@@ -1,6 +1,11 @@
+"use client";
+
 import { Save } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import MarkdownEditor from "./MarkdownEditor";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 type PostFormProps = {
   initialTitle?: string;
@@ -41,10 +46,10 @@ export default function PostForm({
   };
 
   return (
-    <form className="stack" onSubmit={handleSubmit}>
-      <label className="field">
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      <label className="flex flex-col gap-2 text-sm font-semibold">
         <span>Title</span>
-        <input
+        <Input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={200}
@@ -53,19 +58,19 @@ export default function PostForm({
         />
       </label>
       <MarkdownEditor value={content} onChange={setContent} />
-      <div className="tag-row">
-        {tags.length === 0 ? <span className="muted">No tags</span> : null}
+      <div className="flex flex-wrap gap-2">
+        {tags.length === 0 ? <span className="text-sm text-muted-foreground">No tags</span> : null}
         {tags.map((tag) => (
-          <span className="tag" key={tag}>
+          <Badge variant="secondary" key={tag}>
             #{tag}
-          </span>
+          </Badge>
         ))}
       </div>
-      {error ? <p className="error">{error}</p> : null}
-      <button type="submit" className="primary-button" disabled={isSubmitting}>
-        <Save size={18} />
+      {error ? <p className="font-semibold text-destructive">{error}</p> : null}
+      <Button type="submit" className="w-fit" disabled={isSubmitting}>
+        <Save />
         <span>{isSubmitting ? "Saving..." : submitLabel}</span>
-      </button>
+      </Button>
     </form>
   );
 }

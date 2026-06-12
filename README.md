@@ -1,12 +1,12 @@
 # Board Simple
 
+Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
+
 ## Branch Strategy
 
 - `main`: 메인 브랜치입니다. `README.md`를 포함한 최소 파일/폴더만 존재합니다.
 - `dev`: 프로젝트에서 사용할 기반 프로젝트까지만 구현한 브랜치입니다.
 - `project/{nickname}`: 각자 사용할 브랜치입니다. 기반 프로젝트에 기반하여 AI를 활용한 추가 기능들을 붙인 프로젝트입니다.
-
-React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기본 게시판입니다.
 
 ## Features
 
@@ -18,6 +18,13 @@ React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기�
 - `#태그명` 형식 태그 추출
 - 게시글 제목 검색과 페이지네이션
 
+## Stack
+
+- FE: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, zustand
+- BE: FastAPI, Pydantic, SQLAlchemy, Alembic
+- DB: PostgreSQL with pgvector
+- Container: Docker, Docker Compose
+
 ## Project Structure
 
 ```text
@@ -25,66 +32,85 @@ React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기�
 ├── backend/
 │   ├── app/
 │   ├── alembic/
-│   ├── requirements.txt
-│   └── .env.example
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── .env.example
+│   ├── src/app/
+│   ├── src/components/
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-## Backend Setup
+## Environment
+
+Use a root `.env` file for local and Docker Compose configuration.
+
+```bash
+cp .env.example .env
+```
+
+Required values are documented in `.env.example`. For local Docker defaults, the example values are enough.
+
+## Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- `db`: `pgvector/pgvector:pg16`
+- `migrate`: runs `alembic upgrade head`
+- `backend`: FastAPI on `http://localhost:8000`
+- `frontend`: Next.js on `http://localhost:3000`
+
+Health check:
+
+```bash
+curl http://localhost:8000/health
+```
+
+## Backend Local Setup
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env
-```
-
-`backend/.env`:
-
-```env
-DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DBNAME
-JWT_SECRET_KEY=change-me
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-FRONTEND_ORIGIN=http://localhost:5173
-```
-
-Supabase PostgreSQL connection string을 `DATABASE_URL`에 넣습니다. 운영 환경에서는 JWT 쿠키의 `secure=True` 설정을 적용해야 합니다.
-
-마이그레이션과 실행:
-
-```bash
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-테스트:
+On Windows PowerShell:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Test:
 
 ```bash
+cd backend
 pytest
 ```
 
-## Frontend Setup
+## Frontend Local Setup
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-`frontend/.env`:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-빌드:
+Build:
 
 ```bash
 npm run build
