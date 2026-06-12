@@ -44,65 +44,65 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 └── README.md
 ```
 
-## Environment
+## 환경변수
 
-Use a root `.env` file for local and Docker Compose configuration.
+로컬 개발과 Docker Compose 실행 모두 루트 `.env` 파일을 사용합니다.
 
 ```bash
 cp .env.example .env
 ```
 
-Required values are documented in `.env.example`. For local Docker defaults, the example values are enough.
+필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
-## Docker Compose
+로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
-```bash
-docker compose up --build
+```env
+DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
 ```
 
-Services:
+전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
 
-- `db`: `pgvector/pgvector:pg16`
-- `migrate`: runs `alembic upgrade head`
-- `backend`: FastAPI on `http://localhost:8000`
-- `frontend`: Next.js on `http://localhost:3000`
-
-Health check:
-
-```bash
-curl http://localhost:8000/health
+```env
+DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
 ```
 
-## Backend Local Setup
+## 개발용 실행 방법
+
+개발할 때는 아래 방식을 권장합니다.
+
+- PostgreSQL(pgvector)은 Docker에서 실행합니다.
+- FastAPI는 로컬에서 reload 모드로 실행합니다.
+- Next.js는 로컬에서 hot reload 모드로 실행합니다.
+
+DB를 실행합니다.
+
+```bash
+docker compose up -d db
+```
+
+backend를 실행합니다.
 
 ```bash
 cd backend
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-On Windows PowerShell:
+Windows PowerShell에서는 아래 명령을 사용합니다.
 
 ```powershell
 cd backend
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Test:
-
-```bash
-cd backend
-pytest
-```
-
-## Frontend Local Setup
+다른 터미널에서 frontend를 실행합니다.
 
 ```bash
 cd frontend
@@ -110,10 +110,50 @@ npm install
 npm run dev
 ```
 
-Build:
+개발 서버 주소:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+테스트 실행:
 
 ```bash
-npm run build
+cd backend
+pytest
+```
+
+## Docker 배포용 실행 방법
+
+전체 서비스를 Docker로 실행하거나 배포와 유사한 환경을 확인할 때 사용합니다. Docker Compose가 PostgreSQL을 실행하고, migration을 적용한 뒤 backend와 frontend를 실행합니다.
+
+```bash
+docker compose up --build
+```
+
+서비스 구성:
+
+- `db`: `pgvector/pgvector:pg16`
+- `migrate`: `alembic upgrade head`를 한 번 실행하고 종료합니다.
+- `backend`: `http://localhost:8000`에서 실행되는 FastAPI 서버
+- `frontend`: `http://localhost:3000`에서 실행되는 Next.js 서버
+
+상태 확인:
+
+```bash
+curl http://localhost:8000/health
+```
+
+컨테이너 종료:
+
+```bash
+docker compose down
+```
+
+PostgreSQL 데이터까지 삭제하려면 아래 명령을 사용합니다.
+
+```bash
+docker compose down -v
 ```
 
 ## API Overview
