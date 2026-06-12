@@ -1,5 +1,11 @@
 # Board Simple
 
+## Branch Strategy
+
+- `main`: 메인 브랜치입니다. `README.md`를 포함한 최소 파일/폴더만 존재합니다.
+- `dev`: 프로젝트에서 사용할 기반 프로젝트까지만 구현한 브랜치입니다.
+- `project/{nickname}`: 각자 사용할 브랜치입니다. 기반 프로젝트에 기반하여 AI를 활용한 추가 기능들을 붙인 프로젝트입니다.
+
 React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기본 게시판입니다.
 
 ## Features
