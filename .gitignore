@@ -37,3 +37,9 @@ vite.config.d.ts
 .DS_Store
 .idea/
 .vscode/
+
+# local
+/local
+
+# temp
+/tmp
