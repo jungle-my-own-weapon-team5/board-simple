@@ -14,6 +14,13 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserPublicRead(BaseModel):
+    id: int
+    nickname: str
+
+    model_config = {"from_attributes": True}
+
+
 class UserRead(BaseModel):
     id: int
     email: EmailStr

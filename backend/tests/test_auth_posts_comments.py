@@ -50,6 +50,12 @@ def register_and_login(client: TestClient, email: str = "user@example.com") -> d
     return login_response.json()
 
 
+def assert_public_author(author: dict) -> None:
+    assert "id" in author
+    assert "nickname" in author
+    assert "email" not in author
+
+
 def test_register_login_me_and_logout(client: TestClient) -> None:
     user = register_and_login(client)
     assert user["email"] == "user@example.com"
@@ -73,10 +79,17 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     assert create_response.status_code == 201
     post = create_response.json()
     assert [tag["name"] for tag in post["tags"]] == ["python", "fastapi"]
+    assert_public_author(post["author"])
 
     list_response = client.get("/api/posts", params={"q": "board", "page": 1, "size": 10})
     assert list_response.status_code == 200
-    assert list_response.json()["total"] == 1
+    post_page = list_response.json()
+    assert post_page["total"] == 1
+    assert_public_author(post_page["items"][0]["author"])
+
+    detail_response = client.get(f"/api/posts/{post['id']}")
+    assert detail_response.status_code == 200
+    assert_public_author(detail_response.json()["author"])
 
     other_user = register_and_login(client, "other@example.com")
     assert other_user["nickname"].startswith("익명")
@@ -112,8 +125,10 @@ def test_comment_pagination(client: TestClient) -> None:
 
     first_page = client.get(f"/api/posts/{post_id}/comments")
     assert first_page.status_code == 200
-    assert len(first_page.json()["items"]) == 5
-    assert first_page.json()["total"] == 7
+    first_page_payload = first_page.json()
+    assert len(first_page_payload["items"]) == 5
+    assert first_page_payload["total"] == 7
+    assert_public_author(first_page_payload["items"][0]["author"])
 
     next_page = client.get(
         f"/api/posts/{post_id}/comments",

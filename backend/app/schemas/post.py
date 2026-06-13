@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.schemas.tag import TagRead
-from app.schemas.user import UserRead
+from app.schemas.user import UserPublicRead
 
 
 class PostBase(BaseModel):
@@ -23,7 +23,7 @@ class PostRead(BaseModel):
     id: int
     title: str
     content: str
-    author: UserRead
+    author: UserPublicRead
     tags: list[TagRead]
     created_at: datetime
     updated_at: datetime
@@ -34,7 +34,7 @@ class PostRead(BaseModel):
 class PostListItem(BaseModel):
     id: int
     title: str
-    author: UserRead
+    author: UserPublicRead
     tags: list[TagRead]
     created_at: datetime
     updated_at: datetime

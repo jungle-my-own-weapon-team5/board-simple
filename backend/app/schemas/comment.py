@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.schemas.user import UserRead
+from app.schemas.user import UserPublicRead
 
 
 class CommentCreate(BaseModel):
@@ -17,7 +17,7 @@ class CommentRead(BaseModel):
     id: int
     post_id: int
     content: str
-    author: UserRead
+    author: UserPublicRead
     created_at: datetime
     updated_at: datetime
 

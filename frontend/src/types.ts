@@ -5,6 +5,11 @@ export type User = {
   created_at: string;
 };
 
+export type Author = {
+  id: number;
+  nickname: string;
+};
+
 export type Tag = {
   id: number;
   name: string;
@@ -14,7 +19,7 @@ export type Post = {
   id: number;
   title: string;
   content: string;
-  author: User;
+  author: Author;
   tags: Tag[];
   created_at: string;
   updated_at: string;
@@ -33,7 +38,7 @@ export type Comment = {
   id: number;
   post_id: number;
   content: string;
-  author: User;
+  author: Author;
   created_at: string;
   updated_at: string;
 };
