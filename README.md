@@ -54,6 +54,8 @@ cp .env.example .env
 
 필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
+`APP_ENV=production`으로 실행하면 운영 안전 설정을 강제합니다. 이 모드에서는 운영용 JWT 시크릿, HTTPS 프론트엔드 origin, secure 인증 쿠키 설정이 필요하며 FastAPI 문서 엔드포인트는 비활성화됩니다. 기본 `docker-compose.yml`은 로컬 개발과 배포 유사 환경 확인용이며, 운영 배포에서는 데이터베이스 포트 공개와 개발용 기본값을 사용하지 마세요.
+
 로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
 ```env

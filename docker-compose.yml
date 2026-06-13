@@ -20,6 +20,7 @@ services:
       context: ./backend
     command: alembic upgrade head
     environment:
+      APP_ENV: "${APP_ENV:-development}"
       DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://board:board@db:5432/board}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me}"
       JWT_ALGORITHM: "${JWT_ALGORITHM:-HS256}"
@@ -34,6 +35,7 @@ services:
     build:
       context: ./backend
     environment:
+      APP_ENV: "${APP_ENV:-development}"
       DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://board:board@db:5432/board}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me}"
       JWT_ALGORITHM: "${JWT_ALGORITHM:-HS256}"

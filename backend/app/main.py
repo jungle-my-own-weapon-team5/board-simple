@@ -6,7 +6,16 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-app = FastAPI(title="Board Simple API")
+docs_url = None if settings.app_env == "production" else "/docs"
+redoc_url = None if settings.app_env == "production" else "/redoc"
+openapi_url = None if settings.app_env == "production" else "/openapi.json"
+
+app = FastAPI(
+    title="Board Simple API",
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url,
+)
 
 app.add_middleware(
     CORSMiddleware,
