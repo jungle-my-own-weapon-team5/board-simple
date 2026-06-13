@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.main import app
 
+FRONTEND_ORIGIN = "http://localhost:3000"
+
 
 @pytest.fixture()
 def client() -> Generator[TestClient, None, None]:
@@ -33,18 +35,25 @@ def client() -> Generator[TestClient, None, None]:
     app.dependency_overrides.clear()
 
 
+def origin_headers(origin: str = FRONTEND_ORIGIN) -> dict[str, str]:
+    return {"Origin": origin}
+
+
 def register_and_login(client: TestClient, email: str = "user@example.com") -> dict:
     user_payload = {
         "email": email,
         "password": "password123",
         "nickname": "tester" if email == "user@example.com" else None,
     }
-    register_response = client.post("/api/auth/register", json=user_payload)
+    register_response = client.post(
+        "/api/auth/register", json=user_payload, headers=origin_headers()
+    )
     assert register_response.status_code == 201
 
     login_response = client.post(
         "/api/auth/login",
         json={"email": email, "password": "password123"},
+        headers=origin_headers(),
     )
     assert login_response.status_code == 200
     return login_response.json()
@@ -65,9 +74,29 @@ def test_register_login_me_and_logout(client: TestClient) -> None:
     assert me_response.status_code == 200
     assert me_response.json()["email"] == "user@example.com"
 
-    logout_response = client.post("/api/auth/logout")
+    logout_response = client.post("/api/auth/logout", headers=origin_headers())
     assert logout_response.status_code == 204
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_state_changing_requests_require_allowed_origin(client: TestClient) -> None:
+    payload = {
+        "email": "origin@example.com",
+        "password": "password123",
+        "nickname": "origin",
+    }
+
+    missing_origin_response = client.post("/api/auth/register", json=payload)
+    assert missing_origin_response.status_code == 403
+
+    wrong_origin_response = client.post(
+        "/api/auth/register",
+        json=payload,
+        headers=origin_headers("https://evil.example"),
+    )
+    assert wrong_origin_response.status_code == 403
+
+    assert client.get("/api/posts").status_code == 200
 
 
 def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
@@ -75,6 +104,7 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     create_response = client.post(
         "/api/posts",
         json={"title": "Hello board", "content": "Markdown body #Python #python #FastAPI"},
+        headers=origin_headers(),
     )
     assert create_response.status_code == 201
     post = create_response.json()
@@ -96,13 +126,19 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     forbidden_response = client.put(
         f"/api/posts/{post['id']}",
         json={"title": "Bad edit", "content": "Nope"},
+        headers=origin_headers(),
     )
     assert forbidden_response.status_code == 403
 
-    client.post("/api/auth/login", json={"email": "user@example.com", "password": "password123"})
+    client.post(
+        "/api/auth/login",
+        json={"email": "user@example.com", "password": "password123"},
+        headers=origin_headers(),
+    )
     update_response = client.put(
         f"/api/posts/{post['id']}",
         json={"title": "Updated board", "content": "Updated #Django"},
+        headers=origin_headers(),
     )
     assert update_response.status_code == 200
     assert update_response.json()["tags"][0]["name"] == "django"
@@ -113,6 +149,7 @@ def test_comment_pagination(client: TestClient) -> None:
     post_response = client.post(
         "/api/posts",
         json={"title": "Comment target", "content": "Body"},
+        headers=origin_headers(),
     )
     post_id = post_response.json()["id"]
 
@@ -120,6 +157,7 @@ def test_comment_pagination(client: TestClient) -> None:
         response = client.post(
             f"/api/posts/{post_id}/comments",
             json={"content": f"comment {index}"},
+            headers=origin_headers(),
         )
         assert response.status_code == 201
 

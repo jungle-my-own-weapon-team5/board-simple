@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import auth, comments, posts, tags
 from app.core.config import get_settings
 
 settings = get_settings()
+allowed_frontend_origin = str(settings.frontend_origin).rstrip("/")
+unsafe_methods = {"POST", "PUT", "PATCH", "DELETE"}
 
 docs_url = None if settings.app_env == "production" else "/docs"
 redoc_url = None if settings.app_env == "production" else "/redoc"
@@ -19,11 +22,24 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(settings.frontend_origin).rstrip("/")],
+    allow_origins=[allowed_frontend_origin],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
+
+
+@app.middleware("http")
+async def enforce_state_changing_origin(request: Request, call_next):
+    if request.method in unsafe_methods:
+        origin = request.headers.get("origin")
+        if origin != allowed_frontend_origin:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Invalid request origin"},
+            )
+    return await call_next(request)
+
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(posts.router, prefix="/api")
