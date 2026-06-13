@@ -4,25 +4,30 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
+    "@radix-ui/react-slot": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest",
-    "zustand": "latest",
     "react-markdown": "latest",
     "rehype-sanitize": "latest",
-    "lucide-react": "latest"
+    "tailwind-merge": "latest",
+    "zustand": "latest"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
   }
 }

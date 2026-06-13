@@ -1,3 +1,5 @@
+import { Button } from "./ui/button";
+
 type PaginationProps = {
   page: number;
   size: number;
@@ -9,20 +11,21 @@ export default function Pagination({ page, size, total, onPageChange }: Paginati
   const totalPages = Math.max(1, Math.ceil(total / size));
 
   return (
-    <div className="pagination">
-      <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+    <div className="flex items-center justify-center gap-3">
+      <Button type="button" variant="outline" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         Previous
-      </button>
-      <span>
+      </Button>
+      <span className="text-sm font-semibold">
         {page} / {totalPages}
       </span>
-      <button
+      <Button
         type="button"
+        variant="outline"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >
         Next
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,12 @@
 # Board Simple
 
-React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기본 게시판입니다.
+Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
+
+## Branch Strategy
+
+- `main`: 메인 브랜치입니다. `README.md`를 포함한 최소 파일/폴더만 존재합니다.
+- `dev`: 프로젝트에서 사용할 기반 프로젝트까지만 구현한 브랜치입니다.
+- `project/{nickname}`: 각자 사용할 브랜치입니다. 기반 프로젝트에 기반하여 AI를 활용한 추가 기능들을 붙인 프로젝트입니다.
 
 ## Features
 
@@ -12,6 +18,13 @@ React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기�
 - `#태그명` 형식 태그 추출
 - 게시글 제목 검색과 페이지네이션
 
+## Stack
+
+- FE: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, zustand
+- BE: FastAPI, Pydantic, SQLAlchemy, Alembic
+- DB: PostgreSQL with pgvector
+- Container: Docker, Docker Compose
+
 ## Project Structure
 
 ```text
@@ -19,69 +32,128 @@ React + TypeScript + Vite 프론트엔드와 FastAPI 백엔드로 구성한 기�
 ├── backend/
 │   ├── app/
 │   ├── alembic/
-│   ├── requirements.txt
-│   └── .env.example
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── .env.example
+│   ├── src/app/
+│   ├── src/components/
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-## Backend Setup
+## 환경변수
+
+로컬 개발과 Docker Compose 실행 모두 루트 `.env` 파일을 사용합니다.
 
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-`backend/.env`:
+필요한 환경변수는 `.env.example`에 정리되어 있습니다.
+
+로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DBNAME
-JWT_SECRET_KEY=change-me
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-FRONTEND_ORIGIN=http://localhost:5173
+DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
 ```
 
-Supabase PostgreSQL connection string을 `DATABASE_URL`에 넣습니다. 운영 환경에서는 JWT 쿠키의 `secure=True` 설정을 적용해야 합니다.
+전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
 
-마이그레이션과 실행:
+```env
+DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
+```
+
+## 개발용 실행 방법
+
+개발할 때는 아래 방식을 권장합니다.
+
+- PostgreSQL(pgvector)은 Docker에서 실행합니다.
+- FastAPI는 로컬에서 reload 모드로 실행합니다.
+- Next.js는 로컬에서 hot reload 모드로 실행합니다.
+
+DB를 실행합니다.
 
 ```bash
+docker compose up -d db
+```
+
+backend를 실행합니다.
+
+```bash
+cd backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-테스트:
+Windows PowerShell에서는 아래 명령을 사용합니다.
 
-```bash
-pytest
+```powershell
+cd backend
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload
 ```
 
-## Frontend Setup
+다른 터미널에서 frontend를 실행합니다.
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-`frontend/.env`:
+개발 서버 주소:
 
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
 
-빌드:
+테스트 실행:
 
 ```bash
-npm run build
+cd backend
+pytest
+```
+
+## Docker 배포용 실행 방법
+
+전체 서비스를 Docker로 실행하거나 배포와 유사한 환경을 확인할 때 사용합니다. Docker Compose가 PostgreSQL을 실행하고, migration을 적용한 뒤 backend와 frontend를 실행합니다.
+
+```bash
+docker compose up --build
+```
+
+서비스 구성:
+
+- `db`: `pgvector/pgvector:pg16`
+- `migrate`: `alembic upgrade head`를 한 번 실행하고 종료합니다.
+- `backend`: `http://localhost:8000`에서 실행되는 FastAPI 서버
+- `frontend`: `http://localhost:3000`에서 실행되는 Next.js 서버
+
+상태 확인:
+
+```bash
+curl http://localhost:8000/health
+```
+
+컨테이너 종료:
+
+```bash
+docker compose down
+```
+
+PostgreSQL 데이터까지 삭제하려면 아래 명령을 사용합니다.
+
+```bash
+docker compose down -v
 ```
 
 ## API Overview

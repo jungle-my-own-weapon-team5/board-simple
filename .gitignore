@@ -1,6 +1,7 @@
 .env
 backend/.env
 frontend/.env
+.env*
 
 # Python
 __pycache__/
@@ -23,6 +24,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Build outputs
+.next/
+out/
 dist/
 build/
 coverage/

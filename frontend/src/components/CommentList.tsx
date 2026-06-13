@@ -1,7 +1,12 @@
+"use client";
+
 import { FormEvent, useEffect, useState } from "react";
 import * as commentApi from "../api/comments";
 import { useAuthStore } from "../stores/authStore";
 import type { Comment } from "../types";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Textarea } from "./ui/textarea";
 
 type CommentListProps = {
   postId: number;
@@ -47,40 +52,46 @@ export default function CommentList({ postId }: CommentListProps) {
   const hasMore = items.length < total;
 
   return (
-    <section className="comments">
-      <div className="section-header">
-        <h2>Comments</h2>
-        <span className="muted">{total}</span>
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-extrabold">Comments</h2>
+        <span className="text-sm text-muted-foreground">{total}</span>
       </div>
       {user ? (
-        <form className="comment-form" onSubmit={handleSubmit}>
-          <textarea
+        <form className="grid gap-2" onSubmit={handleSubmit}>
+          <Textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
             rows={3}
             placeholder="댓글을 입력하세요."
           />
-          <button type="submit">Add comment</button>
+          <Button type="submit" variant="outline" className="w-fit">
+            Add comment
+          </Button>
         </form>
       ) : (
-        <p className="muted">로그인 후 댓글을 작성할 수 있습니다.</p>
+        <p className="text-sm text-muted-foreground">로그인 후 댓글을 작성할 수 있습니다.</p>
       )}
-      {error ? <p className="error">{error}</p> : null}
-      <div className="comment-stack">
+      {error ? <p className="font-semibold text-destructive">{error}</p> : null}
+      <div className="grid gap-3">
         {items.map((comment) => (
-          <article className="comment" key={comment.id}>
-            <div className="comment-meta">
-              <strong>{comment.author.nickname}</strong>
-              <span>{new Date(comment.created_at).toLocaleString()}</span>
-            </div>
-            <p>{comment.content}</p>
-          </article>
+          <Card key={comment.id}>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <strong>{comment.author.nickname}</strong>
+                <span className="text-muted-foreground">
+                  {new Date(comment.created_at).toLocaleString()}
+                </span>
+              </div>
+              <p className="mt-2 break-words">{comment.content}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
       {hasMore ? (
-        <button type="button" className="secondary-button" onClick={() => loadComments(items.length)}>
+        <Button type="button" variant="outline" className="w-fit" onClick={() => loadComments(items.length)}>
           View more
-        </button>
+        </Button>
       ) : null}
     </section>
   );

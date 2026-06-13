@@ -1,16 +1,22 @@
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
 import * as postApi from "../api/posts";
 import CommentList from "../components/CommentList";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { useAuthStore } from "../stores/authStore";
 import type { Post } from "../types";
 
 export default function PostDetailPage() {
-  const navigate = useNavigate();
-  const { postId } = useParams();
+  const router = useRouter();
+  const params = useParams<{ postId: string }>();
+  const postId = params.postId;
   const { user } = useAuthStore();
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,47 +40,51 @@ export default function PostDetailPage() {
       return;
     }
     await postApi.deletePost(post.id);
-    navigate("/");
+    router.push("/");
   };
 
   if (error) {
-    return <p className="error">{error}</p>;
+    return <p className="font-semibold text-destructive">{error}</p>;
   }
 
   if (!post) {
-    return <p className="muted">Loading...</p>;
+    return <p className="text-muted-foreground">Loading...</p>;
   }
 
   return (
-    <article className="stack">
-      <header className="post-detail-header">
+    <article className="flex flex-col gap-5">
+      <header className="flex flex-col items-start justify-between gap-4 md:flex-row">
         <div>
-          <h1>{post.title}</h1>
-          <p className="muted">
+          <h1 className="break-words text-3xl font-extrabold leading-tight sm:text-4xl">
+            {post.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {post.author.nickname} · {new Date(post.created_at).toLocaleString()}
           </p>
         </div>
         {isAuthor ? (
-          <div className="button-row">
-            <Link className="icon-button" to={`/posts/${post.id}/edit`}>
-              <Pencil size={18} />
-              <span>Edit</span>
-            </Link>
-            <button type="button" className="danger-button" onClick={handleDelete}>
-              <Trash2 size={18} />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/posts/${post.id}/edit`}>
+                <Pencil />
+                <span>Edit</span>
+              </Link>
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>
+              <Trash2 />
               <span>Delete</span>
-            </button>
+            </Button>
           </div>
         ) : null}
       </header>
-      <div className="tag-row">
+      <div className="flex flex-wrap gap-2">
         {post.tags.map((tag) => (
-          <span className="tag" key={tag.id}>
+          <Badge variant="secondary" key={tag.id}>
             #{tag.name}
-          </span>
+          </Badge>
         ))}
       </div>
-      <section className="markdown-body post-body">
+      <section className="markdown-body border-y border-border py-5">
         <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{post.content}</ReactMarkdown>
       </section>
       <CommentList postId={post.id} />
