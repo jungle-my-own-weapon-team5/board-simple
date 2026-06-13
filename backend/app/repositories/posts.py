@@ -15,6 +15,10 @@ def get_post_with_author_and_tags(db: Session, post_id: int) -> Post | None:
     )
 
 
+def post_exists(db: Session, post_id: int) -> bool:
+    return db.scalar(select(Post.id).where(Post.id == post_id)) is not None
+
+
 def count_posts(db: Session, q: str | None = None) -> int:
     statement = select(func.count()).select_from(Post)
     if q:
