@@ -1,10 +1,10 @@
 import re
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.tag import Tag
+from app.repositories import tags as tag_repository
 
 TAG_PATTERN = re.compile(r"#([0-9A-Za-z가-힣_]{1,50})")
 
@@ -23,16 +23,20 @@ def extract_tag_names(text: str) -> list[str]:
 def get_or_create_tags(db: Session, names: list[str]) -> list[Tag]:
     tags: list[Tag] = []
     for name in names:
-        tag = db.scalar(select(Tag).where(Tag.name == name))
+        tag = tag_repository.get_tag_by_name(db, name)
         if tag is None:
             try:
                 with db.begin_nested():
                     tag = Tag(name=name)
-                    db.add(tag)
+                    tag_repository.add_tag(db, tag)
                     db.flush()
             except IntegrityError:
-                tag = db.scalar(select(Tag).where(Tag.name == name))
+                tag = tag_repository.get_tag_by_name(db, name)
                 if tag is None:
                     raise
         tags.append(tag)
     return tags
+
+
+def list_tags(db: Session) -> list[Tag]:
+    return tag_repository.list_tags(db)
