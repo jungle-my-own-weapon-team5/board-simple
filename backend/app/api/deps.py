@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
+from app.repositories import users as user_repository
 
 AUTH_COOKIE_NAME = "access_token"
 
@@ -25,7 +26,7 @@ def get_current_user(
             detail="Invalid authentication token",
         )
 
-    user = db.get(User, int(subject)) if subject.isdigit() else None
+    user = user_repository.get_user_by_id(db, int(subject)) if subject.isdigit() else None
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
