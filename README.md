@@ -88,7 +88,8 @@ backend를 실행합니다.
 cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
@@ -99,7 +100,8 @@ Windows PowerShell에서는 아래 명령을 사용합니다.
 cd backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
