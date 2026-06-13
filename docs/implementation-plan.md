@@ -1,0 +1,537 @@
+# 구현계획
+
+## 목표
+
+현재 게시판 템플릿을 유지하면서 FastAPI + pgvector 기반 명시적 RAG 구조와 MCP/Agent 기능을 단계적으로 추가합니다.
+
+MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사용합니다. MCP 서버는 실제 외부 법률 API tool을 포함하고, Agent는 bounded state machine으로 tool 호출을 조율합니다. Gemini와 Claude는 같은 provider adapter 인터페이스로 후속 확장합니다.
+
+## 전제
+
+- 기존 게시판 API와 테스트를 깨지 않습니다.
+- RAG 구현은 route handler가 아니라 service/repository/model/schema 계층에 추가합니다.
+- secret 값은 `.env`에만 두고 출력하거나 commit하지 않습니다.
+- `.env.example`에는 secret placeholder만 둡니다.
+- Docker Compose에서 AI provider 변수를 backend container로 전달하는 작업은 AI 구현 단계에 포함합니다.
+- MCP와 Agent는 과제 요구사항 충족을 위해 MVP 범위에 포함합니다.
+
+## 단계별 계획
+
+## 0단계: 문서와 설정 정리
+
+상태: 이번 작업 범위
+
+작업:
+
+- `.env.example`에 AI provider와 RAG 설정 변수 추가
+- `docs/architecture.md`에 OpenAI MVP와 provider adapter 전략 반영
+- `docs/api-spec.md`에 AI provider 규칙 반영
+- `docs/requirements.md`에 provider adapter 요구사항 추가
+- `docs/db-design.md` 작성
+- `docs/implementation-plan.md` 작성
+- `docs/provider-adapter-spec.md` 작성
+- `docs/security-privacy.md` 작성
+- `docs/rag-pipeline.md` 작성
+- `docs/evaluation-plan.md` 작성
+- `docs/mcp-agent-design.md` 작성
+
+검증:
+
+- 문서가 UTF-8 without BOM인지 확인
+- CRLF 줄바꿈 확인
+- 한글 표시 확인
+- secret 값이 포함되지 않았는지 확인
+
+## 1단계: 설정 모델 확장
+
+목표:
+
+- backend 설정에서 AI/RAG 환경변수를 읽을 수 있게 합니다.
+
+예상 수정 파일:
+
+```text
+backend/app/core/config.py
+docker-compose.yml
+backend/tests/test_config.py
+```
+
+추가 설정 후보:
+
+```text
+AI_RAG_ENABLED
+AI_AGENT_PROVIDER
+AI_EMBEDDING_PROVIDER
+AI_AGENT_MODEL
+AI_EMBEDDING_MODEL
+AI_EMBEDDING_DIMENSIONS
+AI_REQUEST_TIMEOUT_SECONDS
+RAG_TOP_K
+RAG_PROMPT_VERSION
+OPENAI_API_KEY
+OPENAI_BASE_URL
+GEMINI_API_KEY
+GEMINI_BASE_URL
+ANTHROPIC_API_KEY
+ANTHROPIC_BASE_URL
+LAW_OPEN_API_OC
+```
+
+구현 기준:
+
+- `AI_RAG_ENABLED=false`인 동안에는 OpenAI key와 model 설정이 비어 있어도 됩니다.
+- `AI_RAG_ENABLED=true`에서는 모든 환경에서 OpenAI MVP 사용 시 `OPENAI_API_KEY`, `AI_AGENT_MODEL`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS` 존재를 검증하고, 실패하면 애플리케이션 시작을 중단합니다.
+- `APP_ENV=production`에서는 위 검증에 더해 운영용 JWT, HTTPS origin, secure cookie 같은 기존 운영 안전 설정도 함께 강제합니다.
+- key 값은 validation 오류 메시지나 로그에 출력하지 않습니다.
+- `AI_AGENT_PROVIDER` 허용값은 최소 `openai`, `gemini`, `anthropic`, `mock`으로 제한합니다.
+- `AI_EMBEDDING_PROVIDER` 허용값은 최소 `openai`, `mock`으로 시작합니다.
+- `AI_EMBEDDING_DIMENSIONS`는 양의 정수로 검증합니다.
+
+검증:
+
+- 설정 unit test 추가
+- production에서 필수 key 누락 시 실패 확인
+- secret 값이 출력되지 않는지 확인
+
+## 2단계: AI provider adapter 골격
+
+목표:
+
+- route와 RAG service가 provider SDK에 직접 의존하지 않게 합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/ai/__init__.py
+backend/app/services/ai/client.py
+backend/app/services/ai/providers/__init__.py
+backend/app/services/ai/providers/base.py
+backend/app/services/ai/providers/openai.py
+backend/app/services/ai/providers/mock.py
+backend/tests/test_ai_providers.py
+```
+
+권장 인터페이스:
+
+```text
+generate(prompt, *, model, timeout) -> AITextResult
+embed(texts, *, model, dimensions, timeout) -> list[EmbeddingResult]
+```
+
+구현 기준:
+
+- MVP는 OpenAI adapter를 구현합니다.
+- 테스트는 mock provider로 실행합니다.
+- provider error는 내부 error type으로 변환합니다.
+- provider 응답에는 provider/model metadata와 latency metadata를 포함합니다.
+- 세부 계약은 `docs/provider-adapter-spec.md`를 따릅니다.
+
+검증:
+
+- mock provider unit test
+- OpenAI key가 없을 때 OpenAI adapter 생성이 안전하게 실패하는지 확인
+- provider error mapping test
+
+## 3단계: RAG DB schema 추가
+
+목표:
+
+- 법률 source, document, chunk, AI run, retrieval audit를 저장할 수 있게 합니다.
+
+예상 수정/추가 파일:
+
+```text
+backend/app/models/legal_source.py
+backend/app/models/legal_document.py
+backend/app/models/document_chunk.py
+backend/app/models/rag_run.py
+backend/app/models/__init__.py
+backend/alembic/versions/0003_rag_schema.py
+backend/app/repositories/legal_documents.py
+backend/app/repositories/document_chunks.py
+backend/app/repositories/rag_runs.py
+backend/tests/test_rag_repositories.py
+```
+
+구현 기준:
+
+- `docs/db-design.md`의 schema를 기준으로 합니다.
+- embedding 컬럼의 dimension은 설정과 migration을 일치시킵니다.
+- 초기에는 vector index를 생성하지 않아도 됩니다.
+- generation run에는 `rag_runs.agent_provider`, `rag_runs.agent_model_name`을 저장합니다.
+- 모든 RAG run에는 `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`, `rag_runs.prompt_version`을 저장합니다.
+- `legal_documents`와 `legal_document_chunks`에 indexing/embedding 상태 필드를 추가합니다.
+- `source_type`과 `document_type`의 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 맞춥니다.
+- `legal_documents.normalized_text`는 생성 직후 또는 indexing 전에는 null을 허용합니다.
+- `run_type=search`는 generation을 수행하지 않으므로 `agent_provider`, `agent_model_name`은 null을 허용합니다.
+
+검증:
+
+- Alembic upgrade 테스트
+- repository create/read 테스트
+- unique checksum 테스트
+
+## 4단계: Fixture ingestion과 chunking
+
+목표:
+
+- 외부 API 없이도 반복 가능한 RAG 테스트 데이터를 만들 수 있게 합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/rag/ingestion.py
+backend/app/services/rag/chunking.py
+backend/tests/fixtures/legal_documents/
+backend/tests/test_rag_chunking.py
+backend/tests/test_rag_ingestion.py
+```
+
+구현 기준:
+
+- raw text와 normalized text를 모두 저장합니다.
+- chunk는 `document_id`, `chunk_index`, `heading`, `content`, `metadata_json`을 가집니다.
+- 법령/판례 fixture를 최소 1개씩 둡니다.
+- 세부 파이프라인은 `docs/rag-pipeline.md`를 따릅니다.
+
+검증:
+
+- 같은 fixture를 여러 번 ingest해도 checksum으로 중복을 방지합니다.
+- chunk 순서가 안정적인지 확인합니다.
+- 한글 text가 깨지지 않는지 확인합니다.
+
+## 5단계: Embedding과 vector retrieval
+
+목표:
+
+- chunk embedding을 저장하고 pgvector similarity search로 검색합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/rag/embeddings.py
+backend/app/services/rag/retrieval.py
+backend/app/schemas/ai.py
+backend/app/api/rag.py
+backend/tests/test_rag_retrieval.py
+```
+
+구현 기준:
+
+- 테스트에서는 mock embedding을 사용합니다.
+- MVP 실제 실행은 OpenAI embedding provider를 사용합니다.
+- `/api/rag/search`는 답변 생성 없이 검색 결과만 반환합니다.
+- 검색 결과에는 `run_id`, `embedding_provider`, `embedding_model_name`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
+- 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
+
+검증:
+
+- fixture dataset으로 검색 결과 순위 테스트
+- 인증 필요 여부 테스트
+- `top_k` validation 테스트
+
+## 6단계: MCP 서버와 tool registry
+
+목표:
+
+- Agent가 사용할 수 있는 tool 경계를 MCP JSON-RPC 형식으로 제공합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/mcp/server.py
+backend/app/services/mcp/registry.py
+backend/app/services/mcp/types.py
+backend/app/services/mcp/errors.py
+backend/app/api/mcp.py
+backend/tests/test_mcp_server.py
+```
+
+구현 기준:
+
+- JSON-RPC request/response 구조를 검증합니다.
+- `tools/list`는 allowlist된 tool만 반환합니다.
+- `tools/call`은 allowlist에 없는 tool을 거부합니다.
+- MCP 서버는 인증된 backend/Agent 경로에서만 호출되도록 합니다.
+- tool input/output은 secret을 제거한 metadata만 audit에 남깁니다.
+
+검증:
+
+- JSON-RPC schema validation 테스트
+- unknown tool 거부 테스트
+- tool timeout/error mapping 테스트
+- secret redaction 테스트
+
+## 7단계: MCP 법률 tool 구현
+
+목표:
+
+- 내부 RAG 검색과 실제 외부 법률 API 조회를 Agent가 동일한 tool 경계로 사용할 수 있게 합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/mcp/tools/legal_documents.py
+backend/app/services/mcp/tools/legal_open_api.py
+backend/app/services/mcp/tools/citations.py
+backend/app/services/rag/legal_open_api.py
+backend/tests/test_mcp_legal_tools.py
+```
+
+구현 기준:
+
+- `search_legal_documents`는 5단계 retrieval service를 호출합니다.
+- `search_law_open_api`는 국가법령정보 Open API 등 실제 외부 서비스를 호출합니다.
+- `verify_citations`는 초안 citation이 해당 run의 retrieved chunk 또는 외부 source metadata에 근거하는지 확인합니다.
+- `LAW_OPEN_API_OC`는 secret으로 취급합니다.
+- 외부 API 응답 XML/JSON parsing을 명시적으로 처리합니다.
+- 외부 API 실패와 rate limit을 안전하게 처리합니다.
+
+검증:
+
+- tool별 request/response schema 테스트
+- API client는 mock HTTP response로 테스트합니다.
+- 실제 key 없이 테스트가 통과해야 합니다.
+- key 값은 로그에 출력하지 않습니다.
+
+## 8단계: Bounded AI Agent orchestration
+
+목표:
+
+- 검색 계획, MCP tool 호출, 관찰, 초안 작성, citation 검증을 하나의 제한된 Agent workflow로 묶습니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/agent/orchestrator.py
+backend/app/services/agent/state.py
+backend/app/services/agent/prompts.py
+backend/app/services/agent/citations.py
+backend/app/repositories/agent_steps.py
+backend/tests/test_agent_orchestrator.py
+```
+
+구현 기준:
+
+- 상태 흐름은 `plan -> call_tool -> observe -> decide -> draft -> verify -> persist`를 따릅니다.
+- `max_iterations`, `max_tool_calls`, timeout을 설정으로 제한합니다.
+- 각 step은 `agent_steps`에 저장합니다.
+- Agent는 allowlist된 MCP tool만 호출합니다.
+- 모델 응답은 provider adapter를 통해 OpenAI API로 생성합니다.
+- 검색된 문서와 외부 API 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
+
+검증:
+
+- 정상 tool 선택과 step 저장 테스트
+- `max_tool_calls` 초과 중단 테스트
+- tool 실패 시 안전 응답 테스트
+- provider 실패 시 `502` 또는 `503` mapping 테스트
+
+## 9단계: 답변 초안 생성 API
+
+목표:
+
+- Agent orchestration 결과를 기반으로 쟁점 정리와 답변 초안을 반환합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/api/ai.py
+backend/tests/test_ai_answer_drafts.py
+```
+
+구현 기준:
+
+- `/api/ai/dispute-issues` 추가
+- `/api/ai/answer-drafts` 추가
+- 필요하면 `/api/ai/agent-runs`를 내부 공통 실행 endpoint로 둡니다.
+- 응답에는 citation, disclaimer, `agent_provider`, `agent_model_name`을 포함합니다.
+- `rag_runs`, `rag_retrievals`, `agent_steps`에 실행 결과를 저장합니다.
+
+검증:
+
+- citation 없는 법률 주장 방지 테스트
+- disclaimer 포함 테스트
+- provider/model 저장 테스트
+- Agent step 저장 테스트
+
+## 10단계: 프론트엔드 AI UI
+
+목표:
+
+- 사용자가 분쟁 사실관계를 입력하고 자료 검색/초안 생성을 실행할 수 있게 합니다.
+
+예상 추가 파일:
+
+```text
+frontend/src/api/ai.ts
+frontend/src/api/rag.ts
+frontend/src/screens/DisputeAssistantPage.tsx
+frontend/src/app/ai/page.tsx
+frontend/src/types.ts
+```
+
+구현 기준:
+
+- 검색 결과와 답변 초안을 분리해 보여줍니다.
+- citation source를 사용자가 확인할 수 있게 합니다.
+- pending/error 상태를 명확히 표시합니다.
+- provider API key나 내부 prompt는 frontend에 노출하지 않습니다.
+
+검증:
+
+- frontend build
+- 주요 화면 수동 확인
+- 긴 답변과 citation 목록의 layout 확인
+
+## 11단계: 외부 법률 API ingestion과 운영 정책
+
+목표:
+
+- 국가법령정보 Open API 등 허용된 법률 source를 ingestion하거나 MCP tool로 실시간 조회할 수 있게 합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/legal_sources.py
+backend/app/services/rag/legal_open_api.py
+backend/tests/test_legal_sources.py
+```
+
+구현 기준:
+
+- `LAW_OPEN_API_OC`는 secret으로 취급합니다.
+- MCP `search_law_open_api`와 ingestion client가 같은 parsing/error 정책을 공유합니다.
+- source URL, external ID, fetched_at을 저장합니다.
+
+검증:
+
+- API client는 mock HTTP response로 테스트합니다.
+- 실제 key 없이 테스트가 통과해야 합니다.
+- key 값은 로그에 출력하지 않습니다.
+
+## 12단계: Gemini/Claude provider 확장
+
+목표:
+
+- OpenAI MVP 이후 generation provider를 Gemini와 Claude로 확장할 수 있게 합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/ai/providers/gemini.py
+backend/app/services/ai/providers/anthropic.py
+backend/tests/test_ai_provider_selection.py
+```
+
+구현 기준:
+
+- provider별 SDK 차이는 adapter 내부에 숨깁니다.
+- `AI_AGENT_PROVIDER=gemini` 또는 `anthropic`으로 전환할 수 있게 합니다.
+- request/response API shape는 유지합니다.
+- provider별 timeout, retry, error mapping을 정리합니다.
+- embedding provider는 별도로 유지합니다.
+
+검증:
+
+- provider selection unit test
+- provider별 missing key validation test
+- mock adapter로 API response shape 유지 확인
+
+## 13단계: 품질과 보안 강화
+
+목표:
+
+- 법률/AI 기능을 외부 사용자에게 노출하기 전 안전장치를 강화합니다.
+
+작업:
+
+- AI endpoint rate limiting
+- request body size limit
+- PII redaction 또는 최소 저장 정책
+- prompt injection test case
+- retrieval evaluation fixture
+- MCP allowlist와 JSON-RPC validation
+- Agent loop guard와 tool failure handling
+- admin role과 admin-only ingestion
+- structured audit logging
+- 세부 보안 기준은 `docs/security-privacy.md`를 따릅니다.
+- 평가 기준은 `docs/evaluation-plan.md`를 따릅니다.
+
+검증:
+
+- 보안 회귀 테스트
+- prompt injection fixture 테스트
+- AI run audit record 확인
+- MCP tool call audit record 확인
+- Agent step audit record 확인
+
+## 작업 순서 요약
+
+```text
+0. 문서와 .env.example 정리
+1. 설정 모델 확장
+2. AI provider adapter 골격
+3. RAG DB schema 추가
+4. fixture ingestion과 chunking
+5. embedding과 vector retrieval
+6. MCP 서버와 tool registry
+7. MCP 법률 tool 구현
+8. Bounded AI Agent orchestration
+9. 답변 초안 생성 API
+10. frontend AI UI
+11. 외부 법률 API ingestion과 운영 정책
+12. Gemini/Claude provider 확장
+13. 품질과 보안 강화
+```
+
+## 완료 기준
+
+MVP 완료 기준:
+
+- OpenAI API 기반 provider adapter가 동작합니다.
+- fixture 문서가 DB에 저장되고 chunk로 분리됩니다.
+- chunk embedding이 pgvector에 저장됩니다.
+- `/api/rag/search`가 관련 chunk를 반환합니다.
+- MCP JSON-RPC endpoint가 allowlist된 tool을 호출합니다.
+- `search_law_open_api`가 실제 외부 법률 API 연동 경계를 제공합니다.
+- Agent가 bounded state machine으로 MCP tool을 호출하고 반복 제한을 지킵니다.
+- `/api/ai/dispute-issues`와 `/api/ai/answer-drafts`가 citation과 disclaimer를 포함해 응답합니다.
+- generation run에는 `agent_provider`, `agent_model_name`이 저장됩니다.
+- 모든 RAG run에는 `embedding_provider`, `embedding_model_name`, `prompt_version`, retrieved chunk가 `rag_runs`와 `rag_retrievals`에 저장됩니다.
+- Agent run에는 step metadata가 `agent_steps`에 저장됩니다.
+- secret 값이 로그, 응답, 문서에 노출되지 않습니다.
+
+## 제출 산출물 체크리스트
+
+과제 제출 전 README 또는 별도 발표 자료에 다음을 정리합니다.
+
+- 서비스 개요와 주요 기능
+- 전체 아키텍처
+- RAG 아키텍처와 retrieval 평가 결과
+- MCP 서버 구조, JSON-RPC 예시, 실제 외부 API tool 설명
+- Agent 상태 흐름, tool 선택 방식, loop guard 설명
+- 데모 화면 또는 스크린샷
+- 한계점과 개선 방향
+
+## 열린 설계 질문
+
+- `AI_RAG_ENABLED=true`로 전환할 때 사용할 첫 OpenAI embedding model과 dimension은 무엇으로 확정할 것인가요?
+- MCP endpoint를 FastAPI 내부 `/api/mcp`로 둘지, 별도 local MCP process로 둘지 구현 단계에서 결정해야 합니다.
+- 국가법령정보 Open API 외에 과제 시연에서 사용할 외부 API 범위는 어디까지로 할 것인가요?
+- 업로드된 사용자 문서를 shared corpus에 넣을지, 사용자별 private corpus로 분리할지 결정해야 합니다.
+- AI run history는 소유자만 볼 수 있게 할지, admin audit 접근을 허용할지 결정해야 합니다.
+- 분쟁 사실관계의 보존 기간은 어떻게 정할 것인가요?
+- 답변 초안은 수정 후 게시글로 발행 가능한 형태로 만들지, 별도 artifact로만 유지할지 결정해야 합니다.
+
+## 참고 문서
+
+- 시스템 아키텍처: `docs/architecture.md`
+- API 명세: `docs/api-spec.md`
+- 요구사항: `docs/requirements.md`
+- DB 설계: `docs/db-design.md`
+- Provider adapter 계약: `docs/provider-adapter-spec.md`
+- MCP/Agent 설계: `docs/mcp-agent-design.md`
+- 보안 및 개인정보 보호: `docs/security-privacy.md`
+- RAG pipeline 설계: `docs/rag-pipeline.md`
+- 평가 계획: `docs/evaluation-plan.md`
