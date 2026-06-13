@@ -99,6 +99,34 @@ def test_state_changing_requests_require_allowed_origin(client: TestClient) -> N
     assert client.get("/api/posts").status_code == 200
 
 
+def test_register_rejects_duplicate_email_and_nickname(client: TestClient) -> None:
+    register_and_login(client)
+
+    duplicate_email_response = client.post(
+        "/api/auth/register",
+        json={
+            "email": "user@example.com",
+            "password": "password123",
+            "nickname": "other-name",
+        },
+        headers=origin_headers(),
+    )
+    assert duplicate_email_response.status_code == 409
+    assert duplicate_email_response.json()["detail"] == "Email already registered"
+
+    duplicate_nickname_response = client.post(
+        "/api/auth/register",
+        json={
+            "email": "unique@example.com",
+            "password": "password123",
+            "nickname": "tester",
+        },
+        headers=origin_headers(),
+    )
+    assert duplicate_nickname_response.status_code == 409
+    assert duplicate_nickname_response.json()["detail"] == "Nickname already registered"
+
+
 def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     register_and_login(client)
     create_response = client.post(
@@ -142,6 +170,17 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     )
     assert update_response.status_code == 200
     assert update_response.json()["tags"][0]["name"] == "django"
+
+    second_post_response = client.post(
+        "/api/posts",
+        json={"title": "Reuse tags", "content": "Another body #Python #FastAPI"},
+        headers=origin_headers(),
+    )
+    assert second_post_response.status_code == 201
+    assert [tag["name"] for tag in second_post_response.json()["tags"]] == [
+        "python",
+        "fastapi",
+    ]
 
 
 def test_comment_pagination(client: TestClient) -> None:

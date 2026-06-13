@@ -2,6 +2,7 @@ from random import SystemRandom
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import AUTH_COOKIE_NAME, get_current_user
@@ -42,7 +43,8 @@ def set_auth_cookie(response: Response, token: str) -> None:
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
-    email_exists = db.scalar(select(User.id).where(User.email == payload.email))
+    email = str(payload.email)
+    email_exists = db.scalar(select(User.id).where(User.email == email))
     if email_exists is not None:
         raise HTTPException(status_code=409, detail="Email already registered")
 
@@ -52,12 +54,20 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
         raise HTTPException(status_code=409, detail="Nickname already registered")
 
     user = User(
-        email=str(payload.email),
+        email=email,
         password_hash=hash_password(payload.password),
         nickname=nickname,
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if db.scalar(select(User.id).where(User.email == email)) is not None:
+            raise HTTPException(status_code=409, detail="Email already registered")
+        if db.scalar(select(User.id).where(User.nickname == nickname)) is not None:
+            raise HTTPException(status_code=409, detail="Nickname already registered")
+        raise HTTPException(status_code=409, detail="Could not register user")
     db.refresh(user)
     return user
 

@@ -1,6 +1,7 @@
 import re
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.tag import Tag
@@ -24,8 +25,14 @@ def get_or_create_tags(db: Session, names: list[str]) -> list[Tag]:
     for name in names:
         tag = db.scalar(select(Tag).where(Tag.name == name))
         if tag is None:
-            tag = Tag(name=name)
-            db.add(tag)
-            db.flush()
+            try:
+                with db.begin_nested():
+                    tag = Tag(name=name)
+                    db.add(tag)
+                    db.flush()
+            except IntegrityError:
+                tag = db.scalar(select(Tag).where(Tag.name == name))
+                if tag is None:
+                    raise
         tags.append(tag)
     return tags
