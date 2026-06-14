@@ -42,7 +42,6 @@ def list_posts(
     if filters:
         total_statement = total_statement.where(*filters)
         statement = statement.where(*filters)
-
     total = db.scalar(total_statement) or 0
     posts = db.scalars(
         statement.order_by(Post.created_at.desc()).offset((page - 1) * size).limit(size)
