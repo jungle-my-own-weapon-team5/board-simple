@@ -1,11 +1,7 @@
 import argparse
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-
 from app.core.database import get_session_local
-from app.models.post import Post
-from app.rag.service import index_post_chunks
+from app.services.rag import backfill_post_chunks
 
 
 def main() -> None:
@@ -25,15 +21,9 @@ def main() -> None:
 
     db = get_session_local()()
     try:
-        statement = select(Post).options(selectinload(Post.tags))
-        if not args.all:
-            statement = statement.where(Post.id.in_(args.post_id))
-
-        posts = db.scalars(statement.order_by(Post.id)).all()
-        for post in posts:
-            count = index_post_chunks(db, post)
-            db.commit()
-            print(f"post_id={post.id} chunks={count}")
+        post_ids = None if args.all else args.post_id
+        for post_id, count in backfill_post_chunks(db, post_ids=post_ids):
+            print(f"post_id={post_id} chunks={count}")
     finally:
         db.close()
 
