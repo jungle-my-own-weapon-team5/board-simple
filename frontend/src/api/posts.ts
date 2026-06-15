@@ -1,6 +1,12 @@
 import { apiRequest } from "./client";
 import type { Post, PostPage } from "../types";
 
+export type PostPayload = {
+  title: string;
+  content: string;
+  tags: string[];
+};
+
 export function listPosts(params: { page: number; size: number; q?: string }) {
   const search = new URLSearchParams({
     page: String(params.page),
@@ -16,14 +22,14 @@ export function getPost(postId: number) {
   return apiRequest<Post>(`/api/posts/${postId}`);
 }
 
-export function createPost(payload: { title: string; content: string }) {
+export function createPost(payload: PostPayload) {
   return apiRequest<Post>("/api/posts", {
     method: "POST",
     json: payload
   });
 }
 
-export function updatePost(postId: number, payload: { title: string; content: string }) {
+export function updatePost(postId: number, payload: PostPayload) {
   return apiRequest<Post>(`/api/posts/${postId}`, {
     method: "PUT",
     json: payload
