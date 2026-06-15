@@ -7,9 +7,15 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
-from app.models import LegalDocument, LegalDocumentChunk, LegalSource, User
+from app.models import (
+    LegalDocument,
+    LegalDocumentChunk,
+    LegalDocumentChunkEmbedding,
+    LegalSource,
+    User,
+)
 from app.models.rag_run import AgentStep, RagRetrieval, RagRun
-from app.repositories import document_chunks, legal_documents, rag_runs
+from app.repositories import document_chunks, embeddings, legal_documents, rag_runs
 
 
 @pytest.fixture()
@@ -170,6 +176,20 @@ def test_chunks_rag_runs_steps_and_retrievals_are_persisted_in_order(
         token_count=12,
     )
     document_chunks.add_document_chunk(db, chunk)
+    embedding_profile = embeddings.get_or_create_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-embedding",
+        dimensions=8,
+    )
+    chunk_embedding = LegalDocumentChunkEmbedding(
+        chunk_id=chunk.id,
+        embedding_profile_id=embedding_profile.id,
+        embedding=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        embedding_status="embedded",
+        content_checksum="chunk-checksum-1",
+    )
+    embeddings.add_chunk_embedding(db, chunk_embedding)
     user = User(
         email="rag@example.com",
         password_hash="hashed-password",
@@ -182,8 +202,10 @@ def test_chunks_rag_runs_steps_and_retrievals_are_persisted_in_order(
         user_id=user.id,
         run_type="legal_qa",
         query="테스트 질의",
+        embedding_profile_id=embedding_profile.id,
         embedding_provider="mock",
         embedding_model_name="mock-embedding",
+        embedding_dimensions=8,
         prompt_version="v1",
     )
     rag_runs.add_rag_run(db, rag_run)
@@ -205,6 +227,8 @@ def test_chunks_rag_runs_steps_and_retrievals_are_persisted_in_order(
         RagRetrieval(
             rag_run_id=rag_run.id,
             chunk_id=chunk.id,
+            chunk_embedding_id=chunk_embedding.id,
+            embedding_profile_id=embedding_profile.id,
             rank=1,
             score=0.9,
             retrieval_type="vector",
@@ -219,3 +243,96 @@ def test_chunks_rag_runs_steps_and_retrievals_are_persisted_in_order(
     assert [
         retrieval.chunk_id for retrieval in rag_runs.list_retrievals_by_run(db, rag_run.id)
     ] == [chunk.id]
+    assert rag_runs.get_rag_run(db, rag_run.id).embedding_profile_id == embedding_profile.id
+
+
+def test_chunk_embeddings_support_multiple_profiles_and_dimensions(
+    db: Session,
+) -> None:
+    source = _create_source(db)
+    document = _create_document(db, source)
+    chunk = LegalDocumentChunk(
+        document_id=document.id,
+        chunk_index=0,
+        heading="제1조",
+        content="여러 embedding profile을 검증할 본문",
+        token_count=16,
+    )
+    document_chunks.add_document_chunk(db, chunk)
+    db.flush()
+
+    small_profile = embeddings.get_or_create_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-small",
+        dimensions=4,
+    )
+    large_profile = embeddings.get_or_create_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-large",
+        dimensions=6,
+    )
+    embeddings.add_chunk_embedding(
+        db,
+        LegalDocumentChunkEmbedding(
+            chunk_id=chunk.id,
+            embedding_profile_id=small_profile.id,
+            embedding=[0.1, 0.2, 0.3, 0.4],
+            embedding_status="embedded",
+            content_checksum="checksum-small",
+        ),
+    )
+    embeddings.add_chunk_embedding(
+        db,
+        LegalDocumentChunkEmbedding(
+            chunk_id=chunk.id,
+            embedding_profile_id=large_profile.id,
+            embedding=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+            embedding_status="embedded",
+            content_checksum="checksum-large",
+        ),
+    )
+    db.flush()
+    db.expire_all()
+
+    chunk_embeddings = embeddings.list_chunk_embeddings_by_chunk(db, chunk.id)
+
+    assert [item.embedding_profile.dimensions for item in chunk_embeddings] == [4, 6]
+    assert [len(item.embedding or []) for item in chunk_embeddings] == [4, 6]
+    assert (
+        embeddings.find_chunk_embedding(
+            db,
+            chunk_id=chunk.id,
+            embedding_profile_id=small_profile.id,
+        ).content_checksum
+        == "checksum-small"
+    )
+
+
+def test_embedding_profile_lookup_reuses_same_search_space(db: Session) -> None:
+    first_profile = embeddings.get_or_create_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-embedding",
+        dimensions=8,
+        distance_metric="cosine",
+        is_default=True,
+    )
+    second_profile = embeddings.get_or_create_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-embedding",
+        dimensions=8,
+        distance_metric="cosine",
+    )
+
+    assert second_profile.id == first_profile.id
+    assert embeddings.find_embedding_profile(
+        db,
+        provider="mock",
+        model_name="mock-embedding",
+        dimensions=8,
+        distance_metric="cosine",
+    ).id == first_profile.id
+    assert embeddings.list_active_embedding_profiles(db) == [first_profile]

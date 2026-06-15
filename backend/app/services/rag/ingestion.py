@@ -222,7 +222,6 @@ def _create_document_chunks(
             heading=text_chunk.heading,
             content=text_chunk.content,
             token_count=text_chunk.token_count,
-            embedding_status="pending",
             metadata_json={
                 **text_chunk.metadata_json,
                 "document_type": document.document_type,

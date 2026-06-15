@@ -83,7 +83,6 @@ def test_ingest_legal_document_persists_source_document_and_chunks(
     assert len(chunks) == 2
     assert [chunk.chunk_index for chunk in chunks] == [0, 1]
     assert chunks[0].heading == "제1조(목적)"
-    assert chunks[0].embedding_status == "pending"
     assert chunks[0].metadata_json["document_type"] == "statute"
     assert chunks[0].metadata_json["canonical_id"] == "LAW-001"
     assert chunks[0].metadata_json["effective_date"] == "2026-01-01"

@@ -1,5 +1,6 @@
 from app.models.comment import Comment
 from app.models.document_chunk import LegalDocumentChunk
+from app.models.embedding import EmbeddingProfile, LegalDocumentChunkEmbedding
 from app.models.legal_document import LegalDocument
 from app.models.legal_source import LegalSource
 from app.models.post import Post
@@ -10,8 +11,10 @@ from app.models.user import User
 __all__ = [
     "AgentStep",
     "Comment",
+    "EmbeddingProfile",
     "LegalDocument",
     "LegalDocumentChunk",
+    "LegalDocumentChunkEmbedding",
     "LegalSource",
     "Post",
     "RagRetrieval",

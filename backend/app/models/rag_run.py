@@ -39,8 +39,12 @@ class RagRun(Base):
     disclaimer: Mapped[str | None] = mapped_column(Text)
     agent_provider: Mapped[str | None] = mapped_column(String(50))
     agent_model_name: Mapped[str | None] = mapped_column(String(100))
+    embedding_profile_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_profiles.id", ondelete="SET NULL")
+    )
     embedding_provider: Mapped[str] = mapped_column(String(50))
     embedding_model_name: Mapped[str] = mapped_column(String(100))
+    embedding_dimensions: Mapped[int | None] = mapped_column()
     prompt_version: Mapped[str] = mapped_column(String(50))
     error_code: Mapped[str | None] = mapped_column(String(100))
     error_message: Mapped[str | None] = mapped_column(Text)
@@ -52,6 +56,7 @@ class RagRun(Base):
     )
 
     # agent_steps는 plan/tool/draft/verify 같은 실행 과정을 순서대로 남깁니다.
+    embedding_profile = relationship("EmbeddingProfile", back_populates="rag_runs")
     agent_steps = relationship(
         "AgentStep", back_populates="rag_run", cascade="all, delete-orphan"
     )
@@ -103,6 +108,11 @@ class RagRetrieval(Base):
         UniqueConstraint("rag_run_id", "chunk_id", name="uq_rag_retrievals_run_chunk"),
         Index("ix_rag_retrievals_run_rank", "rag_run_id", "rank"),
         Index("ix_rag_retrievals_chunk_id", "chunk_id"),
+        Index(
+            "ix_rag_retrievals_embedding_profile_type",
+            "embedding_profile_id",
+            "retrieval_type",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -111,6 +121,12 @@ class RagRetrieval(Base):
     )
     chunk_id: Mapped[int] = mapped_column(
         ForeignKey("legal_document_chunks.id", ondelete="RESTRICT")
+    )
+    chunk_embedding_id: Mapped[int | None] = mapped_column(
+        ForeignKey("legal_document_chunk_embeddings.id", ondelete="SET NULL")
+    )
+    embedding_profile_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_profiles.id", ondelete="SET NULL")
     )
     rank: Mapped[int] = mapped_column()
     score: Mapped[float | None] = mapped_column(Float)
@@ -121,3 +137,7 @@ class RagRetrieval(Base):
 
     rag_run = relationship("RagRun", back_populates="retrievals")
     chunk = relationship("LegalDocumentChunk")
+    chunk_embedding = relationship(
+        "LegalDocumentChunkEmbedding", back_populates="retrievals"
+    )
+    embedding_profile = relationship("EmbeddingProfile", back_populates="retrievals")
