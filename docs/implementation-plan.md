@@ -145,11 +145,13 @@ embed(texts, *, model, dimensions, timeout) -> list[EmbeddingResult]
 backend/app/models/legal_source.py
 backend/app/models/legal_document.py
 backend/app/models/document_chunk.py
+backend/app/models/embedding.py
 backend/app/models/rag_run.py
 backend/app/models/__init__.py
 backend/alembic/versions/0003_rag_schema.py
 backend/app/repositories/legal_documents.py
 backend/app/repositories/document_chunks.py
+backend/app/repositories/embeddings.py
 backend/app/repositories/rag_runs.py
 backend/tests/test_rag_repositories.py
 ```
@@ -157,11 +159,12 @@ backend/tests/test_rag_repositories.py
 구현 기준:
 
 - `docs/db-design.md`의 schema를 기준으로 합니다.
-- embedding 컬럼의 dimension은 설정과 migration을 일치시킵니다.
+- `legal_document_chunks`에는 embedding vector와 embedding 상태를 두지 않습니다.
+- `embedding_profiles`와 `legal_document_chunk_embeddings`로 provider/model/dimension별 vector를 분리합니다.
 - 초기에는 vector index를 생성하지 않아도 됩니다.
 - generation run에는 `rag_runs.agent_provider`, `rag_runs.agent_model_name`을 저장합니다.
-- 모든 RAG run에는 `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`, `rag_runs.prompt_version`을 저장합니다.
-- `legal_documents`와 `legal_document_chunks`에 indexing/embedding 상태 필드를 추가합니다.
+- 모든 RAG run에는 `rag_runs.embedding_profile_id`, `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`, `rag_runs.embedding_dimensions`, `rag_runs.prompt_version`을 저장합니다.
+- `legal_documents`에는 indexing 상태 필드를, `legal_document_chunk_embeddings`에는 embedding 상태 필드를 추가합니다.
 - `legal_documents`에 `raw_checksum`, `normalized_checksum`, `dedup_status`, `conflict_status`, `duplicate_of_document_id`를 추가합니다.
 - `source_type`과 `document_type`의 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 맞춥니다.
 - `legal_documents.normalized_text`는 생성 직후 또는 indexing 전에는 null을 허용합니다.
@@ -174,6 +177,8 @@ backend/tests/test_rag_repositories.py
 
 - Alembic upgrade 테스트
 - repository create/read 테스트
+- 하나의 chunk에 여러 embedding profile row를 저장할 수 있는지 테스트
+- 서로 다른 dimension profile을 하드코딩 없이 저장할 수 있는지 테스트
 - normalized checksum 기반 중복 후보 저장 테스트
 - 같은 canonical/version의 checksum 충돌 상태 테스트
 - 다른 `effective_date` 또는 `version_label`은 별도 version으로 보존되는지 테스트
@@ -220,6 +225,7 @@ backend/tests/test_rag_ingestion.py
 ```text
 backend/app/services/rag/embeddings.py
 backend/app/services/rag/retrieval.py
+backend/app/repositories/embeddings.py
 backend/app/schemas/ai.py
 backend/app/api/rag.py
 backend/tests/test_rag_retrieval.py
@@ -229,8 +235,10 @@ backend/tests/test_rag_retrieval.py
 
 - 테스트에서는 mock embedding을 사용합니다.
 - MVP 실제 실행은 OpenAI embedding provider를 사용합니다.
+- embedding service는 선택된 `embedding_profile_id`의 provider/model/dimension을 기준으로 provider 응답을 검증합니다.
+- 같은 chunk는 여러 profile로 임베딩될 수 있지만, retrieval은 하나의 profile만 선택해 수행합니다.
 - `/api/rag/search`는 답변 생성 없이 검색 결과만 반환합니다.
-- 검색 결과에는 `run_id`, `embedding_provider`, `embedding_model_name`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
+- 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
 
 검증:
@@ -500,14 +508,14 @@ MVP 완료 기준:
 
 - OpenAI API 기반 provider adapter가 동작합니다.
 - fixture 문서가 DB에 저장되고 chunk로 분리됩니다.
-- chunk embedding이 pgvector에 저장됩니다.
+- chunk embedding이 `embedding_profiles`별로 pgvector에 저장됩니다.
 - `/api/rag/search`가 관련 chunk를 반환합니다.
 - MCP JSON-RPC endpoint가 allowlist된 tool을 호출합니다.
 - `search_law_open_api`가 실제 외부 법률 API 연동 경계를 제공합니다.
 - Agent가 bounded state machine으로 MCP tool을 호출하고 반복 제한을 지킵니다.
 - `/api/ai/dispute-issues`와 `/api/ai/answer-drafts`가 citation과 disclaimer를 포함해 응답합니다.
 - generation run에는 `agent_provider`, `agent_model_name`이 저장됩니다.
-- 모든 RAG run에는 `embedding_provider`, `embedding_model_name`, `prompt_version`, retrieved chunk가 `rag_runs`와 `rag_retrievals`에 저장됩니다.
+- 모든 RAG run에는 `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `prompt_version`, retrieved chunk가 `rag_runs`와 `rag_retrievals`에 저장됩니다.
 - Agent run에는 step metadata가 `agent_steps`에 저장됩니다.
 - secret 값이 로그, 응답, 문서에 노출되지 않습니다.
 
@@ -525,7 +533,7 @@ MVP 완료 기준:
 
 ## 열린 설계 질문
 
-- `AI_RAG_ENABLED=true`로 전환할 때 사용할 첫 OpenAI embedding model과 dimension은 무엇으로 확정할 것인가요?
+- `AI_RAG_ENABLED=true`로 전환할 때 사용할 기본 active embedding profile은 어떤 provider/model/dimension으로 확정할 것인가요?
 - MCP endpoint를 FastAPI 내부 `/api/mcp`로 둘지, 별도 local MCP process로 둘지 구현 단계에서 결정해야 합니다.
 - 국가법령정보 Open API 외에 과제 시연에서 사용할 외부 API 범위는 어디까지로 할 것인가요?
 - 업로드된 사용자 문서를 shared corpus에 넣을지, 사용자별 private corpus로 분리할지 결정해야 합니다.

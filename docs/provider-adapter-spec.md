@@ -22,14 +22,15 @@ MVP는 OpenAI API를 사용합니다. Gemini와 Claude는 같은 adapter 인터�
 | --- | --- | --- | --- | --- | --- |
 | `openai` | OpenAI | yes | yes | yes | MVP 기본 provider |
 | `gemini` | Google Gemini | yes | no | no | 후속 generation adapter |
-| `anthropic` | Anthropic Claude | yes | no | no | 후속 generation adapter |
+| `anthropic` | Anthropic Claude | yes | conditional | no | 후속 generation adapter. embedding은 provider가 공식 지원하거나 호환 endpoint가 있을 때만 활성화 |
+| `voyage` | Voyage AI | no | yes | no | Claude 생태계와 함께 고려 가능한 후속 embedding adapter |
 | `mock` | Mock Provider | yes | yes | test | 테스트 전용 |
 
 주의:
 
 - `Claude`는 제품/모델 표시명이고, 환경변수 provider 값은 `anthropic`을 사용합니다.
-- Gemini와 Claude는 우선 generation provider로만 취급합니다.
-- embedding provider는 MVP에서 `openai`, 테스트에서 `mock`만 지원하는 것으로 시작합니다.
+- Gemini와 Claude는 우선 generation provider로만 취급합니다. embedding 기능이 없는 provider에서 `embed_texts`를 호출하면 `ProviderCapabilityError`를 반환합니다.
+- embedding provider는 MVP에서 `openai`, 테스트에서 `mock`만 지원하는 것으로 시작하되, DB의 `embedding_profiles.provider`는 향후 `anthropic`, `voyage` 같은 provider를 schema 변경 없이 기록할 수 있게 문자열로 둡니다.
 
 ## 환경변수
 
@@ -144,6 +145,24 @@ embedding_model_name: str
 dimensions: int
 input_index: int
 ```
+
+## Embedding profile 계약
+
+Embedding service는 provider 응답을 저장하기 전에 `embedding_profiles`를 기준으로 검증합니다.
+
+필수 검증:
+
+- `embedding_profile.provider`와 실제 선택된 provider가 일치해야 합니다.
+- `embedding_profile.model_name`과 요청 model이 일치해야 합니다.
+- 각 embedding vector 길이는 `embedding_profile.dimensions`와 일치해야 합니다.
+- 같은 검색 요청에서는 하나의 `embedding_profile_id`만 사용해야 합니다.
+- 다른 provider/model/dimension profile의 vector를 한 ranking 안에서 직접 비교하지 않아야 합니다.
+
+model deprecation 정책:
+
+- 기존 profile은 삭제하지 않고 `deprecated` 또는 `retired` 상태로 표시합니다.
+- 새 model 또는 새 dimension은 새 `embedding_profiles` row로 생성합니다.
+- 기존 chunk는 새 profile로 재임베딩하고, retrieval은 명시적으로 선택된 active profile만 사용합니다.
 
 ### `AIUsage`
 

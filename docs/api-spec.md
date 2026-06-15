@@ -498,6 +498,8 @@ MVP에서는 서버 설정의 `AI_RAG_ENABLED=true`, `AI_AGENT_PROVIDER=openai`,
 
 후속 확장에서 Gemini와 Claude를 추가하더라도 API request/response shape는 유지합니다. provider별 차이는 backend provider adapter에서 처리합니다.
 
+embedding은 단일 `vector(N)` 컬럼에 고정하지 않고 `embedding_profiles`로 선택합니다. 검색 API는 명시적으로 `embedding_profile_id`를 받을 수 있고, 생략하면 서버의 active default profile을 사용합니다. 서로 다른 embedding profile의 vector는 같은 검색 ranking에서 직접 비교하지 않습니다.
+
 ## Legal Documents
 
 ### POST `/api/legal-documents`
@@ -630,6 +632,7 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 {
   "query": "임대차 보증금 반환 분쟁에서 주요 쟁점은 무엇인가요?",
   "top_k": 5,
+  "embedding_profile_id": null,
   "filters": {
     "document_type": ["statute", "case"],
     "date_from": null,
@@ -644,11 +647,14 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 {
   "run_id": 1,
   "query": "임대차 보증금 반환 분쟁에서 주요 쟁점은 무엇인가요?",
+  "embedding_profile_id": 1,
   "embedding_provider": "openai",
   "embedding_model_name": "configured-embedding-model",
+  "embedding_dimensions": 1536,
   "items": [
     {
       "chunk_id": 10,
+      "chunk_embedding_id": 25,
       "document_id": 1,
       "rank": 1,
       "score": 0.82,
@@ -661,7 +667,7 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 }
 ```
 
-이 endpoint는 답변을 생성하지 않지만 검색 재현성을 위해 `rag_runs.run_type=search`와 `rag_retrievals`를 저장합니다. 이 경우 `rag_runs.agent_provider`와 `rag_runs.agent_model_name`은 null일 수 있습니다.
+이 endpoint는 답변을 생성하지 않지만 검색 재현성을 위해 `rag_runs.run_type=search`와 `rag_retrievals`를 저장합니다. 이 경우 `rag_runs.agent_provider`와 `rag_runs.agent_model_name`은 null일 수 있습니다. vector 검색의 `rag_retrievals` row는 가능한 한 `chunk_embedding_id`와 `embedding_profile_id`를 함께 저장합니다.
 
 ## MCP JSON-RPC API
 
@@ -961,7 +967,7 @@ AI 생성 응답은 다음을 만족해야 합니다.
 - 법률 자문이 아니라는 disclaimer를 포함합니다.
 - audit을 위해 retrieved chunk IDs를 저장합니다.
 - generation run에는 `agent_provider`, `agent_model_name`을 저장합니다.
-- 모든 RAG run에는 `embedding_provider`, `embedding_model_name`을 저장합니다.
+- 모든 RAG run에는 `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`를 저장합니다.
 - Agent run에는 MCP tool call과 step metadata를 저장합니다.
 - secret, raw JWT, 내부 prompt template을 노출하지 않습니다.
 

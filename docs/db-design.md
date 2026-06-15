@@ -9,12 +9,12 @@
 ## 설계 원칙
 
 - 게시판 도메인과 RAG 도메인을 테이블 수준에서 분리합니다.
-- 법률 자료는 원천 source, 정규화 문서, 검색 chunk를 분리해 저장합니다.
+- 법률 자료는 원천 source, 정규화 문서, 검색 chunk, embedding profile별 vector를 분리해 저장합니다.
 - AI 생성 결과는 게시글과 분리해 `rag_runs`로 저장합니다.
-- generation run에는 `agent_provider`, `agent_model_name`을 저장하고, 모든 RAG run에는 `embedding_provider`, `embedding_model_name`, `prompt_version`, retrieved chunk를 저장해 재현성과 감사 가능성을 확보합니다.
+- generation run에는 `agent_provider`, `agent_model_name`을 저장하고, 모든 RAG run에는 `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `prompt_version`, retrieved chunk를 저장해 재현성과 감사 가능성을 확보합니다.
 - MCP tool 호출과 Agent 상태 전이는 `agent_steps`로 저장합니다.
 - secret, API key, raw JWT, auth cookie 값은 DB에 저장하지 않습니다.
-- embedding dimension은 pgvector 컬럼의 `vector(N)`과 일치해야 하므로 모델 변경 시 migration 영향을 검토합니다.
+- embedding model과 dimension은 `embedding_profiles`로 관리합니다. 같은 chunk는 여러 provider/model/dimension profile로 임베딩될 수 있으며, 서로 다른 profile의 vector를 같은 검색 공간에서 직접 비교하지 않습니다.
 - 법률 문서는 단일 hash만으로 최종 진실을 판단하지 않습니다. 원문 hash, 정규화 hash, canonical/version metadata, 중복 상태, 충돌 상태를 함께 저장해 중복 제거와 버전 보존을 분리합니다.
 
 ## 현재 구현 테이블
@@ -194,7 +194,7 @@ Foreign keys:
 
 ## `legal_document_chunks`
 
-검색과 citation의 기본 단위입니다.
+검색과 citation의 기본 단위입니다. chunk row는 원문 조각과 citation metadata만 책임지고, embedding vector와 embedding 처리 상태는 `legal_document_chunk_embeddings`에 profile별로 분리해 저장합니다.
 
 | Column | Type | Nullable | 설명 |
 | --- | --- | --- | --- |
@@ -204,10 +204,6 @@ Foreign keys:
 | `heading` | varchar(500) | yes | 조문명, 제목, 판례 섹션 등 |
 | `content` | text | no | chunk 본문 |
 | `token_count` | integer | yes | 추정 token 수 |
-| `embedding` | vector(N) | yes | pgvector embedding |
-| `embedding_status` | varchar(30) | no | `pending`, `embedded`, `failed` |
-| `embedded_at` | timestamptz | yes | embedding 완료 시각 |
-| `embedding_error` | text | yes | 안전하게 정제된 embedding 실패 사유 |
 | `metadata_json` | jsonb | no | 조문 번호, 법원, 사건번호 등 |
 | `created_at` | timestamptz | no | 생성 시각 |
 | `updated_at` | timestamptz | no | 수정 시각 |
@@ -218,17 +214,81 @@ Foreign keys:
 - unique: (`document_id`, `chunk_index`)
 - index: `document_id`
 - index: `metadata_json` GIN은 metadata filter가 필요해질 때 추가
-- vector index는 실제 데이터 적재 후 추가
+
+## `embedding_profiles`
+
+임베딩 provider, model, dimension, 거리 계산 방식을 하나의 검색 공간 단위로 정의합니다. 하나의 chunk는 여러 profile로 임베딩될 수 있지만, 서로 다른 profile의 vector를 같은 검색에서 직접 비교하지 않습니다.
+
+| Column | Type | Nullable | 설명 |
+| --- | --- | --- | --- |
+| `id` | integer | no | primary key |
+| `provider` | varchar(50) | no | 예: `openai`, `mock`, `anthropic`, `voyage` 등 |
+| `model_name` | varchar(150) | no | provider의 embedding model 이름 |
+| `dimensions` | integer | no | embedding vector 차원 |
+| `distance_metric` | varchar(30) | no | `cosine`, `l2`, `inner_product` 등 |
+| `vector_type` | varchar(30) | no | `vector`, `halfvec` 등 저장/index 전략 |
+| `status` | varchar(30) | no | `active`, `deprecated`, `retired` |
+| `is_default` | boolean | no | 기본 검색 profile 여부 |
+| `metadata_json` | jsonb | no | provider별 옵션, deprecation 사유, 운영 메모 등 |
+| `created_at` | timestamptz | no | 생성 시각 |
+| `updated_at` | timestamptz | no | 수정 시각 |
+
+권장 constraints/index:
+
+- unique: (`provider`, `model_name`, `dimensions`, `distance_metric`)
+- index: (`status`, `is_default`)
+- check: `dimensions > 0`
+
+주의:
+
+- `provider` 값은 DB schema를 OpenAI에 고정하지 않기 위해 문자열로 둡니다. 다만 실제 호출 가능 여부는 provider adapter가 `ProviderCapabilityError` 등으로 검증합니다.
+- Anthropic/Claude가 embedding 기능을 직접 제공하지 않는 환경에서는 `provider=anthropic` profile을 활성화하지 않습니다. 구조는 향후 provider 지원 또는 호환 embedding provider 도입을 막지 않기 위한 것입니다.
+- model deprecation이 발생하면 기존 profile을 즉시 삭제하지 않고 `deprecated` 또는 `retired`로 표시한 뒤 새 profile로 재임베딩합니다.
+
+## `legal_document_chunk_embeddings`
+
+chunk별 embedding 결과를 profile 단위로 저장합니다.
+
+| Column | Type | Nullable | 설명 |
+| --- | --- | --- | --- |
+| `id` | integer | no | primary key |
+| `chunk_id` | integer | no | `legal_document_chunks.id` foreign key |
+| `embedding_profile_id` | integer | no | `embedding_profiles.id` foreign key |
+| `embedding` | vector | yes | pgvector embedding. profile의 `dimensions`로 길이를 검증 |
+| `embedding_status` | varchar(30) | no | `pending`, `embedded`, `failed`, `stale` |
+| `embedded_at` | timestamptz | yes | embedding 완료 시각 |
+| `embedding_error` | text | yes | 안전하게 정제된 embedding 실패 사유 |
+| `content_checksum` | varchar(128) | no | embedding 당시 chunk content hash |
+| `metadata_json` | jsonb | no | provider response ID 등 secret이 아닌 metadata |
+| `created_at` | timestamptz | no | 생성 시각 |
+| `updated_at` | timestamptz | no | 수정 시각 |
+
+권장 constraints/index:
+
+- foreign key: `chunk_id -> legal_document_chunks.id ON DELETE CASCADE`
+- foreign key: `embedding_profile_id -> embedding_profiles.id ON DELETE RESTRICT`
+- unique: (`chunk_id`, `embedding_profile_id`)
+- index: (`embedding_profile_id`, `embedding_status`)
+- index: `chunk_id`
+- index: `content_checksum`
+
+규칙:
+
+- embedding 성공 시 `embedding_status=embedded`, 실패 시 `failed`로 저장하고 chunk와 document는 삭제하지 않습니다.
+- chunk 본문이 바뀌어 `content_checksum`이 달라지면 기존 embedding은 `stale`로 간주하고 같은 profile로 재임베딩할 수 있어야 합니다.
+- `embedding` 컬럼은 profile별 dimension을 저장할 수 있도록 고정 `vector(N)` 대신 일반 `vector`를 사용합니다. application/service 계층은 반환 vector 길이가 `embedding_profiles.dimensions`와 같은지 검증해야 합니다.
+- 검색은 반드시 하나의 `embedding_profile_id`를 선택한 뒤 같은 profile의 embedding끼리만 비교합니다.
 
 pgvector index 후보:
 
 ```sql
-CREATE INDEX ix_legal_document_chunks_embedding_hnsw
-ON legal_document_chunks
-USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX ix_chunk_embeddings_profile_1_hnsw
+ON legal_document_chunk_embeddings
+USING hnsw ((embedding::vector(1536)) vector_cosine_ops)
+WHERE embedding_profile_id = 1 AND embedding_status = 'embedded';
 ```
 
-학습 초기에는 index 없이 정확한 검색을 먼저 확인하고, 데이터가 쌓인 후 HNSW 또는 IVFFlat을 선택합니다.
+학습 초기에는 index 없이 정확한 검색을 먼저 확인하고, 데이터가 쌓인 후 profile별 partial/expression index로 HNSW 또는 IVFFlat을 선택합니다. pgvector index는 같은 dimension끼리 만들어야 하므로, 여러 dimension을 하나의 index로 섞지 않습니다.
 
 ## `rag_runs`
 
@@ -246,8 +306,10 @@ USING hnsw (embedding vector_cosine_ops);
 | `disclaimer` | text | yes | 법률 자문 아님 고지 |
 | `agent_provider` | varchar(50) | yes | 예: `openai`, `gemini`, `anthropic`, `mock`. retrieval-only run은 null 가능 |
 | `agent_model_name` | varchar(100) | yes | generation model. retrieval-only run은 null 가능 |
+| `embedding_profile_id` | integer | yes | 검색 query embedding에 사용한 `embedding_profiles.id` |
 | `embedding_provider` | varchar(50) | no | 예: `openai`, `mock` |
 | `embedding_model_name` | varchar(100) | no | embedding model |
+| `embedding_dimensions` | integer | yes | 검색 query embedding dimension snapshot |
 | `prompt_version` | varchar(50) | no | 예: `v1` |
 | `error_code` | varchar(100) | yes | 실패 시 오류 code |
 | `error_message` | text | yes | 실패 시 안전하게 정제된 오류 메시지 |
@@ -257,6 +319,7 @@ USING hnsw (embedding vector_cosine_ops);
 권장 constraints/index:
 
 - foreign key: `user_id -> users.id ON DELETE CASCADE`
+- foreign key: `embedding_profile_id -> embedding_profiles.id ON DELETE SET NULL`
 - index: (`user_id`, `created_at`)
 - index: (`status`, `created_at`)
 - index: (`agent_provider`, `agent_model_name`)
@@ -310,6 +373,8 @@ Agent 실행 중 발생한 계획, MCP tool 호출, 관찰, 초안 작성, 검�
 | `id` | integer | no | primary key |
 | `rag_run_id` | integer | no | `rag_runs.id` foreign key |
 | `chunk_id` | integer | no | `legal_document_chunks.id` foreign key |
+| `chunk_embedding_id` | integer | yes | vector 검색에 사용한 `legal_document_chunk_embeddings.id` |
+| `embedding_profile_id` | integer | yes | vector 검색에 사용한 `embedding_profiles.id` |
 | `rank` | integer | no | 검색 순위 |
 | `score` | double precision | yes | similarity 또는 rerank score |
 | `retrieval_type` | varchar(30) | no | `vector`, `keyword`, `hybrid`, `manual` |
@@ -319,9 +384,17 @@ Agent 실행 중 발생한 계획, MCP tool 호출, 관찰, 초안 작성, 검�
 
 - foreign key: `rag_run_id -> rag_runs.id ON DELETE CASCADE`
 - foreign key: `chunk_id -> legal_document_chunks.id ON DELETE RESTRICT`
+- foreign key: `chunk_embedding_id -> legal_document_chunk_embeddings.id ON DELETE SET NULL`
+- foreign key: `embedding_profile_id -> embedding_profiles.id ON DELETE SET NULL`
 - unique: (`rag_run_id`, `chunk_id`)
 - index: (`rag_run_id`, `rank`)
 - index: `chunk_id`
+- index: (`embedding_profile_id`, `retrieval_type`)
+
+주의:
+
+- `retrieval_type=vector`인 row는 가능한 한 `chunk_embedding_id`와 `embedding_profile_id`를 함께 저장합니다.
+- `retrieval_type=keyword`, `hybrid`, `manual`에서는 vector embedding이 직접 사용되지 않을 수 있으므로 `chunk_embedding_id`가 null일 수 있습니다.
 
 ## ERD 개요
 
@@ -331,10 +404,18 @@ users
   ├─ comments
   └─ rag_runs
        ├─ agent_steps
-       └─ rag_retrievals
-            └─ legal_document_chunks
-                 └─ legal_documents
-                      └─ legal_sources
+       ├─ rag_retrievals
+       │    ├─ legal_document_chunk_embeddings
+       │    │    └─ embedding_profiles
+       │    └─ legal_document_chunks
+       └─ embedding_profiles
+            (embedding_profile_id)
+
+legal_document_chunks
+  ├─ legal_document_chunk_embeddings
+  │    └─ embedding_profiles
+  └─ legal_documents
+       └─ legal_sources
 
 posts
   ├─ comments
@@ -349,17 +430,19 @@ posts
 1. `legal_sources` 생성
 2. `legal_documents` 생성
 3. `legal_documents.duplicate_of_document_id` self-reference foreign key 추가
-4. `legal_document_chunks` 생성, embedding 컬럼은 확정 dimension으로 생성
-5. `rag_runs` 생성
-6. `agent_steps` 생성
-7. `rag_retrievals` 생성
-8. 기본 B-tree index 추가
-9. fixture 데이터로 중복, 버전, 충돌 판정과 검색 품질 확인
-10. 실제 데이터가 일정량 적재된 뒤 vector index 추가
+4. `legal_document_chunks` 생성
+5. `embedding_profiles` 생성
+6. `legal_document_chunk_embeddings` 생성
+7. `rag_runs` 생성
+8. `agent_steps` 생성
+9. `rag_retrievals` 생성
+10. 기본 B-tree index 추가
+11. fixture 데이터로 중복, 버전, 충돌 판정과 검색 품질 확인
+12. 실제 데이터가 일정량 적재된 뒤 profile별 vector index 추가
 
-## Embedding dimension 결정
+## Embedding profile과 dimension 결정
 
-`AI_EMBEDDING_DIMENSIONS`는 DB schema에 직접 영향을 줍니다.
+임베딩 dimension은 더 이상 `legal_document_chunks.embedding vector(N)`처럼 단일 컬럼에 고정하지 않습니다. 대신 `embedding_profiles`가 검색 공간을 정의하고, `legal_document_chunk_embeddings`가 profile별 vector를 저장합니다.
 
 예:
 
@@ -371,9 +454,12 @@ AI_EMBEDDING_DIMENSIONS=<selected-dimension>
 
 주의:
 
-- `legal_document_chunks.embedding vector(N)`의 `N`은 migration 시 고정됩니다.
-- embedding 모델을 바꾸면 기존 vector와 dimension이 달라질 수 있습니다.
-- dimension 변경은 새 컬럼, 재색인, 또는 전체 re-embedding migration이 필요할 수 있습니다.
+- `AI_EMBEDDING_PROVIDER`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS`는 기본 profile 생성 또는 기본 검색 profile 선택에 사용합니다.
+- `embedding_profiles.dimensions`는 provider 응답 vector 길이 검증의 기준입니다.
+- embedding model이나 dimension을 바꾸면 기존 profile을 덮어쓰지 않고 새 profile을 생성합니다.
+- 기존 embedding model이 deprecated되면 기존 row는 보존하고 profile `status`를 `deprecated` 또는 `retired`로 바꾼 뒤 새 profile로 re-embedding합니다.
+- pgvector의 일반 `vector` 컬럼은 여러 dimension 저장을 허용하지만, HNSW/IVFFlat index는 같은 dimension끼리 profile별 partial/expression index로 만들어야 합니다.
+- dimension이 큰 model은 pgvector index 전략에 영향을 줄 수 있습니다. 필요하면 `vector_type=halfvec` 같은 별도 저장/index 전략을 profile metadata로 기록합니다.
 - `AI_RAG_ENABLED=false`인 동안에는 `.env.example`의 embedding 설정이 비어 있어도 됩니다. `AI_RAG_ENABLED=true`로 전환하기 전에 실제 `.env`에서 model과 dimension을 확정해야 합니다.
 
 ## Provider 저장 정책
@@ -388,8 +474,9 @@ AI_EMBEDDING_PROVIDER=openai
 DB에는 provider 실행 결과를 추적하기 위해 다음을 저장합니다.
 
 - generation run: `rag_runs.agent_provider`, `rag_runs.agent_model_name`
-- 모든 RAG run: `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`
+- 모든 RAG run: `rag_runs.embedding_profile_id`, `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`, `rag_runs.embedding_dimensions`
 - `rag_runs.prompt_version`
+- chunk embedding: `legal_document_chunk_embeddings.embedding_profile_id`, `embedding_status`, `content_checksum`
 - MCP/Agent 실행: `agent_steps.step_type`, `agent_steps.tool_name`, `agent_steps.status`, redacted `input_json`, redacted `output_json`
 
 DB에 저장하지 않는 것:
@@ -412,6 +499,8 @@ DB에 저장하지 않는 것:
 - `rag_retrievals`는 `rag_runs` 삭제 시 cascade 삭제합니다.
 - `agent_steps`는 `rag_runs` 삭제 시 cascade 삭제합니다.
 - `legal_document_chunks`는 audit 추적을 위해 기본적으로 restrict 또는 soft delete를 고려합니다.
+- `legal_document_chunk_embeddings`는 chunk 삭제 시 cascade 삭제합니다.
+- `embedding_profiles`는 검색 재현성과 재임베딩 이력을 위해 기본적으로 삭제하지 않고 `status`로 사용 중지합니다.
 
 추후 결정 필요:
 

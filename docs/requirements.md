@@ -207,9 +207,12 @@ chunking은 다음 구조를 보존해야 합니다.
 
 수용 기준:
 
-- embedding model name은 설정 가능해야 합니다.
-- embedding dimension은 설정 가능해야 하며 pgvector column과 일치해야 합니다.
+- embedding provider, model name, dimension, distance metric은 `embedding_profiles`로 저장하고 설정 가능해야 합니다.
+- 하나의 chunk는 여러 embedding profile을 가질 수 있어야 합니다.
+- 서로 다른 provider/model/dimension profile의 vector를 같은 검색 공간에서 직접 비교하지 않아야 합니다.
+- provider 응답 vector 길이는 `embedding_profiles.dimensions`와 일치해야 하며, 특정 model의 dimension을 코드에 하드코딩하지 않아야 합니다.
 - embedding 실패는 source document를 손상시키지 않고 기록되어야 합니다.
+- embedding model이 deprecated되면 기존 embedding row를 삭제하지 않고 새 profile로 재임베딩할 수 있어야 합니다.
 - secret API key는 환경변수에서만 읽고 로그에 남기지 않습니다.
 
 ## FR-009 Vector Retrieval
@@ -345,8 +348,9 @@ MVP provider:
 - `AI_AGENT_PROVIDER`와 `AI_EMBEDDING_PROVIDER`를 분리합니다.
 - provider 응답은 공통 result schema로 변환합니다.
 - generation run에는 `agent_provider`, `agent_model_name`을 저장합니다.
-- 모든 RAG run에는 `embedding_provider`, `embedding_model_name`, `prompt_version`을 저장합니다.
-- embedding model 또는 dimension 변경 시 DB migration 영향을 검토합니다.
+- 모든 RAG run에는 `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `prompt_version`을 저장합니다.
+- embedding provider adapter가 특정 provider의 embedding 기능을 지원하지 않으면 명시적인 capability 오류로 처리합니다.
+- embedding model 또는 dimension 변경 시 기존 profile을 덮어쓰지 않고 새 profile과 re-embedding 계획을 검토합니다.
 
 ## FR-018 AI Agent orchestration
 

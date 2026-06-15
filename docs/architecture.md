@@ -252,10 +252,12 @@ backend/app/
   repositories/
     legal_documents.py
     document_chunks.py
+    embeddings.py
     rag_runs.py
   models/
     legal_document.py
     document_chunk.py
+    embedding.py
     rag_run.py
   schemas/
     ai.py
@@ -282,8 +284,9 @@ backend/app/
 
 4. Embedding
    - chunk별 embedding을 생성합니다.
-   - pgvector 컬럼에 vector를 저장합니다.
-   - embedding 모델명과 vector dimension은 설정으로 관리합니다.
+   - vector는 chunk row가 아니라 embedding profile별 row에 저장합니다.
+   - embedding provider, model, dimension, distance metric은 `embedding_profiles`로 관리합니다.
+   - 같은 chunk가 여러 embedding profile을 가질 수 있지만, 검색 시에는 하나의 profile만 선택해 비교합니다.
 
 5. Retrieval
    - 사용자 query를 embedding합니다.
@@ -366,11 +369,33 @@ legal_document_chunks
   heading
   content
   token_count
-  embedding vector(N)
-  embedding_status
+  metadata_json            -- 조문 번호, 항, 법원, 사건번호 등
+  created_at
+  updated_at
+
+embedding_profiles
+  id
+  provider                 -- openai, mock, anthropic, voyage 등
+  model_name
+  dimensions
+  distance_metric          -- cosine, l2, inner_product 등
+  vector_type              -- vector, halfvec 등
+  status                   -- active, deprecated, retired
+  is_default
+  metadata_json
+  created_at
+  updated_at
+
+legal_document_chunk_embeddings
+  id
+  chunk_id -> legal_document_chunks.id
+  embedding_profile_id -> embedding_profiles.id
+  embedding vector
+  embedding_status         -- pending, embedded, failed, stale
   embedded_at
   embedding_error
-  metadata_json            -- 조문 번호, 항, 법원, 사건번호 등
+  content_checksum
+  metadata_json
   created_at
   updated_at
 
@@ -385,8 +410,10 @@ rag_runs
   disclaimer
   agent_provider           -- generation run이 아니면 null 가능
   agent_model_name         -- generation run이 아니면 null 가능
+  embedding_profile_id
   embedding_provider
   embedding_model_name
+  embedding_dimensions
   prompt_version
   error_code
   error_message
@@ -412,6 +439,8 @@ rag_retrievals
   id
   rag_run_id -> rag_runs.id
   chunk_id -> legal_document_chunks.id
+  chunk_embedding_id -> legal_document_chunk_embeddings.id nullable
+  embedding_profile_id -> embedding_profiles.id nullable
   rank
   score
   retrieval_type           -- vector, keyword, hybrid, manual
@@ -420,8 +449,9 @@ rag_retrievals
 
 구현 참고:
 
-- embedding 모델과 vector dimension은 환경변수 또는 설정으로 관리합니다.
-- vector index는 실제 chunk 데이터가 들어간 뒤 생성하는 편이 좋습니다.
+- embedding 모델과 vector dimension은 `embedding_profiles`로 관리합니다. 환경변수는 기본 profile 선택 또는 생성에만 사용합니다.
+- vector index는 실제 chunk embedding 데이터가 들어간 뒤 profile별 partial/expression index로 생성하는 편이 좋습니다.
+- 서로 다른 provider/model/dimension profile의 vector를 같은 검색 공간에서 직접 비교하지 않습니다.
 - 첫 단계는 vector-only retrieval로 시작하고, 이후 PostgreSQL full-text search를 결합합니다.
 - 법률 답변은 추적 가능해야 하므로 원천 metadata를 반드시 보존합니다.
 - 법률 문서 중복 판단은 `checksum` 단독 기준으로 하지 않습니다. `raw_checksum`, `normalized_checksum`, `canonical_id`, `version_label`, `effective_date`를 함께 사용합니다.
@@ -493,8 +523,8 @@ embed(texts, *, model, dimensions, timeout) -> list[EmbeddingResult]
 주의할 점:
 
 - agent/generation provider와 embedding provider는 분리합니다.
-- Claude는 generation provider로 확장할 수 있지만, embedding provider로 사용할 수 있다고 가정하지 않습니다.
-- embedding dimension은 DB `vector(N)`과 일치해야 하므로 모델 변경 시 migration 영향이 있습니다.
+- Claude는 generation provider로 확장할 수 있지만, embedding provider로 사용할 수 있다고 가정하지 않습니다. 다만 `embedding_profiles.provider`는 향후 Anthropic 또는 호환 provider가 embedding을 지원할 경우 schema 변경 없이 수용할 수 있게 문자열로 둡니다.
+- embedding dimension은 `embedding_profiles.dimensions`와 provider 응답 vector 길이가 일치해야 합니다. 모델 변경 시 기존 profile을 덮어쓰지 않고 새 profile을 생성해 재임베딩합니다.
 - provider API key는 환경변수에서만 읽고 로그에 남기지 않습니다.
 
 ## MCP와 Agent 위치

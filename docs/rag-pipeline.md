@@ -135,13 +135,13 @@ chunk 기준:
 - `content`
 - `token_count`
 - `metadata_json`
-- `embedding_status=pending`
 
 규칙:
 
 - chunk 순서는 안정적이어야 합니다.
 - 하나의 chunk는 너무 길지 않아야 합니다.
 - citation에 필요한 source anchor를 metadata에 포함합니다.
+- chunk row는 embedding 상태를 직접 갖지 않습니다. embedding 상태는 profile별 `legal_document_chunk_embeddings` row에서 관리합니다.
 
 ## 4. Embedding
 
@@ -155,19 +155,27 @@ chunk 기준:
 - `AI_EMBEDDING_PROVIDER`
 - `AI_EMBEDDING_MODEL`
 - `AI_EMBEDDING_DIMENSIONS`
+- `embedding_profiles`
 
 출력:
 
-- `legal_document_chunks.embedding`
-- `embedding_status`
-- `embedded_at`
+- `embedding_profiles`
+- `legal_document_chunk_embeddings.embedding`
+- `legal_document_chunk_embeddings.embedding_status`
+- `legal_document_chunk_embeddings.embedded_at`
+- `legal_document_chunk_embeddings.content_checksum`
 
 규칙:
 
 - MVP는 OpenAI embedding provider를 사용합니다.
 - 테스트는 mock embedding provider를 사용합니다.
-- embedding 실패 시 chunk를 삭제하지 않고 `embedding_status=failed`로 표시합니다.
-- embedding dimension은 DB `vector(N)`과 일치해야 합니다.
+- embedding 실패 시 chunk를 삭제하지 않고 `legal_document_chunk_embeddings.embedding_status=failed`로 표시합니다.
+- embedding provider, model, dimension, distance metric 조합은 `embedding_profiles`로 저장합니다.
+- 같은 chunk는 여러 profile로 임베딩될 수 있습니다.
+- 검색은 반드시 하나의 `embedding_profile_id`를 선택한 뒤 같은 profile의 vector만 비교합니다.
+- provider 응답 vector 길이는 `embedding_profiles.dimensions`와 일치해야 합니다.
+- chunk 본문 checksum이 달라지면 기존 embedding은 `stale`로 간주하고 재임베딩합니다.
+- model deprecation이 발생하면 기존 profile을 삭제하지 않고 `deprecated` 또는 `retired`로 표시한 뒤 새 profile로 재임베딩합니다.
 
 ## 5. Retrieval
 
@@ -190,7 +198,7 @@ chunk 기준:
 MVP 방식:
 
 - query embedding 생성
-- pgvector cosine similarity 기반 top-k 검색
+- 선택된 `embedding_profile_id`의 chunk embedding만 대상으로 pgvector cosine similarity 기반 top-k 검색
 - document type/date filter는 가능한 범위에서 적용
 
 후속 방식:
@@ -293,7 +301,8 @@ MVP 기준:
 - status
 - query
 - agent provider/model. generation run에만 필요하며 retrieval-only run에서는 null 가능
-- embedding provider/model
+- embedding profile ID
+- embedding provider/model/dimensions
 - prompt version
 - answer 또는 failure reason
 
@@ -301,6 +310,8 @@ MVP 기준:
 
 - run ID
 - chunk ID
+- vector 검색에 사용한 chunk embedding ID
+- vector 검색에 사용한 embedding profile ID
 - rank
 - score
 - retrieval type
@@ -355,8 +366,8 @@ plan
 
 - fixture 문서를 ingest할 수 있습니다.
 - 문서가 chunk로 분리됩니다.
-- chunk embedding이 저장됩니다.
-- `/api/rag/search`가 `run_id`, embedding metadata, 관련 chunk를 반환합니다.
+- chunk embedding이 `embedding_profiles`별로 저장됩니다.
+- `/api/rag/search`가 `run_id`, `embedding_profile_id`, embedding metadata, 관련 chunk를 반환합니다.
 - `/api/ai/dispute-issues`와 `/api/ai/answer-drafts`가 citation과 disclaimer를 포함합니다.
 - AI run과 retrieval audit가 저장됩니다.
 
