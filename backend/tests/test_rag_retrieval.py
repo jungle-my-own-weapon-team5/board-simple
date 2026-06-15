@@ -81,6 +81,7 @@ def test_search_legal_documents_returns_ranked_chunks_and_persists_audit(
 
     assert result.status == "completed"
     assert result.run_id is not None
+    assert result.search_mode == "focused_answer"
     assert result.embedding_profile_id == profile.id
     assert [item.chunk_embedding_id for item in result.results] == [
         first_chunk_embedding.id,
@@ -206,6 +207,206 @@ def test_search_legal_documents_filters_document_type_and_unsearchable_rows(
     ]
 
 
+def test_search_legal_documents_applies_score_threshold(db: Session) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    high_score_embedding = _create_chunk_embedding(
+        db,
+        profile=profile,
+        title="높은 점수 문서",
+        heading="제1조",
+        content="query와 매우 가까운 조문",
+        embedding=[1.0, 0.0, 0.0],
+    )
+    _create_chunk_embedding(
+        db,
+        profile=profile,
+        title="낮은 점수 문서",
+        heading="제2조",
+        content="query와 다소 먼 조문",
+        embedding=[0.5, 0.5, 0.0],
+    )
+
+    result = search_legal_documents(
+        db,
+        user_id=user.id,
+        query="높은 점수만 선택",
+        embedding_profile=profile,
+        ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+        top_k=5,
+        score_threshold=0.8,
+    )
+
+    assert [item.chunk_embedding_id for item in result.results] == [
+        high_score_embedding.id
+    ]
+    assert result.score_threshold == 0.8
+    assert len(rag_runs.list_retrievals_by_run(db, result.run_id)) == 1
+
+
+def test_search_legal_documents_can_return_less_than_top_k_after_threshold(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    _create_chunk_embedding(
+        db,
+        profile=profile,
+        title="낮은 점수 문서",
+        heading="제1조",
+        content="threshold보다 낮은 조문",
+        embedding=[0.5, 0.5, 0.0],
+    )
+
+    result = search_legal_documents(
+        db,
+        user_id=user.id,
+        query="threshold 테스트",
+        embedding_profile=profile,
+        ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+        top_k=5,
+        score_threshold=0.95,
+    )
+
+    assert result.results == []
+    assert result.status == "completed"
+    assert rag_runs.list_retrievals_by_run(db, result.run_id) == []
+
+
+def test_search_legal_documents_limits_chunks_per_document(db: Session) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    dominant_document = _create_document_for_retrieval(
+        db,
+        title="검색 결과를 독점할 수 있는 문서",
+    )
+    secondary_document = _create_document_for_retrieval(
+        db,
+        title="함께 참조해야 하는 문서",
+    )
+    dominant_embeddings = [
+        _add_chunk_embedding_to_document(
+            db,
+            profile=profile,
+            document=dominant_document,
+            chunk_index=index,
+            heading=f"제{index + 1}조",
+            content=f"주요 문서 조문 {index + 1}",
+            embedding=embedding,
+        )
+        for index, embedding in enumerate(
+            [
+                [1.0, 0.0, 0.0],
+                [0.95, 0.05, 0.0],
+                [0.9, 0.1, 0.0],
+            ]
+        )
+    ]
+    secondary_embeddings = [
+        _add_chunk_embedding_to_document(
+            db,
+            profile=profile,
+            document=secondary_document,
+            chunk_index=index,
+            heading=f"제{index + 1}조",
+            content=f"보조 문서 조문 {index + 1}",
+            embedding=embedding,
+        )
+        for index, embedding in enumerate(
+            [
+                [0.8, 0.2, 0.0],
+                [0.7, 0.3, 0.0],
+            ]
+        )
+    ]
+
+    result = search_legal_documents(
+        db,
+        user_id=user.id,
+        query="문서별 다양성 테스트",
+        embedding_profile=profile,
+        ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+        top_k=4,
+        max_chunks_per_document=2,
+    )
+
+    assert [item.chunk_embedding_id for item in result.results] == [
+        dominant_embeddings[0].id,
+        dominant_embeddings[1].id,
+        secondary_embeddings[0].id,
+        secondary_embeddings[1].id,
+    ]
+    assert result.max_chunks_per_document == 2
+    assert [
+        item.document_id for item in result.results
+    ].count(dominant_document.id) == 2
+
+
+def test_focused_answer_mode_uses_smaller_default_top_k(db: Session) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    document = _create_document_for_retrieval(
+        db,
+        title="기본 답변 검색 문서",
+    )
+    embeddings = _add_many_chunk_embeddings_to_document(
+        db,
+        profile=profile,
+        document=document,
+        count=10,
+        content_prefix="답변 후보 조문",
+    )
+
+    result = search_legal_documents(
+        db,
+        user_id=user.id,
+        query="기본 답변 검색",
+        embedding_profile=profile,
+        ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+    )
+
+    assert result.search_mode == "focused_answer"
+    assert result.top_k == 8
+    assert [item.chunk_embedding_id for item in result.results] == [
+        embedding.id for embedding in embeddings[:8]
+    ]
+
+
+def test_issue_spotting_mode_uses_wider_default_without_document_cap(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    document = _create_document_for_retrieval(
+        db,
+        title="형법 구성요건 후보 문서",
+    )
+    embeddings = _add_many_chunk_embeddings_to_document(
+        db,
+        profile=profile,
+        document=document,
+        count=10,
+        content_prefix="범죄 구성요건 후보",
+    )
+
+    result = search_legal_documents(
+        db,
+        user_id=user.id,
+        query="사실관계에서 문제될 수 있는 범죄 구성요건",
+        embedding_profile=profile,
+        ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+        search_mode="issue_spotting",
+    )
+
+    assert result.search_mode == "issue_spotting"
+    assert result.top_k == 50
+    assert result.max_chunks_per_document is None
+    assert [item.chunk_embedding_id for item in result.results] == [
+        embedding.id for embedding in embeddings
+    ]
+    assert {item.document_id for item in result.results} == {document.id}
+
+
 def test_search_legal_documents_provider_failure_marks_rag_run_failed(
     db: Session,
 ) -> None:
@@ -280,6 +481,33 @@ def test_search_legal_documents_rejects_invalid_input_without_rag_run(
             embedding_profile=profile,
             ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
             top_k=0,
+        )
+    with pytest.raises(ValueError, match="score_threshold"):
+        search_legal_documents(
+            db,
+            user_id=user.id,
+            query="테스트",
+            embedding_profile=profile,
+            ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+            score_threshold=1.1,
+        )
+    with pytest.raises(ValueError, match="max_chunks_per_document"):
+        search_legal_documents(
+            db,
+            user_id=user.id,
+            query="테스트",
+            embedding_profile=profile,
+            ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+            max_chunks_per_document=0,
+        )
+    with pytest.raises(ValueError, match="search_mode"):
+        search_legal_documents(
+            db,
+            user_id=user.id,
+            query="테스트",
+            embedding_profile=profile,
+            ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+            search_mode="unknown",
         )
 
     assert db.query(RagRun).count() == 0
@@ -426,3 +654,91 @@ def _create_chunk_embedding(
     embedding_repository.add_chunk_embedding(db, chunk_embedding)
     db.flush()
     return chunk_embedding
+
+
+def _create_document_for_retrieval(
+    db: Session,
+    *,
+    title: str,
+    document_type: str = "statute",
+) -> LegalDocument:
+    source = LegalSource(
+        provider="fixture",
+        source_type=document_type,
+        external_id=None,
+        source_url=f"https://example.test/{document_type}",
+    )
+    legal_documents.add_legal_source(db, source)
+    db.flush()
+    document = LegalDocument(
+        source_id=source.id,
+        document_type=document_type,
+        title=title,
+        canonical_id=f"{document_type.upper()}-{db.query(LegalDocument).count() + 1}",
+        version_label="2026-01-01",
+        published_date=date(2025, 12, 1),
+        effective_date=date(2026, 1, 1),
+        raw_text=title,
+        normalized_text=title,
+        raw_checksum=calculate_text_checksum(title),
+        normalized_checksum=calculate_text_checksum(title),
+        dedup_status="unique",
+        conflict_status="none",
+    )
+    legal_documents.add_legal_document(db, document)
+    db.flush()
+    return document
+
+
+def _add_chunk_embedding_to_document(
+    db: Session,
+    *,
+    profile: EmbeddingProfile,
+    document: LegalDocument,
+    chunk_index: int,
+    heading: str,
+    content: str,
+    embedding: list[float],
+) -> LegalDocumentChunkEmbedding:
+    chunk = LegalDocumentChunk(
+        document_id=document.id,
+        chunk_index=chunk_index,
+        heading=heading,
+        content=content,
+        token_count=10,
+        metadata_json={"fixture": "retrieval"},
+    )
+    document_chunks.add_document_chunk(db, chunk)
+    db.flush()
+    chunk_embedding = LegalDocumentChunkEmbedding(
+        chunk_id=chunk.id,
+        embedding_profile_id=profile.id,
+        embedding=embedding,
+        embedding_status="embedded",
+        content_checksum=calculate_text_checksum(content),
+    )
+    embedding_repository.add_chunk_embedding(db, chunk_embedding)
+    db.flush()
+    return chunk_embedding
+
+
+def _add_many_chunk_embeddings_to_document(
+    db: Session,
+    *,
+    profile: EmbeddingProfile,
+    document: LegalDocument,
+    count: int,
+    content_prefix: str,
+) -> list[LegalDocumentChunkEmbedding]:
+    return [
+        _add_chunk_embedding_to_document(
+            db,
+            profile=profile,
+            document=document,
+            chunk_index=index,
+            heading=f"제{index + 1}조",
+            content=f"{content_prefix} {index + 1}",
+            embedding=[1.0 - (index * 0.01), index * 0.01, 0.0],
+        )
+        for index in range(count)
+    ]

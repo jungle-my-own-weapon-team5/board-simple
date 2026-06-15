@@ -247,7 +247,6 @@ def _search_similar_chunk_embeddings_with_pgvector(
     cosine_distance = LegalDocumentChunkEmbedding.embedding.op("<=>")(
         query_vector_param
     ).label("cosine_distance")
-    candidate_limit = max(top_k * 5, top_k + 20)
     statement = (
         _base_searchable_chunk_embedding_statement(
             embedding_profile_id=embedding_profile_id,
@@ -255,7 +254,7 @@ def _search_similar_chunk_embeddings_with_pgvector(
         )
         .add_columns(cosine_distance)
         .order_by(cosine_distance.asc(), LegalDocumentChunkEmbedding.chunk_id.asc())
-        .limit(candidate_limit)
+        .limit(top_k)
     )
     rows = db.execute(statement).all()
     scored_results = [

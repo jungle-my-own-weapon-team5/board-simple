@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Literal, Protocol
 
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,11 @@ from app.repositories import rag_runs as rag_run_repository
 from app.services.ai.errors import ProviderError
 from app.services.ai.types import EmbeddingRequest, EmbeddingResult
 from app.services.rag.normalization import calculate_text_checksum
+
+
+RetrievalSearchMode = Literal["focused_answer", "issue_spotting"]
+DEFAULT_FOCUSED_ANSWER_TOP_K = 8
+DEFAULT_ISSUE_SPOTTING_TOP_K = 50
 
 
 class RetrievalEmbeddingClient(Protocol):
@@ -52,7 +57,10 @@ class SearchLegalDocumentsResult:
     run_id: int
     user_id: int
     query: str
+    search_mode: RetrievalSearchMode
     top_k: int
+    score_threshold: float | None
+    max_chunks_per_document: int | None
     status: str
     embedding_profile_id: int
     embedding_provider: str
@@ -71,7 +79,10 @@ def search_legal_documents(
     query: str,
     embedding_profile: EmbeddingProfile,
     ai_client: RetrievalEmbeddingClient,
-    top_k: int = 5,
+    search_mode: RetrievalSearchMode = "focused_answer",
+    top_k: int | None = None,
+    score_threshold: float | None = None,
+    max_chunks_per_document: int | None = None,
     prompt_version: str = "v1",
     timeout_seconds: int = 60,
     document_types: list[str] | None = None,
@@ -89,7 +100,10 @@ def search_legal_documents(
             query=query,
             embedding_profile=embedding_profile,
             ai_client=ai_client,
+            search_mode=search_mode,
             top_k=top_k,
+            score_threshold=score_threshold,
+            max_chunks_per_document=max_chunks_per_document,
             prompt_version=prompt_version,
             timeout_seconds=timeout_seconds,
             document_types=document_types,
@@ -110,14 +124,25 @@ def _search_legal_documents_without_commit(
     query: str,
     embedding_profile: EmbeddingProfile,
     ai_client: RetrievalEmbeddingClient,
-    top_k: int,
+    search_mode: RetrievalSearchMode,
+    top_k: int | None,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
     prompt_version: str,
     timeout_seconds: int,
     document_types: list[str] | None,
 ) -> SearchLegalDocumentsResult:
+    search_options = _resolve_search_options(
+        search_mode=search_mode,
+        top_k=top_k,
+        score_threshold=score_threshold,
+        max_chunks_per_document=max_chunks_per_document,
+    )
     normalized_query = _validate_search_input(
         query=query,
-        top_k=top_k,
+        top_k=search_options.top_k,
+        score_threshold=search_options.score_threshold,
+        max_chunks_per_document=search_options.max_chunks_per_document,
         timeout_seconds=timeout_seconds,
         embedding_profile=embedding_profile,
     )
@@ -147,7 +172,10 @@ def _search_legal_documents_without_commit(
         return _build_failed_result(
             rag_run,
             embedding_profile=embedding_profile,
-            top_k=top_k,
+            search_mode=search_options.search_mode,
+            top_k=search_options.top_k,
+            score_threshold=search_options.score_threshold,
+            max_chunks_per_document=search_options.max_chunks_per_document,
             prompt_version=prompt_version,
         )
 
@@ -155,13 +183,19 @@ def _search_legal_documents_without_commit(
         db,
         embedding_profile_id=embedding_profile.id,
         query_vector=query_embedding_result.embedding,
-        top_k=_search_candidate_limit(top_k),
+        top_k=_search_candidate_limit(
+            search_options.top_k,
+            search_mode=search_options.search_mode,
+            max_chunks_per_document=search_options.max_chunks_per_document,
+        ),
         expected_dimensions=embedding_profile.dimensions,
         document_types=normalized_document_types,
     )
     selected_candidates = _filter_current_search_results(
         scored_candidates,
-        top_k=top_k,
+        top_k=search_options.top_k,
+        score_threshold=search_options.score_threshold,
+        max_chunks_per_document=search_options.max_chunks_per_document,
     )
     result_items = _persist_retrievals(
         db,
@@ -178,7 +212,10 @@ def _search_legal_documents_without_commit(
         run_id=rag_run.id,
         user_id=user_id,
         query=normalized_query,
-        top_k=top_k,
+        search_mode=search_options.search_mode,
+        top_k=search_options.top_k,
+        score_threshold=search_options.score_threshold,
+        max_chunks_per_document=search_options.max_chunks_per_document,
         status=rag_run.status,
         embedding_profile_id=embedding_profile.id,
         embedding_provider=embedding_profile.provider,
@@ -195,6 +232,16 @@ class _QueryEmbeddingResult:
     embedding: list[float] = field(default_factory=list)
     error_code: str | None = None
     error_message: str | None = None
+
+
+@dataclass(frozen=True)
+class _ResolvedSearchOptions:
+    """검색 목적에 따라 결정된 최종 retrieval 파라미터입니다."""
+
+    search_mode: RetrievalSearchMode
+    top_k: int
+    score_threshold: float | None
+    max_chunks_per_document: int | None
 
 
 def _embed_query(
@@ -232,10 +279,36 @@ def _embed_query(
     return _QueryEmbeddingResult(status="embedded", embedding=query_embedding)
 
 
+def _resolve_search_options(
+    *,
+    search_mode: RetrievalSearchMode,
+    top_k: int | None,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
+) -> _ResolvedSearchOptions:
+    if search_mode == "focused_answer":
+        resolved_top_k = top_k if top_k is not None else DEFAULT_FOCUSED_ANSWER_TOP_K
+    elif search_mode == "issue_spotting":
+        # 쟁점 탐지에서는 한 문서 안의 여러 조문/구성요건이 모두 필요할 수 있으므로
+        # 기본 검색 예산을 넓게 잡고 문서별 chunk 제한은 호출자가 명시할 때만 적용합니다.
+        resolved_top_k = top_k if top_k is not None else DEFAULT_ISSUE_SPOTTING_TOP_K
+    else:
+        raise ValueError("search_mode must be focused_answer or issue_spotting")
+
+    return _ResolvedSearchOptions(
+        search_mode=search_mode,
+        top_k=resolved_top_k,
+        score_threshold=score_threshold,
+        max_chunks_per_document=max_chunks_per_document,
+    )
+
+
 def _validate_search_input(
     *,
     query: str,
     top_k: int,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
     timeout_seconds: int,
     embedding_profile: EmbeddingProfile,
 ) -> str:
@@ -244,6 +317,10 @@ def _validate_search_input(
         raise ValueError("query must not be blank")
     if top_k <= 0:
         raise ValueError("top_k must be positive")
+    if score_threshold is not None and not 0 <= score_threshold <= 1:
+        raise ValueError("score_threshold must be between 0 and 1")
+    if max_chunks_per_document is not None and max_chunks_per_document <= 0:
+        raise ValueError("max_chunks_per_document must be positive")
     if timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive")
     _validate_embedding_profile(embedding_profile)
@@ -323,25 +400,51 @@ def _validate_query_embedding_result(
     return result.embedding
 
 
-def _search_candidate_limit(top_k: int) -> int:
-    """stale row 후처리로 top_k가 부족해지는 상황을 줄이기 위한 후보 개수입니다."""
+def _search_candidate_limit(
+    top_k: int,
+    *,
+    search_mode: RetrievalSearchMode,
+    max_chunks_per_document: int | None,
+) -> int:
+    """후처리 필터로 top_k가 부족해지는 상황을 줄이기 위한 후보 개수입니다."""
 
-    return max(top_k * 5, top_k + 20)
+    base_limit = max(top_k * 5, top_k + 20)
+    if search_mode == "issue_spotting":
+        return max(base_limit, top_k * 10, top_k + 200)
+    if max_chunks_per_document is None:
+        return base_limit
+    # 문서별 개수 제한을 걸면 상위 후보가 같은 문서에 몰릴 수 있어 더 넉넉히 가져옵니다.
+    return max(base_limit, top_k * 20, top_k + 100)
 
 
 def _filter_current_search_results(
     scored_candidates: list[ChunkEmbeddingSearchResult],
     *,
     top_k: int,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
 ) -> list[ChunkEmbeddingSearchResult]:
     filtered_candidates: list[ChunkEmbeddingSearchResult] = []
+    selected_count_by_document: dict[int, int] = {}
     for scored_candidate in scored_candidates:
         chunk_embedding = scored_candidate.chunk_embedding
         if chunk_embedding.content_checksum != calculate_text_checksum(
             chunk_embedding.chunk.content
         ):
             continue
+        if score_threshold is not None and scored_candidate.score < score_threshold:
+            continue
+
+        document_id = chunk_embedding.chunk.document_id
+        selected_count = selected_count_by_document.get(document_id, 0)
+        if (
+            max_chunks_per_document is not None
+            and selected_count >= max_chunks_per_document
+        ):
+            continue
+
         filtered_candidates.append(scored_candidate)
+        selected_count_by_document[document_id] = selected_count + 1
         if len(filtered_candidates) == top_k:
             break
     return filtered_candidates
@@ -419,14 +522,20 @@ def _build_failed_result(
     rag_run: RagRun,
     *,
     embedding_profile: EmbeddingProfile,
+    search_mode: RetrievalSearchMode,
     top_k: int,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
     prompt_version: str,
 ) -> SearchLegalDocumentsResult:
     return SearchLegalDocumentsResult(
         run_id=rag_run.id,
         user_id=rag_run.user_id,
         query=rag_run.query,
+        search_mode=search_mode,
         top_k=top_k,
+        score_threshold=score_threshold,
+        max_chunks_per_document=max_chunks_per_document,
         status=rag_run.status,
         embedding_profile_id=embedding_profile.id,
         embedding_provider=embedding_profile.provider,
