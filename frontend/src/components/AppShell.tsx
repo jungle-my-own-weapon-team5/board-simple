@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { FlaskConical, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -35,14 +35,22 @@ export default function AppShell({ children }: AppShellProps) {
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <Link href="/" className="text-xl font-extrabold">
-            Board Simple
+            역사 덕담
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/ai/playground">
+                <FlaskConical />
+                <span>AI Playground</span>
+              </Link>
+            </Button>
             {user ? (
               <>
-                <Badge variant="secondary" className="min-h-9 px-3">
-                  {user.nickname}
-                </Badge>
+                <Link href="/me" aria-label="내 정보">
+                  <Badge variant="secondary" className="min-h-9 px-3">
+                    {user.nickname}
+                  </Badge>
+                </Link>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/posts/new">
                     <PenLine />
@@ -73,7 +81,7 @@ export default function AppShell({ children }: AppShellProps) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

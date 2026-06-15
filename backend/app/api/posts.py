@@ -31,11 +31,20 @@ def list_posts(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=10, ge=1, le=50),
     q: str | None = Query(default=None),
+    post_type: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    sort: str = Query(default="latest", pattern="^(latest|comments|ai)$"),
     db: Session = Depends(get_db),
 ) -> PostPage:
     filters = []
     if q:
         filters.append(Post.title.ilike(f"%{q}%"))
+    if post_type:
+        filters.append(Post.post_type == post_type)
+    if category:
+        filters.append(Post.category == category)
+    if sort == "ai":
+        filters.append(Post.has_ai_evidence.is_(True))
 
     total_statement = select(func.count()).select_from(Post)
     statement = select(Post).options(selectinload(Post.author), selectinload(Post.tags))
@@ -44,9 +53,14 @@ def list_posts(
         statement = statement.where(*filters)
 
     total = db.scalar(total_statement) or 0
-    posts = db.scalars(
-        statement.order_by(Post.created_at.desc()).offset((page - 1) * size).limit(size)
-    ).all()
+    if sort == "comments":
+        statement = statement.order_by(Post.comment_count.desc(), Post.created_at.desc())
+    elif sort == "ai":
+        statement = statement.order_by(Post.created_at.desc())
+    else:
+        statement = statement.order_by(Post.created_at.desc())
+
+    posts = db.scalars(statement.offset((page - 1) * size).limit(size)).all()
     return PostPage(
         items=[PostListItem.model_validate(post) for post in posts],
         total=total,
@@ -61,7 +75,13 @@ def create_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Post:
-    post = Post(title=payload.title, content=payload.content, author_id=current_user.id)
+    post = Post(
+        title=payload.title,
+        content=payload.content,
+        post_type=payload.post_type,
+        category=payload.category,
+        author_id=current_user.id,
+    )
     post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
     db.add(post)
     db.commit()
@@ -71,6 +91,14 @@ def create_post(
 
 @router.get("/{post_id}", response_model=PostRead)
 def read_post(post_id: int, db: Session = Depends(get_db)) -> Post:
+    return get_post_or_404(db, post_id)
+
+
+@router.post("/{post_id}/view", response_model=PostRead)
+def increment_post_view(post_id: int, db: Session = Depends(get_db)) -> Post:
+    post = get_post_or_404(db, post_id)
+    post.view_count += 1
+    db.commit()
     return get_post_or_404(db, post_id)
 
 
@@ -87,6 +115,8 @@ def update_post(
 
     post.title = payload.title
     post.content = payload.content
+    post.post_type = payload.post_type
+    post.category = payload.category
     post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
     db.commit()
     return get_post_or_404(db, post.id)

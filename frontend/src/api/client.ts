@@ -1,4 +1,28 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const CONFIGURED_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+function getApiBaseUrl() {
+  if (typeof window === "undefined") {
+    return CONFIGURED_API_BASE_URL;
+  }
+
+  const pageHostname = window.location.hostname;
+  const isLocalPage = pageHostname === "localhost" || pageHostname === "127.0.0.1";
+
+  try {
+    const configuredUrl = new URL(CONFIGURED_API_BASE_URL);
+    const isLocalApi =
+      configuredUrl.hostname === "localhost" || configuredUrl.hostname === "127.0.0.1";
+    if (isLocalPage && isLocalApi) {
+      configuredUrl.hostname = pageHostname;
+      return configuredUrl.toString().replace(/\/$/, "");
+    }
+  } catch {
+    // Fall through to the configured value when it is not an absolute URL.
+  }
+
+  return CONFIGURED_API_BASE_URL;
+}
 
 type RequestOptions = RequestInit & {
   json?: unknown;
@@ -22,7 +46,7 @@ export async function apiRequest<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers,
     credentials: "include",

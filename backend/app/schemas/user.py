@@ -21,3 +21,23 @@ class UserRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    nickname: str = Field(min_length=2, max_length=32)
+
+
+class MyCommentRead(BaseModel):
+    id: int
+    post_id: int
+    post_title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class MyCommentPage(BaseModel):
+    items: list[MyCommentRead]
+    total: int
+    page: int
+    size: int
