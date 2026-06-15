@@ -11,6 +11,69 @@ def test_development_settings_allow_local_defaults() -> None:
     assert settings.app_env == "development"
 
 
+def test_ai_rag_disabled_allows_empty_provider_settings() -> None:
+    settings = Settings(
+        ai_rag_enabled=False,
+        openai_api_key="",
+        ai_agent_model="",
+        ai_embedding_model="",
+        ai_embedding_dimensions="",
+    )
+
+    assert settings.ai_rag_enabled is False
+    assert settings.ai_embedding_dimensions is None
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"openai_api_key": ""}, "OPENAI_API_KEY"),
+        ({"ai_agent_model": ""}, "AI_AGENT_MODEL"),
+        ({"ai_embedding_model": ""}, "AI_EMBEDDING_MODEL"),
+        ({"ai_embedding_dimensions": None}, "AI_EMBEDDING_DIMENSIONS"),
+        ({"ai_embedding_dimensions": 0}, "AI_EMBEDDING_DIMENSIONS"),
+    ],
+)
+def test_ai_rag_enabled_requires_openai_settings(
+    overrides: dict[str, object], message: str
+) -> None:
+    values = {
+        "ai_rag_enabled": True,
+        "ai_agent_provider": "openai",
+        "ai_embedding_provider": "openai",
+        "openai_api_key": "present",
+        "ai_agent_model": "gpt-test",
+        "ai_embedding_model": "embedding-test",
+        "ai_embedding_dimensions": 1536,
+        **overrides,
+    }
+
+    with pytest.raises(ValidationError, match=message):
+        Settings(**values)
+
+
+def test_ai_rag_validation_error_does_not_include_secret_values() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(
+            ai_rag_enabled=True,
+            ai_agent_provider="openai",
+            ai_embedding_provider="openai",
+            openai_api_key="present-but-redacted",
+            ai_agent_model="",
+            ai_embedding_model="embedding-test",
+            ai_embedding_dimensions=1536,
+        )
+
+    message = str(exc_info.value)
+    assert "AI_AGENT_MODEL" in message
+    assert "present-but-redacted" not in message
+
+
+def test_mcp_enabled_requires_allowed_tools() -> None:
+    with pytest.raises(ValidationError, match="MCP_ALLOWED_TOOLS"):
+        Settings(mcp_server_enabled=True, mcp_allowed_tools="")
+
+
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
