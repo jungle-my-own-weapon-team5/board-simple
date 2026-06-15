@@ -1,9 +1,23 @@
 """Embedding profile과 chunk embedding 저장소 함수입니다."""
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from dataclasses import dataclass
+from math import sqrt
 
-from app.models.embedding import EmbeddingProfile, LegalDocumentChunkEmbedding
+from sqlalchemy import bindparam
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
+
+from app.models.document_chunk import LegalDocumentChunk
+from app.models.embedding import EmbeddingProfile, LegalDocumentChunkEmbedding, Vector
+from app.models.legal_document import LegalDocument
+
+
+@dataclass(frozen=True)
+class ChunkEmbeddingSearchResult:
+    """repository가 반환하는 vector 검색 결과 1건입니다."""
+
+    chunk_embedding: LegalDocumentChunkEmbedding
+    score: float
 
 
 def add_embedding_profile(db: Session, profile: EmbeddingProfile) -> None:
@@ -143,3 +157,206 @@ def list_chunk_embeddings_by_profile(
             statement.order_by(LegalDocumentChunkEmbedding.chunk_id.asc())
         ).all()
     )
+
+
+def list_searchable_chunk_embeddings(
+    db: Session,
+    embedding_profile_id: int,
+    *,
+    document_types: list[str] | None = None,
+) -> list[LegalDocumentChunkEmbedding]:
+    """vector retrieval 후보가 될 수 있는 chunk embedding row를 조회합니다.
+
+    Repository는 DB에서 명확히 걸러낼 수 있는 조건만 적용합니다. vector score 계산과
+    stale checksum 검증은 service 계층에서 수행합니다.
+    """
+    statement = (
+        select(LegalDocumentChunkEmbedding)
+        .join(LegalDocumentChunk)
+        .join(LegalDocument)
+        .where(
+            LegalDocumentChunkEmbedding.embedding_profile_id == embedding_profile_id,
+            LegalDocumentChunkEmbedding.embedding_status == "embedded",
+            LegalDocumentChunkEmbedding.embedding.is_not(None),
+            LegalDocument.dedup_status != "duplicate",
+            LegalDocument.conflict_status == "none",
+        )
+        .options(
+            selectinload(LegalDocumentChunkEmbedding.chunk)
+            .selectinload(LegalDocumentChunk.document)
+            .selectinload(LegalDocument.source),
+            selectinload(LegalDocumentChunkEmbedding.embedding_profile),
+        )
+    )
+    if document_types:
+        statement = statement.where(LegalDocument.document_type.in_(document_types))
+
+    return list(
+        db.scalars(
+            statement.order_by(LegalDocumentChunkEmbedding.id.asc())
+        ).all()
+    )
+
+
+def search_similar_chunk_embeddings(
+    db: Session,
+    *,
+    embedding_profile_id: int,
+    query_vector: list[float],
+    top_k: int,
+    expected_dimensions: int,
+    document_types: list[str] | None = None,
+) -> list[ChunkEmbeddingSearchResult]:
+    """선택한 embedding profile 안에서 query vector와 가까운 chunk를 검색합니다.
+
+    PostgreSQL에서는 pgvector의 cosine distance 연산자(`<=>`)로 DB가 직접 정렬합니다.
+    SQLite 단위 테스트에서는 pgvector가 없으므로 같은 repository 함수 내부에서만
+    Python fallback을 사용합니다.
+    """
+    dialect_name = db.get_bind().dialect.name
+    if dialect_name == "postgresql":
+        return _search_similar_chunk_embeddings_with_pgvector(
+            db,
+            embedding_profile_id=embedding_profile_id,
+            query_vector=query_vector,
+            top_k=top_k,
+            expected_dimensions=expected_dimensions,
+            document_types=document_types,
+        )
+
+    return _search_similar_chunk_embeddings_with_python_fallback(
+        db,
+        embedding_profile_id=embedding_profile_id,
+        query_vector=query_vector,
+        top_k=top_k,
+        expected_dimensions=expected_dimensions,
+        document_types=document_types,
+    )
+
+
+def _search_similar_chunk_embeddings_with_pgvector(
+    db: Session,
+    *,
+    embedding_profile_id: int,
+    query_vector: list[float],
+    top_k: int,
+    expected_dimensions: int,
+    document_types: list[str] | None,
+) -> list[ChunkEmbeddingSearchResult]:
+    query_vector_param = bindparam("query_vector", value=query_vector, type_=Vector())
+    cosine_distance = LegalDocumentChunkEmbedding.embedding.op("<=>")(
+        query_vector_param
+    ).label("cosine_distance")
+    candidate_limit = max(top_k * 5, top_k + 20)
+    statement = (
+        _base_searchable_chunk_embedding_statement(
+            embedding_profile_id=embedding_profile_id,
+            document_types=document_types,
+        )
+        .add_columns(cosine_distance)
+        .order_by(cosine_distance.asc(), LegalDocumentChunkEmbedding.chunk_id.asc())
+        .limit(candidate_limit)
+    )
+    rows = db.execute(statement).all()
+    scored_results = [
+        ChunkEmbeddingSearchResult(
+            chunk_embedding=chunk_embedding,
+            # pgvector `<=>`는 cosine distance이므로 사용자-facing score는 similarity로 변환합니다.
+            score=1.0 - float(cosine_distance_value),
+        )
+        for chunk_embedding, cosine_distance_value in rows
+    ]
+    return _filter_dimension_scored_results(
+        scored_results,
+        top_k=top_k,
+        expected_dimensions=expected_dimensions,
+    )
+
+
+def _search_similar_chunk_embeddings_with_python_fallback(
+    db: Session,
+    *,
+    embedding_profile_id: int,
+    query_vector: list[float],
+    top_k: int,
+    expected_dimensions: int,
+    document_types: list[str] | None,
+) -> list[ChunkEmbeddingSearchResult]:
+    candidates = list_searchable_chunk_embeddings(
+        db,
+        embedding_profile_id,
+        document_types=document_types,
+    )
+    scored_results = [
+        ChunkEmbeddingSearchResult(
+            chunk_embedding=candidate,
+            score=_cosine_similarity(query_vector, candidate.embedding or []),
+        )
+        for candidate in candidates
+    ]
+    sorted_results = sorted(
+        scored_results,
+        key=lambda result: (-result.score, result.chunk_embedding.chunk_id),
+    )
+    return _filter_dimension_scored_results(
+        sorted_results,
+        top_k=top_k,
+        expected_dimensions=expected_dimensions,
+    )
+
+
+def _base_searchable_chunk_embedding_statement(
+    *,
+    embedding_profile_id: int,
+    document_types: list[str] | None,
+):
+    statement = (
+        select(LegalDocumentChunkEmbedding)
+        .join(LegalDocumentChunk)
+        .join(LegalDocument)
+        .where(
+            LegalDocumentChunkEmbedding.embedding_profile_id == embedding_profile_id,
+            LegalDocumentChunkEmbedding.embedding_status == "embedded",
+            LegalDocumentChunkEmbedding.embedding.is_not(None),
+            LegalDocument.dedup_status != "duplicate",
+            LegalDocument.conflict_status == "none",
+        )
+        .options(
+            selectinload(LegalDocumentChunkEmbedding.chunk)
+            .selectinload(LegalDocumentChunk.document)
+            .selectinload(LegalDocument.source),
+            selectinload(LegalDocumentChunkEmbedding.embedding_profile),
+        )
+    )
+    if document_types:
+        statement = statement.where(LegalDocument.document_type.in_(document_types))
+    return statement
+
+
+def _filter_dimension_scored_results(
+    scored_results: list[ChunkEmbeddingSearchResult],
+    *,
+    top_k: int,
+    expected_dimensions: int,
+) -> list[ChunkEmbeddingSearchResult]:
+    filtered_results: list[ChunkEmbeddingSearchResult] = []
+    for result in scored_results:
+        chunk_embedding = result.chunk_embedding
+        embedding = chunk_embedding.embedding or []
+        if len(embedding) != expected_dimensions:
+            continue
+        filtered_results.append(result)
+        if len(filtered_results) == top_k:
+            break
+    return filtered_results
+
+
+def _cosine_similarity(left: list[float], right: list[float]) -> float:
+    left_norm = sqrt(sum(value * value for value in left))
+    right_norm = sqrt(sum(value * value for value in right))
+    if left_norm == 0 or right_norm == 0:
+        return 0.0
+    dot_product = sum(
+        left_value * right_value for left_value, right_value in zip(left, right)
+    )
+    return dot_product / (left_norm * right_norm)
