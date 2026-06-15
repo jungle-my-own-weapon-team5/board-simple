@@ -48,13 +48,21 @@ source 수집
 - title
 - document type
 - published/effective date
-- checksum
+- raw checksum
+- normalized checksum
+- dedup status
+- conflict status
 
 규칙:
 
 - 이용 약관을 확인하지 않은 scraping은 하지 않습니다.
 - API key는 환경변수에서만 읽습니다.
-- 같은 checksum의 문서는 중복 저장하지 않습니다.
+- `raw_checksum`은 수집 원문 기준, `normalized_checksum`은 정규화 text 기준으로 계산합니다.
+- `checksum` 단독 비교로 최종 중복 여부를 판단하지 않습니다.
+- `document_type`, `canonical_id`, `version_label` 또는 `effective_date`, `normalized_checksum`을 함께 사용해 중복과 버전을 구분합니다.
+- 같은 canonical/version인데 `normalized_checksum`이 같으면 `dedup_status=duplicate`로 원본 문서를 참조합니다.
+- 같은 canonical/version인데 `normalized_checksum`이 다르면 자동 삭제하지 않고 `conflict_status=review_required`로 저장합니다.
+- `effective_date` 또는 `version_label`이 다르면 같은 법령 또는 문서의 다른 버전으로 보존합니다.
 - `source_type`과 `document_type`의 기본 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 맞춥니다.
 - pasted text는 `legal_sources.provider=upload`, fixture는 `legal_sources.provider=fixture`로 저장합니다.
 
@@ -74,6 +82,9 @@ source 수집
 
 - `legal_documents.normalized_text`
 - 구조 metadata
+- `legal_documents.normalized_checksum`
+- `legal_documents.dedup_status`
+- `legal_documents.conflict_status`
 
 규칙:
 
@@ -81,6 +92,21 @@ source 수집
 - 조문 번호, 항, 호, 사건번호, 법원명, 선고일자를 가능한 보존합니다.
 - parser가 실패해도 raw text는 보존합니다.
 - 생성 직후 또는 indexing 전에는 `normalized_text`가 null일 수 있습니다.
+- normalization 후 `normalized_checksum`을 계산하고, 같은 canonical/version의 기존 문서와 비교합니다.
+- normalization 전에는 `raw_checksum`과 metadata만으로 중복 후보를 표시할 수 있지만, 최종 중복 판정은 가능한 한 `normalized_checksum` 기준으로 합니다.
+
+중복/버전 판정 흐름:
+
+```text
+raw source 수집
+  -> raw_checksum 계산
+  -> normalization
+  -> normalized_checksum 계산
+  -> canonical_id + version_label/effective_date 조회
+  -> normalized_checksum 동일: duplicate로 표시
+  -> normalized_checksum 상이: conflict review로 표시
+  -> version_label/effective_date 상이: 별도 version으로 보존
+```
 
 ## 3. Legal-aware chunking
 

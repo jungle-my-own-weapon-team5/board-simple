@@ -162,15 +162,21 @@ backend/tests/test_rag_repositories.py
 - generation run에는 `rag_runs.agent_provider`, `rag_runs.agent_model_name`을 저장합니다.
 - 모든 RAG run에는 `rag_runs.embedding_provider`, `rag_runs.embedding_model_name`, `rag_runs.prompt_version`을 저장합니다.
 - `legal_documents`와 `legal_document_chunks`에 indexing/embedding 상태 필드를 추가합니다.
+- `legal_documents`에 `raw_checksum`, `normalized_checksum`, `dedup_status`, `conflict_status`, `duplicate_of_document_id`를 추가합니다.
 - `source_type`과 `document_type`의 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 맞춥니다.
 - `legal_documents.normalized_text`는 생성 직후 또는 indexing 전에는 null을 허용합니다.
+- checksum 단독 unique constraint는 만들지 않습니다.
+- 중복 판단은 `document_type`, `canonical_id`, `version_label` 또는 `effective_date`, `normalized_checksum` 조합을 기준으로 합니다.
+- 같은 canonical/version인데 `normalized_checksum`이 다르면 자동 삭제하지 않고 `conflict_status=review_required`로 저장할 수 있게 합니다.
 - `run_type=search`는 generation을 수행하지 않으므로 `agent_provider`, `agent_model_name`은 null을 허용합니다.
 
 검증:
 
 - Alembic upgrade 테스트
 - repository create/read 테스트
-- unique checksum 테스트
+- normalized checksum 기반 중복 후보 저장 테스트
+- 같은 canonical/version의 checksum 충돌 상태 테스트
+- 다른 `effective_date` 또는 `version_label`은 별도 version으로 보존되는지 테스트
 
 ## 4단계: Fixture ingestion과 chunking
 
@@ -197,7 +203,9 @@ backend/tests/test_rag_ingestion.py
 
 검증:
 
-- 같은 fixture를 여러 번 ingest해도 checksum으로 중복을 방지합니다.
+- 같은 fixture를 여러 번 ingest해도 `normalized_checksum`과 canonical/version metadata로 중복을 감지합니다.
+- 같은 canonical/version인데 정규화 본문이 달라지면 conflict review 상태를 기록합니다.
+- 같은 canonical document라도 `effective_date` 또는 `version_label`이 다르면 별도 version으로 보존합니다.
 - chunk 순서가 안정적인지 확인합니다.
 - 한글 text가 깨지지 않는지 확인합니다.
 

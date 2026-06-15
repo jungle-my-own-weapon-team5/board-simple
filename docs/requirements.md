@@ -160,7 +160,9 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 - 각 source는 provider metadata를 가집니다.
 - 가능한 경우 각 document는 source URL 또는 source identifier로 추적할 수 있습니다.
-- checksum으로 중복 document를 감지할 수 있습니다.
+- raw checksum과 normalized checksum으로 원문 중복과 실질 내용 중복을 구분할 수 있습니다.
+- document type, canonical ID, 시행일 또는 version label을 함께 사용해 중복 문서와 다른 버전 문서를 구분할 수 있습니다.
+- 완전 중복 문서는 원본 document를 참조할 수 있어야 하며, 같은 canonical/version의 내용 충돌은 검토 상태로 표시할 수 있어야 합니다.
 
 ## FR-006 법률 문서 ingestion
 
@@ -171,6 +173,9 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 - raw text를 보존합니다.
 - normalized text를 별도로 저장합니다.
 - document type, title, case number, statute name, date, source URL 같은 metadata를 보존합니다.
+- raw checksum, normalized checksum, dedup status, conflict status를 저장합니다.
+- 같은 법령 또는 문서의 다른 시행일/버전은 삭제하지 않고 별도 version으로 보존합니다.
+- 같은 canonical/version인데 normalized checksum이 다르면 자동으로 최종 진실을 결정하지 않고 conflict review 대상으로 표시합니다.
 - 업로드 content에서 임의 코드를 실행하지 않습니다.
 
 ## FR-007 법률 구조 기반 chunking

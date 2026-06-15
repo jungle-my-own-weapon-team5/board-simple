@@ -9,6 +9,7 @@
 ## 평가 대상
 
 - 문서 ingestion 정확성
+- 문서 중복 제거, 버전 보존, 충돌 표시 정확성
 - chunking 안정성
 - embedding/retrieval 품질
 - citation 정확성
@@ -35,10 +36,21 @@ fixture metadata:
 document_type
 title
 canonical_id
+version_label
 published_date
+effective_date
 source_url
+raw_checksum
+normalized_checksum
 expected_chunks
 ```
+
+중복/버전 fixture:
+
+- 같은 raw text를 다시 ingest하는 fixture
+- 공백, 줄바꿈, wrapper만 다른 동일 normalized text fixture
+- 같은 canonical ID와 같은 시행일인데 본문이 다른 conflict fixture
+- 같은 canonical ID지만 시행일 또는 version label이 다른 별도 version fixture
 
 ## Retrieval 평가
 
@@ -56,11 +68,16 @@ expected_chunks
 - top-k relevant hit
 - expected chunk 포함 여부
 - 불필요한 chunk 비율
+- duplicate document가 검색 결과에 중복 노출되지 않는지 여부
+- 분쟁 기준일이 있는 경우 적절한 effective date version이 검색되는지 여부
 
 MVP 기준:
 
 - 핵심 fixture query에서 expected chunk가 top-5 안에 포함되어야 합니다.
 - 관련 source가 없는 query에서는 근거 부족을 표시해야 합니다.
+- 완전 중복 fixture는 `dedup_status=duplicate`로 표시되고 원본 document를 참조해야 합니다.
+- 같은 canonical/version의 본문 충돌 fixture는 `conflict_status=review_required`로 표시되어야 합니다.
+- 다른 시행일 또는 version label의 fixture는 별도 version으로 보존되어야 합니다.
 
 ## Citation 평가
 

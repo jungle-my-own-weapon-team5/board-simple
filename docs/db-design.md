@@ -15,6 +15,7 @@
 - MCP tool 호출과 Agent 상태 전이는 `agent_steps`로 저장합니다.
 - secret, API key, raw JWT, auth cookie 값은 DB에 저장하지 않습니다.
 - embedding dimension은 pgvector 컬럼의 `vector(N)`과 일치해야 하므로 모델 변경 시 migration 영향을 검토합니다.
+- 법률 문서는 단일 hash만으로 최종 진실을 판단하지 않습니다. 원문 hash, 정규화 hash, canonical/version metadata, 중복 상태, 충돌 상태를 함께 저장해 중복 제거와 버전 보존을 분리합니다.
 
 ## 현재 구현 테이블
 
@@ -153,7 +154,11 @@ Foreign keys:
 | `effective_date` | date | yes | 시행일 |
 | `raw_text` | text | no | 원문 text |
 | `normalized_text` | text | yes | 정규화된 text. 생성 직후 또는 indexing 전에는 null 가능 |
-| `checksum` | varchar(128) | no | 중복 감지용 hash |
+| `raw_checksum` | varchar(128) | no | 수집 원문 기준 hash |
+| `normalized_checksum` | varchar(128) | yes | 정규화 text 기준 hash. normalization 전에는 null 가능 |
+| `dedup_status` | varchar(30) | no | `unique`, `duplicate`, `superseded` 등 중복/대체 상태 |
+| `conflict_status` | varchar(30) | no | `none`, `review_required`, `resolved` 등 canonical/version 충돌 상태 |
+| `duplicate_of_document_id` | integer | yes | 중복으로 판단된 원본 `legal_documents.id` |
 | `index_status` | varchar(30) | no | `pending`, `indexed`, `failed` |
 | `indexed_at` | timestamptz | yes | 색인 완료 시각 |
 | `index_error` | text | yes | 안전하게 정제된 색인 실패 사유 |
@@ -163,12 +168,29 @@ Foreign keys:
 권장 constraints/index:
 
 - foreign key: `source_id -> legal_sources.id ON DELETE CASCADE`
-- unique: `checksum`
+- foreign key: `duplicate_of_document_id -> legal_documents.id ON DELETE SET NULL`
 - index: (`document_type`, `published_date`)
 - index: `canonical_id`
+- index: (`document_type`, `canonical_id`, `effective_date`)
+- index: (`document_type`, `canonical_id`, `version_label`)
+- index: `raw_checksum`
+- index: `normalized_checksum`
+- index: (`dedup_status`, `conflict_status`)
 - full-text index는 hybrid retrieval 도입 시 추가
 
 `POST /api/legal-documents`처럼 사용자가 직접 텍스트를 입력하는 경우 backend는 `provider=upload` 또는 `provider=fixture`인 `legal_sources` row를 먼저 만들고, 생성된 `source_id`를 `legal_documents.source_id`에 연결합니다.
+
+중복/버전/충돌 정책:
+
+- `raw_checksum`은 수집 원문이 byte-level 또는 text-level로 같은지 확인하기 위한 값입니다.
+- `normalized_checksum`은 normalization 후 실질 검색 본문이 같은지 판단하기 위한 값입니다.
+- `normalized_checksum`이 null인 indexing 전 문서는 `raw_checksum`과 canonical/version metadata만으로 임시 중복 후보를 판단합니다.
+- `checksum` 단독 unique constraint는 사용하지 않습니다. 공백, 줄바꿈, wrapper 차이로 같은 법률 내용의 hash가 달라질 수 있고, 반대로 같은 법령의 다른 시행 버전을 단순 중복으로 오해할 수 있기 때문입니다.
+- 중복 판단은 `document_type`, `canonical_id`, `version_label` 또는 `effective_date`, `normalized_checksum`을 함께 사용합니다.
+- 같은 `document_type`, `canonical_id`, `version_label` 또는 `effective_date`인데 `normalized_checksum`이 다르면 자동 삭제하지 않고 `conflict_status=review_required`로 저장합니다.
+- `effective_date` 또는 `version_label`이 다르면 같은 canonical document의 다른 버전으로 보존합니다.
+- 완전 중복으로 판단한 문서는 `dedup_status=duplicate`, `duplicate_of_document_id`로 원본 문서를 가리키고, 검색 색인 대상에서는 제외할 수 있습니다.
+- 최신 법령만 최종 진실로 간주해 과거 버전을 삭제하지 않습니다. 분쟁 발생 시점에 따라 과거 시행 버전이 근거가 될 수 있습니다.
 
 ## `legal_document_chunks`
 
@@ -326,13 +348,14 @@ posts
 
 1. `legal_sources` 생성
 2. `legal_documents` 생성
-3. `legal_document_chunks` 생성, embedding 컬럼은 확정 dimension으로 생성
-4. `rag_runs` 생성
-5. `agent_steps` 생성
-6. `rag_retrievals` 생성
-7. 기본 B-tree index 추가
-8. fixture 데이터로 검색 품질 확인
-9. 실제 데이터가 일정량 적재된 뒤 vector index 추가
+3. `legal_documents.duplicate_of_document_id` self-reference foreign key 추가
+4. `legal_document_chunks` 생성, embedding 컬럼은 확정 dimension으로 생성
+5. `rag_runs` 생성
+6. `agent_steps` 생성
+7. `rag_retrievals` 생성
+8. 기본 B-tree index 추가
+9. fixture 데이터로 중복, 버전, 충돌 판정과 검색 품질 확인
+10. 실제 데이터가 일정량 적재된 뒤 vector index 추가
 
 ## Embedding dimension 결정
 

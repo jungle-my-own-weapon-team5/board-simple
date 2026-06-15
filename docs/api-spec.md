@@ -510,6 +510,8 @@ MVP에서는 서버 설정의 `AI_RAG_ENABLED=true`, `AI_AGENT_PROVIDER=openai`,
 
 이 endpoint는 backend가 `legal_sources` row를 함께 생성한 뒤 `legal_documents.source_id`에 연결합니다. JSON text 입력의 기본 source provider는 `upload`이고, fixture ingestion에서는 `fixture`를 사용합니다.
 
+backend는 요청의 `raw_text`에서 `raw_checksum`을 계산하고, normalization 이후 `normalized_checksum`을 계산합니다. 중복 판단은 checksum 단독이 아니라 `document_type`, `canonical_id`, `version_label` 또는 `effective_date`, `normalized_checksum` 조합으로 수행합니다. 같은 canonical/version인데 normalized checksum이 다르면 자동 삭제하지 않고 conflict 상태로 기록합니다.
+
 #### Request
 
 ```json
@@ -533,6 +535,13 @@ MVP에서는 서버 설정의 `AI_RAG_ENABLED=true`, `AI_AGENT_PROVIDER=openai`,
   "document_type": "case",
   "title": "Sample decision",
   "canonical_id": "2026-example-001",
+  "version_label": null,
+  "effective_date": null,
+  "raw_checksum": "raw-checksum-value",
+  "normalized_checksum": null,
+  "dedup_status": "unique",
+  "conflict_status": "none",
+  "duplicate_of_document_id": null,
   "index_status": "pending",
   "chunk_count": 0,
   "created_at": "2026-06-13T12:00:00Z"
@@ -588,7 +597,11 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
       "document_type": "case",
       "title": "Sample decision",
       "canonical_id": "2026-example-001",
-      "published_date": "2026-06-13"
+      "version_label": null,
+      "published_date": "2026-06-13",
+      "effective_date": null,
+      "dedup_status": "unique",
+      "conflict_status": "none"
     }
   ],
   "total": 1,
@@ -927,7 +940,7 @@ AI/RAG endpoint는 다음 오류를 사용합니다.
 - `401`: 인증 필요
 - `403`: 권한 없음 또는 상태 변경 요청의 Origin 오류
 - `404`: document 또는 run을 찾을 수 없음
-- `409`: source checksum 중복 또는 indexing 충돌
+- `409`: 동일 canonical/version 중복, canonical/version checksum 충돌, 또는 indexing 충돌
 - `413`: 업로드 content가 너무 큼
 - `422`: validation 오류
 - `429`: rate limit 초과

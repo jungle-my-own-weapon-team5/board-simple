@@ -348,7 +348,11 @@ legal_documents
   effective_date
   raw_text
   normalized_text          -- normalization 전에는 null 가능
-  checksum
+  raw_checksum
+  normalized_checksum      -- normalization 전에는 null 가능
+  dedup_status             -- unique, duplicate, superseded 등
+  conflict_status          -- none, review_required, resolved 등
+  duplicate_of_document_id -> legal_documents.id nullable
   index_status
   indexed_at
   index_error
@@ -420,6 +424,9 @@ rag_retrievals
 - vector index는 실제 chunk 데이터가 들어간 뒤 생성하는 편이 좋습니다.
 - 첫 단계는 vector-only retrieval로 시작하고, 이후 PostgreSQL full-text search를 결합합니다.
 - 법률 답변은 추적 가능해야 하므로 원천 metadata를 반드시 보존합니다.
+- 법률 문서 중복 판단은 `checksum` 단독 기준으로 하지 않습니다. `raw_checksum`, `normalized_checksum`, `canonical_id`, `version_label`, `effective_date`를 함께 사용합니다.
+- 같은 법령의 다른 시행일 또는 version은 별도 문서로 보존합니다. 최신본만 남기고 과거 버전을 삭제하면 분쟁 발생 시점의 근거를 잃을 수 있습니다.
+- 같은 canonical/version인데 normalized checksum이 다르면 자동 병합하거나 삭제하지 않고 conflict review 상태로 저장합니다.
 
 ## 법률 데이터 소스
 
