@@ -43,6 +43,25 @@ def get_legal_source(db: Session, source_id: int) -> LegalSource | None:
     return db.get(LegalSource, source_id)
 
 
+def find_legal_source_by_provider_external_id(
+    db: Session, *, provider: str, external_id: str | None
+) -> LegalSource | None:
+    """외부 provider 식별자가 있는 출처 row를 조회합니다.
+
+    같은 API 응답 또는 fixture를 반복 ingestion할 때 source unique 제약을
+    피하고, 동일 출처에서 여러 문서 버전이 파생될 수 있게 합니다.
+    """
+    if external_id is None:
+        return None
+
+    return db.scalar(
+        select(LegalSource).where(
+            LegalSource.provider == provider,
+            LegalSource.external_id == external_id,
+        )
+    )
+
+
 def add_legal_document(db: Session, document: LegalDocument) -> None:
     """법률 문서 row를 현재 트랜잭션에 추가합니다."""
     db.add(document)
