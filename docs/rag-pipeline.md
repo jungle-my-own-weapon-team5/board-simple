@@ -29,7 +29,7 @@ source 수집
 
 - fixture text
 - pasted text
-- user upload
+- user upload. 계약서, PDF, 스캔본, 메모 같은 사용자 제공 문서입니다.
 - 국가법령정보 Open API 응답
 - 추후 법원/공공데이터 API 응답
 
@@ -64,7 +64,10 @@ source 수집
 - 같은 canonical/version인데 `normalized_checksum`이 다르면 자동 삭제하지 않고 `conflict_status=review_required`로 저장합니다.
 - `effective_date` 또는 `version_label`이 다르면 같은 법령 또는 문서의 다른 버전으로 보존합니다.
 - `source_type`과 `document_type`의 기본 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 맞춥니다.
-- pasted text는 `legal_sources.provider=upload`, fixture는 `legal_sources.provider=fixture`로 저장합니다.
+- 법령, 판례, 법령해석례, 행정심판례 같은 공식 법률 corpus는 사용자가 원문을 업로드하지 않고 backend가 국가법령정보 Open API 또는 허용된 공공 API에서 수집합니다.
+- 사용자 제공 계약서, PDF 추출 텍스트, 스캔본 OCR 결과, 직접 입력 메모는 `document_type=user_file` 또는 `memo`로 저장합니다.
+- pasted text와 사용자 확인을 거친 업로드 추출 텍스트는 `legal_sources.provider=upload`, fixture는 `legal_sources.provider=fixture`, 국가법령정보 Open API 수집 자료는 `legal_sources.provider=law_open_api`로 저장합니다.
+- frontend가 PDF text extraction을 수행할 수는 있지만, 이는 미리보기와 사용자 확인을 위한 전처리입니다. 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 단일 기준으로 수행합니다.
 
 ## 2. Normalization
 

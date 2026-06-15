@@ -150,11 +150,11 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 초기 source type:
 
 - manual fixture
-- user upload
-- statute
-- case
-- legal interpretation
-- administrative appeal
+- user upload: 계약서, PDF, 스캔본, 사용자 메모 등 사용자 제공 문서
+- statute: 국가법령정보 Open API 등 backend가 수집하는 공식 법령
+- case: 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집하는 판례
+- legal interpretation: 공식 API에서 수집하는 법령해석례
+- administrative appeal: 공식 API에서 수집하는 행정심판례
 
 수용 기준:
 
@@ -166,7 +166,9 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 ## FR-006 법률 문서 ingestion
 
-시스템은 pasted text, fixture file, 이후 external API로부터 법률 문서를 ingest해야 합니다.
+시스템은 pasted text, fixture file, 사용자 제공 계약서/PDF/스캔본 추출 텍스트, 이후 external API로부터 법률 문서를 ingest해야 합니다.
+
+공식 법령, 판례, 법령해석례, 행정심판례 원문은 일반 사용자에게서 직접 업로드받지 않습니다. 해당 corpus는 backend가 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집합니다. 일반 사용자 업로드는 `user_file` 또는 `memo` 성격의 문서로 제한합니다.
 
 수용 기준:
 
@@ -176,6 +178,7 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 - raw checksum, normalized checksum, dedup status, conflict status를 저장합니다.
 - 같은 법령 또는 문서의 다른 시행일/버전은 삭제하지 않고 별도 version으로 보존합니다.
 - 같은 canonical/version인데 normalized checksum이 다르면 자동으로 최종 진실을 결정하지 않고 conflict review 대상으로 표시합니다.
+- frontend가 PDF text extraction 또는 OCR preview를 제공할 수 있지만, 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 수행합니다.
 - 업로드 content에서 임의 코드를 실행하지 않습니다.
 
 ## FR-007 법률 구조 기반 chunking

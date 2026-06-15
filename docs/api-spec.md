@@ -502,13 +502,17 @@ MVP에서는 서버 설정의 `AI_RAG_ENABLED=true`, `AI_AGENT_PROVIDER=openai`,
 
 ### POST `/api/legal-documents`
 
-업로드 또는 입력된 텍스트를 법률 문서로 생성합니다.
+사용자가 제공한 계약서, PDF 추출 텍스트, 스캔본 OCR 결과, 메모 또는 입력 텍스트를 RAG 문서로 생성합니다.
 
 초기 학습 버전은 JSON text 입력만 받아도 됩니다. 파일 업로드는 이후 단계에서 추가합니다.
 
 인증이 필요합니다. role이 도입되면 admin-only로 제한해야 합니다.
 
-이 endpoint는 backend가 `legal_sources` row를 함께 생성한 뒤 `legal_documents.source_id`에 연결합니다. JSON text 입력의 기본 source provider는 `upload`이고, fixture ingestion에서는 `fixture`를 사용합니다.
+이 endpoint는 사용자 제공 문서를 위한 경계입니다. 법령, 판례, 법령해석례, 행정심판례 같은 공식 법률 corpus 원문은 일반 사용자가 이 endpoint로 업로드하지 않고, backend가 국가법령정보 Open API 또는 허용된 공공 API에서 수집합니다.
+
+이 endpoint는 backend가 `legal_sources` row를 함께 생성한 뒤 `legal_documents.source_id`에 연결합니다. JSON text 입력의 기본 source provider는 `upload`이고, fixture ingestion에서는 `fixture`를 사용합니다. 사용자 업로드의 기본 `document_type`은 `user_file` 또는 `memo`입니다.
+
+frontend가 PDF text extraction을 수행할 수는 있지만 이는 미리보기와 사용자 확인을 위한 전처리입니다. backend는 전달받은 최종 text에 대해 normalization, checksum 계산, duplicate/conflict 판정, chunking을 다시 수행합니다.
 
 backend는 요청의 `raw_text`에서 `raw_checksum`을 계산하고, normalization 이후 `normalized_checksum`을 계산합니다. 중복 판단은 checksum 단독이 아니라 `document_type`, `canonical_id`, `version_label` 또는 `effective_date`, `normalized_checksum` 조합으로 수행합니다. 같은 canonical/version인데 normalized checksum이 다르면 자동 삭제하지 않고 conflict 상태로 기록합니다.
 
@@ -516,13 +520,13 @@ backend는 요청의 `raw_text`에서 `raw_checksum`을 계산하고, normalizat
 
 ```json
 {
-  "document_type": "case",
-  "title": "Sample decision",
-  "canonical_id": "2026-example-001",
-  "source_url": "https://example.com/source",
+  "document_type": "user_file",
+  "title": "임대차계약서",
+  "canonical_id": null,
+  "source_url": null,
   "published_date": "2026-06-13",
   "effective_date": null,
-  "raw_text": "Full legal text..."
+  "raw_text": "사용자가 확인한 계약서 추출 텍스트..."
 }
 ```
 
@@ -532,9 +536,9 @@ backend는 요청의 `raw_text`에서 `raw_checksum`을 계산하고, normalizat
 {
   "id": 1,
   "source_id": 1,
-  "document_type": "case",
-  "title": "Sample decision",
-  "canonical_id": "2026-example-001",
+  "document_type": "user_file",
+  "title": "임대차계약서",
+  "canonical_id": null,
   "version_label": null,
   "effective_date": null,
   "raw_checksum": "raw-checksum-value",

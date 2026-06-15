@@ -61,6 +61,8 @@ MVP 원칙:
 - 로그에는 전체 facts를 남기지 않습니다.
 - provider로 전송하기 전 PII redaction 가능성을 검토합니다.
 - 사용자 업로드 문서의 공유 범위는 명시적으로 결정하기 전까지 private corpus로 간주합니다.
+- 사용자 업로드 문서는 계약서, PDF, 스캔본, 메모 같은 사용자 제공 자료를 의미합니다. 법령, 판례, 법령해석례, 행정심판례 같은 공식 법률 corpus는 일반 사용자 업로드가 아니라 backend의 허용된 공식 API 수집 흐름으로 처리합니다.
+- frontend PDF text extraction 또는 OCR preview는 사용자 확인용 전처리로만 사용합니다. 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 수행합니다.
 
 ## 데이터 보존 정책
 
