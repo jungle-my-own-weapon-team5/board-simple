@@ -68,7 +68,11 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     register_and_login(client)
     create_response = client.post(
         "/api/posts",
-        json={"title": "Hello board", "content": "Markdown body #Python #python #FastAPI"},
+        json={
+            "title": "Hello board",
+            "content": "Markdown body #Ignored",
+            "tags": ["Python", "#python", "FastAPI"],
+        },
     )
     assert create_response.status_code == 201
     post = create_response.json()
@@ -89,7 +93,7 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     client.post("/api/auth/login", json={"email": "user@example.com", "password": "password123"})
     update_response = client.put(
         f"/api/posts/{post['id']}",
-        json={"title": "Updated board", "content": "Updated #Django"},
+        json={"title": "Updated board", "content": "Updated #Ignored", "tags": ["Django"]},
     )
     assert update_response.status_code == 200
     assert update_response.json()["tags"][0]["name"] == "django"

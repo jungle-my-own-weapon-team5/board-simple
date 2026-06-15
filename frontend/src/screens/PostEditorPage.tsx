@@ -3,6 +3,7 @@
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as postApi from "../api/posts";
+import type { PostPayload } from "../api/posts";
 import PostForm from "../components/PostForm";
 import { useAuthStore } from "../stores/authStore";
 import type { Post } from "../types";
@@ -46,7 +47,7 @@ export default function PostEditorPage() {
     return <p className="text-muted-foreground">Loading...</p>;
   }
 
-  const handleSubmit = async (payload: { title: string; content: string }) => {
+  const handleSubmit = async (payload: PostPayload) => {
     const saved = isEditing
       ? await postApi.updatePost(numericPostId, payload)
       : await postApi.createPost(payload);
@@ -61,6 +62,7 @@ export default function PostEditorPage() {
       <PostForm
         initialTitle={post?.title}
         initialContent={post?.content}
+        initialTags={post?.tags.map((tag) => tag.name)}
         submitLabel={isEditing ? "Update post" : "Create post"}
         onSubmit={handleSubmit}
       />

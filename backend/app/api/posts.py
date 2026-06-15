@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostListItem, PostPage, PostRead, PostUpdate
-from app.services.tags import extract_tag_names, get_or_create_tags
+from app.services.tags import get_or_create_tags
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -62,7 +62,7 @@ def create_post(
     current_user: User = Depends(get_current_user),
 ) -> Post:
     post = Post(title=payload.title, content=payload.content, author_id=current_user.id)
-    post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
+    post.tags = get_or_create_tags(db, payload.tags)
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -87,7 +87,7 @@ def update_post(
 
     post.title = payload.title
     post.content = payload.content
-    post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
+    post.tags = get_or_create_tags(db, payload.tags)
     db.commit()
     return get_post_or_404(db, post.id)
 
