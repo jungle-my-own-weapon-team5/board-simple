@@ -631,7 +631,10 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 ```json
 {
   "query": "임대차 보증금 반환 분쟁에서 주요 쟁점은 무엇인가요?",
-  "top_k": 5,
+  "search_mode": "focused_answer",
+  "top_k": null,
+  "score_threshold": null,
+  "max_chunks_per_document": 5,
   "embedding_profile_id": null,
   "filters": {
     "document_type": ["statute", "case"],
@@ -640,6 +643,14 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
   }
 }
 ```
+
+검색 옵션:
+
+- `search_mode`: `focused_answer` 또는 `issue_spotting`. 생략하면 `focused_answer`입니다.
+- `focused_answer`: 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다. `top_k` 생략 시 기본값은 `8`입니다.
+- `issue_spotting`: 한 사건에서 여러 구성요건, 조문, 쟁점을 넓게 탐지해야 할 때 쓰는 모드입니다. `top_k` 생략 시 기본값은 `50`이고, 문서별 chunk 제한은 명시한 경우에만 적용합니다.
+- `score_threshold`: `0` 이상 `1` 이하의 선택값입니다. 지정하면 threshold 미만 결과를 제외합니다.
+- `max_chunks_per_document`: 선택값입니다. 특정 문서 하나가 검색 결과를 과도하게 차지하는 것을 제한합니다. `issue_spotting`에서는 누락 위험을 줄이기 위해 생략할 수 있습니다.
 
 #### Response `200`
 
@@ -704,7 +715,11 @@ Agent가 allowlist된 MCP tool을 호출하기 위한 JSON-RPC endpoint입니다
           "required": ["query"],
           "properties": {
             "query": { "type": "string" },
-            "top_k": { "type": "integer", "minimum": 1, "maximum": 20 }
+            "search_mode": { "type": "string", "enum": ["focused_answer", "issue_spotting"] },
+            "top_k": { "type": "integer", "minimum": 1 },
+            "score_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+            "max_chunks_per_document": { "type": "integer", "minimum": 1 },
+            "filters": { "type": "object" }
           }
         }
       },
@@ -716,7 +731,7 @@ Agent가 allowlist된 MCP tool을 호출하기 위한 JSON-RPC endpoint입니다
           "required": ["query"],
           "properties": {
             "query": { "type": "string" },
-            "target": { "type": "string", "enum": ["law", "prec", "interpretation"] },
+            "target": { "type": "string", "enum": ["statute", "case", "interpretation", "admin_appeal"] },
             "limit": { "type": "integer", "minimum": 1, "maximum": 20 }
           }
         }
@@ -749,12 +764,14 @@ Agent가 allowlist된 MCP tool을 호출하기 위한 JSON-RPC endpoint입니다
     "name": "search_law_open_api",
     "arguments": {
       "query": "임대차 보증금 반환",
-      "target": "law",
+      "target": "statute",
       "limit": 5
     }
   }
 }
 ```
+
+`search_law_open_api.target`은 내부 `document_type`과 같은 값을 사용합니다. 국가법령정보 Open API의 실제 세부 구분값은 service adapter 내부에서 매핑합니다.
 
 #### `tools/call` Response `200`
 
@@ -809,12 +826,17 @@ MCP 오류는 JSON-RPC error object로 반환합니다. 오류 메시지에는 A
   "task_type": "answer_draft",
   "facts": "임차인이 계약 종료 후 보증금을 돌려받지 못했습니다.",
   "question": "내용증명 초안 방향을 알려주세요.",
+  "search_mode": "focused_answer",
   "top_k": 8,
+  "score_threshold": null,
+  "max_chunks_per_document": 5,
   "options": {
     "tone": "formal"
   }
 }
 ```
+
+Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있습니다.
 
 #### Response `200`
 
@@ -869,7 +891,8 @@ MCP 오류는 JSON-RPC error object로 반환합니다. 오류 메시지에는 A
 {
   "facts": "임차인이 계약 종료 후 보증금을 돌려받지 못했습니다.",
   "question": "어떤 쟁점을 정리해야 하나요?",
-  "top_k": 8
+  "search_mode": "issue_spotting",
+  "top_k": null
 }
 ```
 
@@ -915,6 +938,7 @@ MCP 오류는 JSON-RPC error object로 반환합니다. 오류 메시지에는 A
   "facts": "임차인이 계약 종료 후 보증금을 돌려받지 못했습니다.",
   "question": "내용증명 초안 방향을 알려주세요.",
   "tone": "formal",
+  "search_mode": "focused_answer",
   "top_k": 8
 }
 ```
@@ -946,7 +970,7 @@ MCP 오류는 JSON-RPC error object로 반환합니다. 오류 메시지에는 A
 
 AI/RAG endpoint는 다음 오류를 사용합니다.
 
-- `400`: 지원하지 않는 document type, 잘못된 filter, 빈 facts, 잘못된 top_k
+- `400`: 지원하지 않는 document type, 잘못된 filter, 빈 facts, 잘못된 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`
 - `401`: 인증 필요
 - `403`: 권한 없음 또는 상태 변경 요청의 Origin 오류
 - `404`: document 또는 run을 찾을 수 없음

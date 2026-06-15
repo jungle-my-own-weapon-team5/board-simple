@@ -238,6 +238,8 @@ backend/tests/test_rag_retrieval.py
 - embedding service는 선택된 `embedding_profile_id`의 provider/model/dimension을 기준으로 provider 응답을 검증합니다.
 - 같은 chunk는 여러 profile로 임베딩될 수 있지만, retrieval은 하나의 profile만 선택해 수행합니다.
 - `/api/rag/search`는 답변 생성 없이 검색 결과만 반환합니다.
+- `/api/rag/search`는 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 지원합니다.
+- `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 기본 검색 예산을 넓게 둡니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
 
@@ -246,6 +248,9 @@ backend/tests/test_rag_retrieval.py
 - fixture dataset으로 검색 결과 순위 테스트
 - 인증 필요 여부 테스트
 - `top_k` validation 테스트
+- `score_threshold` validation과 filtering 테스트
+- `max_chunks_per_document` 적용 테스트
+- `focused_answer`와 `issue_spotting` 기본값 테스트
 
 ## 6단계: MCP 서버와 tool registry
 
@@ -269,7 +274,7 @@ backend/tests/test_mcp_server.py
 - JSON-RPC request/response 구조를 검증합니다.
 - `tools/list`는 allowlist된 tool만 반환합니다.
 - `tools/call`은 allowlist에 없는 tool을 거부합니다.
-- MCP 서버는 인증된 backend/Agent 경로에서만 호출되도록 합니다.
+- MCP 서버는 MVP에서 FastAPI 내부 `POST /api/mcp`로 제공하고, 인증된 backend/Agent 경로에서만 호출되도록 합니다.
 - tool input/output은 secret을 제거한 metadata만 audit에 남깁니다.
 
 검증:
@@ -298,7 +303,9 @@ backend/tests/test_mcp_legal_tools.py
 구현 기준:
 
 - `search_legal_documents`는 5단계 retrieval service를 호출합니다.
+- `search_legal_documents`는 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 service에 전달합니다.
 - `search_law_open_api`는 국가법령정보 Open API 등 실제 외부 서비스를 호출합니다.
+- `search_law_open_api.target`은 내부 문서 유형인 `statute`, `case`, `interpretation`, `admin_appeal`을 사용하고, 외부 API별 parameter는 adapter 내부에서 매핑합니다.
 - `verify_citations`는 초안 citation이 해당 run의 retrieved chunk 또는 외부 source metadata에 근거하는지 확인합니다.
 - `LAW_OPEN_API_OC`는 secret으로 취급합니다.
 - 외부 API 응답 XML/JSON parsing을 명시적으로 처리합니다.
@@ -412,7 +419,9 @@ frontend/src/types.ts
 ```text
 backend/app/services/legal_sources.py
 backend/app/services/rag/legal_open_api.py
+backend/app/services/rag/legal_open_api_sync.py
 backend/tests/test_legal_sources.py
+backend/tests/test_legal_open_api_sync.py
 ```
 
 구현 기준:
@@ -420,12 +429,22 @@ backend/tests/test_legal_sources.py
 - `LAW_OPEN_API_OC`는 secret으로 취급합니다.
 - MCP `search_law_open_api`와 ingestion client가 같은 parsing/error 정책을 공유합니다.
 - source URL, external ID, fetched_at을 저장합니다.
+- 전문 API를 호출하기 전에 metadata preflight를 수행합니다.
+- preflight 응답에서 `provider`, `external_id`, `canonical_id`, `version_label`, `effective_date`, `published_date`를 추출해 기존 DB 문서와 비교합니다.
+- 같은 canonical/version 문서가 이미 `index_status=indexed`이고 선택 embedding profile의 chunk embedding이 최신이면 전문 API, chunking, embedding API 호출을 생략하고 기존 DB 데이터를 사용합니다.
+- 새 시행일 또는 새 version은 기존 문서를 덮어쓰지 않고 새 `legal_documents` row로 저장합니다.
+- 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 달라지면 `conflict_status=review_required`로 저장합니다.
+- API timeout, rate limit, parsing failure는 안전한 내부 error로 변환하고 secret을 로그에 남기지 않습니다.
 
 검증:
 
 - API client는 mock HTTP response로 테스트합니다.
 - 실제 key 없이 테스트가 통과해야 합니다.
 - key 값은 로그에 출력하지 않습니다.
+- preflight metadata만으로 기존 indexed 문서를 재사용하는 테스트를 추가합니다.
+- 새 version metadata가 들어오면 전문 조회와 ingestion이 실행되는지 테스트합니다.
+- 같은 canonical/version의 checksum 충돌이 conflict review로 저장되는지 테스트합니다.
+- 기존 chunk와 embedding checksum이 최신이면 embedding provider가 호출되지 않는지 테스트합니다.
 
 ## 12단계: Gemini/Claude provider 확장
 
@@ -534,7 +553,7 @@ MVP 완료 기준:
 ## 열린 설계 질문
 
 - `AI_RAG_ENABLED=true`로 전환할 때 사용할 기본 active embedding profile은 어떤 provider/model/dimension으로 확정할 것인가요?
-- MCP endpoint를 FastAPI 내부 `/api/mcp`로 둘지, 별도 local MCP process로 둘지 구현 단계에서 결정해야 합니다.
+- MVP 이후 MCP endpoint를 별도 local process로 분리할 필요가 있는지 운영 복잡도와 과제 요구사항을 기준으로 재검토해야 합니다.
 - 국가법령정보 Open API 외에 과제 시연에서 사용할 외부 API 범위는 어디까지로 할 것인가요?
 - 업로드된 사용자 문서를 shared corpus에 넣을지, 사용자별 private corpus로 분리할지 결정해야 합니다.
 - AI run history는 소유자만 볼 수 있게 할지, admin audit 접근을 허용할지 결정해야 합니다.

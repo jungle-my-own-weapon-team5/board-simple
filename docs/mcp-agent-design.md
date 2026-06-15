@@ -17,7 +17,7 @@
 | --- | --- |
 | 상용 LLM 사용 | OpenAI API를 기본 generation provider로 사용 |
 | RAG | pgvector 기반 내부 검색, citation 추적, `rag_runs`/`rag_retrievals` 저장 |
-| MCP 서버 구현 | FastAPI 내부 또는 별도 local process로 MCP JSON-RPC endpoint 제공 |
+| MCP 서버 구현 | MVP에서는 FastAPI 내부 `POST /api/mcp` JSON-RPC endpoint 제공. 별도 local process는 후속 확장 |
 | JSON-RPC request/response | `tools/list`, `tools/call` 형식의 JSON-RPC 계약 제공 |
 | 실제 외부 서비스 연동 | `search_law_open_api` tool이 국가법령정보 Open API 호출 |
 | API key/권한 전략 | `LAW_OPEN_API_OC`는 서버 환경변수에서만 읽고 로그/응답/DB에 저장하지 않음 |
@@ -100,7 +100,10 @@ MVP에서 지원할 method:
     "name": "search_legal_documents",
     "arguments": {
       "query": "임대차 보증금 반환",
-      "top_k": 5
+      "search_mode": "focused_answer",
+      "top_k": 8,
+      "score_threshold": null,
+      "max_chunks_per_document": 5
     }
   }
 }
@@ -134,7 +137,10 @@ MVP에서 지원할 method:
 
 ```text
 query: str
-top_k: int
+search_mode: focused_answer | issue_spotting
+top_k: int | null
+score_threshold: float | null
+max_chunks_per_document: int | null
 filters: dict | null
 ```
 
@@ -148,6 +154,8 @@ embedding_model_name: str
 
 이 tool은 직접 SQL 문자열을 받지 않습니다. repository/service 계층의 정해진 검색 함수만 호출합니다.
 
+`focused_answer`는 답변 생성에 넣을 근거를 좁게 고르는 기본 모드이고, `issue_spotting`은 한 사건에서 여러 조문과 구성요건을 넓게 탐지하는 모드입니다. `issue_spotting`에서는 검색 누락을 줄이기 위해 `top_k` 기본값을 크게 두고, `max_chunks_per_document`는 호출자가 명시한 경우에만 적용합니다.
+
 ### `search_law_open_api`
 
 국가법령정보 Open API 등 실제 외부 법률 API를 호출합니다.
@@ -156,9 +164,11 @@ embedding_model_name: str
 
 ```text
 query: str
-target: law | prec | interpretation
+target: statute | case | interpretation | admin_appeal
 limit: int
 ```
+
+`target`은 내부 `document_type`과 같은 enum을 사용합니다. 국가법령정보 Open API의 실제 세부 구분값은 `legal_open_api` adapter 내부에서 매핑합니다.
 
 출력:
 
@@ -326,5 +336,5 @@ OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 실
 - 사용자 추가 질문과 human-in-the-loop
 - progress streaming
 - MCP tool별 권한 정책 세분화
-- 판례/행정심판/공공데이터 API 추가
+- 법원, 공공데이터 등 source별 특화 adapter 추가
 - 사용자 업로드 문서의 private corpus 분리

@@ -69,6 +69,27 @@ source 수집
 - pasted text와 사용자 확인을 거친 업로드 추출 텍스트는 `legal_sources.provider=upload`, fixture는 `legal_sources.provider=fixture`, 국가법령정보 Open API 수집 자료는 `legal_sources.provider=law_open_api`로 저장합니다.
 - frontend가 PDF text extraction을 수행할 수는 있지만, 이는 미리보기와 사용자 확인을 위한 전처리입니다. 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 단일 기준으로 수행합니다.
 
+국가법령정보 Open API preflight 흐름:
+
+```text
+metadata API 조회
+  -> provider, external_id, canonical_id, version_label, effective_date, published_date 추출
+  -> DB의 legal_sources + legal_documents 조회
+  -> 같은 canonical/version 문서가 indexed 상태이고 선택 embedding profile의 chunk embedding이 최신이면 전문 API 호출 생략
+  -> 없거나 새 version이면 전문 API 호출 후 ingestion
+  -> 같은 canonical/version인데 checksum이 달라지면 conflict review로 저장
+```
+
+preflight 규칙:
+
+- 전문 API를 호출하기 전에 metadata API로 법령명, 법령 ID, 시행일, 공포일, 개정 식별자, source URL을 먼저 확인합니다.
+- metadata 조회 결과는 `legal_sources.provider`, `legal_sources.external_id`, `legal_sources.metadata_json`과 `legal_documents.canonical_id`, `version_label`, `effective_date`, `published_date` 비교에 사용합니다.
+- 기존 문서가 `index_status=indexed`이고 선택한 `embedding_profile_id`의 chunk embedding이 모두 `embedded`이며 `content_checksum`이 현재 chunk 본문과 맞으면 DB의 chunk와 embedding을 재사용합니다.
+- metadata 기준 최신 문서가 이미 준비되어 있으면 전문 API, normalization, chunking, embedding API 호출을 모두 생략할 수 있습니다.
+- 새 시행일 또는 새 version이면 기존 문서를 덮어쓰지 않고 별도 `legal_documents` version으로 저장합니다.
+- 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 다르면 자동 병합하거나 삭제하지 않고 `conflict_status=review_required`로 저장합니다.
+- 외부 API 장애, rate limit, timeout이 발생하더라도 기존 indexed 문서가 있으면 임시로 cached/stale source로 사용할 수 있어야 하며, 이 상태는 metadata나 sync log에 남겨야 합니다.
+
 ## 2. Normalization
 
 목표:
@@ -176,6 +197,8 @@ chunk 기준:
 - provider 응답 vector 길이는 `embedding_profiles.dimensions`와 일치해야 합니다.
 - chunk 본문 checksum이 달라지면 기존 embedding은 `stale`로 간주하고 재임베딩합니다.
 - model deprecation이 발생하면 기존 profile을 삭제하지 않고 `deprecated` 또는 `retired`로 표시한 뒤 새 profile로 재임베딩합니다.
+- 공식 source preflight 결과 기존 문서와 chunk가 최신이면 같은 `embedding_profile_id`의 기존 embedding row를 재사용하고 embedding API를 다시 호출하지 않습니다.
+- text normalization, chunking 설정, chunk 본문, 또는 embedding profile이 달라지면 기존 embedding을 재사용하지 않고 새 embedding row를 만들거나 기존 row를 `stale`로 전환합니다.
 
 ## 5. Retrieval
 
@@ -186,7 +209,10 @@ chunk 기준:
 입력:
 
 - query
-- top_k
+- search_mode: `focused_answer` 또는 `issue_spotting`
+- top_k. 생략하면 search_mode별 기본값을 사용합니다.
+- score_threshold
+- max_chunks_per_document
 - metadata filters
 
 출력:
@@ -200,6 +226,10 @@ MVP 방식:
 - query embedding 생성
 - 선택된 `embedding_profile_id`의 chunk embedding만 대상으로 pgvector cosine similarity 기반 top-k 검색
 - document type/date filter는 가능한 범위에서 적용
+- `focused_answer`는 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다.
+- `issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드입니다. 이 모드에서는 기본 top-k를 크게 두고, 문서별 chunk 제한은 호출자가 명시한 경우에만 적용합니다.
+- `score_threshold`가 지정되면 threshold 미만 결과를 제외합니다.
+- `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
 
 후속 방식:
 
@@ -335,6 +365,8 @@ MVP MCP tool:
 - `search_legal_documents`: 내부 retrieval service 호출
 - `search_law_open_api`: 실제 외부 법률 API 호출
 - `verify_citations`: retrieved chunk와 외부 source metadata 기반 citation 검증
+
+`search_law_open_api`의 `target`은 내부 `document_type`과 같은 `statute`, `case`, `interpretation`, `admin_appeal`을 사용합니다. 외부 API별 실제 query parameter 값은 adapter 내부에서 매핑합니다.
 
 Agent 상태 흐름:
 

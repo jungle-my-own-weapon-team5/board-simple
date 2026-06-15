@@ -59,6 +59,7 @@ expected_chunks
 - 명확한 법령 조문을 찾는 query
 - 판례 판단 이유를 찾는 query
 - 여러 source가 모두 필요한 query
+- 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 찾아야 하는 issue spotting query
 - 관련 문서가 부족한 query
 - prompt injection 문서가 검색되는 query
 
@@ -70,10 +71,14 @@ expected_chunks
 - 불필요한 chunk 비율
 - duplicate document가 검색 결과에 중복 노출되지 않는지 여부
 - 분쟁 기준일이 있는 경우 적절한 effective date version이 검색되는지 여부
+- `score_threshold` 적용 후 낮은 점수의 chunk가 제외되는지 여부
+- `max_chunks_per_document` 적용 시 한 문서가 결과를 과도하게 차지하지 않는지 여부
+- `issue_spotting`에서 같은 법령 문서 안의 복수 관련 조문이 누락 없이 포함되는지 여부
 
 MVP 기준:
 
-- 핵심 fixture query에서 expected chunk가 top-5 안에 포함되어야 합니다.
+- `focused_answer` fixture query에서 expected chunk가 top-5 안에 포함되어야 합니다.
+- `issue_spotting` fixture query에서 복수 expected chunk가 기본 검색 예산 안에 포함되어야 합니다.
 - 관련 source가 없는 query에서는 근거 부족을 표시해야 합니다.
 - 완전 중복 fixture는 `dedup_status=duplicate`로 표시되고 원본 document를 참조해야 합니다.
 - 같은 canonical/version의 본문 충돌 fixture는 `conflict_status=review_required`로 표시되어야 합니다.
@@ -137,7 +142,9 @@ MVP 기준:
 - JSON-RPC request/response schema를 검증하는가
 - allowlist에 없는 tool 호출을 거부하는가
 - `search_legal_documents`가 내부 retrieval service 결과를 안정적으로 반환하는가
+- `search_legal_documents`가 `search_mode`, `score_threshold`, `max_chunks_per_document`를 검증하고 service에 전달하는가
 - `search_law_open_api`가 외부 API 성공, 실패, timeout, rate limit을 안전하게 처리하는가
+- `search_law_open_api.target`이 `statute`, `case`, `interpretation`, `admin_appeal`만 허용하고 외부 API parameter로 안전하게 매핑되는가
 - `verify_citations`가 검색되지 않은 chunk 또는 존재하지 않는 URL을 거부하는가
 - MCP tool input/output audit에 secret이나 raw 개인정보가 남지 않는가
 
@@ -224,7 +231,8 @@ notes
 MVP 통과 기준:
 
 - backend unit/integration test 통과
-- fixture retrieval query의 expected chunk top-5 포함
+- `focused_answer` fixture retrieval query의 expected chunk top-5 포함
+- `issue_spotting` fixture retrieval query의 복수 expected chunk 포함
 - retrieval 결과가 `run_id`를 포함하고, 해당 run의 `rag_retrievals`가 재현 가능한 순위와 점수를 저장
 - citation 없는 법률 주장 없음
 - MCP unknown tool 거부

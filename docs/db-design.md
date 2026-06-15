@@ -138,6 +138,14 @@ Foreign keys:
 - unique nullable policy: (`provider`, `external_id`)는 `external_id`가 있을 때만 unique
 - index: `metadata_json` GIN은 필요할 때 추가
 
+국가법령정보 Open API metadata 저장 규칙:
+
+- `external_id`에는 provider가 제공하는 안정적인 법령, 판례, 해석례, 행정심판례 식별자를 저장합니다.
+- `metadata_json`에는 법령명, 법령 ID, 시행일, 공포일, 개정 식별자, 상세 조회 API path, source URL, metadata 응답 시각을 저장할 수 있습니다.
+- `fetched_at`은 전문 또는 원문에 해당하는 raw payload를 실제로 가져온 시각을 의미합니다.
+- 전문을 가져오기 전 metadata만 확인한 시각은 `metadata_json.last_metadata_checked_at` 또는 후속 sync log 테이블에 저장합니다.
+- API key, 인증 토큰, 요청 secret은 `legal_sources`나 `metadata_json`에 저장하지 않습니다.
+
 ## `legal_documents`
 
 정규화 가능한 법률 문서 단위입니다.
@@ -191,6 +199,15 @@ Foreign keys:
 - `effective_date` 또는 `version_label`이 다르면 같은 canonical document의 다른 버전으로 보존합니다.
 - 완전 중복으로 판단한 문서는 `dedup_status=duplicate`, `duplicate_of_document_id`로 원본 문서를 가리키고, 검색 색인 대상에서는 제외할 수 있습니다.
 - 최신 법령만 최종 진실로 간주해 과거 버전을 삭제하지 않습니다. 분쟁 발생 시점에 따라 과거 시행 버전이 근거가 될 수 있습니다.
+
+공식 source 최신성/preflight 정책:
+
+- 국가법령정보 Open API 같은 공식 provider는 전문 API를 호출하기 전에 metadata API로 최신성 정보를 먼저 확인합니다.
+- preflight metadata의 `document_type`, `canonical_id`, `version_label`, `effective_date`, `published_date`가 기존 `legal_documents` row와 일치하고 `index_status=indexed`이면 전문 API 호출을 생략할 수 있습니다.
+- 전문 API를 생략하는 경우 기존 `legal_document_chunks`와 선택된 `embedding_profile_id`의 `legal_document_chunk_embeddings`를 재사용합니다.
+- 새 `effective_date` 또는 새 `version_label`이 발견되면 기존 문서를 수정하지 않고 새 `legal_documents` row로 저장합니다.
+- 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 달라지면 자동 갱신하지 않고 `conflict_status=review_required`로 저장합니다.
+- provider metadata만으로 동일 version 여부를 확정하기 어렵다면 전문을 가져와 normalization과 checksum 비교를 수행합니다.
 
 ## `legal_document_chunks`
 
@@ -278,6 +295,8 @@ chunk별 embedding 결과를 profile 단위로 저장합니다.
 - chunk 본문이 바뀌어 `content_checksum`이 달라지면 기존 embedding은 `stale`로 간주하고 같은 profile로 재임베딩할 수 있어야 합니다.
 - `embedding` 컬럼은 profile별 dimension을 저장할 수 있도록 고정 `vector(N)` 대신 일반 `vector`를 사용합니다. application/service 계층은 반환 vector 길이가 `embedding_profiles.dimensions`와 같은지 검증해야 합니다.
 - 검색은 반드시 하나의 `embedding_profile_id`를 선택한 뒤 같은 profile의 embedding끼리만 비교합니다.
+- 공식 source preflight 결과 문서와 chunk가 최신이면 같은 `embedding_profile_id`의 기존 `embedded` row를 재사용합니다.
+- chunk `content_checksum`, embedding profile, normalization 결과, chunking 설정이 달라진 경우 기존 embedding row를 최신 결과로 간주하지 않습니다.
 
 pgvector index 후보:
 

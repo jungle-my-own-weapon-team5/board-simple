@@ -147,14 +147,20 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 시스템은 법률 source metadata를 정규화된 문서와 분리해 저장해야 합니다.
 
-초기 source type:
+초기 provider:
 
-- manual fixture
-- user upload: 계약서, PDF, 스캔본, 사용자 메모 등 사용자 제공 문서
-- statute: 국가법령정보 Open API 등 backend가 수집하는 공식 법령
-- case: 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집하는 판례
-- legal interpretation: 공식 API에서 수집하는 법령해석례
-- administrative appeal: 공식 API에서 수집하는 행정심판례
+- `fixture`: 반복 가능한 테스트와 학습용 문서
+- `upload`: 사용자가 제공한 계약서, PDF 추출 텍스트, 스캔본 OCR 결과, 메모
+- `law_open_api`: 국가법령정보 Open API 등 backend가 호출하는 공식 법률 API
+
+초기 source/document type:
+
+- `statute`: 국가법령정보 Open API 등 backend가 수집하는 공식 법령
+- `case`: 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집하는 판례
+- `interpretation`: 공식 API에서 수집하는 법령해석례
+- `admin_appeal`: 공식 API에서 수집하는 행정심판례
+- `user_file`: 사용자 제공 계약서, PDF 추출 텍스트, 스캔본 OCR 결과
+- `memo`: 사용자가 직접 입력한 메모
 
 수용 기준:
 
@@ -224,6 +230,9 @@ chunking은 다음 구조를 보존해야 합니다.
 - 사용자 query에 대해 rank가 매겨진 chunk를 반환합니다.
 - 검색 결과는 score, rank, document title, source URL, chunk content를 포함합니다.
 - LLM 답변 생성 없이 retrieval만 테스트할 수 있어야 합니다.
+- 검색 요청은 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 지원해야 합니다.
+- `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하는 기본 모드입니다.
+- `search_mode=issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드이며 기본 검색 예산을 더 크게 둡니다.
 
 ## FR-010 Hybrid Retrieval
 
@@ -262,6 +271,7 @@ hybrid retrieval은 다음을 결합합니다.
 - 결과는 cited chunk와 source metadata를 포함합니다.
 - 사용자는 검색된 source excerpt를 확인할 수 있습니다.
 - 검색 기능은 답변 초안 생성과 독립적으로 동작해야 합니다.
+- 다수 쟁점 탐지 시 `issue_spotting` 검색 모드를 사용해 특정 문서의 일부 chunk만 과도하게 선택되는 문제를 완화할 수 있어야 합니다.
 
 ## FR-013 답변 초안 보조
 
@@ -298,7 +308,7 @@ hybrid retrieval은 다음을 결합합니다.
 
 ## FR-016 MCP 서버와 외부 tool 연동
 
-시스템은 MVP에서 MCP 서버를 제공하고, Agent가 JSON-RPC 기반 MCP tool을 호출할 수 있어야 합니다.
+시스템은 MVP에서 FastAPI 내부 `POST /api/mcp` MCP endpoint를 제공하고, Agent가 JSON-RPC 기반 MCP tool을 호출할 수 있어야 합니다. 별도 local MCP process는 후속 확장으로 둡니다.
 
 MVP tool:
 
@@ -320,6 +330,7 @@ MVP tool:
 - `tools/list` 또는 이에 준하는 registry는 허용된 tool만 반환합니다.
 - `tools/call`은 allowlist에 없는 tool을 거부합니다.
 - `search_law_open_api`는 실제 외부 서비스를 호출하되, API key는 서버 환경변수에서만 읽습니다.
+- `search_law_open_api.target`은 내부 문서 유형과 맞춰 `statute`, `case`, `interpretation`, `admin_appeal`을 사용하고, 외부 API의 실제 구분값은 adapter 내부에서 매핑합니다.
 - MCP tool input/output은 secret과 raw 개인정보를 제거한 metadata 수준에서 감사 가능해야 합니다.
 - tool은 unrestricted filesystem, shell, database operation에 접근할 수 없어야 합니다.
 - 외부 API 실패, timeout, rate limit은 안전한 오류로 변환합니다.
@@ -472,7 +483,7 @@ MVP Agent 역할:
 - `pgvector` Python package: SQLAlchemy vector 지원
 - OpenAI provider adapter 또는 작은 HTTP client wrapper
 - Gemini/Claude 확장을 고려한 공통 provider interface
-- `httpx`: 외부 법률 API 호출
+- `httpx2` 또는 프로젝트에서 선택한 HTTP client wrapper: OpenAI provider와 외부 법률 API 호출
 - deterministic legal document fixture
 
 ## 프레임워크 적용 기준

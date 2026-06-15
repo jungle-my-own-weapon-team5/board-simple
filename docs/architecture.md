@@ -202,7 +202,7 @@ Browser
 Next.js AI/RAG screens
   |
   v
-FastAPI api/ai.py, api/legal_documents.py
+FastAPI api/rag.py, api/ai.py, api/mcp.py, api/legal_documents.py
   |
   v
 AI/RAG services
@@ -291,12 +291,14 @@ backend/app/
 5. Retrieval
    - 사용자 query를 embedding합니다.
    - vector similarity로 top-k chunk를 조회합니다.
+   - `focused_answer`와 `issue_spotting` 검색 모드를 구분하고, `score_threshold`, `max_chunks_per_document`로 결과 폭과 문서 편중을 조절합니다.
    - 문서 유형, 날짜, 법원, 법령명, jurisdiction 같은 metadata filter를 적용할 수 있게 합니다.
    - 이후 단계에서 vector search와 PostgreSQL full-text search를 결합한 hybrid search를 도입합니다.
 
 6. MCP tool exposure
    - 내부 retrieval은 `search_legal_documents` MCP tool로도 호출할 수 있게 합니다.
    - 국가법령정보 Open API 조회는 `search_law_open_api` MCP tool로 호출합니다.
+   - `search_law_open_api`의 `target`은 내부 `document_type`인 `statute`, `case`, `interpretation`, `admin_appeal`을 사용하고, 외부 API별 parameter는 adapter 내부에서 매핑합니다.
    - citation 검증은 `verify_citations` MCP tool로 분리합니다.
    - MCP tool은 allowlist와 JSON-RPC schema로 제한합니다.
 
@@ -466,6 +468,10 @@ rag_retrievals
 - 사용자 제공 문서: 계약서, PDF, 스캔본, 사용자가 직접 입력한 메모 등입니다. `document_type=user_file` 또는 `memo`로 저장하고, 공식 법령 원문처럼 최종 진실로 간주하지 않습니다.
 - 테스트와 학습 재현성을 위한 fixture 문서는 `provider=fixture`로 저장합니다.
 
+공식 법률 corpus는 매번 전문을 다시 내려받지 않습니다. backend는 먼저 국가법령정보 Open API의 metadata 응답에서 `provider`, `external_id`, `canonical_id`, `version_label`, `effective_date`, `published_date`를 추출하고, DB의 기존 `legal_sources`, `legal_documents`, `legal_document_chunks`, `legal_document_chunk_embeddings` 상태와 비교합니다. 같은 canonical/version 문서가 이미 indexed 상태이고 선택된 embedding profile의 chunk embedding이 최신이면 전문 API 호출, normalization, chunking, embedding 호출을 생략하고 DB의 기존 chunk/embedding을 재사용합니다.
+
+새 시행일이나 새 version이 확인되면 기존 문서를 덮어쓰지 않고 별도 문서 version으로 저장합니다. 반대로 같은 canonical/version인데 전문 재조회 결과 `normalized_checksum`이 달라지면 어떤 것이 최종 진실인지 자동 판단하지 않고 conflict review 상태로 남깁니다. 최신성 확인은 기존 색인을 안전하게 재사용하기 위한 절차이며, 과거 version 삭제 기준이 아닙니다.
+
 초기 소스 도입 순서는 다음을 권장합니다.
 
 1. 테스트와 학습 재현성을 위한 fixture 문서
@@ -531,7 +537,7 @@ embed(texts, *, model, dimensions, timeout) -> list[EmbeddingResult]
 
 과제 요구사항을 충족하기 위해 MCP와 AI Agent는 MVP 범위에 포함합니다.
 
-MCP는 모델에게 unrestricted database, filesystem, shell 접근을 제공하기 위한 장치가 아닙니다. 이 프로젝트에서 MCP는 Agent가 사용할 수 있는 법률 조회와 검증 tool의 표준 경계입니다. 모든 tool은 서버 allowlist로 제한하고 JSON-RPC request/response schema를 검증합니다.
+MCP는 모델에게 unrestricted database, filesystem, shell 접근을 제공하기 위한 장치가 아닙니다. 이 프로젝트에서 MCP는 Agent가 사용할 수 있는 법률 조회와 검증 tool의 표준 경계입니다. MVP에서는 FastAPI 내부 `POST /api/mcp` endpoint로 제공하고, 모든 tool은 서버 allowlist와 JSON-RPC request/response schema로 제한합니다. 별도 local MCP process는 후속 확장 후보입니다.
 
 MVP MCP tool:
 
