@@ -8,8 +8,11 @@
 
 - RAG 검색은 FastAPI service + pgvector로 명시적으로 구현합니다.
 - MCP는 Agent가 사용할 수 있는 tool 경계를 표준화합니다.
+- MVP는 멀티에이전트가 아니라 단일 Orchestrator Agent입니다.
+- MCP tool은 Agent가 아닙니다. tool은 Orchestrator 또는 전문 Agent가 호출하는 제한된 service 경계입니다.
 - Agent는 OpenAI API를 사용하되, Gemini/Claude로 확장 가능한 provider adapter 뒤에서 호출합니다.
 - LangGraph는 MVP 필수 의존성으로 두지 않고, 명시적 bounded state machine으로 "LangGraph 또는 유사 구조" 요구를 충족합니다.
+- 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 ## 과제 요구사항 대응
 
@@ -21,7 +24,7 @@
 | JSON-RPC request/response | `tools/list`, `tools/call` 형식의 JSON-RPC 계약 제공 |
 | 실제 외부 서비스 연동 | `search_law_open_api` tool이 국가법령정보 Open API 호출 |
 | API key/권한 전략 | `LAW_OPEN_API_OC`는 서버 환경변수에서만 읽고 로그/응답/DB에 저장하지 않음 |
-| AI Agent | bounded state machine으로 계획, tool 선택, 실행, 관찰, 초안 작성, 검증 수행 |
+| AI Agent | MVP는 단일 Orchestrator Agent. 후속 확장에서 Supervisor Agent와 전문 Agent로 분리 |
 | function/tool calling | Agent가 MCP tool registry를 통해 allowlist된 tool만 호출 |
 | state/memory | `rag_runs`, `rag_retrievals`, `agent_steps`에 실행 상태와 audit 저장 |
 | 무한 루프 방지 | `max_iterations`, `max_tool_calls`, timeout, 실패 상태 저장 |
@@ -47,8 +50,18 @@ backend/app/services/agent/
   __init__.py
   orchestrator.py
   state.py
+  contracts.py
   prompts.py
   citations.py
+  supervisor.py
+  agents/
+    __init__.py
+    issue_spotting.py
+    retrieval.py
+    legal_source.py
+    drafting.py
+    citation_verifier.py
+    safety_review.py
 
 backend/app/repositories/
   agent_steps.py
@@ -67,8 +80,11 @@ backend/app/api/
 | `mcp/tools/legal_documents.py` | 내부 RAG retrieval service 호출 |
 | `mcp/tools/legal_open_api.py` | 외부 법률 API 호출과 응답 정규화 |
 | `mcp/tools/citations.py` | citation이 retrieved chunk 또는 외부 source에 근거하는지 검증 |
-| `agent/orchestrator.py` | Agent 상태 흐름 실행 |
+| `agent/orchestrator.py` | MVP 단일 Orchestrator Agent 상태 흐름 실행 |
 | `agent/state.py` | Agent state, step type, loop counter 정의 |
+| `agent/contracts.py` | 후속 전문 Agent가 공유할 `AgentTask`, `AgentResult`, `AgentContext`, `AgentHandoff` 계약 |
+| `agent/supervisor.py` | 후속 멀티에이전트 workflow의 전문 Agent 호출 순서, handoff, retry, 중단 조건 결정 |
+| `agent/agents/*` | 후속 전문 Agent 구현 |
 | `repositories/agent_steps.py` | step audit 저장 |
 
 ## MCP JSON-RPC 계약
@@ -214,7 +230,7 @@ invalid: list[CitationValidationError]
 
 ## Agent State Machine
 
-MVP Agent는 다음 상태 흐름을 사용합니다.
+MVP Agent는 하나의 `OrchestratorAgent`이며 다음 상태 흐름을 사용합니다.
 
 ```text
 plan
@@ -238,6 +254,8 @@ plan
 | `verify` | `verify_citations`로 citation 검증 |
 | `persist` | `rag_runs`, `rag_retrievals`, `agent_steps` 저장 |
 
+MVP에서는 위 상태를 하나의 `OrchestratorAgent`가 수행합니다. 이 단계에서 MCP tool과 Agent를 혼동하지 않습니다. `search_legal_documents`, `search_law_open_api`, `verify_citations`는 Agent가 아니라 Orchestrator가 호출하는 tool입니다.
+
 Agent는 다음 조건에서 중단합니다.
 
 - `max_iterations` 초과
@@ -247,6 +265,81 @@ Agent는 다음 조건에서 중단합니다.
 - citation 검증 실패 후 복구 불가
 
 중단 시에는 `rag_runs.status=failed` 또는 근거 부족 응답을 저장합니다.
+
+## 멀티에이전트 확장 설계
+
+단일 Orchestrator가 안정화된 뒤 다음 구조로 확장합니다.
+
+```text
+SupervisorAgent
+  -> IssueSpottingAgent
+  -> RetrievalAgent
+  -> LegalSourceAgent
+  -> DraftingAgent
+  -> CitationVerifierAgent
+  -> SafetyReviewAgent
+```
+
+Agent 역할:
+
+| Agent | 책임 |
+| --- | --- |
+| `SupervisorAgent` | 전체 계획, Agent 호출 순서, handoff, retry, 중단 조건 결정 |
+| `IssueSpottingAgent` | 사실관계에서 후보 쟁점, 법률 영역, 누락 사실 추출 |
+| `RetrievalAgent` | 내부 RAG 검색, `focused_answer`/`issue_spotting` 선택, 검색 결과 정리 |
+| `LegalSourceAgent` | 국가법령정보 Open API 등 외부 공식 source 조회 필요성 판단과 결과 정리 |
+| `DraftingAgent` | 검색된 evidence 기반 쟁점 정리 또는 답변 초안 작성 |
+| `CitationVerifierAgent` | citation이 retrieved chunk 또는 외부 source metadata에 근거하는지 검증 |
+| `SafetyReviewAgent` | 법률 자문 단정, 개인정보, secret, prompt injection 영향 검토 |
+
+공통 계약:
+
+```text
+AgentTask
+  task_type
+  user_query
+  facts
+  evidence
+  constraints
+
+AgentResult
+  status
+  output
+  citations
+  confidence
+  missing_facts
+  requires_human_review
+
+AgentContext
+  run_id
+  user_id
+  prompt_version
+  tool_budget
+  evidence_set
+
+AgentHandoff
+  from_agent
+  to_agent
+  reason
+  payload
+```
+
+멀티에이전트 규칙:
+
+- `SupervisorAgent`만 다음 Agent 호출 순서를 결정합니다.
+- 전문 Agent는 서로를 직접 호출하지 않습니다. 필요한 다음 작업은 `AgentHandoff`로 Supervisor에게 반환합니다.
+- 전문 Agent는 provider SDK, database, filesystem을 직접 호출하지 않습니다.
+- 내부 검색과 외부 source 조회는 기존 MCP tool 또는 service 경계를 사용합니다.
+- citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
+- 각 Agent 실행과 handoff는 `agent_steps`에 audit metadata로 저장합니다. MVP 스키마에서는 기본 실행 metadata를 우선 저장하고, handoff reason/confidence/human review 같은 상세 필드는 후속 migration에서 확장할 수 있습니다.
+- `max_iterations`, `max_tool_calls`, `max_agent_handoffs`, timeout으로 루프를 제한합니다.
+
+LangGraph 도입 기준:
+
+- 초기 멀티에이전트는 위 계약을 사용해 직접 구현한 `SupervisorAgent`로 시작할 수 있습니다.
+- handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 LangGraph로 이전합니다.
+- LangGraph로 이전해도 MCP tool 계약, provider adapter 계약, RAG DB schema, citation 검증 정책은 유지합니다.
+- LangGraph node는 전문 Agent 또는 검증 step을 감싸는 orchestration 계층이며, 법률 문서 모델이나 citation model의 소유자가 아닙니다.
 
 ## Function/Tool Calling 정책
 
@@ -332,7 +425,8 @@ OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 실
 
 ## 후속 확장
 
-- LangGraph로 상태 흐름 이전
+- Supervisor Agent와 전문 Agent 기반 멀티에이전트 workflow 추가
+- handoff, branching, retry, human-in-the-loop이 복잡해질 경우 LangGraph로 상태 흐름 이전
 - 사용자 추가 질문과 human-in-the-loop
 - progress streaming
 - MCP tool별 권한 정책 세분화

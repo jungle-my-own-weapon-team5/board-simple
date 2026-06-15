@@ -24,7 +24,8 @@
 - MVP의 AI agent/generation provider는 OpenAI API 사용
 - Gemini와 Claude는 동일한 provider adapter 인터페이스로 이후 확장
 - MVP에 MCP 서버, JSON-RPC tool 호출, 실제 외부 법률 API tool을 포함
-- MVP Agent는 LangGraph 의존성 없이 bounded state machine으로 구현하고, 복잡도가 커지면 LangGraph로 확장
+- MVP Agent는 LangGraph 의존성 없이 단일 Orchestrator Agent와 bounded state machine으로 구현합니다.
+- 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 핵심 목표는 RAG의 각 단계를 팀원이 직접 확인하고 테스트할 수 있게 만드는 것입니다.
 
@@ -308,6 +309,8 @@ backend/app/
    - 낮은 신뢰도이거나 오래된 근거를 제거합니다.
 
 8. Agent orchestration
+   - MVP는 멀티에이전트가 아니라 단일 Orchestrator Agent 구조입니다.
+   - MCP tool은 Agent가 아니며, Orchestrator Agent가 호출하는 제한된 service 경계입니다.
    - Agent는 bounded state machine으로 tool 선택, 관찰, 초안 작성, citation 검증을 수행합니다.
    - MVP의 상태 흐름은 `plan -> call_tool -> observe -> decide -> draft -> verify -> persist`입니다.
    - `max_iterations`와 `max_tool_calls`로 무한 루프를 방지합니다.
@@ -554,7 +557,28 @@ MVP Agent 책임:
 - citation 검증을 통과한 결과만 사용자에게 반환합니다.
 - 각 step을 `agent_steps`에 저장하고 `max_iterations`, `max_tool_calls`, timeout으로 무한 루프를 방지합니다.
 
-LangGraph는 MVP 필수 의존성으로 두지 않습니다. 대신 위 상태 흐름을 명시적 bounded state machine으로 구현합니다. 이후 분기, 재시도, human-in-the-loop, 장기 실행 workflow가 복잡해지면 같은 상태 모델을 LangGraph graph로 옮길 수 있습니다.
+MVP 이후 멀티에이전트 확장:
+
+```text
+SupervisorAgent
+  -> IssueSpottingAgent
+  -> RetrievalAgent
+  -> LegalSourceAgent
+  -> DraftingAgent
+  -> CitationVerifierAgent
+  -> SafetyReviewAgent
+```
+
+- `SupervisorAgent` 또는 `MultiAgentOrchestrator`가 전문 Agent 호출 순서, 재시도, handoff, 중단 조건을 결정합니다.
+- 전문 Agent는 직접 route, repository, provider SDK를 호출하지 않고 정해진 service, MCP tool, provider adapter 경계를 통해 동작합니다.
+- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보를 뽑습니다.
+- `RetrievalAgent`는 내부 RAG 검색 전략과 `search_mode`를 선택합니다.
+- `LegalSourceAgent`는 국가법령정보 Open API 같은 외부 공식 source 조회 필요성을 판단합니다.
+- `DraftingAgent`는 근거 기반 초안을 작성합니다.
+- `CitationVerifierAgent`는 초안의 법률 주장과 citation이 검색 결과 또는 외부 source에 근거하는지 검증합니다.
+- `SafetyReviewAgent`는 과도한 단정, 법률 자문 표현, 개인정보, secret 노출을 검토합니다.
+
+LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator Agent는 명시적 Python state machine으로 구현합니다. 멀티에이전트 확장도 처음에는 같은 계약으로 직접 구현할 수 있으며, handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 해당 상태 모델을 LangGraph graph로 옮깁니다. LangGraph를 도입해도 RAG 문서 모델, MCP tool 계약, provider adapter 계약은 유지합니다.
 
 ## 보안 아키텍처
 
@@ -693,11 +717,12 @@ auth와 AI endpoint는 비용과 보안 위험이 있으므로 외부 공개 전
 2. OpenAI API 기반 generation/embedding provider adapter를 추가합니다.
 3. MCP 서버와 allowlist된 tool registry를 추가합니다.
 4. `search_legal_documents`, `search_law_open_api`, `verify_citations` tool을 구현합니다.
-5. bounded Agent state machine으로 tool 선택, 실행, 관찰, 초안 작성, 검증을 구현합니다.
+5. 단일 Orchestrator Agent의 bounded state machine으로 tool 선택, 실행, 관찰, 초안 작성, 검증을 구현합니다.
 6. hybrid retrieval과 citation tracking을 추가합니다.
 7. Gemini와 Claude provider adapter는 동일 인터페이스로 후속 추가합니다.
-8. LangChain은 provider/tool integration code를 줄이는 효과가 분명할 때만 도입합니다.
-9. LangGraph는 workflow가 durable multi-step orchestration, branching, retry, human-in-the-loop를 요구할 때 도입합니다.
+8. 단일 Orchestrator가 안정화되면 Supervisor Agent와 전문 Agent 기반 멀티에이전트 workflow로 확장합니다.
+9. LangChain은 provider/tool integration code를 줄이는 효과가 분명할 때만 도입합니다.
+10. LangGraph는 workflow가 durable multi-step orchestration, branching, retry, human-in-the-loop를 요구할 때 도입합니다.
 
 이 접근은 법률 근거 데이터 모델을 프레임워크에 너무 일찍 종속시키지 않으면서도, 과제의 MCP/Agent 요구사항과 학습 경로, 디버깅 가능성을 함께 만족시킵니다.
 

@@ -354,6 +354,7 @@ WHERE embedding_profile_id = 1 AND embedding_status = 'embedded';
 ## `agent_steps`
 
 Agent 실행 중 발생한 계획, MCP tool 호출, 관찰, 초안 작성, 검증, 실패 정보를 저장합니다.
+MVP에서는 단일 Orchestrator Agent의 step을 저장합니다. 멀티에이전트 확장 후에는 Supervisor와 전문 Agent 실행, handoff, 검증 step도 같은 audit 흐름으로 추적합니다.
 
 | Column | Type | Nullable | 설명 |
 | --- | --- | --- | --- |
@@ -382,6 +383,10 @@ Agent 실행 중 발생한 계획, MCP tool 호출, 관찰, 초안 작성, 검�
 
 - `input_json`과 `output_json`에는 API key, Authorization header, raw JWT, 전체 provider request/response를 저장하지 않습니다.
 - Agent loop 제한은 설정값과 실행 중 count로 관리하고, 사후 분석은 `agent_steps` 개수와 status로 확인합니다.
+- MVP의 `agent_steps` schema는 단일 Orchestrator Agent를 기준으로 충분합니다.
+- 멀티에이전트 workflow로 확장할 때는 후속 migration으로 `agent_name`, `parent_step_id`, `handoff_from_step_id`, `handoff_reason`, `confidence`, `requires_human_review`를 추가할 수 있습니다.
+- `parent_step_id`와 `handoff_from_step_id`는 Supervisor가 어떤 전문 Agent 실행을 시작했는지, 어떤 결과가 다음 Agent로 넘겨졌는지 추적하기 위한 후보입니다.
+- `confidence`와 `requires_human_review`는 전문 Agent의 불확실성 또는 사용자/관리자 검토 필요성을 audit에 남기기 위한 후보입니다.
 
 ## `rag_retrievals`
 
@@ -526,3 +531,4 @@ DB에 저장하지 않는 것:
 - 사용자 업로드 문서를 shared corpus에 넣을지 user-private corpus로 분리할지
 - 분쟁 사실관계와 AI run의 보존 기간
 - 관리자 audit 접근 범위
+- 멀티에이전트 확장 시 `agent_steps`를 확장할지, 별도 `agent_handoffs` 테이블을 만들지

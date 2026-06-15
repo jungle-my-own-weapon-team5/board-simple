@@ -813,6 +813,8 @@ MCP 오류는 JSON-RPC error object로 반환합니다. 오류 메시지에는 A
 
 ## AI Agent API
 
+MVP의 AI Agent API는 멀티에이전트가 아니라 단일 Orchestrator Agent를 기준으로 동작합니다. Orchestrator는 allowlist된 MCP tool을 순서대로 호출하고, 각 step을 `agent_steps`에 저장합니다. 멀티에이전트 확장 후에도 API request/response shape는 가능한 한 유지하고, Supervisor와 전문 Agent의 실행 details는 audit metadata로 분리합니다.
+
 ### POST `/api/ai/agent-runs`
 
 쟁점 정리와 답변 초안 생성에서 공통으로 사용하는 Agent 실행 API입니다. UI는 단순화를 위해 `/api/ai/dispute-issues`와 `/api/ai/answer-drafts`를 먼저 호출해도 되지만, 내부 구현은 이 실행 모델을 기준으로 맞춥니다.

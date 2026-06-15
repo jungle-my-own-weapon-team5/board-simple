@@ -23,11 +23,12 @@
 - embedding과 LLM generation은 provider adapter로 분리
 - Gemini와 Claude는 후속 provider adapter로 확장
 - MVP에 MCP 서버, JSON-RPC tool 호출, 실제 외부 법률 API tool 포함
-- MVP Agent는 allowlist된 MCP tool을 사용하는 bounded state machine으로 구현
+- MVP Agent는 allowlist된 MCP tool을 사용하는 단일 Orchestrator Agent와 bounded state machine으로 구현
+- 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장
 - `AI_RAG_ENABLED=false`인 동안에는 provider key와 model 설정이 비어 있어도 됨
 - Next.js UI로 게시판과 AI workflow 제공
 
-LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도 MVP 필수 의존성으로 두지 않고, 같은 개념을 명시적 bounded state machine으로 구현합니다. MCP는 과제 요구사항이므로 MVP에 포함합니다.
+LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도 MVP 필수 의존성으로 두지 않고, 같은 개념을 명시적 bounded state machine으로 구현합니다. MCP는 과제 요구사항이므로 MVP에 포함합니다. 멀티에이전트 확장도 처음에는 직접 구현한 Supervisor Agent로 시작할 수 있으며, handoff, branching, retry, human-in-the-loop이 복잡해지면 LangGraph 도입을 검토합니다.
 
 법률 문서 유형의 기본 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 통일합니다.
 
@@ -77,6 +78,7 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 - 최종 법률 자문 제공
 - 자격 있는 법률 전문가의 검토 대체
 - 첫 버전에서 autonomous multi-agent execution 구현
+- 첫 버전에서 LangGraph 의존성 도입
 - 첫 버전에서 real-time crawling 구현
 - 결제, 조직 tenant, enterprise SSO 구현
 
@@ -385,6 +387,17 @@ MVP Agent 역할:
 - 클라이언트는 provider나 tool을 임의 선택할 수 없습니다.
 - MVP에서는 OpenAI를 사용하고, Gemini/Claude는 provider adapter 확장으로 추가할 수 있어야 합니다.
 
+MVP Agent는 단일 Orchestrator Agent입니다. MCP tool은 Agent가 아니며, Orchestrator가 호출하는 제한된 service 경계입니다.
+
+후속 멀티에이전트 확장 요구사항:
+
+- `SupervisorAgent`가 전문 Agent 호출 순서, handoff, retry, 중단 조건을 결정합니다.
+- 전문 Agent 후보는 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`입니다.
+- 전문 Agent는 서로를 직접 호출하지 않고, 필요한 다음 작업을 `AgentHandoff`로 Supervisor에게 반환합니다.
+- 전문 Agent는 provider SDK, database, filesystem을 직접 호출하지 않고 service, MCP tool, provider adapter 경계를 사용합니다.
+- citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
+- 각 Agent 실행과 handoff는 `agent_steps` 또는 후속 audit schema에 저장되어야 합니다.
+
 ## 비기능 요구사항
 
 ## NFR-001 보안
@@ -500,11 +513,15 @@ MVP에서는 LangGraph 의존성 없이 명시적 bounded state machine으로 Ag
 
 LangGraph는 workflow가 다음 특성을 갖게 될 때 도입합니다.
 
+- Supervisor가 여러 전문 Agent를 조건부로 호출
+- Agent 간 handoff와 branching 증가
 - 부족한 사실관계에 대해 사용자에게 추가 질문
 - 사용자 답변에 따른 재검색
 - human approval
 - 실패한 tool retry
 - 긴 run의 progress streaming
+
+LangGraph를 도입하더라도 legal document schema, citation model, MCP tool 계약, provider adapter 계약은 유지합니다.
 
 ### MCP
 
@@ -530,7 +547,8 @@ MCP는 MVP 필수 범위입니다. Agent가 내부 RAG와 외부 법률 API를 �
 14. hybrid retrieval을 추가합니다.
 15. admin control과 audit view를 추가합니다.
 16. Gemini/Claude provider adapter를 필요에 따라 추가합니다.
-17. LangChain 또는 LangGraph는 반복 구현 후 필요가 명확할 때 도입합니다.
+17. 단일 Orchestrator가 안정화되면 Supervisor Agent와 전문 Agent 기반 멀티에이전트 workflow를 추가합니다.
+18. LangChain 또는 LangGraph는 반복 구현 후 필요가 명확할 때 도입합니다.
 
 ## 마일스톤
 

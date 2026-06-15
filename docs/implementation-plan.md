@@ -4,7 +4,7 @@
 
 현재 게시판 템플릿을 유지하면서 FastAPI + pgvector 기반 명시적 RAG 구조와 MCP/Agent 기능을 단계적으로 추가합니다.
 
-MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사용합니다. MCP 서버는 실제 외부 법률 API tool을 포함하고, Agent는 bounded state machine으로 tool 호출을 조율합니다. Gemini와 Claude는 같은 provider adapter 인터페이스로 후속 확장합니다.
+MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사용합니다. MCP 서버는 실제 외부 법률 API tool을 포함하고, MVP Agent는 단일 `OrchestratorAgent`로 bounded state machine을 통해 tool 호출을 조율합니다. Gemini와 Claude는 같은 provider adapter 인터페이스로 후속 확장합니다.
 
 ## 전제
 
@@ -322,7 +322,8 @@ backend/tests/test_mcp_legal_tools.py
 
 목표:
 
-- 검색 계획, MCP tool 호출, 관찰, 초안 작성, citation 검증을 하나의 제한된 Agent workflow로 묶습니다.
+- 검색 계획, MCP tool 호출, 관찰, 초안 작성, citation 검증을 하나의 제한된 단일 Orchestrator Agent workflow로 묶습니다.
+- MVP에서는 멀티에이전트가 아니라 단일 Orchestrator Agent를 구현합니다.
 
 예상 추가 파일:
 
@@ -341,6 +342,7 @@ backend/tests/test_agent_orchestrator.py
 - `max_iterations`, `max_tool_calls`, timeout을 설정으로 제한합니다.
 - 각 step은 `agent_steps`에 저장합니다.
 - Agent는 allowlist된 MCP tool만 호출합니다.
+- MCP tool은 Agent가 아니라 Orchestrator가 호출하는 제한된 service 경계입니다.
 - 모델 응답은 provider adapter를 통해 OpenAI API로 생성합니다.
 - 검색된 문서와 외부 API 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
 
@@ -474,7 +476,54 @@ backend/tests/test_ai_provider_selection.py
 - provider별 missing key validation test
 - mock adapter로 API response shape 유지 확인
 
-## 13단계: 품질과 보안 강화
+## 13단계: 멀티에이전트 workflow 확장
+
+목표:
+
+- 단일 Orchestrator가 안정적으로 동작한 뒤 Supervisor Agent와 전문 Agent 구조로 확장합니다.
+- Agent 간 작업 순서, handoff, retry, 중단 조건을 명시적으로 관리합니다.
+
+예상 추가 파일:
+
+```text
+backend/app/services/agent/contracts.py
+backend/app/services/agent/supervisor.py
+backend/app/services/agent/agents/__init__.py
+backend/app/services/agent/agents/issue_spotting.py
+backend/app/services/agent/agents/retrieval.py
+backend/app/services/agent/agents/legal_source.py
+backend/app/services/agent/agents/drafting.py
+backend/app/services/agent/agents/citation_verifier.py
+backend/app/services/agent/agents/safety_review.py
+backend/tests/test_multi_agent_supervisor.py
+```
+
+구현 기준:
+
+- `SupervisorAgent`가 전문 Agent 호출 순서, handoff, retry, 중단 조건을 결정합니다.
+- 공통 계약은 `AgentTask`, `AgentResult`, `AgentContext`, `AgentHandoff`로 시작합니다.
+- 전문 Agent는 서로를 직접 호출하지 않고 handoff 요청을 Supervisor에게 반환합니다.
+- 전문 Agent는 provider SDK, DB, filesystem을 직접 호출하지 않고 service, MCP tool, provider adapter 경계를 사용합니다.
+- `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`를 단계적으로 추가합니다.
+- citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
+- `max_agent_handoffs`, `max_iterations`, `max_tool_calls`, timeout으로 루프를 제한합니다.
+- 각 Agent 실행과 handoff는 `agent_steps`에 저장합니다. 필요한 경우 후속 migration으로 `agent_name`, `parent_step_id`, `handoff_from_step_id`, `handoff_reason`, `confidence`, `requires_human_review`를 추가합니다.
+
+LangGraph 도입 기준:
+
+- 초기 멀티에이전트는 직접 구현한 `SupervisorAgent`로 시작합니다.
+- handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 LangGraph로 이전합니다.
+- LangGraph를 도입해도 MCP tool 계약, provider adapter 계약, RAG DB schema, citation 검증 정책은 유지합니다.
+
+검증:
+
+- Supervisor가 올바른 전문 Agent 순서를 선택하는지 테스트
+- Agent handoff metadata 저장 테스트
+- `max_agent_handoffs` 초과 중단 테스트
+- citation verifier와 safety review가 누락되지 않는지 테스트
+- 잘못된 Agent 직접 호출 또는 tool 우회 방지 테스트
+
+## 14단계: 품질과 보안 강화
 
 목표:
 
@@ -518,7 +567,8 @@ backend/tests/test_ai_provider_selection.py
 10. frontend AI UI
 11. 외부 법률 API ingestion과 운영 정책
 12. Gemini/Claude provider 확장
-13. 품질과 보안 강화
+13. 멀티에이전트 workflow 확장
+14. 품질과 보안 강화
 ```
 
 ## 완료 기준
@@ -532,6 +582,8 @@ MVP 완료 기준:
 - MCP JSON-RPC endpoint가 allowlist된 tool을 호출합니다.
 - `search_law_open_api`가 실제 외부 법률 API 연동 경계를 제공합니다.
 - Agent가 bounded state machine으로 MCP tool을 호출하고 반복 제한을 지킵니다.
+- MVP Agent는 단일 Orchestrator Agent로 동작하며 MCP tool을 Agent로 취급하지 않습니다.
+- 후속 멀티에이전트 확장에서는 Supervisor Agent가 전문 Agent 호출 순서와 handoff를 관리합니다.
 - `/api/ai/dispute-issues`와 `/api/ai/answer-drafts`가 citation과 disclaimer를 포함해 응답합니다.
 - generation run에는 `agent_provider`, `agent_model_name`이 저장됩니다.
 - 모든 RAG run에는 `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `prompt_version`, retrieved chunk가 `rag_runs`와 `rag_retrievals`에 저장됩니다.
@@ -547,6 +599,7 @@ MVP 완료 기준:
 - RAG 아키텍처와 retrieval 평가 결과
 - MCP 서버 구조, JSON-RPC 예시, 실제 외부 API tool 설명
 - Agent 상태 흐름, tool 선택 방식, loop guard 설명
+- 멀티에이전트 확장 시 Supervisor, 전문 Agent, handoff, LangGraph 도입 기준 설명
 - 데모 화면 또는 스크린샷
 - 한계점과 개선 방향
 
@@ -559,6 +612,7 @@ MVP 완료 기준:
 - AI run history는 소유자만 볼 수 있게 할지, admin audit 접근을 허용할지 결정해야 합니다.
 - 분쟁 사실관계의 보존 기간은 어떻게 정할 것인가요?
 - 답변 초안은 수정 후 게시글로 발행 가능한 형태로 만들지, 별도 artifact로만 유지할지 결정해야 합니다.
+- 멀티에이전트 handoff가 복잡해질 때 LangGraph로 이전할 구체적 임계값을 어떻게 정의할 것인가요?
 
 ## 참고 문서
 

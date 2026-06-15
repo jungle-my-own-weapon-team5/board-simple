@@ -4,7 +4,7 @@
 
 이 문서는 법률정보 기반 RAG 파이프라인의 단계별 책임과 입출력 계약을 정의합니다.
 
-MVP는 FastAPI service 코드로 명시적으로 구현합니다. MCP 서버와 bounded Agent state machine은 과제 요구사항을 충족하기 위해 포함하며, LangChain과 LangGraph는 초기 필수 의존성으로 두지 않습니다.
+MVP는 FastAPI service 코드로 명시적으로 구현합니다. MCP 서버와 단일 Orchestrator Agent 기반 bounded state machine은 과제 요구사항을 충족하기 위해 포함하며, LangChain과 LangGraph는 초기 필수 의존성으로 두지 않습니다. 멀티에이전트 workflow는 단일 Orchestrator가 안정화된 뒤 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 ## 전체 흐름
 
@@ -379,6 +379,10 @@ plan
   -> verify
   -> persist
 ```
+
+MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP tool은 Agent가 아니며, Agent가 호출하는 제한된 service 경계입니다.
+
+후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 
 제한:
 

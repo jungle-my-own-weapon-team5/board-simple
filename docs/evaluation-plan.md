@@ -158,6 +158,7 @@ MVP 기준:
 
 검사 항목:
 
+- MVP Agent가 단일 Orchestrator Agent로 동작하며 MCP tool을 Agent처럼 취급하지 않는가
 - 사용자의 질문에 맞는 MCP tool을 선택하는가
 - tool 결과를 evidence로만 사용하고 instruction으로 따르지 않는가
 - 근거 부족 시 추가 확인 필요 사실을 제시하는가
@@ -170,6 +171,24 @@ MVP 기준:
 - 정상 시나리오에서 Agent run은 `completed` 상태로 끝나야 합니다.
 - 반복 제한 fixture에서는 무한 루프 없이 `failed` 또는 근거 부족 응답으로 종료해야 합니다.
 - citation 검증 실패 시 해당 법률 주장을 제거하거나 한계로 표시해야 합니다.
+
+## Multi-Agent 평가
+
+멀티에이전트 확장 이후 검사 항목:
+
+- `SupervisorAgent`가 올바른 전문 Agent 호출 순서를 선택하는가
+- 전문 Agent가 서로를 직접 호출하지 않고 handoff를 Supervisor에게 반환하는가
+- `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 책임이 섞이지 않는가
+- `CitationVerifierAgent`와 `SafetyReviewAgent`가 최종 응답 전에 누락 없이 실행되는가
+- `max_agent_handoffs`, `max_iterations`, `max_tool_calls`, timeout이 루프를 제한하는가
+- handoff reason, confidence, human review 필요 여부가 audit에 남는가
+- LangGraph 도입 후에도 MCP tool 계약, provider adapter 계약, RAG DB schema, citation 검증 정책이 유지되는가
+
+멀티에이전트 확장 기준:
+
+- 정상 시나리오에서 Supervisor run은 `completed` 상태로 끝나야 합니다.
+- 잘못된 Agent 선택 fixture에서는 Supervisor가 재계획하거나 안전하게 실패해야 합니다.
+- citation 검증 또는 safety review를 건너뛰는 workflow는 실패해야 합니다.
 
 ## Regression 평가
 
@@ -184,6 +203,8 @@ MVP 기준:
 - legal source 추가
 - MCP tool 추가 또는 schema 변경
 - Agent state machine 변경
+- Multi-agent Supervisor 또는 전문 Agent 변경
+- LangGraph 도입 또는 graph node 변경
 
 각 변경은 최소 fixture query set을 다시 실행해야 합니다.
 
