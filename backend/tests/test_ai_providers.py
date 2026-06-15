@@ -146,6 +146,163 @@ def test_generation_provider_without_embedding_support_fails_explicitly() -> Non
         )
 
 
+def test_openai_provider_posts_text_generation_request_and_normalizes_output_text() -> None:
+    captured_requests: list[httpx.Request] = []
+    captured_payloads: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured_requests.append(request)
+        captured_payloads.append(json.loads(request.content.decode("utf-8")))
+        return httpx.Response(
+            200,
+            json={
+                "id": "resp-test",
+                "model": "gpt-5.4-mini",
+                "status": "completed",
+                "output_text": "법률 쟁점 초안입니다.",
+                "usage": {
+                    "input_tokens": 12,
+                    "output_tokens": 8,
+                    "total_tokens": 20,
+                },
+            },
+        )
+
+    provider = OpenAIProvider(
+        api_key="test-api-key",
+        base_url="https://api.openai.test/v1/",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = provider.generate_text(
+        AITextRequest(
+            prompt="보증금 반환 쟁점을 정리해주세요.",
+            model="gpt-5.4-mini",
+            temperature=0.2,
+            timeout_seconds=10,
+            metadata={"purpose": "agent_draft"},
+        )
+    )
+
+    assert len(captured_requests) == 1
+    assert str(captured_requests[0].url) == "https://api.openai.test/v1/responses"
+    assert captured_requests[0].headers["Authorization"].startswith("Bearer ")
+    assert captured_payloads == [
+        {
+            "model": "gpt-5.4-mini",
+            "input": "보증금 반환 쟁점을 정리해주세요.",
+            "temperature": 0.2,
+        }
+    ]
+    assert result.text == "법률 쟁점 초안입니다."
+    assert result.agent_provider == "openai"
+    assert result.agent_model_name == "gpt-5.4-mini"
+    assert result.finish_reason == "completed"
+    assert result.raw_response_id == "resp-test"
+    assert result.usage is not None
+    assert result.usage.input_tokens == 12
+    assert result.usage.output_tokens == 8
+    assert result.usage.total_tokens == 20
+
+
+def test_openai_provider_parses_text_generation_output_array() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "resp-array",
+                "model": "gpt-array",
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [
+                            {"type": "output_text", "text": "첫 번째 문장."},
+                            {"type": "output_text", "text": " 두 번째 문장."},
+                        ],
+                    }
+                ],
+            },
+        )
+
+    provider = OpenAIProvider(
+        api_key="test-api-key",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = provider.generate_text(_openai_text_request(model="gpt-array"))
+
+    assert result.text == "첫 번째 문장. 두 번째 문장."
+    assert result.agent_model_name == "gpt-array"
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected_error"),
+    [
+        (401, ProviderAuthError),
+        (403, ProviderAuthError),
+        (429, ProviderRateLimitError),
+        (500, ProviderUnavailableError),
+    ],
+)
+def test_openai_provider_maps_generation_http_errors_to_provider_errors(
+    status_code: int,
+    expected_error: type[Exception],
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            status_code,
+            json={"error": {"message": "must not leak test-api-key"}},
+        )
+
+    provider = OpenAIProvider(
+        api_key="test-api-key",
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(expected_error) as exc_info:
+        provider.generate_text(_openai_text_request())
+
+    assert "test-api-key" not in str(exc_info.value)
+
+
+def test_openai_provider_maps_generation_timeout_to_provider_timeout_error() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("timeout with test-api-key", request=request)
+
+    provider = OpenAIProvider(
+        api_key="test-api-key",
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(ProviderTimeoutError, match="timed out") as exc_info:
+        provider.generate_text(_openai_text_request())
+
+    assert "test-api-key" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "response_json",
+    [
+        {"id": "resp-no-text", "model": "gpt-test"},
+        {"id": "resp-empty-text", "model": "gpt-test", "output_text": ""},
+        {"id": "resp-invalid-output", "model": "gpt-test", "output": "bad"},
+    ],
+)
+def test_openai_provider_rejects_invalid_text_generation_response_shape(
+    response_json: dict[str, object],
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=response_json)
+
+    provider = OpenAIProvider(
+        api_key="test-api-key",
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(ProviderResponseError):
+        provider.generate_text(_openai_text_request())
+
+
 def test_openai_provider_posts_embedding_request_and_normalizes_response() -> None:
     captured_requests: list[httpx.Request] = []
     captured_payloads: list[dict[str, object]] = []
@@ -332,6 +489,16 @@ def _openai_embedding_request() -> EmbeddingRequest:
         texts=["테스트 문장"],
         model="text-embedding-3-small",
         dimensions=3,
+        timeout_seconds=10,
+        metadata={},
+    )
+
+
+def _openai_text_request(model: str = "gpt-test") -> AITextRequest:
+    return AITextRequest(
+        prompt="테스트 프롬프트",
+        model=model,
+        temperature=None,
         timeout_seconds=10,
         metadata={},
     )
