@@ -17,6 +17,7 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 - 댓글 작성과 `View more` 방식 페이지네이션
 - `#태그명` 형식 태그 추출
 - 게시글 제목 검색과 페이지네이션
+- LangChain + OpenAI + PostgreSQL pgvector 기반 기술 뉴스 RAG Q&A
 
 ## Stack
 
@@ -54,16 +55,27 @@ cp .env.example .env
 
 필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
+RAG Q&A 기능은 기본적으로 비활성화되어 있습니다. 사용하려면 `.env`에 OpenAI API 키와 RAG 설정을 추가합니다.
+
+```env
+OPENAI_API_KEY=your-api-key
+OPENAI_CHAT_MODEL=gpt-5.5
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+RAG_ENABLED=true
+RAG_COLLECTION_NAME=tech_news_posts
+RAG_TOP_K=5
+```
+
 로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
 ```env
 DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
 ```
 
-전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
+전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 `DOCKER_DATABASE_URL`의 DB host는 `db`를 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
+DOCKER_DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
 ```
 
 ## 개발용 실행 방법
@@ -89,6 +101,12 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
+```
+
+기존 게시글을 RAG 인덱스에 백필하려면 backend 가상환경에서 아래 명령을 실행합니다.
+
+```bash
+python -m app.scripts.reindex_rag
 ```
 
 Windows PowerShell에서는 아래 명령을 사용합니다.
@@ -172,3 +190,4 @@ docker compose down -v
 - `PUT /api/comments/{comment_id}`: 댓글 수정
 - `DELETE /api/comments/{comment_id}`: 댓글 삭제
 - `GET /api/tags`: 태그 목록
+- `POST /api/rag/ask`: 전체 게시글 기반 RAG Q&A
