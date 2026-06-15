@@ -93,6 +93,38 @@ class McpToolNotImplementedError(McpError):
         )
 
 
+class McpToolConfigError(McpError):
+    def __init__(self, message: str = "Tool is not configured") -> None:
+        super().__init__(
+            code=JsonRpcErrorCode.INTERNAL_ERROR,
+            message=message,
+            error_code="mcp_tool_config_error",
+        )
+
+
+class McpToolTimeoutError(McpError):
+    def __init__(self, message: str = "Tool request timed out") -> None:
+        super().__init__(
+            code=JsonRpcErrorCode.INTERNAL_ERROR,
+            message=message,
+            error_code="mcp_tool_timeout",
+        )
+
+
+class McpToolExternalServiceError(McpError):
+    def __init__(
+        self,
+        message: str = "External legal source request failed",
+        *,
+        error_code: str = "mcp_external_service_error",
+    ) -> None:
+        super().__init__(
+            code=JsonRpcErrorCode.INTERNAL_ERROR,
+            message=message,
+            error_code=error_code,
+        )
+
+
 class McpToolExecutionError(McpError):
     def __init__(self) -> None:
         super().__init__(

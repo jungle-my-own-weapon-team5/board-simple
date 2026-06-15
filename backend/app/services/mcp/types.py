@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
+
+if TYPE_CHECKING:
+    from app.core.config import Settings
 
 JsonRpcId = str | int | None
 JsonObject = dict[str, Any]
@@ -19,6 +22,9 @@ class McpToolCallContext:
 
     db: Session | None = None
     user_id: int | None = None
+    settings: "Settings | None" = None
+    ai_client: Any | None = None
+    law_open_api_client: Any | None = None
     request_id: JsonRpcId = None
 
 

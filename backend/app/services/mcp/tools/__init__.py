@@ -1,0 +1,2 @@
+"""MCP legal tool handlers."""
+

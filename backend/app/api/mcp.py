@@ -34,6 +34,7 @@ def handle_mcp_request(
     context = McpToolCallContext(
         db=db,
         user_id=current_user.id,
+        settings=settings,
         request_id=_extract_request_id(payload),
     )
     return server.handle(payload, context=context)
