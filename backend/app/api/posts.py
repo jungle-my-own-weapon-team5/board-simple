@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostListItem, PostPage, PostRead, PostUpdate
+from app.services.rag import delete_post_index_safe, sync_post_index
 from app.services.tags import extract_tag_names, get_or_create_tags
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -66,6 +67,7 @@ def create_post(
     db.add(post)
     db.commit()
     db.refresh(post)
+    sync_post_index(db, post)
     return get_post_or_404(db, post.id)
 
 
@@ -89,6 +91,7 @@ def update_post(
     post.content = payload.content
     post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
     db.commit()
+    sync_post_index(db, post)
     return get_post_or_404(db, post.id)
 
 
@@ -102,5 +105,6 @@ def delete_post(
     if post.author_id != current_user.id:
         raise HTTPException(status_code=403, detail="Only the author can delete this post")
 
+    delete_post_index_safe(db, post.id)
     db.delete(post)
     db.commit()
