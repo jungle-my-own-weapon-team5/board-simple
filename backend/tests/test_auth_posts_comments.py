@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
 from app.main import app
+from app.rag.service import RagAnswer, RagSource
 
 
 @pytest.fixture()
@@ -125,3 +126,46 @@ def test_comment_pagination(client: TestClient) -> None:
     )
     assert next_page.status_code == 200
     assert len(next_page.json()["items"]) == 2
+
+
+def test_rag_chat_requires_login(client: TestClient) -> None:
+    response = client.post("/api/rag/chat", json={"message": "게시글에서 무엇을 찾을 수 있나요?"})
+
+    assert response.status_code == 401
+
+
+def test_rag_chat_returns_answer_and_sources(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    register_and_login(client)
+
+    def fake_answer_question(db: Session, question: str) -> RagAnswer:
+        assert question == "FastAPI 내용 알려줘"
+        return RagAnswer(
+            answer="FastAPI 게시글이 있습니다.",
+            sources=[
+                RagSource(
+                    post_id=1,
+                    title="FastAPI",
+                    heading="Intro",
+                    anchor="user-content-intro",
+                    snippet="FastAPI 관련 내용",
+                )
+            ],
+        )
+
+    monkeypatch.setattr("app.api.rag.answer_question", fake_answer_question)
+
+    response = client.post("/api/rag/chat", json={"message": "FastAPI 내용 알려줘"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "FastAPI 게시글이 있습니다.",
+        "sources": [
+            {
+                "post_id": 1,
+                "title": "FastAPI",
+                "heading": "Intro",
+                "anchor": "user-content-intro",
+                "snippet": "FastAPI 관련 내용",
+            }
+        ],
+    }

@@ -6,6 +6,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.post import Post
 from app.models.user import User
+from app.rag.service import index_post_chunks
 from app.schemas.post import PostCreate, PostListItem, PostPage, PostRead, PostUpdate
 from app.services.tags import get_or_create_tags
 
@@ -66,6 +67,9 @@ def create_post(
     db.add(post)
     db.commit()
     db.refresh(post)
+    post = get_post_or_404(db, post.id)
+    index_post_chunks(db, post)
+    db.commit()
     return get_post_or_404(db, post.id)
 
 
@@ -88,6 +92,9 @@ def update_post(
     post.title = payload.title
     post.content = payload.content
     post.tags = get_or_create_tags(db, payload.tags)
+    db.commit()
+    post = get_post_or_404(db, post.id)
+    index_post_chunks(db, post)
     db.commit()
     return get_post_or_404(db, post.id)
 
