@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { LogIn, LogOut, MessageCircle, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -38,6 +38,12 @@ export default function AppShell({ children }: AppShellProps) {
             Board Simple
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/ask">
+                <MessageCircle />
+                <span>Q&A</span>
+              </Link>
+            </Button>
             {user ? (
               <>
                 <Badge variant="secondary" className="min-h-9 px-3">
