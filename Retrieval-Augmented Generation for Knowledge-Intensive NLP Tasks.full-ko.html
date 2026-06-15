@@ -1,0 +1,2233 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>지식 집약적 NLP 과제를 위한 검색 증강 생성</title>
+  <style>
+    body{margin:0;background:#f6f7f9;color:#1f2937;font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif;line-height:1.75}
+    main{max-width:980px;margin:0 auto;background:#fff;padding:48px 28px 90px}
+    h1,h2,h3{line-height:1.35;color:#111827}
+    h1{font-size:2.05rem;margin:0 0 8px}
+    h2{font-size:1.5rem;margin-top:48px;padding-top:20px;border-top:1px solid #e5e7eb}
+    h3{font-size:1.14rem;margin-top:30px}
+    p{margin:13px 0}
+    .authors,.meta{color:#4b5563}
+    .abstract{background:#f9fafb;border-left:4px solid #374151;padding:14px 18px;margin:24px 0}
+    figure{margin:28px 0;padding:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px}
+    figure img{display:block;max-width:100%;height:auto;margin:0 auto}
+    figcaption{margin-top:12px;color:#4b5563;font-size:.94rem}
+    table{border-collapse:collapse;width:100%;margin:18px 0;font-size:.92rem}
+    th,td{border:1px solid #d1d5db;padding:7px 9px;vertical-align:top}
+    th{background:#f3f4f6}
+    code{background:#eef2f7;padding:1px 4px;border-radius:4px}
+    .ref li{margin:7px 0}
+    .table-guide{margin:26px 0 10px;padding:12px 14px;background:#eef6ff;border-left:4px solid #2563eb;color:#1f2937;border-radius:6px}
+    .ltx_table,.ltx_figure_panel{overflow-x:auto}
+    .ltx_flex_figure,.ltx_flex_table{display:block!important}
+    .ltx_flex_cell{display:block!important;width:auto!important;margin:0 0 20px!important}
+    .ltx_transformed_outer{width:100%!important;height:auto!important;overflow-x:auto!important;vertical-align:baseline!important}
+    .ltx_transformed_inner{display:block!important;transform:none!important}
+    .ltx_tabular{width:auto;min-width:max-content;max-width:none}
+    .ltx_table figcaption{font-weight:600;color:#374151}
+  </style>
+</head>
+<body>
+<main>
+  <h1>지식 집약적 NLP 과제를 위한 검색 증강 생성</h1>
+  <p class="authors">Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich Kuttler, Mike Lewis, Wen-tau Yih, Tim Rocktaschel, Sebastian Riedel, Douwe Kiela</p>
+  <p class="meta">Conference paper 한국어 번역본</p>
+
+  <section class="abstract">
+    <h2>초록</h2>
+    <p>대규모 사전학습 언어 모델은 사실 지식을 자신의 파라미터 안에 저장할 수 있으며, 하위 NLP 과제에 맞게 미세조정될 때 최신 수준의 결과를 달성하는 것으로 나타났다.</p>
+    <p>그러나 이러한 모델이 지식에 접근하고 지식을 정밀하게 조작하는 능력은 여전히 제한되어 있으며, 따라서 지식 집약적 과제에서는 과제별 구조를 갖춘 모델에 뒤처진다.</p>
+    <p>우리는 사전학습된 파라미터 기반 메모리 생성 모델을 비파라미터 기반 메모리와 결합하는 범용 미세조정 방법을 탐구한다.</p>
+    <p>여기서 비파라미터 기반 메모리는 Wikipedia의 조밀 벡터 인덱스이며, 사전학습된 신경 검색기를 통해 접근된다.</p>
+    <p>우리는 이 모델을 검색 증강 생성, 곧 RAG라고 부른다.</p>
+    <p>RAG 모델에서는 파라미터 기반 seq2seq 모델이 사전학습된 신경 검색기로부터 검색된 문서를 잠재 변수로 사용한다.</p>
+    <p>우리는 잠재 문서가 전체 생성 시퀀스에 대해 동일하다고 가정하는 모델과, 각 토큰마다 달라질 수 있다고 가정하는 모델을 비교한다.</p>
+    <p>우리는 다양한 지식 집약적 NLP 과제에서 RAG 모델을 미세조정하고 평가한다.</p>
+    <p>세 가지 오픈 도메인 QA 과제에서 RAG는 최신 성능을 달성하며, 파라미터 기반 seq2seq 모델과 과제 특화 검색-추출 아키텍처를 능가한다.</p>
+    <p>언어 생성 과제에서 RAG 모델은 강한 seq2seq 기준선보다 더 구체적이고 다양하며 사실적인 언어를 생성한다.</p>
+  </section>
+
+  <section>
+    <h2>1. 서론</h2>
+    <p>사전학습된 신경 언어 모델은 데이터로부터 상당한 양의 깊이 있는 지식을 학습하는 것으로 나타났다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib47" title="" class="ltx_ref">47</a>]</cite></p>
+    <p>이 모델들은 별도의 외부 메모리 없이도 하위 과제에 맞게 미세조정될 때 인상적인 결과를 보인다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib51" title="" class="ltx_ref">51</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a>]</cite></p>
+    <p>그러나 모델의 파라미터에만 의존하는 지식 접근 방식은 여러 약점을 갖는다.</p>
+    <p>파라미터 안에 저장된 지식은 어떤 근거에서 비롯되었는지 확인하기 어렵고, 업데이트하기 어려우며, hallucination을 일으킬 수 있다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib38" title="" class="ltx_ref">38</a>]</cite></p>
+    <p>또한 모델이 희귀하거나 구체적인 사실을 필요로 하는 입력을 처리할 때, 파라미터 기반 기억만으로는 충분하지 않을 수 있다.</p>
+    <p>반면 명시적 검색 시스템은 대규모 문서 모음에서 관련 문서를 찾아낼 수 있으며, 검색된 문서는 모델의 예측에 대한 근거로 제시될 수 있다.</p>
+    <p>하지만 검색만으로는 자연어 생성의 유창함과 일반화 능력을 충분히 제공하기 어렵다.</p>
+    <p>따라서 파라미터 기반 기억과 비파라미터 기반 기억을 결합하는 것은 지식 집약적 과제를 다루기 위한 자연스러운 방향이다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib48" title="" class="ltx_ref">48</a>]</cite></p>
+    <p>우리는 사전학습된 파라미터 기반 생성 모델에 비파라미터 기반 메모리를 부여하는 일반적인 미세조정 접근법을 제안하며, 이를 검색 증강 생성이라고 부른다.</p>
+    <p>우리가 구축한 RAG 모델에서 파라미터 기반 메모리는 사전학습된 seq2seq Transformer이고, 비파라미터 기반 메모리는 Wikipedia의 조밀 벡터 인덱스이며, 이는 사전학습된 신경 검색기로 접근된다.</p>
+    <p>우리는 이 구성요소들을 끝까지 함께 학습되는 확률 모델 안에서 결합한다.</p>
+    <p>검색기, 곧 Dense Passage Retriever(DPR)는 입력에 조건화된 잠재 문서를 제공하고, seq2seq 모델, 곧 BART는 입력과 잠재 문서에 함께 조건화되어 출력을 생성한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib32" title="" class="ltx_ref">32</a>]</cite></p>
+    <p>우리는 top-K 근사를 사용하여 잠재 문서를 주변화한다.</p>
+    <p>이 주변화는 모든 토큰에 대해 같은 문서가 책임을 진다고 보는 출력 단위 방식이거나, 서로 다른 토큰이 서로 다른 문서에 의해 책임질 수 있다고 보는 토큰 단위 방식일 수 있다.</p>
+    <p>T5나 BART와 마찬가지로 RAG는 어떤 seq2seq 과제에도 미세조정될 수 있으며, 이때 생성기와 검색기는 함께 학습된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib51" title="" class="ltx_ref">51</a>]</cite></p>
+
+    <figure>
+      <img src="./Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks_files/x1.png" onerror="this.onerror=null;this.src='https://arxiv.org/html/2005.11401v4/x1.png';" width="660" height="190" alt="RAG 접근 방식 개요">
+      <figcaption>그림 1: 접근 방식의 개요. 우리는 사전학습된 검색기, 곧 질문 인코더와 문서 인덱스를 사전학습된 seq2seq 모델, 곧 생성기와 결합하고 전체를 끝까지 미세조정한다. 질의 x에 대해 우리는 최대 내적 검색(MIPS)을 사용해 상위 K개 문서 z_i를 찾는다. 최종 예측 y에 대해 우리는 z를 잠재 변수로 취급하고, 서로 다른 문서가 주어졌을 때의 seq2seq 예측을 주변화한다.</figcaption>
+    </figure>
+
+    <p>비파라미터 메모리를 사용해 시스템을 풍부하게 만들기 위한 아키텍처를 제안한 이전 연구는 많다.</p>
+    <p>예를 들어 메모리 네트워크, 스택 증강 네트워크, 메모리 계층은 특정 과제를 위해 처음부터 학습되는 비파라미터 메모리 구조를 제안했다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib64" title="" class="ltx_ref">64</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib55" title="" class="ltx_ref">55</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib25" title="" class="ltx_ref">25</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib30" title="" class="ltx_ref">30</a>]</cite></p>
+    <p>이와 달리 우리는 파라미터 기반 메모리 구성요소와 비파라미터 기반 메모리 구성요소가 모두 사전학습되어 있으며 광범위한 지식을 미리 탑재한 설정을 탐구한다.</p>
+    <p>중요하게도 사전학습된 접근 메커니즘을 사용함으로써, 추가 학습 없이도 지식에 접근하는 능력이 존재한다.</p>
+    <p>우리의 결과는 생성과 함께 파라미터 기반 메모리와 비파라미터 기반 메모리를 결합하는 것이 지식 집약적 과제에 유익하다는 점을 강조한다.</p>
+    <p>여기서 지식 집약적 과제란 인간도 외부 지식원에 접근하지 않고는 합리적으로 수행하기 어렵다고 기대되는 과제를 뜻한다.</p>
+    <p>우리의 RAG 모델은 오픈 Natural Questions, WebQuestions, CuratedTrec에서 최신 수준의 결과를 달성하며, TriviaQA에서는 특수한 사전학습 목적을 사용하는 최근 접근법을 크게 능가한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib29" title="" class="ltx_ref">29</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib3" title="" class="ltx_ref">3</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib2" title="" class="ltx_ref">2</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib24" title="" class="ltx_ref">24</a>]</cite></p>
+    <p>이 과제들이 추출형 과제임에도 불구하고, 우리는 제약 없는 생성이 이전의 추출형 접근법보다 우수함을 발견했다.</p>
+    <p>지식 집약적 생성에서는 MS-MARCO와 Jeopardy 질문 생성을 실험하며, 우리의 모델이 BART 기준선보다 더 사실적이고 구체적이며 다양한 응답을 생성함을 발견했다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib1" title="" class="ltx_ref">1</a>]</cite></p>
+    <p>FEVER 사실 검증에서는 강한 검색 감독을 사용하는 최신 파이프라인 모델과 4.3% 이내의 결과를 달성한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib56" title="" class="ltx_ref">56</a>]</cite></p>
+  </section>
+
+  <section>
+    <h2>2. 방법</h2>
+    <p>우리는 입력 시퀀스 x를 사용해 텍스트 문서 z를 검색하고, 목표 시퀀스 y를 생성할 때 이를 추가 문맥으로 사용하는 RAG 모델을 탐구한다.</p>
+    <p>그림 1에 보인 것처럼, 우리의 모델은 두 구성요소를 활용한다.</p>
+    <p>첫 번째 구성요소는 파라미터 η를 갖는 검색기 pη(z|x)이며, 질의 x가 주어졌을 때 텍스트 passage에 대한 top-K 절단 분포를 반환한다.</p>
+    <p>두 번째 구성요소는 파라미터 θ를 갖는 생성기 pθ(y_i|x,z,y_1:i-1)이며, 이전 i-1개 토큰 y_1:i-1, 원래 입력 x, 그리고 검색된 passage z의 문맥에 기반하여 현재 토큰을 생성한다.</p>
+    <p>검색기와 생성기를 끝까지 학습하기 위해 우리는 검색된 문서를 잠재 변수로 취급한다.</p>
+    <p>우리는 생성 텍스트에 대한 분포를 만들기 위해 잠재 문서를 서로 다른 방식으로 주변화하는 두 모델을 제안한다.</p>
+    <p>한 접근법인 RAG-Sequence에서는 모델이 각 목표 토큰을 예측하기 위해 같은 문서를 사용한다.</p>
+    <p>두 번째 접근법인 RAG-Token에서는 각 목표 토큰이 서로 다른 문서를 기반으로 예측될 수 있다.</p>
+    <p>아래에서는 두 모델을 형식적으로 소개한 뒤, pη와 pθ 구성요소, 그리고 학습 및 디코딩 절차를 설명한다.</p>
+
+    <h3>2.1 모델</h3>
+    <p>RAG-Sequence 모델은 하나의 동일한 검색 문서를 사용하여 완전한 시퀀스를 생성한다.</p>
+    <p>기술적으로 이 모델은 검색된 문서를 하나의 잠재 변수로 취급하고, top-K 근사를 통해 seq2seq 확률 p(y|x)를 얻기 위해 이를 주변화한다.</p>
+    <p>구체적으로 검색기를 사용해 상위 K개 문서를 검색하고, 생성기는 각 문서에 대해 출력 시퀀스 확률을 생성하며, 이후 이 확률들을 주변화한다.</p>
+<table id="S2.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.Ex1.m1" class="ltx_math_unparsed" alttext="p_{\text{\tiny{RAG-Sequence}}}(y|x)\;\approx\;\sum_{\mathclap{z\in\text{top-}k(p(\cdot|x))}}p_{\eta}(z|x)p_{\theta}(y|x,z)\;=\;\sum_{\mathclap{z\in\text{top-}k(p(\cdot|x))}}p_{\eta}(z|x)\prod_{i}^{N}p_{\theta}(y_{i}|x,z,y_{1:i-1})" display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>p</mi><mtext mathsize="0.710em">RAG-Sequence</mtext></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>y</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo rspace="0.280em" stretchy="false">)</mo></mrow></mrow><mo rspace="0.391em">≈</mo><mrow><munder><mo movablelimits="false">∑</mo><mpadded style="width:0pt;" lspace="-27.0pt" width="0pt"><mi>z</mi><mo>∈</mo><mtext>top-</mtext><mi>k</mi><mrow><mo stretchy="false">(</mo><mi>p</mi><mrow><mo stretchy="false">(</mo><mo lspace="0em" rspace="0em">⋅</mo><mo fence="false" rspace="0.167em" stretchy="false">|</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mo stretchy="false">)</mo></mrow></mpadded></munder><mrow><msub><mi>p</mi><mi>η</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>z</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><msub><mi>p</mi><mi>θ</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>y</mi><mo fence="false">|</mo><mrow><mi>x</mi><mo>,</mo><mi>z</mi></mrow></mrow><mo rspace="0.280em" stretchy="false">)</mo></mrow></mrow></mrow><mo rspace="0.391em">=</mo><mrow><munder><mo movablelimits="false">∑</mo><mpadded style="width:0pt;" lspace="-27.0pt" width="0pt"><mi>z</mi><mo>∈</mo><mtext>top-</mtext><mi>k</mi><mrow><mo stretchy="false">(</mo><mi>p</mi><mrow><mo stretchy="false">(</mo><mo lspace="0em" rspace="0em">⋅</mo><mo fence="false" rspace="0.167em" stretchy="false">|</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mo stretchy="false">)</mo></mrow></mpadded></munder><mrow><msub><mi>p</mi><mi>η</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>z</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><mrow><munderover><mo movablelimits="false">∏</mo><mi>i</mi><mi>N</mi></munderover><mrow><msub><mi>p</mi><mi>θ</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>y</mi><mi>i</mi></msub><mo fence="false">|</mo><mrow><mi>x</mi><mo>,</mo><mi>z</mi><mo>,</mo><msub><mi>y</mi><mrow><mn>1</mn><mo lspace="0.278em" rspace="0.278em">:</mo><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></mrow></msub></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">p_{\text{\tiny{RAG-Sequence}}}(y|x)\;\approx\;\sum_{\mathclap{z\in\text{top-}k(p(\cdot|x))}}p_{\eta}(z|x)p_{\theta}(y|x,z)\;=\;\sum_{\mathclap{z\in\text{top-}k(p(\cdot|x))}}p_{\eta}(z|x)\prod_{i}^{N}p_{\theta}(y_{i}|x,z,y_{1:i-1})</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+    <p>RAG-Token 모델에서는 각 목표 토큰마다 서로 다른 잠재 문서를 뽑고 이에 따라 주변화할 수 있다.</p>
+    <p>이 방식은 답변을 생성할 때 생성기가 여러 문서의 내용을 선택할 수 있게 한다.</p>
+    <p>구체적으로 검색기를 사용해 상위 K개 문서를 검색한 뒤, 생성기는 각 문서에 대해 다음 출력 토큰의 분포를 생성하고, 이를 주변화한 다음 다음 출력 토큰에 대해 같은 과정을 반복한다.</p>
+<table id="S2.Ex2" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.Ex2.m1" class="ltx_math_unparsed" alttext="p_{\text{\tiny{RAG-Token}}}(y|x)\;\approx\;\prod_{i}^{N}\;\sum_{z\in\text{top-}k(p(\cdot|x))}p_{\eta}(z|x)p_{\theta}(y_{i}|x,z,y_{1:i-1})" display="block" intent=":literal"><semantics><mrow><mrow><msub><mi>p</mi><mtext mathsize="0.710em">RAG-Token</mtext></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>y</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo rspace="0.280em" stretchy="false">)</mo></mrow></mrow><mo rspace="0.391em">≈</mo><mrow><munderover><mo movablelimits="false" rspace="0em">∏</mo><mi>i</mi><mi>N</mi></munderover><mrow><munder><mo movablelimits="false">∑</mo><mrow><mi>z</mi><mo>∈</mo><mtext>top-</mtext><mi>k</mi><mrow><mo stretchy="false">(</mo><mi>p</mi><mrow><mo stretchy="false">(</mo><mo lspace="0em" rspace="0em">⋅</mo><mo fence="false" rspace="0.167em" stretchy="false">|</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><mo stretchy="false">)</mo></mrow></mrow></munder><mrow><msub><mi>p</mi><mi>η</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>z</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo stretchy="false">)</mo></mrow><mo lspace="0em" rspace="0em">​</mo><msub><mi>p</mi><mi>θ</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><msub><mi>y</mi><mi>i</mi></msub><mo fence="false">|</mo><mrow><mi>x</mi><mo>,</mo><mi>z</mi><mo>,</mo><msub><mi>y</mi><mrow><mn>1</mn><mo lspace="0.278em" rspace="0.278em">:</mo><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></mrow></msub></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">p_{\text{\tiny{RAG-Token}}}(y|x)\;\approx\;\prod_{i}^{N}\;\sum_{z\in\text{top-}k(p(\cdot|x))}p_{\eta}(z|x)p_{\theta}(y_{i}|x,z,y_{1:i-1})</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+    <p>마지막으로 우리는 RAG가 목표 클래스를 길이 1의 목표 시퀀스로 간주함으로써 시퀀스 분류 과제에도 사용될 수 있음을 지적한다.</p>
+    <p>이 경우 RAG-Sequence와 RAG-Token은 동일하다.</p>
+
+    <h3>2.2 검색기: DPR</h3>
+    <p>검색 구성요소 pη(z|x)는 DPR에 기반한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>]</cite></p>
+    <p>DPR은 이중 인코더 아키텍처를 따른다.</p>
+<table id="S2.Ex3" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S2.Ex3.m1" class="ltx_Math" alttext="p_{\eta}(z|x)\propto\exp\left(\mathbf{d}(z)^{\top}\mathbf{q}(x)\right)\;\;\;\;\;\;\;\;\;\mathbf{d}(z)=\text{BERT}_{d}(z),\;\;\mathbf{q}(x)=\text{BERT}_{q}(x)" display="block" intent=":literal"><semantics><mrow><mrow><mrow><msub><mi>p</mi><mi>η</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mrow><mi>z</mi><mo fence="false">|</mo><mi>x</mi></mrow><mo stretchy="false">)</mo></mrow></mrow><mo>∝</mo><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi>𝐝</mi><mo lspace="0em" rspace="0em">​</mo><msup><mrow><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></mrow><mo>⊤</mo></msup><mo lspace="0em" rspace="0em">​</mo><mi>𝐪</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mspace style="width:2.50000000000001em;" width="2.50000000000001em"></mspace><mrow><mrow><mrow><mi>𝐝</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><msub><mtext>BERT</mtext><mi>d</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>z</mi><mo stretchy="false">)</mo></mrow></mrow></mrow><mo rspace="0.727em">,</mo><mrow><mrow><mi>𝐪</mi><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><msub><mtext>BERT</mtext><mi>q</mi></msub><mo lspace="0em" rspace="0em">​</mo><mrow><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow><annotation encoding="application/x-tex">p_{\eta}(z|x)\propto\exp\left(\mathbf{d}(z)^{\top}\mathbf{q}(x)\right)\;\;\;\;\;\;\;\;\;\mathbf{d}(z)=\text{BERT}_{d}(z),\;\;\mathbf{q}(x)=\text{BERT}_{q}(x)</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+    <p>여기서 d(z)는 BERTBASE 문서 인코더가 생성한 문서의 조밀 표현이고, q(x)는 역시 BERTBASE에 기반한 질의 인코더가 생성한 질의 표현이다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib8" title="" class="ltx_ref">8</a>]</cite></p>
+    <p>문서에 대한 사전확률은 균등하다고 가정한다.</p>
+    <p>입력 x에 대해 관련 문서를 찾기 위해 최대 내적 검색을 수행한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib23" title="" class="ltx_ref">23</a>]</cite></p>
+    <p>우리는 Wikipedia를 분할한 문서 인덱스를 사용하며, 각 문서는 약 100단어의 비중첩 텍스트 청크로 구성된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib31" title="" class="ltx_ref">31</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>]</cite></p>
+
+    <h3>2.3 생성기: BART</h3>
+    <p>생성 구성요소 pθ(y_i|x,z,y_1:i-1)는 어떤 인코더-디코더로도 모델링될 수 있다.</p>
+    <p>우리는 4억 개 파라미터를 가진 사전학습 seq2seq Transformer인 BART-large를 사용한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib32" title="" class="ltx_ref">32</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib58" title="" class="ltx_ref">58</a>]</cite></p>
+    <p>BART에서 생성할 때 입력 x와 검색된 내용 z를 결합하기 위해 우리는 단순히 둘을 이어 붙인다.</p>
+    <p>BART는 노이즈 제거 목적함수로 사전학습되어 있으며, 텍스트 생성, 번역, 이해 과제에서 강한 기준선이다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib32" title="" class="ltx_ref">32</a>]</cite></p>
+
+    <h3>2.4 학습</h3>
+    <p>우리는 어떤 문서가 검색되어야 하는지에 대한 직접 감독 없이 검색기와 생성기를 공동으로 학습한다.</p>
+    <p>입력-출력 쌍이 주어지면, 모델은 정답 출력의 음의 로그 가능도를 최소화하도록 학습된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib28" title="" class="ltx_ref">28</a>]</cite></p>
+    <p>문서는 잠재 변수이므로, 학습 목표는 검색된 상위 K개 문서에 대한 주변화 가능도에 기반한다.</p>
+    <p>우리는 문서 인코더를 고정하고 문서 인덱스를 사전에 계산한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a>]</cite></p>
+    <p>학습 중에는 질의 인코더와 생성기 파라미터가 업데이트된다.</p>
+    <p>검색 인덱스 자체는 고정되어 있으므로 효율적인 최대 내적 검색을 사용할 수 있다.</p>
+
+    <h3>2.5 디코딩</h3>
+    <p>테스트 시점에서 RAG-Sequence와 RAG-Token은 arg max_y p(y|x)를 근사하기 위한 서로 다른 방법을 필요로 한다.</p>
+    <p>RAG-Token 모델은 표준적인 자기회귀 seq2seq 생성기로 볼 수 있으며, 각 단계의 전이 확률은 검색 문서에 대해 주변화된다.</p>
+    <p>따라서 표준 빔서치를 사용해 디코딩할 수 있다.</p>
+    <p>RAG-Sequence에서는 전체 시퀀스에 대해 하나의 잠재 문서가 사용되므로 디코딩이 더 어렵다.</p>
+    <p>우리는 각 문서별로 후보 시퀀스를 생성하고, 이 후보들을 전체 주변화 확률로 다시 점수화하는 접근을 사용한다.</p>
+    <p>짧은 답변 과제에서는 더 철저한 디코딩이 유리할 수 있고, 긴 생성 과제에서는 빠른 디코딩이 더 실용적이다.</p>
+  </section>
+
+  <section>
+    <h2>3. 실험</h2>
+    <p>우리는 RAG가 지식 집약적 NLP 과제에서 얼마나 효과적인지 평가하기 위해 네 종류의 과제를 고려한다.</p>
+    <p>이 과제들은 오픈 도메인 질의응답, 추상적 질의응답, 질문 생성, 사실 검증이다.</p>
+    <p>모든 과제에서 모델은 입력만 받고, 필요한 지식은 검색 인덱스에서 찾아야 한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib31" title="" class="ltx_ref">31</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib23" title="" class="ltx_ref">23</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib37" title="" class="ltx_ref">37</a>]</cite></p>
+
+    <h3>3.1 오픈 도메인 질의응답</h3>
+    <p>오픈 도메인 QA 과제에서는 모델이 질문을 입력으로 받고, 대규모 문서 집합에서 답을 찾은 뒤 짧은 답변을 생성해야 한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a>]</cite></p>
+    <p>우리는 Natural Questions, TriviaQA, WebQuestions, CuratedTrec를 사용한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib29" title="" class="ltx_ref">29</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib24" title="" class="ltx_ref">24</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib3" title="" class="ltx_ref">3</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib2" title="" class="ltx_ref">2</a>]</cite></p>
+    <p>이 과제들은 답변이 대체로 짧기 때문에 Exact Match가 주요 평가 지표로 사용된다.</p>
+    <p>우리는 추출형 모델과 달리 답변 문자열을 제약 없이 생성한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib5" title="" class="ltx_ref">5</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib7" title="" class="ltx_ref">7</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib31" title="" class="ltx_ref">31</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a>]</cite></p>
+
+    <h3>3.2 추상적 질의응답</h3>
+    <p>RAG의 자연어 생성 능력을 지식 집약적 환경에서 시험하기 위해 우리는 MS MARCO NLG 과제 v2.1을 사용한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib43" title="" class="ltx_ref">43</a>]</cite></p>
+    <p>이 과제는 질문, 각 질문에 대해 검색 엔진이 검색한 열 개의 금 passage, 그리고 검색된 passage에서 주석된 완전한 문장 답변으로 구성된다.</p>
+    <p>우리는 MSMARCO를 오픈 도메인 추상적 QA 과제로 다루기 위해 제공된 passage를 사용하지 않고 질문과 답변만 사용한다.</p>
+    <p>MSMARCO에는 금 passage에 접근하지 않고는 참조 답변과 일치하는 방식으로 답할 수 없는 질문이 일부 포함되어 있다.</p>
+    <p>예를 들어 “Volcano, CA의 날씨는 어떤가?”와 같은 질문은 금 passage 없이는 참조 답변과 맞추기 어렵다.</p>
+    <p>따라서 금 passage를 사용하지 않을 경우 성능은 더 낮아질 것이다.</p>
+
+    <h3>3.3 Jeopardy 질문 생성</h3>
+    <p>우리는 검색 증강 생성이 더 풍부한 지식 기반 질문을 생성할 수 있는지 평가하기 위해 Jeopardy 질문 생성 과제를 사용한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib10" title="" class="ltx_ref">10</a>]</cite></p>
+    <p>입력은 답변 엔티티이며, 목표는 해당 답변을 요구하는 Jeopardy 스타일 질문을 생성하는 것이다.</p>
+    <p>이 과제는 특정 인물, 작품, 장소, 사건에 대한 구체적 지식을 요구하므로 RAG의 외부 메모리 활용 능력을 평가하기에 적합하다.</p>
+
+    <h3>3.4 사실 검증</h3>
+    <p>우리는 FEVER 데이터셋을 사용해 사실 검증을 평가한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib56" title="" class="ltx_ref">56</a>]</cite></p>
+    <p>입력은 자연어 주장이고, 모델은 그 주장이 지지됨, 반박됨, 또는 정보 부족 중 어느 범주에 속하는지 예측해야 한다.</p>
+    <p>FEVER는 외부 증거 문서를 필요로 하므로 검색 기반 접근이 특히 중요하다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib56" title="" class="ltx_ref">56</a>]</cite></p>
+
+    <h3>3.5 구현 세부사항</h3>
+    <p>우리는 모든 RAG 모델을 BART-large와 DPR 검색기를 기반으로 구현한다.</p>
+    <p>검색 인덱스는 Wikipedia dump를 passage 단위로 나누어 구성한다.</p>
+    <p>학습과 평가에서 RAG-Sequence와 RAG-Token을 모두 비교한다.</p>
+    <p>과제별로 적절한 검색 문서 수와 디코딩 방법을 사용한다.</p>
+  </section>
+
+  <section>
+    <h2>4. 결과</h2>
+    <p>우리는 결과를 과제별로 보고하고, 이후 생성 다양성, 사실성, 검색된 문서의 역할, 지식 갱신 가능성에 대한 추가 분석을 제공한다.</p>
+
+    <h3>4.1 오픈 도메인 질의응답</h3>
+    <p>RAG는 오픈 도메인 QA에서 강한 결과를 달성한다.</p>
+    <p>Natural Questions, WebQuestions, CuratedTrec에서는 최신 수준의 결과를 달성하고, TriviaQA에서는 특수 사전학습 목적을 사용하는 최근 접근법을 크게 능가한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib29" title="" class="ltx_ref">29</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib3" title="" class="ltx_ref">3</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib2" title="" class="ltx_ref">2</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib24" title="" class="ltx_ref">24</a>]</cite></p>
+    <p>흥미롭게도 이 과제들은 전통적으로 추출형 QA로 다루어졌지만, RAG의 제약 없는 생성 방식은 이전 추출형 접근법보다 좋은 성능을 보인다.</p>
+    <p>이는 생성 모델이 검색된 문서를 활용해 정답 문자열을 직접 생성할 수 있음을 보여준다.</p>
+
+<div class="table-guide"><strong>표 1-2 원본 테이블</strong><br>표 1은 4.1 오픈 도메인 질의응답 결과에서 참조되는 QA 테스트 점수이고, 표 2는 4.2-4.4 생성 및 분류 과제 결과에서 참조되는 테스트 점수이다.</div>
+<figure id="S4.T2.fig1" class="ltx_figure ltx_figure_panel ltx_minipage ltx_align_bottom" style="width:212.5pt;">
+<figcaption class="ltx_caption ltx_centering" style="font-size:90%;"><span class="ltx_tag ltx_tag_figure">표 1: </span>오픈 도메인 QA 테스트 점수. TQA에서 왼쪽 열은 오픈 도메인 QA의 표준 테스트 세트를 사용하고, 오른쪽 열은 TQA-Wiki 테스트 세트를 사용한다. 자세한 내용은 부록 <a href="https://arxiv.org/html/2005.11401v4#A4" title="Appendix D Further Details on Open-Domain QA ‣ Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" class="ltx_ref"><span class="ltx_text ltx_ref_tag">D</span></a>를 참조하라.</figcaption>
+<div id="S4.T2.fig1.4" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:212.5pt;height:49pt;vertical-align:-23.2pt;"><span class="ltx_transformed_inner" style="transform:translate(-80.0pt,18.5pt) scale(0.570501442391917,0.570501442391917) ;">
+<table id="S4.T2.fig1.4.1" class="ltx_tabular ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T2.fig1.4.1.1.1" class="ltx_tr">
+<th id="S4.T2.fig1.4.1.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;" colspan="2"><span id="S4.T2.fig1.4.1.1.1.1.1" class="ltx_text" style="font-size:90%;">Model</span></th>
+<th id="S4.T2.fig1.4.1.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.1.1.2.1" class="ltx_text" style="font-size:90%;">NQ</span></th>
+<th id="S4.T2.fig1.4.1.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;" colspan="2"><span id="S4.T2.fig1.4.1.1.1.3.1" class="ltx_text" style="font-size:90%;">TQA</span></th>
+<th id="S4.T2.fig1.4.1.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.1.1.4.1" class="ltx_text" style="font-size:90%;">WQ</span></th>
+<th id="S4.T2.fig1.4.1.1.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.1.1.5.1" class="ltx_text" style="font-size:90%;">CT</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T2.fig1.4.1.2.1" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.2.1.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;" rowspan="2"><span id="S4.T2.fig1.4.1.2.1.1.1" class="ltx_text" style="font-size:90%;">Closed Book</span></td>
+<td id="S4.T2.fig1.4.1.2.1.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">
+<span id="S4.T2.fig1.4.1.2.1.2.1" class="ltx_text" style="font-size:90%;">T5-11B </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S4.T2.fig1.4.1.2.1.2.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a><span id="S4.T2.fig1.4.1.2.1.2.3.2" class="ltx_text" style="font-size:90%;">]</span></cite>
+</td>
+<td id="S4.T2.fig1.4.1.2.1.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.2.1.3.1" class="ltx_text" style="font-size:90%;">34.5</span></td>
+<td id="S4.T2.fig1.4.1.2.1.4" class="ltx_td ltx_nopad_r ltx_align_right ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.2.1.4.1" class="ltx_text" style="font-size:90%;">- /</span></td>
+<td id="S4.T2.fig1.4.1.2.1.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.2.1.5.1" class="ltx_text" style="font-size:90%;">50.1</span></td>
+<td id="S4.T2.fig1.4.1.2.1.6" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.2.1.6.1" class="ltx_text" style="font-size:90%;">37.4</span></td>
+<td id="S4.T2.fig1.4.1.2.1.7" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.2.1.7.1" class="ltx_text" style="font-size:90%;">-</span></td>
+</tr>
+<tr id="S4.T2.fig1.4.1.3.2" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.3.2.1" class="ltx_td ltx_align_left" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.1.1" class="ltx_text" style="font-size:70%;">T5-11B+SSM<cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a>]</cite></span></td>
+<td id="S4.T2.fig1.4.1.3.2.2" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.2.1" class="ltx_text" style="font-size:90%;">36.6</span></td>
+<td id="S4.T2.fig1.4.1.3.2.3" class="ltx_td ltx_nopad_r ltx_align_right" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.3.1" class="ltx_text" style="font-size:90%;">- /</span></td>
+<td id="S4.T2.fig1.4.1.3.2.4" class="ltx_td ltx_nopad_l ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.4.1" class="ltx_text" style="font-size:90%;">60.5</span></td>
+<td id="S4.T2.fig1.4.1.3.2.5" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.5.1" class="ltx_text" style="font-size:90%;">44.7</span></td>
+<td id="S4.T2.fig1.4.1.3.2.6" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.3.2.6.1" class="ltx_text" style="font-size:90%;">-</span></td>
+</tr>
+<tr id="S4.T2.fig1.4.1.4.3" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.4.3.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;" rowspan="2"><span id="S4.T2.fig1.4.1.4.3.1.1" class="ltx_text" style="font-size:90%;">Open Book</span></td>
+<td id="S4.T2.fig1.4.1.4.3.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">
+<span id="S4.T2.fig1.4.1.4.3.2.1" class="ltx_text" style="font-size:90%;">REALM </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S4.T2.fig1.4.1.4.3.2.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a><span id="S4.T2.fig1.4.1.4.3.2.3.2" class="ltx_text" style="font-size:90%;">]</span></cite>
+</td>
+<td id="S4.T2.fig1.4.1.4.3.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.4.3.3.1" class="ltx_text" style="font-size:90%;">40.4</span></td>
+<td id="S4.T2.fig1.4.1.4.3.4" class="ltx_td ltx_nopad_r ltx_align_right ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.4.3.4.1" class="ltx_text" style="font-size:90%;">- /</span></td>
+<td id="S4.T2.fig1.4.1.4.3.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.4.3.5.1" class="ltx_text" style="font-size:90%;">-</span></td>
+<td id="S4.T2.fig1.4.1.4.3.6" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.4.3.6.1" class="ltx_text" style="font-size:90%;">40.7</span></td>
+<td id="S4.T2.fig1.4.1.4.3.7" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.4.3.7.1" class="ltx_text" style="font-size:90%;">46.8</span></td>
+</tr>
+<tr id="S4.T2.fig1.4.1.5.4" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.5.4.1" class="ltx_td ltx_align_left" style="padding-left:4.0pt;padding-right:4.0pt;">
+<span id="S4.T2.fig1.4.1.5.4.1.1" class="ltx_text" style="font-size:90%;">DPR </span><cite class="ltx_cite ltx_citemacro_cite"><span id="S4.T2.fig1.4.1.5.4.1.2.1" class="ltx_text" style="font-size:90%;">[</span><a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a><span id="S4.T2.fig1.4.1.5.4.1.3.2" class="ltx_text" style="font-size:90%;">]</span></cite>
+</td>
+<td id="S4.T2.fig1.4.1.5.4.2" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.5.4.2.1" class="ltx_text" style="font-size:90%;">41.5</span></td>
+<td id="S4.T2.fig1.4.1.5.4.3" class="ltx_td ltx_nopad_r ltx_align_right" style="padding-left:4.0pt;padding-right:4.0pt;">
+<span id="S4.T2.fig1.4.1.5.4.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">57.9</span><span id="S4.T2.fig1.4.1.5.4.3.2" class="ltx_text" style="font-size:90%;"> /</span>
+</td>
+<td id="S4.T2.fig1.4.1.5.4.4" class="ltx_td ltx_nopad_l ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.5.4.4.1" class="ltx_text" style="font-size:90%;">-</span></td>
+<td id="S4.T2.fig1.4.1.5.4.5" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.5.4.5.1" class="ltx_text" style="font-size:90%;">41.1</span></td>
+<td id="S4.T2.fig1.4.1.5.4.6" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.5.4.6.1" class="ltx_text" style="font-size:90%;">50.6</span></td>
+</tr>
+<tr id="S4.T2.fig1.4.1.6.5" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.6.5.1" class="ltx_td ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"></td>
+<td id="S4.T2.fig1.4.1.6.5.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.2.1" class="ltx_text" style="font-size:90%;">RAG-Token</span></td>
+<td id="S4.T2.fig1.4.1.6.5.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.3.1" class="ltx_text" style="font-size:90%;">44.1</span></td>
+<td id="S4.T2.fig1.4.1.6.5.4" class="ltx_td ltx_nopad_r ltx_align_right ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.4.1" class="ltx_text" style="font-size:90%;">55.2 /</span></td>
+<td id="S4.T2.fig1.4.1.6.5.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.5.1" class="ltx_text" style="font-size:90%;">66.1</span></td>
+<td id="S4.T2.fig1.4.1.6.5.6" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.6.1" class="ltx_text ltx_font_bold" style="font-size:90%;">45.5</span></td>
+<td id="S4.T2.fig1.4.1.6.5.7" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.6.5.7.1" class="ltx_text" style="font-size:90%;">50.0</span></td>
+</tr>
+<tr id="S4.T2.fig1.4.1.7.6" class="ltx_tr">
+<td id="S4.T2.fig1.4.1.7.6.1" class="ltx_td ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"></td>
+<td id="S4.T2.fig1.4.1.7.6.2" class="ltx_td ltx_align_left ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.2.1" class="ltx_text" style="font-size:90%;">RAG-Seq.</span></td>
+<td id="S4.T2.fig1.4.1.7.6.3" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">44.5</span></td>
+<td id="S4.T2.fig1.4.1.7.6.4" class="ltx_td ltx_nopad_r ltx_align_right ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.4.1" class="ltx_text" style="font-size:90%;">56.8 /</span></td>
+<td id="S4.T2.fig1.4.1.7.6.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.5.1" class="ltx_text ltx_font_bold" style="font-size:90%;">68.0</span></td>
+<td id="S4.T2.fig1.4.1.7.6.6" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.6.1" class="ltx_text" style="font-size:90%;">45.2</span></td>
+<td id="S4.T2.fig1.4.1.7.6.7" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.fig1.4.1.7.6.7.1" class="ltx_text ltx_font_bold" style="font-size:90%;">52.2</span></td>
+</tr>
+</tbody>
+</table>
+</span></div>
+</figure>
+<figure id="S4.T2.fig2" class="ltx_figure ltx_figure_panel ltx_minipage ltx_align_bottom" style="width:212.5pt;">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">표 2: </span>생성 및 분류 테스트 점수. MS-MARCO 최신 성능은 <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib4" title="" class="ltx_ref">4</a>]</cite>, FEVER-3은 <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib68" title="" class="ltx_ref">68</a>]</cite>, FEVER-2는 <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib57" title="" class="ltx_ref">57</a>]</cite>이다. *는 gold context/evidence를 사용했음을 뜻한다. gold 접근 없이 가장 좋은 모델은 밑줄로 표시했다.</figcaption>
+<div id="S4.T2.fig2.1" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:212.5pt;height:65.4pt;vertical-align:-30.7pt;"><span class="ltx_transformed_inner" style="transform:translate(-14.7pt,4.5pt) scale(0.878733382437799,0.878733382437799) ;">
+<table id="S4.T2.fig2.1.1" class="ltx_tabular ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S4.T2.fig2.1.1.1.1" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.1.1.1" class="ltx_td ltx_align_center ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.1.1.1.1" class="ltx_text" style="font-size:90%;">Model</span></td>
+<td id="S4.T2.fig2.1.1.1.1.2" class="ltx_td ltx_align_center ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;" colspan="2"><span id="S4.T2.fig2.1.1.1.1.2.1" class="ltx_text" style="font-size:90%;">Jeopardy</span></td>
+<td id="S4.T2.fig2.1.1.1.1.3" class="ltx_td ltx_align_center ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;" colspan="2"><span id="S4.T2.fig2.1.1.1.1.3.1" class="ltx_text" style="font-size:90%;">MSMARCO</span></td>
+<td id="S4.T2.fig2.1.1.1.1.4" class="ltx_td ltx_align_center ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.1.1.4.1" class="ltx_text" style="font-size:90%;">FVR3</span></td>
+<td id="S4.T2.fig2.1.1.1.1.5" class="ltx_td ltx_align_center ltx_border_tt" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.1.1.5.1" class="ltx_text" style="font-size:90%;">FVR2</span></td>
+</tr>
+<tr id="S4.T2.fig2.1.1.2.2" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.2.2.1" class="ltx_td" style="padding-left:3.0pt;padding-right:3.0pt;"></td>
+<td id="S4.T2.fig2.1.1.2.2.2" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.2.2.2.1" class="ltx_text" style="font-size:90%;">B-1</span></td>
+<td id="S4.T2.fig2.1.1.2.2.3" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.2.2.3.1" class="ltx_text" style="font-size:90%;">QB-1</span></td>
+<td id="S4.T2.fig2.1.1.2.2.4" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.2.2.4.1" class="ltx_text" style="font-size:90%;">R-L</span></td>
+<td id="S4.T2.fig2.1.1.2.2.5" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.2.2.5.1" class="ltx_text" style="font-size:90%;">B-1</span></td>
+<td id="S4.T2.fig2.1.1.2.2.6" class="ltx_td ltx_align_center" style="padding-left:3.0pt;padding-right:3.0pt;" colspan="2"><span id="S4.T2.fig2.1.1.2.2.6.1" class="ltx_text" style="font-size:90%;">Label Acc.</span></td>
+</tr>
+<tr id="S4.T2.fig2.1.1.3.3" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.3.3.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.3.3.1.1" class="ltx_text" style="font-size:90%;">SotA</span></td>
+<td id="S4.T2.fig2.1.1.3.3.2" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.3.3.2.1" class="ltx_text" style="font-size:90%;">-</span></td>
+<td id="S4.T2.fig2.1.1.3.3.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.3.3.3.1" class="ltx_text" style="font-size:90%;">-</span></td>
+<td id="S4.T2.fig2.1.1.3.3.4" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S4.T2.fig2.1.1.3.3.4.1" class="ltx_text ltx_font_bold" style="font-size:90%;">49.8</span><span id="S4.T2.fig2.1.1.3.3.4.2" class="ltx_text" style="font-size:90%;">*</span>
+</td>
+<td id="S4.T2.fig2.1.1.3.3.5" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S4.T2.fig2.1.1.3.3.5.1" class="ltx_text ltx_font_bold" style="font-size:90%;">49.9</span><span id="S4.T2.fig2.1.1.3.3.5.2" class="ltx_text" style="font-size:90%;">*</span>
+</td>
+<td id="S4.T2.fig2.1.1.3.3.6" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.3.3.6.1" class="ltx_text ltx_font_bold" style="font-size:90%;">76.8</span></td>
+<td id="S4.T2.fig2.1.1.3.3.7" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;">
+<span id="S4.T2.fig2.1.1.3.3.7.1" class="ltx_text ltx_font_bold" style="font-size:90%;">92.2</span><span id="S4.T2.fig2.1.1.3.3.7.2" class="ltx_text" style="font-size:90%;">*</span>
+</td>
+</tr>
+<tr id="S4.T2.fig2.1.1.4.4" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.4.4.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.1.1" class="ltx_text" style="font-size:90%;">BART</span></td>
+<td id="S4.T2.fig2.1.1.4.4.2" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.2.1" class="ltx_text" style="font-size:90%;">15.1</span></td>
+<td id="S4.T2.fig2.1.1.4.4.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.3.1" class="ltx_text" style="font-size:90%;">19.7</span></td>
+<td id="S4.T2.fig2.1.1.4.4.4" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.4.1" class="ltx_text" style="font-size:90%;">38.2</span></td>
+<td id="S4.T2.fig2.1.1.4.4.5" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.5.1" class="ltx_text" style="font-size:90%;">41.6</span></td>
+<td id="S4.T2.fig2.1.1.4.4.6" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.6.1" class="ltx_text" style="font-size:90%;">64.0</span></td>
+<td id="S4.T2.fig2.1.1.4.4.7" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.4.4.7.1" class="ltx_text" style="font-size:90%;">81.1</span></td>
+</tr>
+<tr id="S4.T2.fig2.1.1.5.5" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.5.5.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.5.5.1.1" class="ltx_text" style="font-size:90%;">RAG-Tok.</span></td>
+<td id="S4.T2.fig2.1.1.5.5.2" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.5.5.2.1" class="ltx_text ltx_font_bold" style="font-size:90%;">17.3</span></td>
+<td id="S4.T2.fig2.1.1.5.5.3" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.5.5.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">22.2</span></td>
+<td id="S4.T2.fig2.1.1.5.5.4" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.5.5.4.1" class="ltx_text" style="font-size:90%;">40.1</span></td>
+<td id="S4.T2.fig2.1.1.5.5.5" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.5.5.5.1" class="ltx_text" style="font-size:90%;">41.5</span></td>
+<td id="S4.T2.fig2.1.1.5.5.6" class="ltx_td ltx_align_center ltx_border_bb ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;" rowspan="2"><span id="S4.T2.fig2.1.1.5.5.6.1" class="ltx_text" style="font-size:90%;">72.5</span></td>
+<td id="S4.T2.fig2.1.1.5.5.7" class="ltx_td ltx_align_center ltx_border_bb ltx_border_t" style="padding-left:3.0pt;padding-right:3.0pt;" rowspan="2"><span id="S4.T2.fig2.1.1.5.5.7.1" class="ltx_text" style="font-size:90%;"><span id="S4.T2.fig2.1.1.5.5.7.1.1" class="ltx_text ltx_framed ltx_framed_underline">89.5</span></span></td>
+</tr>
+<tr id="S4.T2.fig2.1.1.6.6" class="ltx_tr">
+<td id="S4.T2.fig2.1.1.6.6.1" class="ltx_td ltx_align_left ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.6.6.1.1" class="ltx_text" style="font-size:90%;">RAG-Seq.</span></td>
+<td id="S4.T2.fig2.1.1.6.6.2" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.6.6.2.1" class="ltx_text" style="font-size:90%;">14.7</span></td>
+<td id="S4.T2.fig2.1.1.6.6.3" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.6.6.3.1" class="ltx_text" style="font-size:90%;">21.4</span></td>
+<td id="S4.T2.fig2.1.1.6.6.4" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.6.6.4.1" class="ltx_text ltx_framed ltx_framed_underline" style="font-size:90%;">40.8</span></td>
+<td id="S4.T2.fig2.1.1.6.6.5" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:3.0pt;padding-right:3.0pt;"><span id="S4.T2.fig2.1.1.6.6.5.1" class="ltx_text ltx_framed ltx_framed_underline" style="font-size:90%;">44.2</span></td>
+</tr>
+</tbody>
+</table>
+</span></div>
+</figure>
+
+    <h3>4.2 추상적 질의응답</h3>
+    <p>MS-MARCO NLG에서 RAG 모델은 강한 생성 기준선과 비교된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib4" title="" class="ltx_ref">4</a>]</cite></p>
+    <p>검색된 문서에 조건화된 생성은 답변을 더 구체적으로 만들 수 있지만, 금 passage를 사용하지 않는 설정은 과제를 더 어렵게 만든다.</p>
+    <p>결과는 RAG가 외부 지식을 활용해 자연어 답변을 생성할 수 있음을 보여준다.</p>
+
+    <h3>4.3 Jeopardy 질문 생성</h3>
+    <p>Jeopardy 질문 생성에서 RAG 모델은 더 구체적이고 사실적으로 정확한 응답을 생성한다.</p>
+    <p>그림 2는 하나의 예시를 보여준다.</p>
+    <p>“Sun”을 생성할 때 posterior는 “The Sun Also Rises”를 언급하는 문서 2에서 높다.</p>
+    <p>마찬가지로 “A Farewell to Arms”가 생성될 때는 문서 1이 posterior를 지배한다.</p>
+    <p>흥미롭게도 각 책 제목의 첫 토큰이 생성된 뒤에는 문서 posterior가 평평해진다.</p>
+    <p>이 관찰은 생성기가 특정 문서에 의존하지 않고도 제목을 완성할 수 있음을 시사한다.</p>
+    <p>다시 말해 모델의 파라미터 기반 지식만으로도 제목을 완성하기에 충분하다.</p>
+    <p>우리는 BART 단독 기준선에 부분 디코딩을 입력함으로써 이 가설을 뒷받침하는 증거를 발견한다.</p>
+    <p>BART는 부분 생성 문자열을 완성하여 해당 제목이 BART의 파라미터 안에 저장되어 있음을 보여준다.</p>
+    <p>이 예시는 파라미터 기반 메모리와 비파라미터 기반 메모리가 함께 작동하는 방식을 보여준다.</p>
+    <p>비파라미터 구성요소는 생성 방향을 안내하고, 파라미터 기반 메모리에 저장된 특정 지식을 끌어낸다.</p>
+
+    <figure>
+      <img src="./Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks_files/x2.png" onerror="this.onerror=null;this.src='https://arxiv.org/html/2005.11401v4/x2.png';" width="660" height="109" alt="RAG-Token 문서 posterior">
+      <figcaption>그림 2: 검색된 문서 5개를 사용하는 Jeopardy 생성에서 입력 “Hemingway”에 대해, 생성된 각 토큰별 RAG-Token 문서 posterior p(z_i|x,y_i,y_-i)를 나타낸다. “A Farewell to Arms”를 생성할 때는 문서 1의 posterior가 높고, “The Sun Also Rises”를 생성할 때는 문서 2의 posterior가 높다.</figcaption>
+    </figure>
+
+<div class="table-guide"><strong>표 3 원본 테이블</strong><br>4.3 Jeopardy 질문 생성 결과에서 참조되는 생성 예시 표이다.</div>
+<figure id="S4.T3" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering" style="font-size:90%;"><span class="ltx_tag ltx_tag_table">표 3: </span>생성 과제의 예시. RAG 모델은 더 구체적이고 사실적으로 정확한 응답을 생성한다. 물음표는 사실적으로 잘못된 응답을, *는 부분적으로 올바른 응답을 나타낸다.</figcaption>
+<div id="S4.T3.3" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:341.6pt;height:79.9pt;vertical-align:-38.8pt;"><span class="ltx_transformed_inner" style="transform:translate(-169.7pt,39.7pt) scale(0.501568020120133,0.501568020120133) ;">
+<table id="S4.T3.3.1" class="ltx_tabular ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T3.3.1.1.1" class="ltx_tr">
+<th id="S4.T3.3.1.1.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.1.1.1.1" class="ltx_text" style="font-size:90%;">Task</span></th>
+<th id="S4.T3.3.1.1.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.1.1.2.1" class="ltx_text" style="font-size:90%;">Input</span></th>
+<th id="S4.T3.3.1.1.1.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.1.1.3.1" class="ltx_text" style="font-size:90%;">Model</span></th>
+<th id="S4.T3.3.1.1.1.4" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.1.1.4.1" class="ltx_text" style="font-size:90%;">Generation</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T3.3.1.2.1" class="ltx_tr">
+<td id="S4.T3.3.1.2.1.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="6"><span id="S4.T3.3.1.2.1.1.1" class="ltx_text" style="font-size:90%;">MS-MARCO</span></td>
+<td id="S4.T3.3.1.2.1.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="3"><span id="S4.T3.3.1.2.1.2.1" class="ltx_text" style="font-size:90%;">define middle ear</span></td>
+<td id="S4.T3.3.1.2.1.3" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.2.1.3.1" class="ltx_text" style="font-size:90%;">BART</span></td>
+<td id="S4.T3.3.1.2.1.4" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;">
+<sup id="S4.T3.3.1.2.1.4.1" class="ltx_sup"><span id="S4.T3.3.1.2.1.4.1.1" class="ltx_text" style="font-size:90%;">?</span></sup><span id="S4.T3.3.1.2.1.4.2" class="ltx_text" style="font-size:80%;">The middle ear is the part of the ear between the middle ear and the nose.</span>
+</td>
+</tr>
+<tr id="S4.T3.3.1.3.2" class="ltx_tr">
+<td id="S4.T3.3.1.3.2.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.3.2.1.1" class="ltx_text" style="font-size:90%;">RAG-T</span></td>
+<td id="S4.T3.3.1.3.2.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.3.2.2.1" class="ltx_text" style="font-size:80%;">The middle ear is the portion of the ear internal to the eardrum.</span></td>
+</tr>
+<tr id="S4.T3.3.1.4.3" class="ltx_tr">
+<td id="S4.T3.3.1.4.3.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.4.3.1.1" class="ltx_text" style="font-size:90%;">RAG-S</span></td>
+<td id="S4.T3.3.1.4.3.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.4.3.2.1" class="ltx_text" style="font-size:80%;">The middle ear includes the tympanic cavity and the three ossicles.</span></td>
+</tr>
+<tr id="S4.T3.3.1.5.4" class="ltx_tr">
+<td id="S4.T3.3.1.5.4.1" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="3"><span id="S4.T3.3.1.5.4.1.1" class="ltx_text" style="font-size:90%;">what currency needed in scotland</span></td>
+<td id="S4.T3.3.1.5.4.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.5.4.2.1" class="ltx_text" style="font-size:90%;">BART</span></td>
+<td id="S4.T3.3.1.5.4.3" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.5.4.3.1" class="ltx_text" style="font-size:80%;">The currency needed in Scotland is Pound sterling.</span></td>
+</tr>
+<tr id="S4.T3.3.1.6.5" class="ltx_tr">
+<td id="S4.T3.3.1.6.5.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.6.5.1.1" class="ltx_text" style="font-size:90%;">RAG-T</span></td>
+<td id="S4.T3.3.1.6.5.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.6.5.2.1" class="ltx_text" style="font-size:80%;">Pound is the currency needed in Scotland.</span></td>
+</tr>
+<tr id="S4.T3.3.1.7.6" class="ltx_tr">
+<td id="S4.T3.3.1.7.6.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.7.6.1.1" class="ltx_text" style="font-size:90%;">RAG-S</span></td>
+<td id="S4.T3.3.1.7.6.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.7.6.2.1" class="ltx_text" style="font-size:80%;">The currency needed in Scotland is the pound sterling.</span></td>
+</tr>
+<tr id="S4.T3.3.1.8.7" class="ltx_tr">
+<td id="S4.T3.3.1.8.7.1" class="ltx_td ltx_align_left ltx_border_bb ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="6"><span id="S4.T3.3.1.8.7.1.1" class="ltx_text" style="font-size:90%;">Jeopardy Question Gener -ation</span></td>
+<td id="S4.T3.3.1.8.7.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="3"><span id="S4.T3.3.1.8.7.2.1" class="ltx_text" style="font-size:90%;">Washington</span></td>
+<td id="S4.T3.3.1.8.7.3" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.8.7.3.1" class="ltx_text" style="font-size:90%;">BART</span></td>
+<td id="S4.T3.3.1.8.7.4" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;">
+<sup id="S4.T3.3.1.8.7.4.1" class="ltx_sup"><span id="S4.T3.3.1.8.7.4.1.1" class="ltx_text" style="font-size:90%;">?</span></sup><span id="S4.T3.3.1.8.7.4.2" class="ltx_text" style="font-size:80%;">This state has the largest number of counties in the U.S.</span>
+</td>
+</tr>
+<tr id="S4.T3.3.1.9.8" class="ltx_tr">
+<td id="S4.T3.3.1.9.8.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.9.8.1.1" class="ltx_text" style="font-size:90%;">RAG-T</span></td>
+<td id="S4.T3.3.1.9.8.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.9.8.2.1" class="ltx_text" style="font-size:80%;">It’s the only U.S. state named for a U.S. president</span></td>
+</tr>
+<tr id="S4.T3.3.1.10.9" class="ltx_tr">
+<td id="S4.T3.3.1.10.9.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.10.9.1.1" class="ltx_text" style="font-size:90%;">RAG-S</span></td>
+<td id="S4.T3.3.1.10.9.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.10.9.2.1" class="ltx_text" style="font-size:80%;">It’s the state where you’ll find Mount Rainier National Park</span></td>
+</tr>
+<tr id="S4.T3.3.1.11.10" class="ltx_tr">
+<td id="S4.T3.3.1.11.10.1" class="ltx_td ltx_align_left ltx_border_bb ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;" rowspan="3"><span id="S4.T3.3.1.11.10.1.1" class="ltx_text" style="font-size:90%;">The Divine Comedy</span></td>
+<td id="S4.T3.3.1.11.10.2" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.11.10.2.1" class="ltx_text" style="font-size:90%;">BART</span></td>
+<td id="S4.T3.3.1.11.10.3" class="ltx_td ltx_align_left ltx_border_t" style="padding-left:2.8pt;padding-right:2.8pt;">
+<sup id="S4.T3.3.1.11.10.3.1" class="ltx_sup"><span id="S4.T3.3.1.11.10.3.1.1" class="ltx_text" style="font-size:90%;">*</span></sup><span id="S4.T3.3.1.11.10.3.2" class="ltx_text" style="font-size:80%;">This epic poem by Dante is divided into 3 parts: the Inferno, the Purgatorio &amp; the Purgatorio</span>
+</td>
+</tr>
+<tr id="S4.T3.3.1.12.11" class="ltx_tr">
+<td id="S4.T3.3.1.12.11.1" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.12.11.1.1" class="ltx_text" style="font-size:90%;">RAG-T</span></td>
+<td id="S4.T3.3.1.12.11.2" class="ltx_td ltx_align_left" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.12.11.2.1" class="ltx_text" style="font-size:80%;">Dante’s "Inferno" is the first part of this epic poem</span></td>
+</tr>
+<tr id="S4.T3.3.1.13.12" class="ltx_tr">
+<td id="S4.T3.3.1.13.12.1" class="ltx_td ltx_align_left ltx_border_bb" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.13.12.1.1" class="ltx_text" style="font-size:90%;">RAG-S</span></td>
+<td id="S4.T3.3.1.13.12.2" class="ltx_td ltx_align_left ltx_border_bb" style="padding-left:2.8pt;padding-right:2.8pt;"><span id="S4.T3.3.1.13.12.2.1" class="ltx_text" style="font-size:80%;">This 14th century work is divided into 3 sections: "Inferno", "Purgatorio" &amp; "Paradiso"</span></td>
+</tr>
+</tbody>
+</table>
+</span></div>
+</figure>
+<div class="table-guide"><strong>표 4-5 원본 테이블</strong><br>표 4는 4.3 Jeopardy 질문 생성 인간 평가 결과이고, 표 5는 4.6 생성 다양성 분석에서 참조되는 distinct trigram 비율이다.</div>
+<figure id="S4.T5.fig1" class="ltx_figure ltx_figure_panel ltx_minipage ltx_align_bottom" style="width:212.5pt;">
+<figcaption class="ltx_caption ltx_centering" style="font-size:90%;"><span class="ltx_tag ltx_tag_figure">표 4: </span>Jeopardy 질문 생성 과제에 대한 인간 평가.</figcaption>
+<table id="S4.T5.fig1.3" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T5.fig1.3.1.1" class="ltx_tr">
+<th id="S4.T5.fig1.3.1.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_tt"></th>
+<th id="S4.T5.fig1.3.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T5.fig1.3.1.1.2.1" class="ltx_text" style="font-size:90%;">Factuality</span></th>
+<th id="S4.T5.fig1.3.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T5.fig1.3.1.1.3.1" class="ltx_text" style="font-size:90%;">Specificity</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T5.fig1.3.2.1" class="ltx_tr">
+<th id="S4.T5.fig1.3.2.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t"><span id="S4.T5.fig1.3.2.1.1.1" class="ltx_text" style="font-size:90%;">BART better</span></th>
+<td id="S4.T5.fig1.3.2.1.2" class="ltx_td ltx_align_center ltx_border_t"><span id="S4.T5.fig1.3.2.1.2.1" class="ltx_text" style="font-size:90%;">7.1%</span></td>
+<td id="S4.T5.fig1.3.2.1.3" class="ltx_td ltx_align_center ltx_border_t"><span id="S4.T5.fig1.3.2.1.3.1" class="ltx_text" style="font-size:90%;">16.8%</span></td>
+</tr>
+<tr id="S4.T5.fig1.3.3.2" class="ltx_tr">
+<th id="S4.T5.fig1.3.3.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="S4.T5.fig1.3.3.2.1.1" class="ltx_text" style="font-size:90%;">RAG better</span></th>
+<td id="S4.T5.fig1.3.3.2.2" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.3.2.2.1" class="ltx_text ltx_font_bold" style="font-size:90%;">42.7%</span></td>
+<td id="S4.T5.fig1.3.3.2.3" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.3.2.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">37.4%</span></td>
+</tr>
+<tr id="S4.T5.fig1.3.4.3" class="ltx_tr">
+<th id="S4.T5.fig1.3.4.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="S4.T5.fig1.3.4.3.1.1" class="ltx_text" style="font-size:90%;">Both good</span></th>
+<td id="S4.T5.fig1.3.4.3.2" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.4.3.2.1" class="ltx_text" style="font-size:90%;">11.7%</span></td>
+<td id="S4.T5.fig1.3.4.3.3" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.4.3.3.1" class="ltx_text" style="font-size:90%;">11.8%</span></td>
+</tr>
+<tr id="S4.T5.fig1.3.5.4" class="ltx_tr">
+<th id="S4.T5.fig1.3.5.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="S4.T5.fig1.3.5.4.1.1" class="ltx_text" style="font-size:90%;">Both poor</span></th>
+<td id="S4.T5.fig1.3.5.4.2" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.5.4.2.1" class="ltx_text" style="font-size:90%;">17.7%</span></td>
+<td id="S4.T5.fig1.3.5.4.3" class="ltx_td ltx_align_center"><span id="S4.T5.fig1.3.5.4.3.1" class="ltx_text" style="font-size:90%;">6.9%</span></td>
+</tr>
+<tr id="S4.T5.fig1.3.6.5" class="ltx_tr">
+<th id="S4.T5.fig1.3.6.5.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb"><span id="S4.T5.fig1.3.6.5.1.1" class="ltx_text" style="font-size:90%;">No majority</span></th>
+<td id="S4.T5.fig1.3.6.5.2" class="ltx_td ltx_align_center ltx_border_bb"><span id="S4.T5.fig1.3.6.5.2.1" class="ltx_text" style="font-size:90%;">20.8%</span></td>
+<td id="S4.T5.fig1.3.6.5.3" class="ltx_td ltx_align_center ltx_border_bb"><span id="S4.T5.fig1.3.6.5.3.1" class="ltx_text" style="font-size:90%;">20.1%</span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+<figure id="S4.T5.fig2" class="ltx_figure ltx_figure_panel ltx_minipage ltx_align_bottom" style="width:212.5pt;">
+<figcaption class="ltx_caption" style="font-size:90%;"><span class="ltx_tag ltx_tag_figure">표 5: </span>생성 과제에서 전체 trigram 대비 고유 trigram의 비율.</figcaption>
+<table id="S4.T5.fig2.3" class="ltx_tabular ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T5.fig2.3.1.1" class="ltx_tr">
+<th id="S4.T5.fig2.3.1.1.1" class="ltx_td ltx_th ltx_th_row ltx_border_tt"></th>
+<th id="S4.T5.fig2.3.1.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span id="S4.T5.fig2.3.1.1.2.1" class="ltx_inline-block ltx_align_top">
+<span id="S4.T5.fig2.3.1.1.2.1.1" class="ltx_p ltx_align_center"><span id="S4.T5.fig2.3.1.1.2.1.1.1" class="ltx_text" style="font-size:90%;">MSMARCO</span></span>
+</span>
+</th>
+<th id="S4.T5.fig2.3.1.1.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span id="S4.T5.fig2.3.1.1.3.1" class="ltx_inline-block ltx_align_top">
+<span id="S4.T5.fig2.3.1.1.3.1.1" class="ltx_p ltx_align_center"><span id="S4.T5.fig2.3.1.1.3.1.1.1" class="ltx_text" style="font-size:90%;">Jeopardy QGen</span></span>
+</span>
+</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T5.fig2.3.2.1" class="ltx_tr">
+<th id="S4.T5.fig2.3.2.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t"><span id="S4.T5.fig2.3.2.1.1.1" class="ltx_text" style="font-size:90%;">Gold</span></th>
+<td id="S4.T5.fig2.3.2.1.2" class="ltx_td ltx_align_center ltx_border_t"><span id="S4.T5.fig2.3.2.1.2.1" class="ltx_text" style="font-size:90%;">89.6%</span></td>
+<td id="S4.T5.fig2.3.2.1.3" class="ltx_td ltx_align_center ltx_border_t"><span id="S4.T5.fig2.3.2.1.3.1" class="ltx_text" style="font-size:90%;">90.0%</span></td>
+</tr>
+<tr id="S4.T5.fig2.3.3.2" class="ltx_tr">
+<th id="S4.T5.fig2.3.3.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="S4.T5.fig2.3.3.2.1.1" class="ltx_text" style="font-size:90%;">BART</span></th>
+<td id="S4.T5.fig2.3.3.2.2" class="ltx_td ltx_align_center"><span id="S4.T5.fig2.3.3.2.2.1" class="ltx_text" style="font-size:90%;">70.7%</span></td>
+<td id="S4.T5.fig2.3.3.2.3" class="ltx_td ltx_align_center"><span id="S4.T5.fig2.3.3.2.3.1" class="ltx_text" style="font-size:90%;">32.4%</span></td>
+</tr>
+<tr id="S4.T5.fig2.3.4.3" class="ltx_tr">
+<th id="S4.T5.fig2.3.4.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="S4.T5.fig2.3.4.3.1.1" class="ltx_text" style="font-size:90%;">RAG-Token</span></th>
+<td id="S4.T5.fig2.3.4.3.2" class="ltx_td ltx_align_center"><span id="S4.T5.fig2.3.4.3.2.1" class="ltx_text" style="font-size:90%;">77.8%</span></td>
+<td id="S4.T5.fig2.3.4.3.3" class="ltx_td ltx_align_center"><span id="S4.T5.fig2.3.4.3.3.1" class="ltx_text" style="font-size:90%;">46.8%</span></td>
+</tr>
+<tr id="S4.T5.fig2.3.5.4" class="ltx_tr">
+<th id="S4.T5.fig2.3.5.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb"><span id="S4.T5.fig2.3.5.4.1.1" class="ltx_text" style="font-size:90%;">RAG-Seq.</span></th>
+<td id="S4.T5.fig2.3.5.4.2" class="ltx_td ltx_align_center ltx_border_bb"><span id="S4.T5.fig2.3.5.4.2.1" class="ltx_text" style="font-size:90%;">83.5%</span></td>
+<td id="S4.T5.fig2.3.5.4.3" class="ltx_td ltx_align_center ltx_border_bb"><span id="S4.T5.fig2.3.5.4.3.1" class="ltx_text" style="font-size:90%;">53.8%</span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+
+    <h3>4.4 사실 검증</h3>
+    <p>FEVER에서 RAG는 검색된 문서를 바탕으로 주장에 대한 분류를 수행한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib57" title="" class="ltx_ref">57</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib35" title="" class="ltx_ref">35</a>]</cite></p>
+    <p>강한 검색 감독을 사용하는 파이프라인 모델에는 약간 뒤처지지만, RAG는 직접적인 증거 감독 없이도 경쟁력 있는 결과를 낸다.</p>
+    <p>이는 잠재 검색과 생성 기반 분류가 사실 검증에도 적용될 수 있음을 보여준다.</p>
+
+    <h3>4.5 추가 결과</h3>
+    <p>우리는 ablation을 통해 검색기와 생성기가 각각 성능에 미치는 영향을 분석한다.</p>
+    <p>FEVER는 분류 과제이므로 두 RAG 모델은 동일하다.</p>
+    <p>개발 세트 ablation은 검색 구성요소와 생성 구성요소가 모두 중요한 역할을 한다는 점을 보여준다.</p>
+<div class="table-guide"><strong>표 6 원본 테이블</strong><br>4.5 추가 결과에서 참조되는 개발 세트 ablation 표이다.</div>
+<figure id="S4.T6" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering" style="font-size:90%;"><span class="ltx_tag ltx_tag_table">표 6: </span>개발 세트 ablation. FEVER는 분류 과제이므로 두 RAG 모델은 동일하다.</figcaption>
+<table id="S4.T6.3" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T6.3.1.1" class="ltx_tr">
+<th id="S4.T6.3.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.1.1" class="ltx_text" style="font-size:90%;">Model</span></th>
+<th id="S4.T6.3.1.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.2.1" class="ltx_text" style="font-size:90%;">NQ</span></th>
+<th id="S4.T6.3.1.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.3.1" class="ltx_text" style="font-size:90%;">TQA</span></th>
+<th id="S4.T6.3.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.4.1" class="ltx_text" style="font-size:90%;">WQ</span></th>
+<th id="S4.T6.3.1.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.5.1" class="ltx_text" style="font-size:90%;">CT</span></th>
+<th id="S4.T6.3.1.1.6" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" colspan="2"><span id="S4.T6.3.1.1.6.1" class="ltx_text" style="font-size:90%;">Jeopardy-QGen</span></th>
+<th id="S4.T6.3.1.1.7" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" colspan="2"><span id="S4.T6.3.1.1.7.1" class="ltx_text" style="font-size:90%;">MSMarco</span></th>
+<th id="S4.T6.3.1.1.8" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.8.1" class="ltx_text" style="font-size:90%;">FVR-3</span></th>
+<th id="S4.T6.3.1.1.9" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt"><span id="S4.T6.3.1.1.9.1" class="ltx_text" style="font-size:90%;">FVR-2</span></th>
+</tr>
+<tr id="S4.T6.3.2.2" class="ltx_tr">
+<th id="S4.T6.3.2.2.1" class="ltx_td ltx_th ltx_th_column"></th>
+<th id="S4.T6.3.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column" colspan="4"><span id="S4.T6.3.2.2.2.1" class="ltx_text" style="font-size:90%;">Exact Match</span></th>
+<th id="S4.T6.3.2.2.3" class="ltx_td ltx_align_center ltx_th ltx_th_column"><span id="S4.T6.3.2.2.3.1" class="ltx_text" style="font-size:90%;">B-1</span></th>
+<th id="S4.T6.3.2.2.4" class="ltx_td ltx_align_center ltx_th ltx_th_column"><span id="S4.T6.3.2.2.4.1" class="ltx_text" style="font-size:90%;">QB-1</span></th>
+<th id="S4.T6.3.2.2.5" class="ltx_td ltx_align_center ltx_th ltx_th_column"><span id="S4.T6.3.2.2.5.1" class="ltx_text" style="font-size:90%;">R-L</span></th>
+<th id="S4.T6.3.2.2.6" class="ltx_td ltx_align_center ltx_th ltx_th_column"><span id="S4.T6.3.2.2.6.1" class="ltx_text" style="font-size:90%;">B-1</span></th>
+<th id="S4.T6.3.2.2.7" class="ltx_td ltx_align_center ltx_th ltx_th_column" colspan="2"><span id="S4.T6.3.2.2.7.1" class="ltx_text" style="font-size:90%;">Label Accuracy</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T6.3.3.1" class="ltx_tr">
+<td id="S4.T6.3.3.1.1" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.1.1" class="ltx_text" style="font-size:90%;">RAG-Token-BM25</span></td>
+<td id="S4.T6.3.3.1.2" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.2.1" class="ltx_text" style="font-size:90%;">29.7</span></td>
+<td id="S4.T6.3.3.1.3" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.3.1" class="ltx_text" style="font-size:90%;">41.5</span></td>
+<td id="S4.T6.3.3.1.4" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.4.1" class="ltx_text" style="font-size:90%;">32.1</span></td>
+<td id="S4.T6.3.3.1.5" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.3.1.5.1" class="ltx_text" style="font-size:90%;">33.1</span></td>
+<td id="S4.T6.3.3.1.6" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.6.1" class="ltx_text" style="font-size:90%;">17.5</span></td>
+<td id="S4.T6.3.3.1.7" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.7.1" class="ltx_text" style="font-size:90%;">22.3</span></td>
+<td id="S4.T6.3.3.1.8" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.3.1.8.1" class="ltx_text" style="font-size:90%;">55.5</span></td>
+<td id="S4.T6.3.3.1.9" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.3.1.9.1" class="ltx_text" style="font-size:90%;">48.4</span></td>
+<td id="S4.T6.3.3.1.10" class="ltx_td ltx_align_center ltx_border_t" rowspan="2"><span id="S4.T6.3.3.1.10.1" class="ltx_text ltx_font_bold" style="font-size:90%;">75.1</span></td>
+<td id="S4.T6.3.3.1.11" class="ltx_td ltx_align_center ltx_border_t" rowspan="2"><span id="S4.T6.3.3.1.11.1" class="ltx_text ltx_font_bold" style="font-size:90%;">91.6</span></td>
+</tr>
+<tr id="S4.T6.3.4.2" class="ltx_tr">
+<td id="S4.T6.3.4.2.1" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.1.1" class="ltx_text" style="font-size:90%;">RAG-Sequence-BM25</span></td>
+<td id="S4.T6.3.4.2.2" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.2.1" class="ltx_text" style="font-size:90%;">31.8</span></td>
+<td id="S4.T6.3.4.2.3" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.3.1" class="ltx_text" style="font-size:90%;">44.1</span></td>
+<td id="S4.T6.3.4.2.4" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.4.1" class="ltx_text" style="font-size:90%;">36.6</span></td>
+<td id="S4.T6.3.4.2.5" class="ltx_td ltx_align_left ltx_border_r"><span id="S4.T6.3.4.2.5.1" class="ltx_text" style="font-size:90%;">33.8</span></td>
+<td id="S4.T6.3.4.2.6" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.6.1" class="ltx_text" style="font-size:90%;">11.1</span></td>
+<td id="S4.T6.3.4.2.7" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.7.1" class="ltx_text" style="font-size:90%;">19.5</span></td>
+<td id="S4.T6.3.4.2.8" class="ltx_td ltx_align_left"><span id="S4.T6.3.4.2.8.1" class="ltx_text" style="font-size:90%;">56.5</span></td>
+<td id="S4.T6.3.4.2.9" class="ltx_td ltx_align_left ltx_border_r"><span id="S4.T6.3.4.2.9.1" class="ltx_text" style="font-size:90%;">46.9</span></td>
+</tr>
+<tr id="S4.T6.3.5.3" class="ltx_tr">
+<td id="S4.T6.3.5.3.1" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.1.1" class="ltx_text" style="font-size:90%;">RAG-Token-Frozen</span></td>
+<td id="S4.T6.3.5.3.2" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.2.1" class="ltx_text" style="font-size:90%;">37.8</span></td>
+<td id="S4.T6.3.5.3.3" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.3.1" class="ltx_text" style="font-size:90%;">50.1</span></td>
+<td id="S4.T6.3.5.3.4" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.4.1" class="ltx_text" style="font-size:90%;">37.1</span></td>
+<td id="S4.T6.3.5.3.5" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.5.3.5.1" class="ltx_text" style="font-size:90%;">51.1</span></td>
+<td id="S4.T6.3.5.3.6" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.6.1" class="ltx_text" style="font-size:90%;">16.7</span></td>
+<td id="S4.T6.3.5.3.7" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.7.1" class="ltx_text" style="font-size:90%;">21.7</span></td>
+<td id="S4.T6.3.5.3.8" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.5.3.8.1" class="ltx_text" style="font-size:90%;">55.9</span></td>
+<td id="S4.T6.3.5.3.9" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.5.3.9.1" class="ltx_text" style="font-size:90%;">49.4</span></td>
+<td id="S4.T6.3.5.3.10" class="ltx_td ltx_align_center ltx_border_t" rowspan="2"><span id="S4.T6.3.5.3.10.1" class="ltx_text" style="font-size:90%;">72.9</span></td>
+<td id="S4.T6.3.5.3.11" class="ltx_td ltx_align_center ltx_border_t" rowspan="2"><span id="S4.T6.3.5.3.11.1" class="ltx_text" style="font-size:90%;">89.4</span></td>
+</tr>
+<tr id="S4.T6.3.6.4" class="ltx_tr">
+<td id="S4.T6.3.6.4.1" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.1.1" class="ltx_text" style="font-size:90%;">RAG-Sequence-Frozen</span></td>
+<td id="S4.T6.3.6.4.2" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.2.1" class="ltx_text" style="font-size:90%;">41.2</span></td>
+<td id="S4.T6.3.6.4.3" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.3.1" class="ltx_text" style="font-size:90%;">52.1</span></td>
+<td id="S4.T6.3.6.4.4" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.4.1" class="ltx_text" style="font-size:90%;">41.8</span></td>
+<td id="S4.T6.3.6.4.5" class="ltx_td ltx_align_left ltx_border_r"><span id="S4.T6.3.6.4.5.1" class="ltx_text" style="font-size:90%;">52.6</span></td>
+<td id="S4.T6.3.6.4.6" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.6.1" class="ltx_text" style="font-size:90%;">11.8</span></td>
+<td id="S4.T6.3.6.4.7" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.7.1" class="ltx_text" style="font-size:90%;">19.6</span></td>
+<td id="S4.T6.3.6.4.8" class="ltx_td ltx_align_left"><span id="S4.T6.3.6.4.8.1" class="ltx_text" style="font-size:90%;">56.7</span></td>
+<td id="S4.T6.3.6.4.9" class="ltx_td ltx_align_left ltx_border_r"><span id="S4.T6.3.6.4.9.1" class="ltx_text" style="font-size:90%;">47.3</span></td>
+</tr>
+<tr id="S4.T6.3.7.5" class="ltx_tr">
+<td id="S4.T6.3.7.5.1" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.1.1" class="ltx_text" style="font-size:90%;">RAG-Token</span></td>
+<td id="S4.T6.3.7.5.2" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.2.1" class="ltx_text" style="font-size:90%;">43.5</span></td>
+<td id="S4.T6.3.7.5.3" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.3.1" class="ltx_text" style="font-size:90%;">54.8</span></td>
+<td id="S4.T6.3.7.5.4" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.4.1" class="ltx_text ltx_font_bold" style="font-size:90%;">46.5</span></td>
+<td id="S4.T6.3.7.5.5" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.7.5.5.1" class="ltx_text" style="font-size:90%;">51.9</span></td>
+<td id="S4.T6.3.7.5.6" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.6.1" class="ltx_text ltx_font_bold" style="font-size:90%;">17.9</span></td>
+<td id="S4.T6.3.7.5.7" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.7.1" class="ltx_text ltx_font_bold" style="font-size:90%;">22.6</span></td>
+<td id="S4.T6.3.7.5.8" class="ltx_td ltx_align_left ltx_border_t"><span id="S4.T6.3.7.5.8.1" class="ltx_text" style="font-size:90%;">56.2</span></td>
+<td id="S4.T6.3.7.5.9" class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span id="S4.T6.3.7.5.9.1" class="ltx_text ltx_font_bold" style="font-size:90%;">49.4</span></td>
+<td id="S4.T6.3.7.5.10" class="ltx_td ltx_align_center ltx_border_bb ltx_border_t" rowspan="2"><span id="S4.T6.3.7.5.10.1" class="ltx_text" style="font-size:90%;">74.5</span></td>
+<td id="S4.T6.3.7.5.11" class="ltx_td ltx_align_center ltx_border_bb ltx_border_t" rowspan="2"><span id="S4.T6.3.7.5.11.1" class="ltx_text" style="font-size:90%;">90.6</span></td>
+</tr>
+<tr id="S4.T6.3.8.6" class="ltx_tr">
+<td id="S4.T6.3.8.6.1" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.1.1" class="ltx_text" style="font-size:90%;">RAG-Sequence</span></td>
+<td id="S4.T6.3.8.6.2" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.2.1" class="ltx_text ltx_font_bold" style="font-size:90%;">44.0</span></td>
+<td id="S4.T6.3.8.6.3" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.3.1" class="ltx_text ltx_font_bold" style="font-size:90%;">55.8</span></td>
+<td id="S4.T6.3.8.6.4" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.4.1" class="ltx_text" style="font-size:90%;">44.9</span></td>
+<td id="S4.T6.3.8.6.5" class="ltx_td ltx_align_left ltx_border_bb ltx_border_r"><span id="S4.T6.3.8.6.5.1" class="ltx_text ltx_font_bold" style="font-size:90%;">53.4</span></td>
+<td id="S4.T6.3.8.6.6" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.6.1" class="ltx_text" style="font-size:90%;">15.3</span></td>
+<td id="S4.T6.3.8.6.7" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.7.1" class="ltx_text" style="font-size:90%;">21.5</span></td>
+<td id="S4.T6.3.8.6.8" class="ltx_td ltx_align_left ltx_border_bb"><span id="S4.T6.3.8.6.8.1" class="ltx_text ltx_font_bold" style="font-size:90%;">57.2</span></td>
+<td id="S4.T6.3.8.6.9" class="ltx_td ltx_align_left ltx_border_bb ltx_border_r"><span id="S4.T6.3.8.6.9.1" class="ltx_text" style="font-size:90%;">47.5</span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+    <p>또한 검색 문서 수를 늘리는 효과도 분석한다.</p>
+    <p>그림 3의 왼쪽은 테스트 시 더 많은 문서를 검색할수록 RAG-Sequence의 오픈 도메인 QA 결과가 단조롭게 개선됨을 보여준다.</p>
+    <p>반면 RAG-Token의 성능은 검색 문서 10개에서 정점에 도달한다.</p>
+    <p>그림 3의 오른쪽은 더 많은 문서를 검색하면 RAG-Token에서 Bleu-1을 희생하는 대신 Rouge-L이 높아지지만, RAG-Sequence에서는 그 효과가 덜 뚜렷함을 보여준다.</p>
+
+    <figure>
+      <img src="./Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks_files/x3.png" onerror="this.onerror=null;this.src='https://arxiv.org/html/2005.11401v4/x3.png';" width="660" height="137" alt="검색 문서 수에 따른 성능">
+      <figcaption>그림 3: 왼쪽은 더 많은 문서를 검색할 때의 NQ 성능을 나타낸다. 가운데는 NQ에서의 검색 recall 성능을 나타낸다. 오른쪽은 더 많은 문서를 검색할 때 MS-MARCO Bleu-1과 Rouge-L이 어떻게 변하는지 나타낸다.</figcaption>
+    </figure>
+
+    <h3>4.6 생성 다양성</h3>
+    <p>RAG 모델은 BART 기준선보다 더 다양한 생성을 만들어낸다.</p>
+    <p>이는 검색된 문서가 생성 과정에 추가적인 정보원을 제공하기 때문이다.</p>
+    <p>고유 trigram 비율은 RAG의 출력이 더 반복적이지 않고 더 다양한 표현을 포함함을 보여준다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib33" title="" class="ltx_ref">33</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib59" title="" class="ltx_ref">59</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib39" title="" class="ltx_ref">39</a>]</cite></p>
+
+    <h3>4.7 사실성 및 구체성</h3>
+    <p>인간 평가는 RAG 생성물이 BART 생성물보다 더 사실적이고 구체적인 경우가 많음을 보여준다.</p>
+    <p>외부 지식에 근거하는 생성은 환각을 줄이는 데 도움이 된다.</p>
+    <p>그러나 검색된 문서가 부정확하거나 편향되어 있다면 생성 결과도 그 영향을 받을 수 있다.</p>
+
+    <h3>4.8 지식 갱신</h3>
+    <p>RAG와 같은 비파라미터 메모리 모델의 장점은 테스트 시점에 지식을 쉽게 업데이트할 수 있다는 것이다.</p>
+    <p>T5나 BART와 같은 파라미터 전용 모델은 세계가 변할 때 행동을 업데이트하기 위해 추가 학습이 필요하다.</p>
+    <p>이를 보이기 위해 저자들은 서로 다른 시점의 Wikipedia dump를 사용해 인덱스를 구축하고, 최신성이 필요한 질문에 대한 성능을 비교한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib5" title="" class="ltx_ref">5</a>]</cite></p>
+    <p>문서 인덱스를 업데이트하는 것만으로 모델의 지식 접근이 바뀔 수 있다는 점은 RAG의 중요한 실용적 장점이다.</p>
+  </section>
+
+  <section>
+    <h2>5. 관련 연구</h2>
+    <p>이전 연구는 검색이 독립적으로 고려될 때 다양한 NLP 과제에서 성능을 향상시킨다는 점을 보여주었다.</p>
+    <p>이러한 과제에는 오픈 도메인 질의응답
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib5" title="" class="ltx_ref">5</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib29" title="" class="ltx_ref">29</a>]</cite>,
+      사실 확인
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib56" title="" class="ltx_ref">56</a>]</cite>,
+      사실 완성
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib48" title="" class="ltx_ref">48</a>]</cite>,
+      장문 질의응답
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib12" title="" class="ltx_ref">12</a>]</cite>,
+      Wikipedia article generation
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib36" title="" class="ltx_ref">36</a>]</cite>,
+      대화
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib41" title="" class="ltx_ref">41</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib65" title="" class="ltx_ref">65</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib9" title="" class="ltx_ref">9</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib13" title="" class="ltx_ref">13</a>]</cite>,
+      번역
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib17" title="" class="ltx_ref">17</a>]</cite>,
+      그리고 언어 모델링
+      <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib19" title="" class="ltx_ref">19</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib27" title="" class="ltx_ref">27</a>]</cite>
+      이 포함된다.</p>
+    <p>오픈 도메인 질의응답 시스템은 일반적으로 검색기와 reader를 결합한다.</p>
+    <p>검색기는 관련 문서를 찾고, reader는 해당 문서에서 답을 추출한다.</p>
+    <p>우리의 접근은 reader가 추출에 제한되지 않고 답변을 생성한다는 점에서 다르다.</p>
+    <p>검색을 사용하지 않는 범용 NLP 아키텍처에 대한 연구도 큰 성공을 거두었다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib60" title="" class="ltx_ref">60</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib61" title="" class="ltx_ref">61</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib49" title="" class="ltx_ref">49</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib8" title="" class="ltx_ref">8</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib50" title="" class="ltx_ref">50</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib32" title="" class="ltx_ref">32</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib51" title="" class="ltx_ref">51</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a>]</cite></p>
+    <p>BERT, GPT, BART, T5 같은 모델은 대규모 사전학습과 미세조정을 통해 여러 과제에서 강한 결과를 낸다.</p>
+    <p>그러나 이러한 모델은 외부 문서를 명시적으로 검색하지 않으므로 지식 갱신과 근거 제시에 제한이 있다.</p>
+    <p>정보 검색 분야에서는 문서를 검색하는 방법에 대한 연구가 많으며, 최근에는 사전학습된 신경 언어 모델을 사용하는 조밀 검색이 발전했다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib44" title="" class="ltx_ref">44</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>]</cite></p>
+    <p>DPR은 우리의 검색 구성요소와 밀접하게 관련된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib26" title="" class="ltx_ref">26</a>]</cite></p>
+    <p>우리의 문서 인덱스는 신경망이 attend할 수 있는 대규모 외부 메모리로 볼 수 있으며, 이는 메모리 네트워크와 유사하다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib64" title="" class="ltx_ref">64</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib55" title="" class="ltx_ref">55</a>]</cite></p>
+    <p>하지만 RAG는 사전학습된 검색기와 사전학습된 생성기를 결합하고, 대규모 Wikipedia 인덱스를 사용한다는 점에서 차별적이다.</p>
+    <p>우리의 방법은 검색 후 편집 방식과도 일부 유사하다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib18" title="" class="ltx_ref">18</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib22" title="" class="ltx_ref">22</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib21" title="" class="ltx_ref">21</a>]</cite></p>
+    <p>그 접근에서는 주어진 입력에 대해 유사한 학습 입력-출력 쌍을 검색한 뒤, 이를 편집하여 최종 출력을 만든다.</p>
+    <p>이러한 접근은 기계번역과 의미 파싱을 포함한 여러 영역에서 성공을 보였다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib18" title="" class="ltx_ref">18</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib22" title="" class="ltx_ref">22</a>, <a href="https://arxiv.org/html/2005.11401v4#bib.bib21" title="" class="ltx_ref">21</a>]</cite></p>
+    <p>우리의 접근은 검색된 항목을 가볍게 편집하는 데 초점을 두기보다, 여러 검색 문서의 내용을 통합하고, 잠재 검색을 학습하며, 관련 학습 쌍이 아니라 증거 문서를 검색한다는 점에서 다르다.</p>
+    <p>그럼에도 RAG 기술은 이러한 설정에서도 잘 작동할 수 있으며, 유망한 향후 연구 방향이 될 수 있다.</p>
+  </section>
+
+  <section>
+    <h2>6. 결론</h2>
+    <p>이 연구에서 우리는 파라미터 기반 메모리와 비파라미터 기반 메모리에 접근할 수 있는 하이브리드 생성 모델을 제시했다.</p>
+    <p>우리는 이 모델을 검색 증강 생성이라고 부르며, 사전학습된 seq2seq 생성기와 사전학습된 신경 검색기를 결합한다.</p>
+    <p>RAG는 여러 지식 집약적 NLP 과제에서 강한 성능을 보였고, 특히 오픈 도메인 QA에서 최신 수준의 결과를 달성했다.</p>
+    <p>또한 RAG는 BART 기준선보다 더 구체적이고 사실적이며 다양한 생성을 만드는 경향을 보였다.</p>
+    <p>이 결과는 대규모 언어 모델의 파라미터 기반 지식과 외부 문서 기반 지식을 결합하는 것이 지식 집약적 자연어 처리에 효과적임을 보여준다.</p>
+  </section>
+
+  <section>
+    <h2>더 넓은 영향</h2>
+    <p>이 연구는 이전 연구에 비해 여러 긍정적인 사회적 이점을 제공한다.</p>
+    <p>실제 사실 지식, 이 경우 Wikipedia에 더 강하게 근거한다는 점은 생성 결과의 환각을 줄이고, 더 사실적인 생성을 가능하게 하며, 더 큰 통제 가능성과 해석 가능성을 제공한다.</p>
+    <p>RAG는 사회에 직접적인 이익을 줄 수 있는 다양한 시나리오에 사용될 수 있다.</p>
+    <p>예를 들어 의료 인덱스를 부여하고 해당 주제에 대한 오픈 도메인 질문을 하거나, 사람들이 자신의 업무를 더 효과적으로 수행하도록 돕는 방식으로 사용할 수 있다.</p>
+    <p>이러한 장점과 함께 잠재적 단점도 존재한다.</p>
+    <p>Wikipedia나 어떤 잠재적 외부 지식원도 완전히 사실적이고 편향이 전혀 없을 가능성은 낮다.</p>
+    <p>RAG는 언어 모델로 사용될 수 있으므로 GPT-2에 대해 제기된 것과 유사한 우려가 여기에도 적용된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib50" title="" class="ltx_ref">50</a>]</cite></p>
+    <p>다만 그 정도는 다소 낮을 수 있다.</p>
+    <p>이러한 우려에는 악성 콘텐츠, 뉴스나 소셜 미디어에서의 허위 또는 오도성 콘텐츠 생성, 타인 사칭, 스팸 또는 피싱 콘텐츠 생성의 자동화가 포함된다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib54" title="" class="ltx_ref">54</a>]</cite></p>
+    <p>고도화된 언어 모델은 앞으로 수십 년 동안 다양한 직업의 자동화로 이어질 수도 있다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib16" title="" class="ltx_ref">16</a>]</cite></p>
+    <p>이러한 위험을 완화하기 위해 AI 시스템은 오도성 콘텐츠와 자동화된 스팸 또는 피싱에 대응하는 데 사용될 수 있다.</p>
+  </section>
+
+  <section>
+    <h2>감사의 글</h2>
+    <p>저자들은 이 논문에 대해 사려 깊고 건설적인 피드백을 제공한 리뷰어들에게 감사한다.</p>
+    <p>또한 RAG 모델을 실행하기 위한 코드를 오픈소스로 공개하는 데 도움을 준 HuggingFace에도 감사한다.</p>
+    <p>저자들은 생산적인 논의와 조언을 제공한 Kyunghyun Cho와 Sewon Min에게도 감사한다.</p>
+    <p>EP는 NSF Graduate Research Fellowship의 지원에 감사한다.</p>
+    <p>PL은 FAIR PhD 프로그램의 지원을 받았다.</p>
+  </section>
+
+  <section>
+    <h2>부록 A. 디코딩 세부사항</h2>
+    <p>오픈 도메인 QA의 경우 우리는 RAG-Token 모델에 대해 15개 검색 문서를 사용한 테스트 수치를 보고한다.</p>
+    <p>RAG-Sequence 모델의 경우 우리는 50개 검색 문서를 사용한 테스트 결과를 보고하고, 답변이 일반적으로 짧기 때문에 Thorough Decoding 접근을 사용한다.</p>
+    <p>우리는 빔서치가 결과를 개선하지 않는다는 점을 발견했기 때문에 QA에서는 탐욕적 디코딩을 사용한다.</p>
+    <p>Open-MSMarco와 Jeopardy 질문 생성의 경우, RAG-Token과 RAG-Sequence 모두에 대해 10개 검색 문서를 사용한 테스트 수치를 보고하고, 기준선으로 BART-large 모델도 학습한다.</p>
+    <p>우리는 빔 크기 4를 사용하며, Thorough Decoding이 성능을 개선하지 않았기 때문에 RAG-Sequence 모델에는 Fast Decoding 접근을 사용한다.</p>
+  </section>
+
+  <section>
+    <h2>부록 B. 인간 평가</h2>
+    <figure>
+      <img src="https://ar5iv.labs.arxiv.org/html/2005.11401/assets/images/annotation_interface.png" width="476" height="183" alt="Annotation interface for human evaluation of factuality">
+      <figcaption>Figure 4: Annotation interface for human evaluation of factuality. "view tool guide"를 클릭하면 자세한 지침과 작업 예시가 팝아웃으로 나타난다.</figcaption>
+    </figure>
+    <p>그림 4는 인간 평가를 위한 사용자 인터페이스를 보여준다.</p>
+    <p>화면 위치에 따른 편향을 피하기 위해, 어떤 모델이 문장 A와 문장 B에 대응되는지는 각 예시마다 무작위로 선택되었다.</p>
+    <p>주석자는 인터넷을 사용해 주제를 조사하도록 권장되었으며, 전체 지침 탭에서 자세한 지침과 작업 예시를 제공받았다.</p>
+    <p>우리는 주석자의 정확도를 평가하기 위해 일부 금 문장을 포함했다.</p>
+    <p>두 명의 주석자는 이러한 예시에서 좋은 성과를 내지 못했으며, 그들의 주석은 결과에서 제거되었다.</p>
+  </section>
+
+  <section>
+    <h2>부록 C. 학습 설정 세부사항</h2>
+    <p>우리는 모든 RAG 모델과 BART 기준선을 Fairseq를 사용해 학습한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib45" title="" class="ltx_ref">45</a>]</cite></p>
+    <p>최적화에는 Adam을 사용한다.</p>
+    <p>과제별로 학습률, 배치 크기, 총 학습 단계 수를 조정한다.</p>
+    <p>검색은 FAISS 기반 최대 내적 검색으로 수행된다.</p>
+    <p>문서 인코더는 고정되어 있으며, 질의 인코더와 생성기는 미세조정된다.</p>
+  </section>
+
+  <section>
+    <h2>부록 D. 오픈 도메인 QA에 대한 추가 세부사항</h2>
+    <p>오픈 도메인 QA에서는 하나의 질문에 대해 여러 답변 주석이 제공되는 경우가 많다.</p>
+    <p>추출형 모델은 일반적으로 학습 데이터를 준비할 때 문서 안에서 매칭을 찾기 위해 모든 답변 주석을 사용하므로 이러한 답변 주석을 활용한다.</p>
+    <p>RAG의 경우에도 Natural Questions와 WebQuestions에 대해 각 질문-답변 쌍을 별도로 사용하여 모델을 학습함으로써 여러 주석 예시를 활용하며, 이는 정확도를 약간 높인다.</p>
+    <p>TriviaQA의 경우 하나의 질문에 대해 유효한 답변이 많이 존재하는 경우가 많으며, 그중 일부는 이모지나 철자 변형처럼 적절한 학습 목표가 아닐 수 있다.</p>
+    <p>TriviaQA에서는 답변 후보가 해당 질의의 상위 1000개 문서에 나타나지 않으면 이를 필터링한다.</p>
+    <p>CuratedTrec의 답변은 정규표현식 형태로 주어진다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a>]</cite></p>
+    <p>이는 답변 생성 모델에 적합하지 않은 이유로 제기되어 왔다.</p>
+    <p>이를 극복하기 위해 우리는 전처리 단계를 사용한다.</p>
+    <p>먼저 각 질의에 대해 상위 1000개 문서를 검색하고, 정규표현식 패턴과 가장 자주 매칭되는 답변을 지도 목표로 사용한다.</p>
+    <p>매칭이 발견되지 않으면 단순한 휴리스틱을 사용한다.</p>
+    <p>이 휴리스틱은 각 정규표현식에 대해 가능한 모든 순열을 생성하고, 정규표현식의 중첩 트리 구조 안에 있는 비결정적 기호를 공백으로 대체한다.</p>
+    <p>오픈 도메인 QA 커뮤니티에서는 QA 데이터셋의 테스트 데이터가 종종 제한되어 있고 독해 목적에 전용되어 있기 때문에 공개 개발 데이터셋을 테스트 데이터셋으로 사용하는 관행이 있다.</p>
+    <p>우리는 DPR에서 사용한 데이터셋 분할을 사용해 결과를 보고하며, 이는 오픈 도메인 QA의 일반적 관행과 일치한다.</p>
+    <p>TriviaQA의 경우 이 테스트 데이터셋은 공개 TriviaQA Web Development 분할이다.</p>
+  </section>
+
+  <section>
+    <h2>부록 E. FEVER 세부사항</h2>
+    <p>FEVER 분류의 경우 우리는 이전 연구의 관행을 따르며, 먼저 주장을 다시 생성한 뒤 최종 은닉 상태의 표현을 사용해 분류하고, 마지막으로 문서들에 걸쳐 주변화하여 클래스 확률을 얻는다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib32" title="" class="ltx_ref">32</a>]</cite></p>
+  </section>
+
+  <section>
+    <h2>부록 F. Null 문서</h2>
+    <p>우리는 주어진 입력에 대해 유용한 정보를 검색할 수 없는 경우를 모델링하기 위해 REALM과 유사한 “Null document” 메커니즘을 RAG에 추가하는 실험을 수행했다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib20" title="" class="ltx_ref">20</a>]</cite></p>
+    <p>여기서 k개의 문서가 검색되었다면, 우리는 추가로 빈 문서를 “검색”하고 null 문서에 대한 로짓을 예측한 뒤, k+1개의 예측에 대해 주변화한다.</p>
+    <p>우리는 null 문서에 대한 로짓을 모델링하기 위해 세 가지 방법을 탐구했다.</p>
+    <p>첫째, null 문서에 대한 문서 임베딩을 학습했다.</p>
+    <p>둘째, 정적인 학습 편향 항을 사용했다.</p>
+    <p>셋째, 로짓을 예측하는 신경망을 사용했다.</p>
+    <p>우리는 이 방법들이 성능을 개선하지 않는다는 점을 발견했으므로, 단순성을 위해 이를 생략한다.</p>
+    <p>유용한 검색 문서를 항상 검색할 수 없는 Open MS-MARCO의 경우, 모델은 검색으로부터 이익을 얻을 가능성이 낮은 질문에 대해 특정 문서 집합을 항상 검색하도록 학습하는 것을 관찰했다.</p>
+    <p>이는 null 문서 메커니즘이 RAG에 필요하지 않을 수 있음을 시사한다.</p>
+  </section>
+
+  <section>
+    <h2>부록 G. 파라미터 수</h2>
+    <p>우리의 RAG 모델은 DPR의 BERT-base 질의 인코더와 문서 인코더에 대한 학습 가능한 파라미터를 포함하며, 각각은 1억 1천만 개의 파라미터를 갖는다.</p>
+    <p>다만 우리는 문서 인코더 자체를 학습하지 않는다.</p>
+    <p>또한 BART-large로부터 4억 6백만 개의 학습 가능한 파라미터를 포함하며, 총 학습 가능한 파라미터 수는 6억 2천 6백만 개가 된다.</p>
+    <p>가장 좋은 성능을 보이는 폐쇄형 책, 곧 파라미터 전용 오픈 도메인 QA 모델은 110억 개의 학습 가능한 파라미터를 가진 T5-11B이다.</p>
+    <p>우리 모델과 가장 가까운 파라미터 수를 가진 T5 모델은 7억 7천만 개 파라미터를 가진 T5-large이며, 이는 Natural Questions에서 28.9 EM을 달성한다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib52" title="" class="ltx_ref">52</a>]</cite></p>
+    <p>이는 RAG-Sequence가 달성한 44.5보다 상당히 낮다.</p>
+    <p>따라서 하이브리드 파라미터/비파라미터 모델은 강한 오픈 도메인 QA 성능을 위해 훨씬 적은 학습 가능 파라미터를 필요로 함을 나타낸다.</p>
+    <p>비파라미터 메모리 인덱스는 학습 가능한 파라미터로 구성되지 않는다.</p>
+    <p>하지만 이 인덱스는 2,100만 개의 728차원 벡터, 곧 153억 개 값으로 구성된다.</p>
+    <p>이 값들은 메모리와 디스크 사용량을 관리하기 위해 8비트 부동소수점 정밀도로 쉽게 저장될 수 있다.</p>
+  </section>
+
+  <section>
+    <h2>부록 H. 검색 붕괴</h2>
+    <p>예비 실험에서 우리는 스토리 생성과 같은 일부 과제에서 검색 구성요소가 “붕괴”하여 입력과 관계없이 같은 문서를 검색하도록 학습하는 현상을 관찰했다. <cite class="ltx_cite ltx_citemacro_cite">[<a href="https://arxiv.org/html/2005.11401v4#bib.bib11" title="" class="ltx_ref">11</a>]</cite></p>
+    <p>이러한 경우 검색이 붕괴된 뒤 생성기는 문서를 무시하도록 학습하고, RAG 모델은 BART와 동등하게 수행된다.</p>
+    <p>이는 RAG가 특히 외부 지식이 실제로 도움이 되는 지식 집약적 과제에 적합하다는 점을 시사한다.</p>
+  </section>
+
+  <section>
+    <h2>부록 I. 데이터셋별 인스턴스 수</h2>
+    <p>우리 데이터셋 각각의 학습, 개발, 테스트 데이터 포인트 수는 표 7에 표시되어 있다.</p>
+<div class="table-guide"><strong>표 7 원본 테이블</strong><br>부록 I에서 참조되는 데이터셋별 인스턴스 수 표이다.</div>
+<figure id="A9.T7" class="ltx_table">
+<figcaption class="ltx_caption ltx_centering" style="font-size:90%;"><span class="ltx_tag ltx_tag_table">표 7: </span>사용된 데이터셋의 인스턴스 수. *는 이 데이터의 숨겨진 부분집합이 평가에 사용됨을 뜻한다.</figcaption>
+<table id="A9.T7.3" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="A9.T7.3.1.1" class="ltx_tr">
+<th id="A9.T7.3.1.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt"><span id="A9.T7.3.1.1.1.1" class="ltx_text" style="font-size:90%;">Task</span></th>
+<th id="A9.T7.3.1.1.2" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span id="A9.T7.3.1.1.2.1" class="ltx_text" style="font-size:90%;">Train</span></th>
+<th id="A9.T7.3.1.1.3" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span id="A9.T7.3.1.1.3.1" class="ltx_text" style="font-size:90%;">Development</span></th>
+<th id="A9.T7.3.1.1.4" class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span id="A9.T7.3.1.1.4.1" class="ltx_text" style="font-size:90%;">Test</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="A9.T7.3.2.1" class="ltx_tr">
+<th id="A9.T7.3.2.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t"><span id="A9.T7.3.2.1.1.1" class="ltx_text" style="font-size:90%;">Natural Questions</span></th>
+<td id="A9.T7.3.2.1.2" class="ltx_td ltx_align_right ltx_border_t"><span id="A9.T7.3.2.1.2.1" class="ltx_text" style="font-size:90%;">79169</span></td>
+<td id="A9.T7.3.2.1.3" class="ltx_td ltx_align_right ltx_border_t"><span id="A9.T7.3.2.1.3.1" class="ltx_text" style="font-size:90%;">8758</span></td>
+<td id="A9.T7.3.2.1.4" class="ltx_td ltx_align_right ltx_border_t"><span id="A9.T7.3.2.1.4.1" class="ltx_text" style="font-size:90%;">3611</span></td>
+</tr>
+<tr id="A9.T7.3.3.2" class="ltx_tr">
+<th id="A9.T7.3.3.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.3.2.1.1" class="ltx_text" style="font-size:90%;">TriviaQA</span></th>
+<td id="A9.T7.3.3.2.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.3.2.2.1" class="ltx_text" style="font-size:90%;">78786</span></td>
+<td id="A9.T7.3.3.2.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.3.2.3.1" class="ltx_text" style="font-size:90%;">8838</span></td>
+<td id="A9.T7.3.3.2.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.3.2.4.1" class="ltx_text" style="font-size:90%;">11314</span></td>
+</tr>
+<tr id="A9.T7.3.4.3" class="ltx_tr">
+<th id="A9.T7.3.4.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.4.3.1.1" class="ltx_text" style="font-size:90%;">WebQuestions</span></th>
+<td id="A9.T7.3.4.3.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.4.3.2.1" class="ltx_text" style="font-size:90%;">3418</span></td>
+<td id="A9.T7.3.4.3.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.4.3.3.1" class="ltx_text" style="font-size:90%;">362</span></td>
+<td id="A9.T7.3.4.3.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.4.3.4.1" class="ltx_text" style="font-size:90%;">2033</span></td>
+</tr>
+<tr id="A9.T7.3.5.4" class="ltx_tr">
+<th id="A9.T7.3.5.4.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.5.4.1.1" class="ltx_text" style="font-size:90%;">CuratedTrec</span></th>
+<td id="A9.T7.3.5.4.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.5.4.2.1" class="ltx_text" style="font-size:90%;">635</span></td>
+<td id="A9.T7.3.5.4.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.5.4.3.1" class="ltx_text" style="font-size:90%;">134</span></td>
+<td id="A9.T7.3.5.4.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.5.4.4.1" class="ltx_text" style="font-size:90%;">635</span></td>
+</tr>
+<tr id="A9.T7.3.6.5" class="ltx_tr">
+<th id="A9.T7.3.6.5.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.6.5.1.1" class="ltx_text" style="font-size:90%;">Jeopardy Question Generation</span></th>
+<td id="A9.T7.3.6.5.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.6.5.2.1" class="ltx_text" style="font-size:90%;">97392</span></td>
+<td id="A9.T7.3.6.5.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.6.5.3.1" class="ltx_text" style="font-size:90%;">13714</span></td>
+<td id="A9.T7.3.6.5.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.6.5.4.1" class="ltx_text" style="font-size:90%;">26849</span></td>
+</tr>
+<tr id="A9.T7.3.7.6" class="ltx_tr">
+<th id="A9.T7.3.7.6.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.7.6.1.1" class="ltx_text" style="font-size:90%;">MS-MARCO</span></th>
+<td id="A9.T7.3.7.6.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.7.6.2.1" class="ltx_text" style="font-size:90%;">153726</span></td>
+<td id="A9.T7.3.7.6.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.7.6.3.1" class="ltx_text" style="font-size:90%;">12468</span></td>
+<td id="A9.T7.3.7.6.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.7.6.4.1" class="ltx_text" style="font-size:90%;">101093*</span></td>
+</tr>
+<tr id="A9.T7.3.8.7" class="ltx_tr">
+<th id="A9.T7.3.8.7.1" class="ltx_td ltx_align_left ltx_th ltx_th_row"><span id="A9.T7.3.8.7.1.1" class="ltx_text" style="font-size:90%;">FEVER-3-way</span></th>
+<td id="A9.T7.3.8.7.2" class="ltx_td ltx_align_right"><span id="A9.T7.3.8.7.2.1" class="ltx_text" style="font-size:90%;">145450</span></td>
+<td id="A9.T7.3.8.7.3" class="ltx_td ltx_align_right"><span id="A9.T7.3.8.7.3.1" class="ltx_text" style="font-size:90%;">10000</span></td>
+<td id="A9.T7.3.8.7.4" class="ltx_td ltx_align_right"><span id="A9.T7.3.8.7.4.1" class="ltx_text" style="font-size:90%;">10000</span></td>
+</tr>
+<tr id="A9.T7.3.9.8" class="ltx_tr">
+<th id="A9.T7.3.9.8.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb"><span id="A9.T7.3.9.8.1.1" class="ltx_text" style="font-size:90%;">FEVER-2-way</span></th>
+<td id="A9.T7.3.9.8.2" class="ltx_td ltx_align_right ltx_border_bb"><span id="A9.T7.3.9.8.2.1" class="ltx_text" style="font-size:90%;">96966</span></td>
+<td id="A9.T7.3.9.8.3" class="ltx_td ltx_align_right ltx_border_bb"><span id="A9.T7.3.9.8.3.1" class="ltx_text" style="font-size:90%;">6666</span></td>
+<td id="A9.T7.3.9.8.4" class="ltx_td ltx_align_right ltx_border_bb"><span id="A9.T7.3.9.8.4.1" class="ltx_text" style="font-size:90%;">6666</span></td>
+</tr>
+</tbody>
+</table>
+</figure>
+  </section>
+
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul class="ltx_biblist">
+<li id="bib.bib1" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bajaj et&nbsp;al. [2016]</span>
+<span class="ltx_bibblock">
+Payal Bajaj, Daniel Campos, Nick Craswell, Li&nbsp;Deng, Jianfeng Gao, Xiaodong Liu,
+Rangan Majumder, Andrew McNamara, Bhaskar Mitra, Tri Nguyen, Mir Rosenberg,
+Xia Song, Alina Stoica, Saurabh Tiwary, and Tong Wang.
+
+</span>
+<span class="ltx_bibblock">MS MARCO: A Human Generated MAchine Reading
+COmprehension Dataset.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib1.1.1" class="ltx_emph ltx_font_italic">arXiv:1611.09268 [cs]</em>, November 2016.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1611.09268" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1611.09268</a>.
+
+</span>
+<span class="ltx_bibblock">arXiv: 1611.09268.
+
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Baudiš and Šedivỳ [2015]</span>
+<span class="ltx_bibblock">
+Petr Baudiš and Jan Šedivỳ.
+
+</span>
+<span class="ltx_bibblock">Modeling of the question answering task in the yodaqa system.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib2.1.1" class="ltx_emph ltx_font_italic">International Conference of the Cross-Language Evaluation
+Forum for European Languages</em>, pages 222–228. Springer, 2015.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://link.springer.com/chapter/10.1007%2F978-3-319-24027-5_20" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://link.springer.com/chapter/10.1007%2F978-3-319-24027-5_20</a>.
+
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Berant et&nbsp;al. [2013]</span>
+<span class="ltx_bibblock">
+Jonathan Berant, Andrew Chou, Roy Frostig, and Percy Liang.
+
+</span>
+<span class="ltx_bibblock">Semantic Parsing on Freebase from Question-Answer Pairs.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib3.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2013 Conference on Empirical
+Methods in Natural Language Processing</em>, pages 1533–1544, Seattle,
+Washington, USA, October 2013. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://www.aclweb.org/anthology/D13-1160" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://www.aclweb.org/anthology/D13-1160</a>.
+
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Bi et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Bin Bi, Chenliang Li, Chen Wu, Ming Yan, and Wei Wang.
+
+</span>
+<span class="ltx_bibblock">Palm: Pre-training an autoencoding&amp;autoregressive language model for
+context-conditioned generation.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib4.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/2004.07159, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2004.07159" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2004.07159</a>.
+
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Chen et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Danqi Chen, Adam Fisch, Jason Weston, and Antoine Bordes.
+
+</span>
+<span class="ltx_bibblock">Reading Wikipedia to Answer Open-Domain Questions.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib5.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 55th Annual Meeting of the
+Association for Computational Linguistics (Volume 1: Long
+Papers)</em>, pages 1870–1879, Vancouver, Canada, July 2017. Association for
+Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P17-1171</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P17-1171" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P17-1171</a>.
+
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Choi et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Eunsol Choi, Daniel Hewlett, Jakob Uszkoreit, Illia Polosukhin, Alexandre
+Lacoste, and Jonathan Berant.
+
+</span>
+<span class="ltx_bibblock">Coarse-to-fine question answering for long documents.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib6.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 55th Annual Meeting of the Association
+for Computational Linguistics (Volume 1: Long Papers)</em>, pages 209–220,
+Vancouver, Canada, July 2017. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P17-1020</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P17-1020" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P17-1020</a>.
+
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Clark and Gardner [2017]</span>
+<span class="ltx_bibblock">
+Christopher Clark and Matt Gardner.
+
+</span>
+<span class="ltx_bibblock">Simple and Effective Multi-Paragraph Reading Comprehension.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib7.1.1" class="ltx_emph ltx_font_italic">arXiv:1710.10723 [cs]</em>, October 2017.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1710.10723" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1710.10723</a>.
+
+</span>
+<span class="ltx_bibblock">arXiv: 1710.10723.
+
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Devlin et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.
+
+</span>
+<span class="ltx_bibblock">BERT: Pre-training of Deep Bidirectional Transformers for
+Language Understanding.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib8.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2019 Conference of the North
+American Chapter of the Association for Computational Linguistics:
+Human Language Technologies, Volume 1 (Long and Short Papers)</em>,
+pages 4171–4186, Minneapolis, Minnesota, June 2019. Association for
+Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/N19-1423</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/N19-1423" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/N19-1423</a>.
+
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Dinan et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Emily Dinan, Stephen Roller, Kurt Shuster, Angela Fan, Michael Auli, and Jason
+Weston.
+
+</span>
+<span class="ltx_bibblock">Wizard of wikipedia: Knowledge-powered conversational agents.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib9.1.1" class="ltx_emph ltx_font_italic">International Conference on Learning Representations</em>, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=r1l73iRqKm" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=r1l73iRqKm</a>.
+
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Dunn et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Matthew Dunn, Levent Sagun, Mike Higgins, V.&nbsp;Ugur Guney, Volkan Cirik, and
+Kyunghyun Cho.
+
+</span>
+<span class="ltx_bibblock">SearchQA: A New Q&amp;A Dataset Augmented with Context
+from a Search Engine.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib10.1.1" class="ltx_emph ltx_font_italic">arXiv:1704.05179 [cs]</em>, April 2017.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1704.05179" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1704.05179</a>.
+
+</span>
+<span class="ltx_bibblock">arXiv: 1704.05179.
+
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Fan et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Angela Fan, Mike Lewis, and Yann Dauphin.
+
+</span>
+<span class="ltx_bibblock">Hierarchical neural story generation.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib11.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 56th Annual Meeting of the Association
+for Computational Linguistics (Volume 1: Long Papers)</em>, pages 889–898,
+Melbourne, Australia, July 2018. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P18-1082</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P18-1082" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P18-1082</a>.
+
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Fan et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Angela Fan, Yacine Jernite, Ethan Perez, David Grangier, Jason Weston, and
+Michael Auli.
+
+</span>
+<span class="ltx_bibblock">ELI5: Long form question answering.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib12.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 57th Annual Meeting of the Association
+for Computational Linguistics</em>, pages 3558–3567, Florence, Italy, July 2019.
+Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P19-1346</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P19-1346" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P19-1346</a>.
+
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Fan et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Angela Fan, Claire Gardent, Chloe Braud, and Antoine Bordes.
+
+</span>
+<span class="ltx_bibblock">Augmenting transformers with KNN-based composite memory, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=H1gx1CNKPH" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=H1gx1CNKPH</a>.
+
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Févry et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Thibault Févry, Livio&nbsp;Baldini Soares, Nicholas FitzGerald, Eunsol Choi, and
+Tom Kwiatkowski.
+
+</span>
+<span class="ltx_bibblock">Entities as experts: Sparse memory access with entity supervision.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib14.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/2004.07202, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2004.07202" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2004.07202</a>.
+
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ghazvininejad et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Marjan Ghazvininejad, Chris Brockett, Ming-Wei Chang, Bill Dolan, Jianfeng Gao,
+Wen tau Yih, and Michel Galley.
+
+</span>
+<span class="ltx_bibblock">A knowledge-grounded neural conversation model.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib15.1.1" class="ltx_emph ltx_font_italic">AAAI Conference on Artificial Intelligence</em>, 2018.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16710" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16710</a>.
+
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Grace et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Katja Grace, John Salvatier, Allan Dafoe, Baobao Zhang, and Owain Evans.
+
+</span>
+<span class="ltx_bibblock">When will AI exceed human performance? evidence from AI experts.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib16.1.1" class="ltx_emph ltx_font_italic">CoRR</em>, abs/1705.08807, 2017.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1705.08807" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1705.08807</a>.
+
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Gu et&nbsp;al. [2018a]</span>
+<span class="ltx_bibblock">
+Jiatao Gu, Yong Wang, Kyunghyun Cho, and Victor&nbsp;O.K. Li.
+
+</span>
+<span class="ltx_bibblock">Search engine guided neural machine translation.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib17.1.1" class="ltx_emph ltx_font_italic">AAAI Conference on Artificial Intelligence</em>,
+2018a.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/17282" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/17282</a>.
+
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Gu et&nbsp;al. [2018b]</span>
+<span class="ltx_bibblock">
+Jiatao Gu, Yong Wang, Kyunghyun Cho, and Victor O.K. Li.
+
+</span>
+<span class="ltx_bibblock">Search engine guided neural machine translation.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib18.1.1" class="ltx_emph ltx_font_italic">32nd AAAI Conference on Artificial Intelligence, AAAI 2018</em>,
+32nd AAAI Conference on Artificial Intelligence, AAAI 2018, pages 5133–5140.
+AAAI press, 2018b.
+
+</span>
+<span class="ltx_bibblock">32nd AAAI Conference on Artificial Intelligence, AAAI 2018 ;
+Conference date: 02-02-2018 Through 07-02-2018.
+
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Guu et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Kelvin Guu, Tatsunori&nbsp;B. Hashimoto, Yonatan Oren, and Percy Liang.
+
+</span>
+<span class="ltx_bibblock">Generating sentences by editing prototypes.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib19.1.1" class="ltx_emph ltx_font_italic">Transactions of the Association for Computational Linguistics</em>,
+6:437–450, 2018.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.1162/tacl_a_00030</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/Q18-1031" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/Q18-1031</a>.
+
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Guu et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasupat, and Ming-Wei Chang.
+
+</span>
+<span class="ltx_bibblock">REALM: Retrieval-augmented language model pre-training.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib20.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/2002.08909, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2002.08909" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2002.08909</a>.
+
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hashimoto et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Tatsunori&nbsp;B Hashimoto, Kelvin Guu, Yonatan Oren, and Percy&nbsp;S Liang.
+
+</span>
+<span class="ltx_bibblock">A retrieve-and-edit framework for predicting structured outputs.
+
+</span>
+<span class="ltx_bibblock">In S.&nbsp;Bengio, H.&nbsp;Wallach, H.&nbsp;Larochelle, K.&nbsp;Grauman, N.&nbsp;Cesa-Bianchi,
+and R.&nbsp;Garnett, editors, <em id="bib.bib21.1.1" class="ltx_emph ltx_font_italic">Advances in Neural Information Processing
+Systems 31</em>, pages 10052–10062. Curran Associates, Inc., 2018.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="http://papers.nips.cc/paper/8209-a-retrieve-and-edit-framework-for-predicting-structured-outputs.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://papers.nips.cc/paper/8209-a-retrieve-and-edit-framework-for-predicting-structured-outputs.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Hossain et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Nabil Hossain, Marjan Ghazvininejad, and Luke Zettlemoyer.
+
+</span>
+<span class="ltx_bibblock">Simple and effective retrieve-edit-rerank text generation.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib22.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 58th Annual Meeting of the Association
+for Computational Linguistics</em>, pages 2532–2538, Online, July 2020.
+Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/2020.acl-main.228</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/2020.acl-main.228" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/2020.acl-main.228</a>.
+
+</span>
+</li>
+<li id="bib.bib23" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Johnson et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Jeff Johnson, Matthijs Douze, and Hervé Jégou.
+
+</span>
+<span class="ltx_bibblock">Billion-scale similarity search with gpus.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib23.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:1702.08734</em>, 2017.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1702.08734" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1702.08734</a>.
+
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Joshi et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Mandar Joshi, Eunsol Choi, Daniel Weld, and Luke Zettlemoyer.
+
+</span>
+<span class="ltx_bibblock">TriviaQA: A Large Scale Distantly Supervised Challenge
+Dataset for Reading Comprehension.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib24.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 55th Annual Meeting of the
+Association for Computational Linguistics (Volume 1: Long
+Papers)</em>, pages 1601–1611, Vancouver, Canada, July 2017. Association for
+Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P17-1147</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P17-1147" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P17-1147</a>.
+
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Joulin and Mikolov [2015]</span>
+<span class="ltx_bibblock">
+Armand Joulin and Tomas Mikolov.
+
+</span>
+<span class="ltx_bibblock">Inferring algorithmic patterns with stack-augmented recurrent nets.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib25.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 28th International Conference on Neural
+Information Processing Systems - Volume 1</em>, NIPS’15, page 190–198,
+Cambridge, MA, USA, 2015. MIT Press.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://papers.nips.cc/paper/5857-inferring-algorithmic-patterns-with-stack-augmented-recurrent-nets" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://papers.nips.cc/paper/5857-inferring-algorithmic-patterns-with-stack-augmented-recurrent-nets</a>.
+
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Karpukhin et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Vladimir Karpukhin, Barlas Oguz, Sewon Min, Ledell Wu, Sergey Edunov, Danqi
+Chen, and Wen-tau Yih.
+
+</span>
+<span class="ltx_bibblock">Dense passage retrieval for open-domain question answering.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib26.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:2004.04906</em>, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2004.04906" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2004.04906</a>.
+
+</span>
+</li>
+<li id="bib.bib27" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Khandelwal et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Urvashi Khandelwal, Omer Levy, Dan Jurafsky, Luke Zettlemoyer, and Mike Lewis.
+
+</span>
+<span class="ltx_bibblock">Generalization through memorization: Nearest neighbor language
+models.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib27.1.1" class="ltx_emph ltx_font_italic">International Conference on Learning Representations</em>, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=HklBjCEKvH" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=HklBjCEKvH</a>.
+
+</span>
+</li>
+<li id="bib.bib28" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kingma and Ba [2015]</span>
+<span class="ltx_bibblock">
+Diederik&nbsp;P. Kingma and Jimmy Ba.
+
+</span>
+<span class="ltx_bibblock">Adam: A method for stochastic optimization.
+
+</span>
+<span class="ltx_bibblock">In Yoshua Bengio and Yann LeCun, editors, <em id="bib.bib28.1.1" class="ltx_emph ltx_font_italic">3rd International
+Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May
+7-9, 2015, Conference Track Proceedings</em>, 2015.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1412.6980" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1412.6980</a>.
+
+</span>
+</li>
+<li id="bib.bib29" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Kwiatkowski et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur
+Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Matthew Kelcey,
+Jacob Devlin, Kenton Lee, Kristina&nbsp;N. Toutanova, Llion Jones, Ming-Wei Chang,
+Andrew Dai, Jakob Uszkoreit, Quoc Le, and Slav Petrov.
+
+</span>
+<span class="ltx_bibblock">Natural Questions: a Benchmark for Question Answering
+Research.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib29.1.1" class="ltx_emph ltx_font_italic">Transactions of the Association of Computational Linguistics</em>,
+2019.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://tomkwiat.users.x20web.corp.google.com/papers/natural-questions/main-1455-kwiatkowski.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://tomkwiat.users.x20web.corp.google.com/papers/natural-questions/main-1455-kwiatkowski.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib30" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lample et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Guillaume Lample, Alexandre Sablayrolles, Marc’&nbsp;Aurelio Ranzato, Ludovic
+Denoyer, and Herve Jegou.
+
+</span>
+<span class="ltx_bibblock">Large memory layers with product keys.
+
+</span>
+<span class="ltx_bibblock">In H.&nbsp;Wallach, H.&nbsp;Larochelle, A.&nbsp;Beygelzimer, F.&nbsp;d’&nbsp;Alché-Buc,
+E.&nbsp;Fox, and R.&nbsp;Garnett, editors, <em id="bib.bib30.1.1" class="ltx_emph ltx_font_italic">Advances in Neural Information
+Processing Systems 32</em>, pages 8548–8559. Curran Associates, Inc., 2019.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="http://papers.nips.cc/paper/9061-large-memory-layers-with-product-keys.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://papers.nips.cc/paper/9061-large-memory-layers-with-product-keys.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib31" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lee et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Kenton Lee, Ming-Wei Chang, and Kristina Toutanova.
+
+</span>
+<span class="ltx_bibblock">Latent retrieval for weakly supervised open domain question
+answering.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib31.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 57th Annual Meeting of the Association
+for Computational Linguistics</em>, pages 6086–6096, Florence, Italy, July 2019.
+Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P19-1612</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P19-1612" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P19-1612</a>.
+
+</span>
+</li>
+<li id="bib.bib32" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Lewis et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed,
+Omer Levy, Veselin Stoyanov, and Luke Zettlemoyer.
+
+</span>
+<span class="ltx_bibblock">BART: Denoising sequence-to-sequence pre-training for natural
+language generation, translation, and comprehension.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib32.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:1910.13461</em>, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1910.13461" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1910.13461</a>.
+
+</span>
+</li>
+<li id="bib.bib33" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Li et&nbsp;al. [2016]</span>
+<span class="ltx_bibblock">
+Jiwei Li, Michel Galley, Chris Brockett, Jianfeng Gao, and Bill Dolan.
+
+</span>
+<span class="ltx_bibblock">A diversity-promoting objective function for neural conversation
+models.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib33.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2016 Conference of the North American
+Chapter of the Association for Computational Linguistics: Human Language
+Technologies</em>, pages 110–119, San Diego, California, June 2016. Association
+for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/N16-1014</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/N16-1014" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/N16-1014</a>.
+
+</span>
+</li>
+<li id="bib.bib34" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Li et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Margaret Li, Jason Weston, and Stephen Roller.
+
+</span>
+<span class="ltx_bibblock">Acute-eval: Improved dialogue evaluation with optimized questions and
+multi-turn comparisons.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib34.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/1909.03087, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1909.03087" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1909.03087</a>.
+
+</span>
+</li>
+<li id="bib.bib35" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Liu et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Hairong Liu, Mingbo Ma, Liang Huang, Hao Xiong, and Zhongjun He.
+
+</span>
+<span class="ltx_bibblock">Robust neural machine translation with joint textual and phonetic
+embedding.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib35.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 57th Annual Meeting of the Association
+for Computational Linguistics</em>, pages 3044–3049, Florence, Italy, July 2019.
+Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/P19-1291</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/P19-1291" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/P19-1291</a>.
+
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Liu* et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Peter&nbsp;J. Liu*, Mohammad Saleh*, Etienne Pot, Ben Goodrich, Ryan Sepassi, Lukasz
+Kaiser, and Noam Shazeer.
+
+</span>
+<span class="ltx_bibblock">Generating wikipedia by summarizing long sequences.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib36.1.1" class="ltx_emph ltx_font_italic">International Conference on Learning Representations</em>, 2018.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=Hyg0vbWC-" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=Hyg0vbWC-</a>.
+
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Malkov and Yashunin [2016]</span>
+<span class="ltx_bibblock">
+Yury&nbsp;A. Malkov and D.&nbsp;A. Yashunin.
+
+</span>
+<span class="ltx_bibblock">Efficient and robust approximate nearest neighbor search using
+hierarchical navigable small world graphs.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib37.1.1" class="ltx_emph ltx_font_italic">IEEE Transactions on Pattern Analysis and Machine
+Intelligence</em>, 42:824–836, 2016.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1603.09320" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1603.09320</a>.
+
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Marcus [2020]</span>
+<span class="ltx_bibblock">
+Gary Marcus.
+
+</span>
+<span class="ltx_bibblock">The next decade in ai: four steps towards robust artificial
+intelligence.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib38.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:2002.06177</em>, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2002.06177" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2002.06177</a>.
+
+</span>
+</li>
+<li id="bib.bib39" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Massarelli et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Luca Massarelli, Fabio Petroni, Aleksandra Piktus, Myle Ott, Tim
+Rocktäschel, Vassilis Plachouras, Fabrizio Silvestri, and Sebastian
+Riedel.
+
+</span>
+<span class="ltx_bibblock">How decoding strategies affect the verifiability of generated text.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib39.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:1911.03587</em>, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1911.03587" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1911.03587</a>.
+
+</span>
+</li>
+<li id="bib.bib40" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Micikevicius et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Paulius Micikevicius, Sharan Narang, Jonah Alben, Gregory Diamos, Erich Elsen,
+David Garcia, Boris Ginsburg, Michael Houston, Oleksii Kuchaiev, Ganesh
+Venkatesh, and Hao Wu.
+
+</span>
+<span class="ltx_bibblock">Mixed precision training.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib40.1.1" class="ltx_emph ltx_font_italic">ICLR</em>, 2018.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=r1gs9JgRZ" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=r1gs9JgRZ</a>.
+
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Moghe et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Nikita Moghe, Siddhartha Arora, Suman Banerjee, and Mitesh&nbsp;M. Khapra.
+
+</span>
+<span class="ltx_bibblock">Towards exploiting background knowledge for building conversation
+systems.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib41.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2018 Conference on Empirical Methods in
+Natural Language Processing</em>, pages 2322–2332, Brussels, Belgium,
+October-November 2018. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/D18-1255</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/D18-1255" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/D18-1255</a>.
+
+</span>
+</li>
+<li id="bib.bib42" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nema and Khapra [2018]</span>
+<span class="ltx_bibblock">
+Preksha Nema and Mitesh&nbsp;M. Khapra.
+
+</span>
+<span class="ltx_bibblock">Towards a better metric for evaluating question generation systems.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib42.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2018 Conference on Empirical Methods in
+Natural Language Processing</em>, pages 3950–3959, Brussels, Belgium,
+October-November 2018. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/D18-1429</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/D18-1429" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/D18-1429</a>.
+
+</span>
+</li>
+<li id="bib.bib43" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nguyen et&nbsp;al. [2016]</span>
+<span class="ltx_bibblock">
+Tri Nguyen, Mir Rosenberg, Xia Song, Jianfeng Gao, Saurabh Tiwary, Rangan
+Majumder, and Li&nbsp;Deng.
+
+</span>
+<span class="ltx_bibblock">MS MARCO: A human generated machine reading comprehension
+dataset.
+
+</span>
+<span class="ltx_bibblock">In Tarek&nbsp;Richard Besold, Antoine Bordes, Artur&nbsp;S. d’Avila Garcez, and
+Greg Wayne, editors, <em id="bib.bib43.1.1" class="ltx_emph ltx_font_italic">Proceedings of the Workshop on Cognitive
+Computation: Integrating neural and symbolic approaches 2016 co-located with
+the 30th Annual Conference on Neural Information Processing Systems (NIPS
+2016), Barcelona, Spain, December 9, 2016</em>, volume 1773 of <em id="bib.bib43.2.2" class="ltx_emph ltx_font_italic">CEUR
+Workshop Proceedings</em>. CEUR-WS.org, 2016.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://ceur-ws.org/Vol-1773/CoCoNIPS_2016_paper9.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://ceur-ws.org/Vol-1773/CoCoNIPS_2016_paper9.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib44" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Nogueira and Cho [2019]</span>
+<span class="ltx_bibblock">
+Rodrigo Nogueira and Kyunghyun Cho.
+
+</span>
+<span class="ltx_bibblock">Passage re-ranking with BERT.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib44.1.1" class="ltx_emph ltx_font_italic">arXiv preprint arXiv:1901.04085</em>, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1901.04085" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1901.04085</a>.
+
+</span>
+</li>
+<li id="bib.bib45" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Ott et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Myle Ott, Sergey Edunov, Alexei Baevski, Angela Fan, Sam Gross, Nathan Ng,
+David Grangier, and Michael Auli.
+
+</span>
+<span class="ltx_bibblock">fairseq: A fast, extensible toolkit for sequence modeling.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib45.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2019 Conference of the North American
+Chapter of the Association for Computational Linguistics (Demonstrations)</em>,
+pages 48–53, Minneapolis, Minnesota, June 2019. Association for
+Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/N19-4009</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/N19-4009" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/N19-4009</a>.
+
+</span>
+</li>
+<li id="bib.bib46" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Perez et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Ethan Perez, Siddharth Karamcheti, Rob Fergus, Jason Weston, Douwe Kiela, and
+Kyunghyun Cho.
+
+</span>
+<span class="ltx_bibblock">Finding generalizable evidence by learning to convince q&amp;a models.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib46.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2019 Conference on Empirical Methods in
+Natural Language Processing and the 9th International Joint Conference on
+Natural Language Processing (EMNLP-IJCNLP)</em>, pages 2402–2411, Hong Kong,
+China, November 2019. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/D19-1244</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/D19-1244" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/D19-1244</a>.
+
+</span>
+</li>
+<li id="bib.bib47" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Petroni et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Fabio Petroni, Tim Rocktäschel, Sebastian Riedel, Patrick Lewis, Anton
+Bakhtin, Yuxiang Wu, and Alexander Miller.
+
+</span>
+<span class="ltx_bibblock">Language models as knowledge bases?
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib47.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2019 Conference on Empirical Methods in
+Natural Language Processing and the 9th International Joint Conference on
+Natural Language Processing (EMNLP-IJCNLP)</em>, pages 2463–2473, Hong Kong,
+China, November 2019. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/D19-1250</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/D19-1250" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/D19-1250</a>.
+
+</span>
+</li>
+<li id="bib.bib48" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Petroni et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Fabio Petroni, Patrick Lewis, Aleksandra Piktus, Tim Rocktäschel, Yuxiang
+Wu, Alexander&nbsp;H. Miller, and Sebastian Riedel.
+
+</span>
+<span class="ltx_bibblock">How context affects language models’ factual predictions.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib48.1.1" class="ltx_emph ltx_font_italic">Automated Knowledge Base Construction</em>, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=025X0zPfn" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=025X0zPfn</a>.
+
+</span>
+</li>
+<li id="bib.bib49" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Radford et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Alec Radford, Karthik Narasimhan, Tim Salimans, and Ilya Sutskever.
+
+</span>
+<span class="ltx_bibblock">Improving Language Understanding by Generative
+Pre-Training, 2018.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib50" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Radford et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, and Ilya
+Sutskever.
+
+</span>
+<span class="ltx_bibblock">Language models are unsupervised multitask learners, 2019.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://d4mucfpksywv.cloudfront.net/better-language-models/language_models_are_unsupervised_multitask_learners.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib51" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Raffel et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael
+Matena, Yanqi Zhou, Wei Li, and Peter&nbsp;J. Liu.
+
+</span>
+<span class="ltx_bibblock">Exploring the limits of transfer learning with a unified text-to-text
+transformer.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib51.1.1" class="ltx_emph ltx_font_italic">arXiv e-prints</em>, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1910.10683" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1910.10683</a>.
+
+</span>
+</li>
+<li id="bib.bib52" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Roberts et&nbsp;al. [2020]</span>
+<span class="ltx_bibblock">
+Adam Roberts, Colin Raffel, and Noam Shazeer.
+
+</span>
+<span class="ltx_bibblock">How much knowledge can you pack into the parameters of a language
+model?
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib52.1.1" class="ltx_emph ltx_font_italic">arXiv e-prints</em>, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2002.08910" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2002.08910</a>.
+
+</span>
+</li>
+<li id="bib.bib53" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Robertson and Zaragoza [2009]</span>
+<span class="ltx_bibblock">
+Stephen Robertson and Hugo Zaragoza.
+
+</span>
+<span class="ltx_bibblock">The probabilistic relevance framework: Bm25 and beyond.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib53.1.1" class="ltx_emph ltx_font_italic">Found. Trends Inf. Retr.</em>, 3(4):333–389,
+April 2009.
+
+</span>
+<span class="ltx_bibblock">ISSN 1554-0669.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.1561/1500000019</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://doi.org/10.1561/1500000019" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://doi.org/10.1561/1500000019</a>.
+
+</span>
+</li>
+<li id="bib.bib54" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Solaiman et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Irene Solaiman, Miles Brundage, Jack Clark, Amanda Askell, Ariel Herbert-Voss,
+Jeff Wu, Alec Radford, and Jian-Bing Wang.
+
+</span>
+<span class="ltx_bibblock">Release strategies and the social impacts of language models.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib54.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/1908.09203, 2019.
+
+</span>
+</li>
+<li id="bib.bib55" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Sukhbaatar et&nbsp;al. [2015]</span>
+<span class="ltx_bibblock">
+Sainbayar Sukhbaatar, Arthur Szlam, Jason Weston, and Rob Fergus.
+
+</span>
+<span class="ltx_bibblock">End-to-end memory networks.
+
+</span>
+<span class="ltx_bibblock">In C.&nbsp;Cortes, N.&nbsp;D. Lawrence, D.&nbsp;D. Lee, M.&nbsp;Sugiyama, and R.&nbsp;Garnett,
+editors, <em id="bib.bib55.1.1" class="ltx_emph ltx_font_italic">Advances in Neural Information Processing Systems 28</em>, pages
+2440–2448. Curran Associates, Inc., 2015.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="http://papers.nips.cc/paper/5846-end-to-end-memory-networks.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://papers.nips.cc/paper/5846-end-to-end-memory-networks.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib56" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Thorne et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+James Thorne, Andreas Vlachos, Christos Christodoulopoulos, and Arpit Mittal.
+
+</span>
+<span class="ltx_bibblock">FEVER: a large-scale dataset for fact extraction and
+VERification.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib56.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2018 Conference of the North American
+Chapter of the Association for Computational Linguistics: Human Language
+Technologies, Volume 1 (Long Papers)</em>, pages 809–819, New Orleans,
+Louisiana, June 2018. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/N18-1074</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/N18-1074" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/N18-1074</a>.
+
+</span>
+</li>
+<li id="bib.bib57" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Thorne and Vlachos [2020]</span>
+<span class="ltx_bibblock">
+James&nbsp;H. Thorne and Andreas Vlachos.
+
+</span>
+<span class="ltx_bibblock">Avoiding catastrophic forgetting in mitigating model biases in
+sentence-pair classification with elastic weight consolidation.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib57.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/2004.14366, 2020.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/2004.14366" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/2004.14366</a>.
+
+</span>
+</li>
+<li id="bib.bib58" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Vaswani et&nbsp;al. [2017]</span>
+<span class="ltx_bibblock">
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+Aidan&nbsp;N Gomez, Ł&nbsp;ukasz Kaiser, and Illia Polosukhin.
+
+</span>
+<span class="ltx_bibblock">Attention is all you need.
+
+</span>
+<span class="ltx_bibblock">In I.&nbsp;Guyon, U.&nbsp;V. Luxburg, S.&nbsp;Bengio, H.&nbsp;Wallach, R.&nbsp;Fergus,
+S.&nbsp;Vishwanathan, and R.&nbsp;Garnett, editors, <em id="bib.bib58.1.1" class="ltx_emph ltx_font_italic">Advances in Neural
+Information Processing Systems 30</em>, pages 5998–6008. Curran Associates,
+Inc., 2017.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="http://papers.nips.cc/paper/7181-attention-is-all-you-need.pdf" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://papers.nips.cc/paper/7181-attention-is-all-you-need.pdf</a>.
+
+</span>
+</li>
+<li id="bib.bib59" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Vijayakumar et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Ashwin Vijayakumar, Michael Cogswell, Ramprasaath Selvaraju, Qing Sun, Stefan
+Lee, David Crandall, and Dhruv Batra.
+
+</span>
+<span class="ltx_bibblock">Diverse beam search for improved description of complex scenes.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib59.1.1" class="ltx_emph ltx_font_italic">AAAI Conference on Artificial Intelligence</em>, 2018.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/17329" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/17329</a>.
+
+</span>
+</li>
+<li id="bib.bib60" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wang et&nbsp;al. [2018a]</span>
+<span class="ltx_bibblock">
+Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel
+Bowman.
+
+</span>
+<span class="ltx_bibblock">GLUE: A multi-task benchmark and analysis platform for natural
+language understanding.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib60.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2018 EMNLP Workshop BlackboxNLP:
+Analyzing and Interpreting Neural Networks for NLP</em>, pages 353–355,
+Brussels, Belgium, November 2018a. Association for Computational
+Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/W18-5446</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/W18-5446" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/W18-5446</a>.
+
+</span>
+</li>
+<li id="bib.bib61" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wang et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Alex Wang, Yada Pruksachatkun, Nikita Nangia, Amanpreet Singh, Julian Michael,
+Felix Hill, Omer Levy, and Samuel Bowman.
+
+</span>
+<span class="ltx_bibblock">SuperGLUE: A Stickier Benchmark for General-Purpose
+Language Understanding Systems.
+
+</span>
+<span class="ltx_bibblock">In H.&nbsp;Wallach, H.&nbsp;Larochelle, A.&nbsp;Beygelzimer,
+F.&nbsp;d\textquotesingle Alché-Buc, E.&nbsp;Fox, and R.&nbsp;Garnett,
+editors, <em id="bib.bib61.1.1" class="ltx_emph ltx_font_italic">Advances in Neural Information Processing Systems 32</em>,
+pages 3261–3275. Curran Associates, Inc., 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1905.00537" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1905.00537</a>.
+
+</span>
+</li>
+<li id="bib.bib62" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wang et&nbsp;al. [2018b]</span>
+<span class="ltx_bibblock">
+Shuohang Wang, Mo&nbsp;Yu, Xiaoxiao Guo, Zhiguo Wang, Tim Klinger, Wei Zhang, Shiyu
+Chang, Gerry Tesauro, Bowen Zhou, and Jing Jiang.
+
+</span>
+<span class="ltx_bibblock">R<math id="bib.bib62.1.m1" class="ltx_Math" alttext="{}^{\mbox{3}}" display="inline" intent=":literal"><semantics><msup><mi></mi><mtext>3</mtext></msup><annotation encoding="application/x-tex">{}^{\mbox{3}}</annotation></semantics></math>: Reinforced ranker-reader for open-domain question
+answering.
+
+</span>
+<span class="ltx_bibblock">In Sheila&nbsp;A. McIlraith and Kilian&nbsp;Q. Weinberger, editors,
+<em id="bib.bib62.2.1" class="ltx_emph ltx_font_italic">Proceedings of the Thirty-Second AAAI Conference on Artificial
+Intelligence, (AAAI-18), the 30th innovative Applications of Artificial
+Intelligence (IAAI-18), and the 8th AAAI Symposium on Educational Advances
+in Artificial Intelligence (EAAI-18), New Orleans, Louisiana, USA, February
+2-7, 2018</em>, pages 5981–5988. AAAI Press, 2018b.
+
+</span>
+<span class="ltx_bibblock">URL
+<a href="https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16712" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aaai.org/ocs/index.php/AAAI/AAAI18/paper/view/16712</a>.
+
+</span>
+</li>
+<li id="bib.bib63" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wang et&nbsp;al. [2018c]</span>
+<span class="ltx_bibblock">
+Shuohang Wang, Mo&nbsp;Yu, Jing Jiang, Wei Zhang, Xiaoxiao Guo, Shiyu Chang, Zhiguo
+Wang, Tim Klinger, Gerald Tesauro, and Murray Campbell.
+
+</span>
+<span class="ltx_bibblock">Evidence aggregation for answer re-ranking in open-domain question
+answering.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib63.1.1" class="ltx_emph ltx_font_italic">ICLR</em>, 2018c.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://openreview.net/forum?id=rJl3yM-Ab" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://openreview.net/forum?id=rJl3yM-Ab</a>.
+
+</span>
+</li>
+<li id="bib.bib64" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Weston et&nbsp;al. [2015]</span>
+<span class="ltx_bibblock">
+Jason Weston, Sumit Chopra, and Antoine Bordes.
+
+</span>
+<span class="ltx_bibblock">Memory networks.
+
+</span>
+<span class="ltx_bibblock">In Yoshua Bengio and Yann LeCun, editors, <em id="bib.bib64.1.1" class="ltx_emph ltx_font_italic">3rd International
+Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May
+7-9, 2015, Conference Track Proceedings</em>, 2015.
+
+</span>
+<span class="ltx_bibblock">URL <a href="http://arxiv.org/abs/1410.3916" title="" class="ltx_ref ltx_url ltx_font_typewriter">http://arxiv.org/abs/1410.3916</a>.
+
+</span>
+</li>
+<li id="bib.bib65" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Weston et&nbsp;al. [2018]</span>
+<span class="ltx_bibblock">
+Jason Weston, Emily Dinan, and Alexander Miller.
+
+</span>
+<span class="ltx_bibblock">Retrieve and refine: Improved sequence generation models for
+dialogue.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib65.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2018 EMNLP Workshop SCAI: The 2nd
+International Workshop on Search-Oriented Conversational AI</em>, pages 87–92,
+Brussels, Belgium, October 2018. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/W18-5713</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/W18-5713" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/W18-5713</a>.
+
+</span>
+</li>
+<li id="bib.bib66" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Wolf et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue,
+Anthony Moi, Pierric Cistac, Tim Rault, Rémi Louf, Morgan Funtowicz, Joe
+Davison, Sam Shleifer, Patrick von Platen, Clara Ma, Yacine Jernite, Julien
+Plu, Canwen Xu, Teven&nbsp;Le Scao, Sylvain Gugger, Mariama Drame, Quentin Lhoest,
+and Alexander&nbsp;M. Rush.
+
+</span>
+<span class="ltx_bibblock">Huggingface’s transformers: State-of-the-art natural language
+processing.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib66.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/1910.03771, 2019.
+
+</span>
+</li>
+<li id="bib.bib67" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Zhang and Bansal [2019]</span>
+<span class="ltx_bibblock">
+Shiyue Zhang and Mohit Bansal.
+
+</span>
+<span class="ltx_bibblock">Addressing semantic drift in question generation for semi-supervised
+question answering.
+
+</span>
+<span class="ltx_bibblock">In <em id="bib.bib67.1.1" class="ltx_emph ltx_font_italic">Proceedings of the 2019 Conference on Empirical Methods in
+Natural Language Processing and the 9th International Joint Conference on
+Natural Language Processing (EMNLP-IJCNLP)</em>, pages 2495–2509, Hong Kong,
+China, November 2019. Association for Computational Linguistics.
+
+</span>
+<span class="ltx_bibblock">doi: <span class="ltx_ref ltx_nolink ltx_Url ltx_ref_self">10.18653/v1/D19-1253</span>.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://www.aclweb.org/anthology/D19-1253" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.aclweb.org/anthology/D19-1253</a>.
+
+</span>
+</li>
+<li id="bib.bib68" class="ltx_bibitem">
+<span class="ltx_tag ltx_role_refnum ltx_tag_bibitem">Zhong et&nbsp;al. [2019]</span>
+<span class="ltx_bibblock">
+Wanjun Zhong, Jingjing Xu, Duyu Tang, Zenan Xu, Nan Duan, Ming Zhou, Jiahai
+Wang, and Jian Yin.
+
+</span>
+<span class="ltx_bibblock">Reasoning over semantic-level graph for fact checking.
+
+</span>
+<span class="ltx_bibblock"><em id="bib.bib68.1.1" class="ltx_emph ltx_font_italic">ArXiv</em>, abs/1909.03745, 2019.
+
+</span>
+<span class="ltx_bibblock">URL <a href="https://arxiv.org/abs/1909.03745" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://arxiv.org/abs/1909.03745</a>.
+
+</span>
+</li>
+</ul>
+</section>
+</main>
+</body>
+</html>
+
+
+

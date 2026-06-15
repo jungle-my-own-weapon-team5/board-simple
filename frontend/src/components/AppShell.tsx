@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { Activity, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -44,6 +44,12 @@ export default function AppShell({ children }: AppShellProps) {
                   {user.nickname}
                 </Badge>
                 <Button asChild variant="outline" size="sm">
+                  <Link href="/fitlog">
+                    <Activity />
+                    <span>FitLog</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
                   <Link href="/posts/new">
                     <PenLine />
                     <span>Write</span>
@@ -60,6 +66,12 @@ export default function AppShell({ children }: AppShellProps) {
                   <Link href="/login">
                     <LogIn />
                     <span>Login</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/fitlog">
+                    <Activity />
+                    <span>FitLog</span>
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm">

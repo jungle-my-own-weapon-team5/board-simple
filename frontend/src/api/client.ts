@@ -1,4 +1,11 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export function assetUrl(path?: string | null) {
+  if (!path) {
+    return "";
+  }
+  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+}
 
 type RequestOptions = RequestInit & {
   json?: unknown;

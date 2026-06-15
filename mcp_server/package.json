@@ -1,0 +1,16 @@
+{
+  "name": "fitlog-context-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "fitlog-context-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
