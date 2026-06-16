@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.models.rag_run import AgentStep, RagRun
-from app.repositories import embeddings as embedding_repository
 from app.repositories import agent_steps as agent_step_repository
 from app.repositories import rag_runs as rag_run_repository
 from app.services.agent.citations import build_chunk_citations
@@ -29,6 +28,10 @@ from app.services.ai.errors import ProviderError
 from app.services.ai.types import AITextRequest, AITextResult
 from app.services.mcp.server import McpJsonRpcServer, create_default_server
 from app.services.mcp.types import McpToolCallContext
+from app.services.rag.embedding_profiles import (
+    EmbeddingProfileConfigError,
+    get_active_or_create_default_embedding_profile,
+)
 from app.services.rag.legal_open_api import LawOpenApiClient
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 
@@ -810,12 +813,16 @@ class OrchestratorAgent:
                 "agent_action_arguments_invalid",
                 "sync_official_source requires a non-empty query",
             )
-        active_profiles = embedding_repository.list_active_embedding_profiles(db)
-        if not active_profiles:
+        try:
+            embedding_profile = get_active_or_create_default_embedding_profile(
+                db,
+                self.settings,
+            )
+        except EmbeddingProfileConfigError as exc:
             raise AgentOrchestrationError(
                 "agent_embedding_profile_missing",
-                "No active embedding profile is available",
-            )
+                str(exc),
+            ) from exc
         client = self.law_open_api_client or LawOpenApiClient(
             oc=self.settings.law_open_api_oc,
             base_url=self.settings.law_open_api_base_url,
@@ -826,7 +833,7 @@ class OrchestratorAgent:
             db,
             client=client,
             query=query.strip(),
-            embedding_profile=active_profiles[0],
+            embedding_profile=embedding_profile,
             ai_client=self.ai_client,
             search_limit=1,
             timeout_seconds=self.settings.ai_request_timeout_seconds,

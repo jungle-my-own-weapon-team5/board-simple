@@ -245,6 +245,43 @@ def test_orchestrator_agent_syncs_official_source_when_internal_evidence_is_miss
     )
 
 
+def test_orchestrator_agent_bootstraps_profile_before_official_source_sync(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    ai_client = _AgentTestAIClient(
+        embedding=[1.0, 0.0, 0.0],
+        draft_text="fresh DB에서도 공식 법령 보강 후 답변합니다.",
+    )
+    law_client = _FakeLawOpenApiClient()
+
+    result = OrchestratorAgent(
+        settings=_settings(ai_agent_max_tool_calls=5, law_open_api_oc="test-oc"),
+        ai_client=ai_client,
+        law_open_api_client=law_client,
+    ).run(
+        db,
+        AgentRunRequest(
+            user_id=user.id,
+            task_type="answer_draft",
+            facts="공식 법령 corpus가 아직 비어 있는 fresh DB입니다.",
+            question="관련 법령을 찾아 답변해 주세요.",
+            top_k=3,
+        ),
+    )
+
+    profiles = embedding_repository.list_active_embedding_profiles(db)
+
+    assert result.status == "completed"
+    assert result.answer == "fresh DB에서도 공식 법령 보강 후 답변합니다."
+    assert result.citations
+    assert len(profiles) == 1
+    assert profiles[0].provider == "mock"
+    assert profiles[0].model_name == "mock-embedding"
+    assert profiles[0].is_default is True
+    assert law_client.body_calls == ["MST-CRIMINAL"]
+
+
 def test_orchestrator_agent_rejects_invalid_action_before_tool_execution(
     db: Session,
 ) -> None:

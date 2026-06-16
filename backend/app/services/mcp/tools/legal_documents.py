@@ -7,6 +7,10 @@ from app.repositories import embeddings as embedding_repository
 from app.services.ai.client import AIClient
 from app.services.mcp.errors import McpInvalidParamsError, McpToolConfigError
 from app.services.mcp.types import JsonObject, McpToolCallContext, McpToolDefinition
+from app.services.rag.embedding_profiles import (
+    EmbeddingProfileConfigError,
+    get_active_or_create_default_embedding_profile,
+)
 from app.services.rag.retrieval import search_legal_documents
 
 SUPPORTED_SEARCH_MODES = {"focused_answer", "issue_spotting"}
@@ -58,6 +62,7 @@ def search_legal_documents_tool(
     document_types = _document_types_from_filters(filters)
     embedding_profile = _select_embedding_profile(
         db,
+        settings=settings,
         embedding_profile_id=filters.get("embedding_profile_id"),
     )
     ai_client = context.ai_client or AIClient(settings)
@@ -182,7 +187,12 @@ def _document_types_from_filters(filters: JsonObject) -> list[str] | None:
     return [item.strip() for item in document_types]
 
 
-def _select_embedding_profile(db, *, embedding_profile_id: object):
+def _select_embedding_profile(
+    db,
+    *,
+    settings: Settings,
+    embedding_profile_id: object,
+):
     if embedding_profile_id is not None:
         if isinstance(embedding_profile_id, bool) or not isinstance(
             embedding_profile_id, int
@@ -193,8 +203,8 @@ def _select_embedding_profile(db, *, embedding_profile_id: object):
             raise McpInvalidParamsError("embedding_profile_id was not found")
         return profile
 
-    active_profiles = embedding_repository.list_active_embedding_profiles(db)
-    if not active_profiles:
-        raise McpToolConfigError("No active embedding profile is available")
-    return active_profiles[0]
+    try:
+        return get_active_or_create_default_embedding_profile(db, settings)
+    except EmbeddingProfileConfigError as exc:
+        raise McpToolConfigError(str(exc)) from exc
 

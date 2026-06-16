@@ -8,7 +8,7 @@ import {
   Search,
   SlidersHorizontal
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 
 import * as aiApi from "../api/ai";
@@ -63,11 +63,13 @@ export default function DisputeAssistantPage() {
   const [issuesResult, setIssuesResult] = useState<DisputeIssuesResponse | null>(null);
   const [draftResult, setDraftResult] = useState<AnswerDraftResponse | null>(null);
   const [activeAction, setActiveAction] = useState<ActionState>("idle");
+  const [showWorkingStatus, setShowWorkingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const trimmedFacts = facts.trim();
   const trimmedQuestion = question.trim();
   const isBusy = activeAction !== "idle";
+  const workingMessage = workingMessageForAction(activeAction);
   const isRunnable = trimmedFacts.length > 0 && trimmedQuestion.length > 0 && !isBusy;
   const retrievalOptions = useMemo(
     () => ({
@@ -78,6 +80,19 @@ export default function DisputeAssistantPage() {
     }),
     [maxChunksPerDocument, scoreThreshold, searchMode, topK]
   );
+
+  useEffect(() => {
+    if (activeAction === "idle") {
+      setShowWorkingStatus(false);
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setShowWorkingStatus(true);
+    }, 1000);
+
+    return () => window.clearTimeout(timerId);
+  }, [activeAction]);
 
   // 자료 검색은 답변 생성을 하지 않고 backend retrieval 결과만 받아옵니다.
   const handleSearch = async (event?: FormEvent) => {
@@ -215,6 +230,16 @@ export default function DisputeAssistantPage() {
                 답변 초안
               </ActionButton>
             </div>
+            {showWorkingStatus && workingMessage ? (
+              <div
+                className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="size-4 animate-spin text-primary" />
+                <span>{workingMessage}</span>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -509,6 +534,19 @@ function EmptyState({ text }: { text: string }) {
       {text}
     </div>
   );
+}
+
+function workingMessageForAction(action: ActionState): string | null {
+  if (action === "searching") {
+    return "자료를 검색하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  }
+  if (action === "issues") {
+    return "쟁점을 정리하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  }
+  if (action === "draft") {
+    return "답변 초안을 작성하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  }
+  return null;
 }
 
 function optionalPositiveNumber(value: string): number | undefined {

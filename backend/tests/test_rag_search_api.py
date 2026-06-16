@@ -1,6 +1,7 @@
 from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -43,6 +44,13 @@ def rag_client_context() -> Generator[ApiTestContext, None, None]:
 @pytest.fixture()
 def disabled_rag_client_context() -> Generator[ApiTestContext, None, None]:
     yield from _client_context(_settings(ai_rag_enabled=False))
+
+
+@pytest.fixture()
+def law_open_api_rag_client_context() -> Generator[ApiTestContext, None, None]:
+    yield from _client_context(
+        _settings(ai_rag_enabled=True, law_open_api_oc="test-oc")
+    )
 
 
 def test_rag_search_endpoint_returns_ranked_chunks_and_persists_audit(
@@ -168,6 +176,83 @@ def test_rag_search_endpoint_supports_embedding_profile_and_document_filters(
     assert body["items"][0]["metadata"]["document_type"] == "case"
 
 
+def test_rag_search_endpoint_creates_default_embedding_profile_when_missing(
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rag_client_context.client, email="bootstrap-rag@example.com")
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "fresh database search",
+            "top_k": 3,
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["embedding_provider"] == "mock"
+    assert body["embedding_model_name"] == "mock-embedding"
+    assert body["embedding_dimensions"] == 3
+    assert body["items"] == []
+
+    with rag_client_context.session_factory() as db:
+        profiles = embedding_repository.list_active_embedding_profiles(db)
+        assert len(profiles) == 1
+        assert profiles[0].is_default is True
+
+
+def test_rag_search_endpoint_syncs_official_source_when_search_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+    law_open_api_rag_client_context: ApiTestContext,
+) -> None:
+    sync_calls: list[str] = []
+    register_and_login(
+        law_open_api_rag_client_context.client,
+        email="sync-rag@example.com",
+    )
+
+    def fake_sync_and_embed_law_open_api_statute(
+        db: Session,
+        *,
+        query: str,
+        embedding_profile: EmbeddingProfile,
+        **_: object,
+    ) -> SimpleNamespace:
+        sync_calls.append(query)
+        _create_chunk_embedding(
+            db,
+            profile=embedding_profile,
+            title="synced statute",
+            heading="Article 1",
+            content=f"synced content for {query}",
+            embedding=_mock_embedding_for_text(query, dimensions=3),
+        )
+        return SimpleNamespace(status="embedded")
+
+    monkeypatch.setattr(
+        "app.api.rag.sync_and_embed_law_open_api_statute",
+        fake_sync_and_embed_law_open_api_statute,
+    )
+
+    response = law_open_api_rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "official source sync query",
+            "top_k": 3,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert sync_calls == ["official source sync query"]
+    assert [item["title"] for item in body["items"]] == ["synced statute"]
+    assert body["embedding_provider"] == "mock"
+
+
 def test_rag_search_endpoint_requires_authentication_and_origin(
     rag_client_context: ApiTestContext,
 ) -> None:
@@ -284,7 +369,7 @@ def _client_context(
     app.dependency_overrides.clear()
 
 
-def _settings(*, ai_rag_enabled: bool) -> Settings:
+def _settings(*, ai_rag_enabled: bool, law_open_api_oc: str = "") -> Settings:
     return Settings(
         app_env="test",
         ai_rag_enabled=ai_rag_enabled,
@@ -293,6 +378,7 @@ def _settings(*, ai_rag_enabled: bool) -> Settings:
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,
+        law_open_api_oc=law_open_api_oc,
     )
 
 

@@ -13,6 +13,12 @@ from app.models.user import User
 from app.repositories import embeddings as embedding_repository
 from app.schemas.rag import RagSearchCreate, RagSearchRead
 from app.services.ai.client import AIClient
+from app.services.rag.embedding_profiles import (
+    EmbeddingProfileConfigError,
+    get_active_or_create_default_embedding_profile,
+)
+from app.services.rag.legal_open_api import LawOpenApiClient
+from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 from app.services.rag.retrieval import search_legal_documents
 
 router = APIRouter(prefix="/rag", tags=["rag"])
@@ -41,14 +47,16 @@ def search_rag_documents(
     _ensure_ai_rag_enabled(settings)
     embedding_profile = _select_embedding_profile(
         db,
+        settings=settings,
         embedding_profile_id=payload.embedding_profile_id,
     )
+    ai_client = AIClient(settings)
     result = search_legal_documents(
         db,
         user_id=current_user.id,
         query=payload.query,
         embedding_profile=embedding_profile,
-        ai_client=AIClient(settings),
+        ai_client=ai_client,
         search_mode=payload.search_mode,
         top_k=payload.top_k,
         score_threshold=payload.score_threshold,
@@ -59,6 +67,38 @@ def search_rag_documents(
     )
     if result.status == "failed":
         _raise_search_failure(result.error_code, result.error_message)
+    if not result.results and _should_try_official_source_sync(settings, payload):
+        sync_result = sync_and_embed_law_open_api_statute(
+            db,
+            client=LawOpenApiClient(
+                oc=settings.law_open_api_oc,
+                base_url=settings.law_open_api_base_url,
+                service_url=settings.law_open_api_service_url,
+                timeout_seconds=settings.mcp_request_timeout_seconds,
+            ),
+            query=payload.query,
+            embedding_profile=embedding_profile,
+            ai_client=ai_client,
+            search_limit=1,
+            timeout_seconds=settings.ai_request_timeout_seconds,
+        )
+        if sync_result.status in {"embedded", "reused"}:
+            result = search_legal_documents(
+                db,
+                user_id=current_user.id,
+                query=payload.query,
+                embedding_profile=embedding_profile,
+                ai_client=ai_client,
+                search_mode=payload.search_mode,
+                top_k=payload.top_k,
+                score_threshold=payload.score_threshold,
+                max_chunks_per_document=payload.max_chunks_per_document,
+                prompt_version=settings.rag_prompt_version,
+                timeout_seconds=settings.ai_request_timeout_seconds,
+                document_types=_document_types_from_filters(payload),
+            )
+            if result.status == "failed":
+                _raise_search_failure(result.error_code, result.error_message)
     return RagSearchRead.from_service_result(result)
 
 
@@ -74,6 +114,7 @@ def _ensure_ai_rag_enabled(settings: Settings) -> None:
 def _select_embedding_profile(
     db: Session,
     *,
+    settings: Settings,
     embedding_profile_id: int | None,
 ) -> EmbeddingProfile:
     if embedding_profile_id is not None:
@@ -85,13 +126,13 @@ def _select_embedding_profile(
             )
         return profile
 
-    active_profiles = embedding_repository.list_active_embedding_profiles(db)
-    if not active_profiles:
+    try:
+        return get_active_or_create_default_embedding_profile(db, settings)
+    except EmbeddingProfileConfigError as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No active embedding profile is available",
-        )
-    return active_profiles[0]
+            detail=str(exc),
+        ) from exc
 
 
 def _document_types_from_filters(payload: RagSearchCreate) -> list[str] | None:
@@ -103,6 +144,16 @@ def _document_types_from_filters(payload: RagSearchCreate) -> list[str] | None:
     if filters.document_types is not None:
         return list(filters.document_types)
     return None
+
+
+def _should_try_official_source_sync(
+    settings: Settings,
+    payload: RagSearchCreate,
+) -> bool:
+    if not settings.law_open_api_oc.strip():
+        return False
+    document_types = _document_types_from_filters(payload)
+    return document_types is None or "statute" in document_types
 
 
 def _raise_search_failure(
