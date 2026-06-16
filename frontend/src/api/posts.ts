@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import type { Post, PostPage } from "../types";
+import type { Post, PostPage, RelatedPost } from "../types";
 
 export function listPosts(params: { page: number; size: number; q?: string }) {
   const search = new URLSearchParams({
@@ -14,6 +14,10 @@ export function listPosts(params: { page: number; size: number; q?: string }) {
 
 export function getPost(postId: number) {
   return apiRequest<Post>(`/api/posts/${postId}`);
+}
+
+export function getRelatedPosts(postId: number) {
+  return apiRequest<RelatedPost[]>(`/api/posts/${postId}/related`);
 }
 
 export function createPost(payload: { title: string; content: string }) {

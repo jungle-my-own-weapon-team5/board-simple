@@ -19,6 +19,12 @@ class PostUpdate(PostBase):
     pass
 
 
+class RelatedPost(BaseModel):
+    post_id: int
+    title: str
+    score: float | None = None
+
+
 class PostRead(BaseModel):
     id: int
     title: str
@@ -27,6 +33,7 @@ class PostRead(BaseModel):
     tags: list[TagRead]
     created_at: datetime
     updated_at: datetime
+    related_posts: list[RelatedPost] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

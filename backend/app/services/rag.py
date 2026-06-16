@@ -30,6 +30,13 @@ class RagAnswerResult:
     sources: list[RagSourceResult]
 
 
+@dataclass
+class RelatedPostResult:
+    post_id: int
+    title: str
+    score: float | None = None
+
+
 class RagService:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
@@ -176,6 +183,65 @@ class RagService:
         )
         return RagAnswerResult(answer=_message_text(response.content), sources=sources)
 
+    def related_posts(
+        self,
+        db: Session,
+        post: Post,
+        limit: int = 3,
+    ) -> list[RelatedPostResult]:
+        if limit <= 0 or not self.is_configured():
+            return []
+
+        try:
+            results = self._get_vector_store().similarity_search_with_score(
+                f"Title: {post.title}\n\n{post.content}",
+                k=max(limit * 4, limit + 3),
+            )
+        except Exception:
+            logger.exception("Failed to search related posts", extra={"post_id": post.id})
+            return []
+
+        candidates: list[tuple[int, str, float | None]] = []
+        seen_post_ids: set[int] = set()
+        for document, score in results:
+            post_id = _metadata_post_id(getattr(document, "metadata", {}))
+            if post_id is None or post_id == post.id or post_id in seen_post_ids:
+                continue
+            seen_post_ids.add(post_id)
+            candidates.append(
+                (
+                    post_id,
+                    str(getattr(document, "metadata", {}).get("title") or "").strip(),
+                    float(score) if score is not None else None,
+                )
+            )
+
+        if not candidates:
+            return []
+
+        titles_by_id = dict(
+            db.execute(
+                select(Post.id, Post.title).where(
+                    Post.id.in_([post_id for post_id, _, _ in candidates])
+                )
+            ).all()
+        )
+        related: list[RelatedPostResult] = []
+        for post_id, metadata_title, score in candidates:
+            db_title = titles_by_id.get(post_id)
+            if db_title is None:
+                continue
+            related.append(
+                RelatedPostResult(
+                    post_id=post_id,
+                    title=metadata_title or db_title,
+                    score=score,
+                )
+            )
+            if len(related) == limit:
+                break
+        return related
+
 
 _rag_service: RagService | None = None
 
@@ -214,6 +280,15 @@ def _message_text(content: object) -> str:
     if isinstance(content, str):
         return content
     return str(content)
+
+
+def _metadata_post_id(metadata: object) -> int | None:
+    if not isinstance(metadata, dict) or "post_id" not in metadata:
+        return None
+    try:
+        return int(metadata["post_id"])
+    except (TypeError, ValueError):
+        return None
 
 
 def _to_iso(value: datetime | None) -> str | None:
