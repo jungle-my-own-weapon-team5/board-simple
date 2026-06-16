@@ -5,6 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
+AgentActionType = Literal[
+    "search_internal",
+    "search_external_source",
+    "sync_official_source",
+    "draft_answer",
+    "verify_citations",
+    "respond_insufficient_evidence",
+    "stop",
+]
 AgentTaskType = Literal["answer_draft", "dispute_issues"]
 AgentRunStatus = Literal["completed", "failed"]
 AgentSearchMode = Literal["focused_answer", "issue_spotting"]
@@ -33,6 +42,25 @@ class AgentToolCallSummary:
     step_index: int
     tool_name: str
     status: str
+
+
+@dataclass(frozen=True)
+class AgentAction:
+    """LLM 또는 deterministic planner가 제안한 다음 실행 후보입니다."""
+
+    action_type: AgentActionType
+    reason: str
+    tool_name: str | None = None
+    arguments: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AgentObservation:
+    """Action 실행 결과를 다음 판단에 쓰기 위한 요약입니다."""
+
+    action_type: AgentActionType
+    status: str
+    summary: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

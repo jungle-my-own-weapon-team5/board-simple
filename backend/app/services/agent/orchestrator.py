@@ -14,6 +14,7 @@ from app.repositories import rag_runs as rag_run_repository
 from app.services.agent.citations import build_chunk_citations
 from app.services.agent.prompts import build_draft_prompt
 from app.services.agent.state import (
+    AgentAction,
     LEGAL_AI_DISCLAIMER,
     AgentRunRequest,
     AgentRunResult,
@@ -50,10 +51,11 @@ class OrchestratorAgent:
         tool_call_count = 0
 
         try:
+            search_action = _build_search_action(normalized_request)
             search_response = self._call_tool(
                 db,
-                tool_name="search_legal_documents",
-                arguments=_build_search_arguments(normalized_request),
+                tool_name=_require_tool_name(search_action),
+                arguments=search_action.arguments,
                 user_id=normalized_request.user_id,
             )
             tool_call_count += 1
@@ -69,11 +71,11 @@ class OrchestratorAgent:
                 db,
                 rag_run=rag_run,
                 step_index=step_index,
-                step_type="plan",
+                step_type="initialize_run",
                 status="completed",
-                input_json=_task_metadata(normalized_request),
                 output_json={
-                    "tool_candidates": ["search_legal_documents", "verify_citations"],
+                    "max_iterations": self.settings.ai_agent_max_iterations,
+                    "max_tool_calls": self.settings.ai_agent_max_tool_calls,
                 },
             )
             step_index += 1
@@ -82,16 +84,57 @@ class OrchestratorAgent:
                 db,
                 rag_run=rag_run,
                 step_index=step_index,
-                step_type="tool_call",
-                tool_name="search_legal_documents",
+                step_type="plan_issue_sources",
                 status="completed",
-                input_json=_safe_tool_arguments(_build_search_arguments(normalized_request)),
+                input_json=_task_metadata(normalized_request),
+                output_json={
+                    "rag_queries": [_redacted_query_summary(search_action.arguments)],
+                    "candidate_actions": [
+                        "search_internal",
+                        "draft_answer",
+                        "verify_citations",
+                    ],
+                },
+            )
+            step_index += 1
+
+            _add_step(
+                db,
+                rag_run=rag_run,
+                step_index=step_index,
+                step_type="propose_action",
+                tool_name=search_action.tool_name,
+                status="completed",
+                output_json=_action_summary(search_action),
+            )
+            step_index += 1
+
+            _add_step(
+                db,
+                rag_run=rag_run,
+                step_index=step_index,
+                step_type="validate_action",
+                tool_name=search_action.tool_name,
+                status="completed",
+                input_json=_action_validation_input(search_action),
+                output_json={"valid": True, "reason": "default_planner_action"},
+            )
+            step_index += 1
+
+            _add_step(
+                db,
+                rag_run=rag_run,
+                step_index=step_index,
+                step_type="execute_tool",
+                tool_name=search_action.tool_name,
+                status="completed",
+                input_json=_safe_tool_arguments(search_action.arguments),
                 output_json=_search_summary(search_result),
             )
             tool_calls.append(
                 AgentToolCallSummary(
                     step_index=step_index,
-                    tool_name="search_legal_documents",
+                    tool_name=_require_tool_name(search_action),
                     status="completed",
                 )
             )
@@ -114,9 +157,10 @@ class OrchestratorAgent:
                 db,
                 rag_run=rag_run,
                 step_index=step_index,
-                step_type="tool_result",
+                step_type="observe",
                 status="completed",
                 output_json={
+                    "action_type": search_action.action_type,
                     "evidence_count": len(evidence_items),
                     "citation_count": len(citations),
                 },
@@ -127,7 +171,7 @@ class OrchestratorAgent:
                 db,
                 rag_run=rag_run,
                 step_index=step_index,
-                step_type="decide",
+                step_type="decide_continue_or_stop",
                 status="completed",
                 output_json={"decision": "draft", "reason": "evidence_available"},
             )
@@ -144,6 +188,7 @@ class OrchestratorAgent:
                     tool_calls=tool_calls,
                 )
 
+            draft_action = _build_draft_action(normalized_request)
             draft_result = self._draft(normalized_request, evidence_items, citations)
             _apply_draft_result(rag_run, draft_result)
             _add_step(
@@ -153,6 +198,7 @@ class OrchestratorAgent:
                 step_type="draft",
                 status="completed",
                 input_json={
+                    "action_type": draft_action.action_type,
                     "model": self.settings.ai_agent_model,
                     "evidence_count": len(evidence_items),
                 },
@@ -164,10 +210,34 @@ class OrchestratorAgent:
             )
             step_index += 1
 
+            verify_action = _build_verify_action(rag_run_id=rag_run.id, citations=citations)
+            _add_step(
+                db,
+                rag_run=rag_run,
+                step_index=step_index,
+                step_type="propose_action",
+                tool_name=verify_action.tool_name,
+                status="completed",
+                output_json=_action_summary(verify_action),
+            )
+            step_index += 1
+
+            _add_step(
+                db,
+                rag_run=rag_run,
+                step_index=step_index,
+                step_type="validate_action",
+                tool_name=verify_action.tool_name,
+                status="completed",
+                input_json=_action_validation_input(verify_action),
+                output_json={"valid": True, "reason": "default_planner_action"},
+            )
+            step_index += 1
+
             verify_response = self._call_tool(
                 db,
-                tool_name="verify_citations",
-                arguments={"run_id": rag_run.id, "citations": citations},
+                tool_name=_require_tool_name(verify_action),
+                arguments=verify_action.arguments,
                 user_id=normalized_request.user_id,
             )
             tool_call_count += 1
@@ -178,11 +248,12 @@ class OrchestratorAgent:
                 rag_run=rag_run,
                 step_index=step_index,
                 step_type="verify",
-                tool_name="verify_citations",
+                tool_name=verify_action.tool_name,
                 status=verify_status,
                 input_json={
                     "run_id": rag_run.id,
                     "citation_count": len(citations),
+                    "action_type": verify_action.action_type,
                 },
                 output_json={
                     "valid": verify_result.get("valid"),
@@ -192,7 +263,7 @@ class OrchestratorAgent:
             tool_calls.append(
                 AgentToolCallSummary(
                     step_index=step_index,
-                    tool_name="verify_citations",
+                    tool_name=_require_tool_name(verify_action),
                     status=verify_status,
                 )
             )
@@ -392,6 +463,44 @@ def _build_search_arguments(request: AgentRunRequest) -> dict[str, object]:
     return arguments
 
 
+def _build_search_action(request: AgentRunRequest) -> AgentAction:
+    return AgentAction(
+        action_type="search_internal",
+        tool_name="search_legal_documents",
+        arguments=_build_search_arguments(request),
+        reason="internal_rag_search_first",
+    )
+
+
+def _build_draft_action(request: AgentRunRequest) -> AgentAction:
+    return AgentAction(
+        action_type="draft_answer",
+        reason=f"draft_{request.task_type}_from_available_evidence",
+    )
+
+
+def _build_verify_action(
+    *,
+    rag_run_id: int,
+    citations: list[dict[str, object]],
+) -> AgentAction:
+    return AgentAction(
+        action_type="verify_citations",
+        tool_name="verify_citations",
+        arguments={"run_id": rag_run_id, "citations": citations},
+        reason="verify_generated_citations",
+    )
+
+
+def _require_tool_name(action: AgentAction) -> str:
+    if action.tool_name is None:
+        raise AgentOrchestrationError(
+            "agent_tool_name_missing",
+            f"{action.action_type} requires a tool name",
+        )
+    return action.tool_name
+
+
 def _unwrap_tool_result(response: dict[str, Any]) -> dict[str, Any]:
     error = response.get("error")
     if isinstance(error, dict):
@@ -538,8 +647,32 @@ def _task_metadata(request: AgentRunRequest) -> dict[str, object]:
 def _safe_tool_arguments(arguments: dict[str, object]) -> dict[str, object]:
     safe_arguments = dict(arguments)
     query = safe_arguments.pop("query", "")
+    citations = safe_arguments.pop("citations", None)
     safe_arguments["query_length"] = len(str(query))
+    if isinstance(citations, list):
+        safe_arguments["citation_count"] = len(citations)
     return safe_arguments
+
+
+def _redacted_query_summary(arguments: dict[str, object]) -> dict[str, object]:
+    return _safe_tool_arguments(arguments)
+
+
+def _action_summary(action: AgentAction) -> dict[str, object]:
+    return {
+        "action_type": action.action_type,
+        "tool_name": action.tool_name,
+        "reason": action.reason,
+        "arguments": _safe_tool_arguments(action.arguments),
+    }
+
+
+def _action_validation_input(action: AgentAction) -> dict[str, object]:
+    return {
+        "action_type": action.action_type,
+        "tool_name": action.tool_name,
+        "arguments": _safe_tool_arguments(action.arguments),
+    }
 
 
 def _search_summary(search_result: dict[str, Any]) -> dict[str, object]:

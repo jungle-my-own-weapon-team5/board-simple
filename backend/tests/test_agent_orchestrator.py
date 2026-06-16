@@ -110,15 +110,20 @@ def test_orchestrator_agent_searches_drafts_verifies_and_persists_audit(
     assert rag_run.agent_model_name == "agent-test-model"
 
     assert [step.step_type for step in steps] == [
-        "plan",
-        "tool_call",
-        "tool_result",
-        "decide",
+        "initialize_run",
+        "plan_issue_sources",
+        "propose_action",
+        "validate_action",
+        "execute_tool",
+        "observe",
+        "decide_continue_or_stop",
         "draft",
+        "propose_action",
+        "validate_action",
         "verify",
         "persist",
     ]
-    assert steps[0].input_json == {
+    assert steps[1].input_json == {
         "task_type": "answer_draft",
         "facts_length": len(facts),
         "question_length": len(question),
@@ -127,14 +132,17 @@ def test_orchestrator_agent_searches_drafts_verifies_and_persists_audit(
         "score_threshold": None,
         "max_chunks_per_document": None,
     }
-    assert "임대차" not in str(steps[1].input_json)
-    assert steps[1].input_json == {
+    assert steps[2].output_json is not None
+    assert steps[2].output_json["action_type"] == "search_internal"
+    assert "임대차" not in str(steps[2].output_json)
+    assert "임대차" not in str(steps[4].input_json)
+    assert steps[4].input_json == {
         "search_mode": "focused_answer",
         "top_k": 1,
         "query_length": len(f"{facts}\n{question}"),
     }
-    assert steps[5].status == "completed"
-    assert steps[5].output_json == {"valid": True, "invalid_count": 0}
+    assert steps[10].status == "completed"
+    assert steps[10].output_json == {"valid": True, "invalid_count": 0}
     assert ai_client.text_requests[0].model == "agent-test-model"
     assert "임대차 보증금" in ai_client.text_requests[0].prompt
 
