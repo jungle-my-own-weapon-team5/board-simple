@@ -7,7 +7,6 @@ import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import FloatingChat from "@/components/FloatingChat";
 import { useAuthStore } from "@/stores/authStore";
 
 type AppShellProps = {
@@ -77,7 +76,6 @@ export default function AppShell({ children }: AppShellProps) {
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
-      {user ? <FloatingChat /> : null}
     </div>
   );
 }
