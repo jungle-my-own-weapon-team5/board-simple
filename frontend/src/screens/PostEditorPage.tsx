@@ -46,7 +46,7 @@ export default function PostEditorPage() {
     return <p className="text-muted-foreground">Loading...</p>;
   }
 
-  const handleSubmit = async (payload: { title: string; content: string }) => {
+  const handleSubmit = async (payload: { title: string; content: string; post_type: string; category: string }) => {
     const saved = isEditing
       ? await postApi.updatePost(numericPostId, payload)
       : await postApi.createPost(payload);
@@ -61,6 +61,8 @@ export default function PostEditorPage() {
       <PostForm
         initialTitle={post?.title}
         initialContent={post?.content}
+        initialPostType={post?.post_type}
+        initialCategory={post?.category}
         submitLabel={isEditing ? "Update post" : "Create post"}
         onSubmit={handleSubmit}
       />

@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import AUTH_COOKIE_NAME, get_current_user
-from app.core.config import get_settings
+from app.api.deps import AUTH_COOKIE_NAME, get_current_user, serialize_user
+from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
@@ -41,7 +41,11 @@ def set_auth_cookie(response: Response, token: str) -> None:
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
+def register(
+    payload: UserCreate,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> UserRead:
     email_exists = db.scalar(select(User.id).where(User.email == payload.email))
     if email_exists is not None:
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -59,7 +63,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
+    return serialize_user(user, settings)
 
 
 @router.post("/login", response_model=UserRead)
@@ -67,13 +71,14 @@ def login(
     payload: UserLogin,
     response: Response,
     db: Session = Depends(get_db),
-) -> User:
+    settings: Settings = Depends(get_settings),
+) -> UserRead:
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     set_auth_cookie(response, create_access_token(str(user.id)))
-    return user
+    return serialize_user(user, settings)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -82,5 +87,8 @@ def logout(response: Response) -> None:
 
 
 @router.get("/me", response_model=UserRead)
-def me(current_user: User = Depends(get_current_user)) -> User:
-    return current_user
+def me(
+    current_user: User = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> UserRead:
+    return serialize_user(current_user, settings)

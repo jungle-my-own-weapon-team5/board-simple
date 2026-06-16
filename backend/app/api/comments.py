@@ -74,6 +74,9 @@ def create_comment(
         content=payload.content,
     )
     db.add(comment)
+    post = db.get(Post, post_id)
+    if post is not None:
+        post.comment_count += 1
     db.commit()
     db.refresh(comment)
     return get_comment_or_404(db, comment.id)
@@ -109,5 +112,8 @@ def delete_comment(
             status_code=403, detail="Only the author can delete this comment"
         )
 
+    post = db.get(Post, comment.post_id)
+    if post is not None and post.comment_count > 0:
+        post.comment_count -= 1
     db.delete(comment)
     db.commit()
