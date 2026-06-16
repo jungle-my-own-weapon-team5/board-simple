@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, MessageCircle, PenLine, UserPlus } from "lucide-react";
+import { LogIn, LogOut, MessageCircle, Newspaper, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -49,6 +49,12 @@ export default function AppShell({ children }: AppShellProps) {
                 <Badge variant="secondary" className="min-h-9 px-3">
                   {user.nickname}
                 </Badge>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/news/import">
+                    <Newspaper />
+                    <span>뉴스 수집</span>
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/posts/new">
                     <PenLine />

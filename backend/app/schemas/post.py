@@ -29,6 +29,11 @@ class PostRead(BaseModel):
     id: int
     title: str
     content: str
+    source_type: str | None = None
+    source_id: str | None = None
+    source_url: str | None = None
+    source_title: str | None = None
+    source_fetched_at: datetime | None = None
     author: UserRead
     tags: list[TagRead]
     created_at: datetime
@@ -41,6 +46,11 @@ class PostRead(BaseModel):
 class PostListItem(BaseModel):
     id: int
     title: str
+    source_type: str | None = None
+    source_id: str | None = None
+    source_url: str | None = None
+    source_title: str | None = None
+    source_fetched_at: datetime | None = None
     author: UserRead
     tags: list[TagRead]
     created_at: datetime
