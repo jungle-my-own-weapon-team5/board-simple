@@ -1,0 +1,31 @@
+# AGENTS.md
+
+- Scope: entire repository.
+- Work in small, verifiable changes; do not refactor unrelated code.
+- Preserve the stack: FastAPI, SQLAlchemy, Alembic, PostgreSQL pgvector, Next.js App Router, TypeScript, Tailwind.
+- Prefer existing project patterns before adding abstractions.
+- Use `rg`/`rg --files` for search and `apply_patch` for manual edits.
+- Never read or print real `.env` secrets; document with `.env.example`.
+- Keep `OPENAI_API_KEY` in environment only; never hardcode it.
+- `RAG_ENABLED=false` must remain the default.
+- Existing board CRUD must work when RAG, HN import, or OpenAI config is unavailable.
+- Related posts must use existing vector DB/RAG data, not a new table.
+- Show related posts only on post detail unless explicitly requested.
+- Related post API output should expose title links only: `post_id`, `title`, optional `score`.
+- Exclude the current post and deduplicate multiple chunks from the same post.
+- Return an empty related list if RAG/vector search fails.
+- Do not add migrations for related posts unless storage requirements change.
+- HN import failures must not break existing post create/update/delete.
+- Do not store full translated articles; store Korean summary, key points, and source links.
+- Use current `posts` table for imported HN articles with nullable source metadata.
+- Keep Alembic migrations reversible.
+- SQLite tests must not require pgvector, OpenAI, or external network calls.
+- Mock HN APIs, article fetch, Readability, embeddings, vector store, and LLM behavior in tests.
+- Add tests for public API behavior whenever backend endpoints change.
+- Run backend verification with `cd backend && pytest`.
+- Run frontend verification with `cd frontend && npm run build`.
+- Do not introduce background workers unless explicitly requested.
+- Do not add streaming, chat history, reranking, scheduling, or admin UI in the MVP.
+- Keep frontend UI utilitarian and consistent with current shadcn/Tailwind style.
+- Prefer Korean user-facing copy where existing UI uses Korean.
+- After changes, summarize modified files and verification results.
