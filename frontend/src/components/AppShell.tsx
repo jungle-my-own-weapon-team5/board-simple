@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { Bot, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -43,6 +43,12 @@ export default function AppShell({ children }: AppShellProps) {
                 <Badge variant="secondary" className="min-h-9 px-3">
                   {user.nickname}
                 </Badge>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/ai">
+                    <Bot />
+                    <span>AI</span>
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/posts/new">
                     <PenLine />
