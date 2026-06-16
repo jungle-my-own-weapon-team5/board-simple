@@ -44,3 +44,16 @@ export type CommentPage = {
   offset: number;
   limit: number;
 };
+
+export type RagChatSource = {
+  post_id: number;
+  title: string;
+  heading: string | null;
+  anchor: string | null;
+  snippet: string;
+};
+
+export type RagChatResponse = {
+  answer: string;
+  sources: RagChatSource[];
+};

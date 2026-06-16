@@ -26,3 +26,6 @@ class Post(Base):
         "Comment", back_populates="post", cascade="all, delete-orphan"
     )
     tags = relationship("Tag", secondary=post_tags, back_populates="posts")
+    rag_chunks = relationship(
+        "PostRagChunk", back_populates="post", cascade="all, delete-orphan"
+    )

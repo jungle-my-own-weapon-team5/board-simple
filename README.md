@@ -15,8 +15,9 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 - 닉네임 unique 검증과 `익명0000` 형식 자동 닉네임 생성
 - 게시글 CRUD, Markdown 작성/미리보기/표시
 - 댓글 작성과 `View more` 방식 페이지네이션
-- `#태그명` 형식 태그 추출
+- 별도 입력 필드 기반 게시글 태그 관리
 - 게시글 제목 검색과 페이지네이션
+- 게시글 RAG 청크 인덱싱과 로그인 사용자용 AI 검색 챗봇
 
 ## Stack
 
@@ -54,16 +55,16 @@ cp .env.example .env
 
 필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
-로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
+로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 backend가 호스트 OS에서 실행되므로 `DATABASE_URL`은 호스트 포트 `5433`을 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
+DATABASE_URL=postgresql+psycopg://board:board@localhost:5433/board
 ```
 
-전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
+전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 Compose가 backend/migrate 컨테이너에 `DOCKER_DATABASE_URL` 값을 `DATABASE_URL`로 주입하며, DB host는 Compose 서비스명인 `db`를 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
+DOCKER_DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
 ```
 
 ## 개발용 실행 방법
@@ -172,3 +173,21 @@ docker compose down -v
 - `PUT /api/comments/{comment_id}`: 댓글 수정
 - `DELETE /api/comments/{comment_id}`: 댓글 삭제
 - `GET /api/tags`: 태그 목록
+- `POST /api/rag/chat`: 로그인 사용자용 게시글 RAG 챗봇
+
+## RAG 설정
+
+RAG 챗봇은 OpenAI API와 PostgreSQL pgvector를 사용합니다.
+
+```env
+OPENAI_API_KEY=
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-5.5
+RAG_TOP_K=5
+```
+
+기존 게시글을 인덱싱하려면 migration 적용 후 backend에서 아래 명령을 실행합니다.
+
+```bash
+python -m app.rag.backfill --all
+```

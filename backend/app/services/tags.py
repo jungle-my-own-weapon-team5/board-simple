@@ -1,31 +1,25 @@
-import re
-
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.tag import Tag
+from app.repositories import tags as tag_repository
 
-TAG_PATTERN = re.compile(r"#([0-9A-Za-z가-힣_]{1,50})")
+TAG_NAME_PATTERN = r"^[0-9A-Za-z가-힣_]{1,50}$"
 
 
-def extract_tag_names(text: str) -> list[str]:
+def normalize_tag_names(names: list[str]) -> list[str]:
     seen: set[str] = set()
-    names: list[str] = []
-    for raw_name in TAG_PATTERN.findall(text):
-        name = raw_name.strip().lower()
+    normalized_names: list[str] = []
+    for raw_name in names:
+        name = raw_name.strip().removeprefix("#").lower()
         if name and name not in seen:
             seen.add(name)
-            names.append(name)
-    return names
+            normalized_names.append(name)
+    return normalized_names
 
 
 def get_or_create_tags(db: Session, names: list[str]) -> list[Tag]:
-    tags: list[Tag] = []
-    for name in names:
-        tag = db.scalar(select(Tag).where(Tag.name == name))
-        if tag is None:
-            tag = Tag(name=name)
-            db.add(tag)
-            db.flush()
-        tags.append(tag)
-    return tags
+    return tag_repository.get_or_create_tags(db, normalize_tag_names(names))
+
+
+def list_tags(db: Session) -> list[Tag]:
+    return tag_repository.list_tags(db)
