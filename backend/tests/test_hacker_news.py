@@ -12,11 +12,15 @@ from app.core.config import Settings
 from app.core.database import Base, get_db
 from app.main import app
 from app.models.post import Post
+from app.mcp import board as board_mcp
+from app.services import duplicate_check as duplicate_check_module
+from app.services.duplicate_check import DuplicateCheckService
 from app.services.hacker_news import (
     HackerNewsCandidate,
     HackerNewsService,
     HackerNewsSummary,
 )
+from app.services.news_curation import NewsCurationService
 from test_auth_posts_comments import register_and_login
 
 
@@ -143,6 +147,7 @@ def test_hacker_news_preview_top_and_search(
     top_payload = top_response.json()
     assert top_payload["items"][0]["hn_id"] == 100
     assert top_payload["items"][0]["summary_status"] == "success"
+    assert top_payload["items"][0]["duplicate_matches"] == []
 
     search_response = client.post(
         "/api/news/hacker-news/preview",
@@ -359,3 +364,173 @@ def test_hacker_news_import_survives_rag_index_failure(
     )
     assert response.status_code == 200
     assert response.json()["created"][0]["hn_id"] == 124
+
+
+def test_web_article_preview_requires_login(client: TestClient) -> None:
+    response = client.post(
+        "/api/news/web/preview",
+        json={"url": "https://example.com/article", "article_text": "본문 " * 100},
+    )
+    assert response.status_code == 401
+
+
+def test_web_article_preview_imports_and_skips_duplicate(client: TestClient) -> None:
+    class FakeResponse:
+        content = '{"summary": "웹 기사 요약", "key_points": ["핵심 1", "핵심 2"]}'
+
+    class FakeLlm:
+        def invoke(self, messages: list[tuple[str, str]]) -> FakeResponse:
+            assert "본문" in messages[1][1]
+            return FakeResponse()
+
+    service = NewsCurationService(Settings(openai_api_key="test-key"))
+    service._llm = FakeLlm()
+    app.dependency_overrides[news_api.get_news_curation_service_dependency] = lambda: service
+    register_and_login(client)
+
+    preview_response = client.post(
+        "/api/news/web/preview",
+        json={"url": "https://example.com/articles/fastapi-news", "article_text": "본문 " * 100},
+    )
+    assert preview_response.status_code == 200
+    item = preview_response.json()["item"]
+    assert item["source_type"] == "web_article"
+    assert item["summary_status"] == "success"
+    assert item["summary"] == "웹 기사 요약"
+    assert item["duplicate_matches"] == []
+
+    import_response = client.post("/api/news/web/import", json={"items": [item]})
+    assert import_response.status_code == 200
+    created = import_response.json()["created"][0]
+    assert created["source_id"] == item["source_id"]
+
+    duplicate_response = client.post("/api/news/web/import", json={"items": [item]})
+    assert duplicate_response.status_code == 200
+    assert duplicate_response.json()["created"] == []
+    assert duplicate_response.json()["skipped"] == [
+        {"source_id": item["source_id"], "reason": "already_imported"}
+    ]
+
+    post_response = client.get(f"/api/posts/{created['post_id']}")
+    assert post_response.status_code == 200
+    post = post_response.json()
+    assert post["source_type"] == "web_article"
+    assert post["source_url"] == "https://example.com/articles/fastapi-news"
+    assert "#technews #webarticle" in post["content"]
+
+
+def test_web_article_preview_returns_failed_item_without_openai(client: TestClient) -> None:
+    service = NewsCurationService(Settings(openai_api_key=None))
+    app.dependency_overrides[news_api.get_news_curation_service_dependency] = lambda: service
+    register_and_login(client)
+
+    response = client.post(
+        "/api/news/web/preview",
+        json={"url": "https://example.com/no-key", "article_text": "본문 " * 100},
+    )
+    assert response.status_code == 200
+    item = response.json()["item"]
+    assert item["summary_status"] == "failed"
+    assert item["error"] == "OPENAI_API_KEY is required"
+
+
+def test_duplicate_check_service_url_title_rag_and_rag_failure_without_network(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    class FakeDocument:
+        metadata = {"post_id": 3, "title": "Vector duplicate"}
+
+    class FakeVectorStore:
+        def similarity_search_with_score(self, query: str, k: int) -> list:
+            return [(FakeDocument(), 0.2)]
+
+    class FakeRagService:
+        def __init__(self, fail: bool = False) -> None:
+            self.fail = fail
+
+        def is_configured(self) -> bool:
+            return True
+
+        def _get_vector_store(self) -> FakeVectorStore:
+            if self.fail:
+                raise RuntimeError("vector down")
+            return FakeVectorStore()
+
+    with TestingSessionLocal() as db:
+        db.add_all(
+            [
+                Post(
+                    title="Exact URL",
+                    content="body",
+                    author_id=1,
+                    source_url="https://Example.com/article/#section",
+                ),
+                Post(title="FastAPI release notes", content="body", author_id=1),
+                Post(title="Vector duplicate", content="body", author_id=1),
+            ]
+        )
+        db.commit()
+
+        monkeypatch.setattr(
+            duplicate_check_module,
+            "get_rag_service",
+            lambda: FakeRagService(),
+        )
+        matches = DuplicateCheckService().check(
+            db,
+            title="FastAPI release note",
+            url="https://example.com/article",
+            content="FastAPI content",
+        )
+        assert [match.reason for match in matches] == ["same_url", "similar_title", "rag"]
+        assert [match.post_id for match in matches] == [1, 2, 3]
+
+        monkeypatch.setattr(
+            duplicate_check_module,
+            "get_rag_service",
+            lambda: FakeRagService(fail=True),
+        )
+        fallback = DuplicateCheckService().check(
+            db,
+            title="FastAPI release note",
+            url="https://example.com/article",
+            content="FastAPI content",
+        )
+        assert [match.reason for match in fallback] == ["same_url", "similar_title"]
+
+
+def test_board_mcp_duplicate_tool_is_preview_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    with TestingSessionLocal() as db:
+        db.add(
+            Post(
+                title="MCP article",
+                content="body",
+                author_id=1,
+                source_url="https://example.com/mcp",
+            )
+        )
+        db.commit()
+
+    monkeypatch.setattr(board_mcp, "get_session_local", lambda: TestingSessionLocal)
+    matches = board_mcp.check_news_duplicates_tool(
+        title="MCP article",
+        url="https://example.com/mcp",
+    )
+    assert matches == [
+        {"post_id": 1, "title": "MCP article", "reason": "same_url", "score": None}
+    ]

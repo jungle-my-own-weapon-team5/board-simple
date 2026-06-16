@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 NewsSource = Literal["top", "best", "new", "search"]
 SummaryStatus = Literal["success", "failed"]
+DuplicateReason = Literal["same_url", "similar_title", "rag"]
+
+
+class DuplicateMatch(BaseModel):
+    post_id: int
+    title: str
+    reason: DuplicateReason
+    score: float | None = None
 
 
 class HackerNewsPreviewRequest(BaseModel):
@@ -39,6 +47,7 @@ class HackerNewsPreviewItem(BaseModel):
     summary_status: SummaryStatus
     summary: str | None = None
     key_points: list[str] = []
+    duplicate_matches: list[DuplicateMatch] = Field(default_factory=list)
     is_imported: bool
     error: str | None = None
 
@@ -97,3 +106,84 @@ class HackerNewsSkippedItem(BaseModel):
 class HackerNewsImportResponse(BaseModel):
     created: list[HackerNewsCreatedPost]
     skipped: list[HackerNewsSkippedItem]
+
+
+class WebArticlePreviewRequest(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+    article_text: str | None = None
+
+    @field_validator("url")
+    @classmethod
+    def strip_url(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("url must not be blank")
+        return stripped
+
+    @field_validator("article_text")
+    @classmethod
+    def strip_article_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+
+class WebArticlePreviewItem(BaseModel):
+    source_type: Literal["web_article"] = "web_article"
+    source_id: str
+    title: str
+    url: str
+    summary_status: SummaryStatus
+    summary: str | None = None
+    key_points: list[str] = Field(default_factory=list)
+    duplicate_matches: list[DuplicateMatch] = Field(default_factory=list)
+    error: str | None = None
+
+
+class WebArticlePreviewResponse(BaseModel):
+    item: WebArticlePreviewItem
+
+
+class WebArticleImportItem(BaseModel):
+    source_type: Literal["web_article"] = "web_article"
+    source_id: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=500)
+    url: str = Field(min_length=1, max_length=2048)
+    summary: str = Field(min_length=1)
+    key_points: list[str] = Field(min_length=1)
+
+    @field_validator("source_id", "title", "url", "summary")
+    @classmethod
+    def strip_required_text(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("field must not be blank")
+        return stripped
+
+    @field_validator("key_points")
+    @classmethod
+    def strip_key_points(cls, value: list[str]) -> list[str]:
+        points = [point.strip() for point in value if point.strip()]
+        if not points:
+            raise ValueError("key_points must contain at least one item")
+        return points
+
+
+class WebArticleImportRequest(BaseModel):
+    items: list[WebArticleImportItem] = Field(min_length=1, max_length=20)
+
+
+class WebArticleCreatedPost(BaseModel):
+    post_id: int
+    source_id: str
+    title: str
+
+
+class WebArticleSkippedItem(BaseModel):
+    source_id: str
+    reason: str
+
+
+class WebArticleImportResponse(BaseModel):
+    created: list[WebArticleCreatedPost]
+    skipped: list[WebArticleSkippedItem]
