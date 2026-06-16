@@ -18,7 +18,7 @@ from app.repositories import (
     rag_runs as rag_run_repository,
 )
 from app.services.agent.orchestrator import OrchestratorAgent
-from app.services.agent.state import AgentRunRequest, LEGAL_AI_DISCLAIMER
+from app.services.agent.state import AgentAction, AgentRunRequest, LEGAL_AI_DISCLAIMER
 from app.services.ai.errors import ProviderUnavailableError
 from app.services.ai.types import (
     AITextRequest,
@@ -191,6 +191,38 @@ def test_orchestrator_agent_stops_before_draft_when_tool_budget_is_exceeded(
     assert steps[-1].error_code == "agent_tool_budget_exceeded"
 
 
+def test_orchestrator_agent_rejects_invalid_action_before_tool_execution(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    ai_client = _AgentTestAIClient(embedding=[1.0, 0.0, 0.0])
+
+    result = OrchestratorAgent(
+        settings=_settings(ai_agent_max_tool_calls=5),
+        ai_client=ai_client,
+        action_planner=_InvalidSearchToolPlanner(),
+    ).run(
+        db,
+        AgentRunRequest(
+            user_id=user.id,
+            task_type="answer_draft",
+            facts="잘못된 action 검증을 확인합니다.",
+            question="검색을 실행해 주세요.",
+            top_k=1,
+        ),
+    )
+
+    steps = agent_step_repository.list_agent_steps_by_run(db, result.run_id)
+
+    assert result.status == "failed"
+    assert result.error_code == "agent_action_tool_mismatch"
+    assert result.tool_calls == []
+    assert ai_client.embedding_requests == []
+    assert ai_client.text_requests == []
+    assert steps[-1].step_type == "error"
+    assert steps[-1].error_code == "agent_action_tool_mismatch"
+
+
 def test_orchestrator_agent_sanitizes_provider_error_message(db: Session) -> None:
     user = _create_user(db)
     profile = _create_profile(db, dimensions=3)
@@ -282,6 +314,29 @@ class _AgentTestAIClient:
             agent_model_name=request.model,
             finish_reason="stop",
             raw_response_id="test-response-id",
+        )
+
+
+class _InvalidSearchToolPlanner:
+    def propose_search_action(self, request: AgentRunRequest) -> AgentAction:
+        return AgentAction(
+            action_type="search_internal",
+            tool_name="verify_citations",
+            arguments={"query": request.question, "search_mode": request.search_mode},
+            reason="invalid_tool_for_search_action",
+        )
+
+    def propose_verify_action(
+        self,
+        *,
+        rag_run_id: int,
+        citations: list[dict[str, object]],
+    ) -> AgentAction:
+        return AgentAction(
+            action_type="verify_citations",
+            tool_name="verify_citations",
+            arguments={"run_id": rag_run_id, "citations": citations},
+            reason="unused",
         )
 
 

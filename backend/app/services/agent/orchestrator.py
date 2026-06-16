@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Protocol
 
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from app.services.agent.citations import build_chunk_citations
 from app.services.agent.prompts import build_draft_prompt
 from app.services.agent.state import (
     AgentAction,
+    AgentActionType,
     LEGAL_AI_DISCLAIMER,
     AgentRunRequest,
     AgentRunResult,
@@ -26,6 +27,51 @@ from app.services.ai.types import AITextRequest, AITextResult
 from app.services.mcp.server import McpJsonRpcServer, create_default_server
 from app.services.mcp.types import McpToolCallContext
 
+ALLOWED_ACTION_TYPES: set[str] = {
+    "search_internal",
+    "search_external_source",
+    "sync_official_source",
+    "draft_answer",
+    "verify_citations",
+    "respond_insufficient_evidence",
+    "stop",
+}
+ACTION_TOOL_NAMES: dict[str, str] = {
+    "search_internal": "search_legal_documents",
+    "search_external_source": "search_law_open_api",
+    "verify_citations": "verify_citations",
+}
+
+
+class AgentActionPlanner(Protocol):
+    """LLM 또는 deterministic planner가 다음 action을 제안하는 계약입니다."""
+
+    def propose_search_action(self, request: AgentRunRequest) -> AgentAction:
+        """내부 RAG 검색 action을 제안합니다."""
+
+    def propose_verify_action(
+        self,
+        *,
+        rag_run_id: int,
+        citations: list[dict[str, object]],
+    ) -> AgentAction:
+        """Citation 검증 action을 제안합니다."""
+
+
+class DefaultAgentActionPlanner:
+    """현재 MVP의 deterministic action planner입니다."""
+
+    def propose_search_action(self, request: AgentRunRequest) -> AgentAction:
+        return _build_search_action(request)
+
+    def propose_verify_action(
+        self,
+        *,
+        rag_run_id: int,
+        citations: list[dict[str, object]],
+    ) -> AgentAction:
+        return _build_verify_action(rag_run_id=rag_run_id, citations=citations)
+
 
 class OrchestratorAgent:
     """MCP tool을 순서대로 호출하는 MVP 단일 Agent입니다."""
@@ -36,12 +82,14 @@ class OrchestratorAgent:
         settings: Settings,
         ai_client: AIClient | None = None,
         mcp_server: McpJsonRpcServer | None = None,
+        action_planner: AgentActionPlanner | None = None,
     ) -> None:
         self.settings = settings
         self.ai_client = ai_client or AIClient(settings)
         self.mcp_server = mcp_server or create_default_server(
             settings.mcp_allowed_tool_names
         )
+        self.action_planner = action_planner or DefaultAgentActionPlanner()
 
     def run(self, db: Session, request: AgentRunRequest) -> AgentRunResult:
         normalized_request = _validate_request(request)
@@ -49,9 +97,24 @@ class OrchestratorAgent:
         tool_calls: list[AgentToolCallSummary] = []
         rag_run: RagRun | None = None
         tool_call_count = 0
+        iteration_count = 0
+        seen_actions: dict[str, int] = {}
 
         try:
-            search_action = _build_search_action(normalized_request)
+            search_action = self.action_planner.propose_search_action(
+                normalized_request
+            )
+            iteration_count = _next_iteration_count(
+                iteration_count,
+                settings=self.settings,
+            )
+            search_validation = _validate_action(
+                search_action,
+                settings=self.settings,
+                seen_actions=seen_actions,
+                allowed_action_types={"search_internal"},
+            )
+            _record_action_seen(search_action, seen_actions)
             search_response = self._call_tool(
                 db,
                 tool_name=_require_tool_name(search_action),
@@ -117,7 +180,7 @@ class OrchestratorAgent:
                 tool_name=search_action.tool_name,
                 status="completed",
                 input_json=_action_validation_input(search_action),
-                output_json={"valid": True, "reason": "default_planner_action"},
+                output_json=search_validation,
             )
             step_index += 1
 
@@ -210,7 +273,14 @@ class OrchestratorAgent:
             )
             step_index += 1
 
-            verify_action = _build_verify_action(rag_run_id=rag_run.id, citations=citations)
+            verify_action = self.action_planner.propose_verify_action(
+                rag_run_id=rag_run.id,
+                citations=citations,
+            )
+            iteration_count = _next_iteration_count(
+                iteration_count,
+                settings=self.settings,
+            )
             _add_step(
                 db,
                 rag_run=rag_run,
@@ -222,6 +292,13 @@ class OrchestratorAgent:
             )
             step_index += 1
 
+            verify_validation = _validate_action(
+                verify_action,
+                settings=self.settings,
+                seen_actions=seen_actions,
+                allowed_action_types={"verify_citations"},
+            )
+            _record_action_seen(verify_action, seen_actions)
             _add_step(
                 db,
                 rag_run=rag_run,
@@ -230,7 +307,7 @@ class OrchestratorAgent:
                 tool_name=verify_action.tool_name,
                 status="completed",
                 input_json=_action_validation_input(verify_action),
-                output_json={"valid": True, "reason": "default_planner_action"},
+                output_json=verify_validation,
             )
             step_index += 1
 
@@ -499,6 +576,113 @@ def _require_tool_name(action: AgentAction) -> str:
             f"{action.action_type} requires a tool name",
         )
     return action.tool_name
+
+
+def _next_iteration_count(iteration_count: int, *, settings: Settings) -> int:
+    next_count = iteration_count + 1
+    if next_count > settings.ai_agent_max_iterations:
+        raise AgentOrchestrationError(
+            "agent_iteration_budget_exceeded",
+            "Agent iteration budget was exceeded",
+        )
+    return next_count
+
+
+def _validate_action(
+    action: AgentAction,
+    *,
+    settings: Settings,
+    seen_actions: dict[str, int],
+    allowed_action_types: set[AgentActionType],
+) -> dict[str, object]:
+    if action.action_type not in ALLOWED_ACTION_TYPES:
+        raise AgentOrchestrationError(
+            "agent_action_not_allowed",
+            "Agent action type is not allowed",
+        )
+    if action.action_type not in allowed_action_types:
+        raise AgentOrchestrationError(
+            "agent_action_not_allowed_in_state",
+            "Agent action type is not allowed in the current state",
+        )
+
+    expected_tool_name = ACTION_TOOL_NAMES.get(action.action_type)
+    if expected_tool_name is None:
+        if action.tool_name is not None:
+            raise AgentOrchestrationError(
+                "agent_action_tool_mismatch",
+                "Agent action must not include a tool name",
+            )
+    elif action.tool_name != expected_tool_name:
+        raise AgentOrchestrationError(
+            "agent_action_tool_mismatch",
+            "Agent action tool name is not allowed",
+        )
+
+    if action.tool_name is not None and action.tool_name not in settings.mcp_allowed_tool_names:
+        raise AgentOrchestrationError(
+            "agent_tool_not_allowed",
+            "Agent tool is not in the MCP allowlist",
+        )
+
+    _validate_action_arguments(action)
+
+    action_signature = _action_signature(action)
+    repeated_count = seen_actions.get(action_signature, 0)
+    if repeated_count >= settings.ai_agent_max_repeated_actions:
+        raise AgentOrchestrationError(
+            "agent_repeated_action_limit_exceeded",
+            "Agent repeated action limit was exceeded",
+        )
+
+    return {
+        "valid": True,
+        "action_type": action.action_type,
+        "tool_name": action.tool_name,
+        "reason": "action_schema_and_policy_valid",
+        "previous_same_action_count": repeated_count,
+    }
+
+
+def _validate_action_arguments(action: AgentAction) -> None:
+    if action.action_type == "search_internal":
+        query = action.arguments.get("query")
+        if not isinstance(query, str) or not query.strip():
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "search_internal requires a non-empty query",
+            )
+        search_mode = action.arguments.get("search_mode")
+        if search_mode not in {"focused_answer", "issue_spotting"}:
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "search_internal search_mode is invalid",
+            )
+    elif action.action_type == "verify_citations":
+        run_id = action.arguments.get("run_id")
+        citations = action.arguments.get("citations")
+        if isinstance(run_id, bool) or not isinstance(run_id, int) or run_id <= 0:
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "verify_citations requires a positive run_id",
+            )
+        if not isinstance(citations, list):
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "verify_citations requires a citation list",
+            )
+
+
+def _action_signature(action: AgentAction) -> str:
+    return repr((action.action_type, action.tool_name, action.arguments))
+
+
+def _record_action_seen(
+    action: AgentAction,
+    seen_actions: dict[str, int],
+) -> None:
+    action_signature = _action_signature(action)
+    seen_actions[action_signature] = seen_actions.get(action_signature, 0) + 1
 
 
 def _unwrap_tool_result(response: dict[str, Any]) -> dict[str, Any]:

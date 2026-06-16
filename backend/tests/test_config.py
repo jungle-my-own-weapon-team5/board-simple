@@ -87,6 +87,23 @@ def test_mcp_enabled_requires_allowed_tools() -> None:
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
+        ({"ai_agent_max_repeated_actions": 0}, "AI_AGENT_MAX_REPEATED_ACTIONS"),
+        (
+            {"ai_agent_max_external_sync_candidates": 0},
+            "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",
+        ),
+    ],
+)
+def test_agent_loop_guard_settings_must_be_positive(
+    overrides: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValidationError, match=message):
+        Settings(**overrides)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
         ({"jwt_secret_key": "change-me"}, "JWT_SECRET_KEY"),
         ({"auth_cookie_secure": False}, "AUTH_COOKIE_SECURE"),
         ({"frontend_origin": "http://example.com"}, "FRONTEND_ORIGIN"),
