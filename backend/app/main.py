@@ -31,6 +31,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def enforce_state_changing_origin(request: Request, call_next):
+    if _request_body_too_large(request):
+        return JSONResponse(
+            status_code=413,
+            content={"detail": "Request body is too large"},
+        )
     if request.method in unsafe_methods:
         origin = request.headers.get("origin")
         if origin != allowed_frontend_origin:
@@ -39,6 +44,17 @@ async def enforce_state_changing_origin(request: Request, call_next):
                 content={"detail": "Invalid request origin"},
             )
     return await call_next(request)
+
+
+def _request_body_too_large(request: Request) -> bool:
+    content_length = request.headers.get("content-length")
+    if content_length is None:
+        return False
+    try:
+        body_size = int(content_length)
+    except ValueError:
+        return False
+    return body_size > settings.api_request_body_max_bytes
 
 
 app.include_router(auth.router, prefix="/api")

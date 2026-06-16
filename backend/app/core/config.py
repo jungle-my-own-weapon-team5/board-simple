@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     frontend_origin: AnyUrl = "http://localhost:3000"
     auth_cookie_secure: bool = False
+    api_request_body_max_bytes: int = 262_144
 
     ai_rag_enabled: bool = False
     ai_agent_provider: Literal["openai", "gemini", "anthropic", "mock"] = "openai"
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
     ai_agent_max_handoffs: int = 8
     ai_agent_max_repeated_actions: int = 2
     ai_agent_max_external_sync_candidates: int = 3
+    ai_rate_limit_per_minute: int = 20
     rag_top_k: int = 5
     rag_prompt_version: str = "v1"
 
@@ -88,6 +90,7 @@ class Settings(BaseSettings):
             return value.strip() == ""
 
         positive_integer_fields = [
+            ("API_REQUEST_BODY_MAX_BYTES", self.api_request_body_max_bytes),
             ("AI_REQUEST_TIMEOUT_SECONDS", self.ai_request_timeout_seconds),
             ("AI_AGENT_MAX_ITERATIONS", self.ai_agent_max_iterations),
             ("AI_AGENT_MAX_TOOL_CALLS", self.ai_agent_max_tool_calls),
@@ -97,6 +100,7 @@ class Settings(BaseSettings):
                 "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",
                 self.ai_agent_max_external_sync_candidates,
             ),
+            ("AI_RATE_LIMIT_PER_MINUTE", self.ai_rate_limit_per_minute),
             ("RAG_TOP_K", self.rag_top_k),
             ("MCP_REQUEST_TIMEOUT_SECONDS", self.mcp_request_timeout_seconds),
         ]

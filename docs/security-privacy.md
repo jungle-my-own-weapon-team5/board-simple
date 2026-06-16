@@ -41,7 +41,8 @@ Secret에 해당하는 값:
 - auth endpoint rate limiting
 - refresh token 또는 server-side session invalidation 검토
 - logout 이후 token 재사용 방지 전략 검토
-- AI/RAG endpoint에는 별도 rate limit 적용
+- AI/RAG endpoint에는 `AI_RATE_LIMIT_PER_MINUTE` 기준 별도 rate limit 적용
+- request body는 `API_REQUEST_BODY_MAX_BYTES`를 초과하면 route handler 진입 전에 거부
 
 ## 개인정보와 민감정보
 
@@ -169,7 +170,7 @@ AI 출력은 다음을 지켜야 합니다.
 - MCP allowlist와 외부 API key 존재 여부 확인. 값은 출력하지 않음
 - Agent `max_iterations`, `max_tool_calls`, timeout 설정 확인
 - auth/AI endpoint rate limit
-- request body size limit
+- `API_REQUEST_BODY_MAX_BYTES` request body size limit
 - structured logging redaction
 - AI disclaimer 표시
 - citation 포함 테스트

@@ -977,7 +977,7 @@ AI/RAG endpoint는 다음 오류를 사용합니다.
 - `403`: 권한 없음 또는 상태 변경 요청의 Origin 오류
 - `404`: document 또는 run을 찾을 수 없음
 - `409`: 동일 canonical/version 중복, canonical/version checksum 충돌, 또는 indexing 충돌
-- `413`: 업로드 content가 너무 큼
+- `413`: request body 또는 업로드 content가 너무 큼
 - `422`: validation 오류
 - `429`: rate limit 초과
 - `500`: 서버 provider 설정 오류

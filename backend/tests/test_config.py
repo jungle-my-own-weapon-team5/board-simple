@@ -87,6 +87,8 @@ def test_mcp_enabled_requires_allowed_tools() -> None:
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
+        ({"api_request_body_max_bytes": 0}, "API_REQUEST_BODY_MAX_BYTES"),
+        ({"ai_rate_limit_per_minute": 0}, "AI_RATE_LIMIT_PER_MINUTE"),
         ({"ai_agent_max_repeated_actions": 0}, "AI_AGENT_MAX_REPEATED_ACTIONS"),
         ({"ai_agent_max_handoffs": 0}, "AI_AGENT_MAX_HANDOFFS"),
         (

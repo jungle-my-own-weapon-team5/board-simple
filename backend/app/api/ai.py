@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from collections import deque
+from threading import Lock
+from time import monotonic
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -31,6 +35,9 @@ PROVIDER_ERROR_CODES = {
     "ProviderTimeoutError",
     "ProviderUnavailableError",
 }
+AI_RATE_LIMIT_WINDOW_SECONDS = 60
+_AI_RATE_LIMIT_LOCK = Lock()
+_AI_RATE_LIMIT_BUCKETS: dict[tuple[int, int], deque[float]] = {}
 
 
 def get_orchestrator_agent(
@@ -52,6 +59,7 @@ def create_agent_run(
     """공통 Agent 실행 endpoint입니다."""
 
     _ensure_ai_rag_enabled(settings)
+    _enforce_ai_rate_limit(settings, current_user)
     result = _run_agent(
         db,
         agent=agent,
@@ -71,6 +79,7 @@ def create_dispute_issues(
     """사실관계에서 후보 법률 쟁점을 정리합니다."""
 
     _ensure_ai_rag_enabled(settings)
+    _enforce_ai_rate_limit(settings, current_user)
     result = _run_agent(
         db,
         agent=agent,
@@ -99,6 +108,7 @@ def create_answer_draft(
     """검색 근거와 citation 검증을 거친 답변 초안을 생성합니다."""
 
     _ensure_ai_rag_enabled(settings)
+    _enforce_ai_rate_limit(settings, current_user)
     result = _run_agent(
         db,
         agent=agent,
@@ -124,6 +134,22 @@ def _ensure_ai_rag_enabled(settings: Settings) -> None:
         status_code=status.HTTP_404_NOT_FOUND,
         detail="AI/RAG API is disabled",
     )
+
+
+def _enforce_ai_rate_limit(settings: Settings, current_user: User) -> None:
+    now = monotonic()
+    cutoff = now - AI_RATE_LIMIT_WINDOW_SECONDS
+    key = (id(settings), current_user.id)
+    with _AI_RATE_LIMIT_LOCK:
+        bucket = _AI_RATE_LIMIT_BUCKETS.setdefault(key, deque())
+        while bucket and bucket[0] <= cutoff:
+            bucket.popleft()
+        if len(bucket) >= settings.ai_rate_limit_per_minute:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="AI rate limit exceeded",
+            )
+        bucket.append(now)
 
 
 def _run_agent(

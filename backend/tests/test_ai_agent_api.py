@@ -41,6 +41,13 @@ def disabled_ai_client_context() -> Generator[ApiTestContext, None, None]:
     yield from _client_context(_settings(ai_rag_enabled=False))
 
 
+@pytest.fixture()
+def rate_limited_ai_client_context() -> Generator[ApiTestContext, None, None]:
+    yield from _client_context(
+        _settings(ai_rag_enabled=True, ai_rate_limit_per_minute=1)
+    )
+
+
 def test_answer_drafts_endpoint_runs_agent_and_returns_citations(
     ai_client_context: ApiTestContext,
 ) -> None:
@@ -178,6 +185,50 @@ def test_ai_agent_api_is_disabled_when_ai_rag_is_disabled(
     assert response.json()["detail"] == "AI/RAG API is disabled"
 
 
+def test_ai_agent_endpoint_rate_limits_per_user(
+    rate_limited_ai_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rate_limited_ai_client_context.client, email="rate-ai@example.com")
+    app.dependency_overrides[get_orchestrator_agent] = lambda: _SuccessfulAgent()
+    payload = {
+        "task_type": "answer_draft",
+        "facts": "rate limit 테스트 사실관계",
+        "question": "답변 초안을 만들어주세요.",
+    }
+
+    first_response = rate_limited_ai_client_context.client.post(
+        "/api/ai/agent-runs",
+        json=payload,
+        headers=origin_headers(),
+    )
+    second_response = rate_limited_ai_client_context.client.post(
+        "/api/ai/agent-runs",
+        json=payload,
+        headers=origin_headers(),
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 429
+    assert second_response.json()["detail"] == "AI rate limit exceeded"
+
+
+def test_ai_agent_endpoint_rejects_oversized_request_body(
+    ai_client_context: ApiTestContext,
+) -> None:
+    response = ai_client_context.client.post(
+        "/api/ai/agent-runs",
+        json={
+            "task_type": "answer_draft",
+            "facts": "x" * 300_000,
+            "question": "답변 초안을 만들어주세요.",
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == "Request body is too large"
+
+
 def test_provider_failure_is_mapped_without_raw_provider_message(
     ai_client_context: ApiTestContext,
 ) -> None:
@@ -230,7 +281,11 @@ def _client_context(
     app.dependency_overrides.clear()
 
 
-def _settings(*, ai_rag_enabled: bool) -> Settings:
+def _settings(
+    *,
+    ai_rag_enabled: bool,
+    ai_rate_limit_per_minute: int = 20,
+) -> Settings:
     return Settings(
         app_env="test",
         ai_rag_enabled=ai_rag_enabled,
@@ -239,7 +294,22 @@ def _settings(*, ai_rag_enabled: bool) -> Settings:
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,
+        ai_rate_limit_per_minute=ai_rate_limit_per_minute,
     )
+
+
+class _SuccessfulAgent:
+    def run(self, db: Session, request: AgentRunRequest) -> AgentRunResult:
+        return AgentRunResult(
+            run_id=88,
+            status="completed",
+            task_type=request.task_type,
+            agent_provider="mock",
+            agent_model_name="agent-test-model",
+            answer="성공 응답입니다.",
+            citations=[],
+            tool_calls=[],
+        )
 
 
 class _FailingAgent:

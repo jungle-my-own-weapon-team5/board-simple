@@ -84,6 +84,14 @@ MVP 기준:
 - 같은 canonical/version의 본문 충돌 fixture는 `conflict_status=review_required`로 표시되어야 합니다.
 - 다른 시행일 또는 version label의 fixture는 별도 version으로 보존되어야 합니다.
 
+후속 evidence 평가 개선 기준:
+
+- 쟁점별 coverage를 계산해 특정 쟁점의 근거가 누락되지 않는지 확인합니다.
+- 법령, 판례, 법령해석례, 행정심판례 등 source type 다양성을 확인합니다.
+- 법령 source가 최신 시행 버전인지 확인합니다.
+- citation 후보가 공식 source에서 온 근거인지 확인합니다.
+- top-k 결과가 하나의 문서 또는 하나의 조문에 과도하게 몰리는지 확인합니다.
+
 ## Citation 평가
 
 검사 항목:
