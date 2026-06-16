@@ -1,21 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostListItem, PostPage, PostRead, PostUpdate
-from app.services import posts as post_service
-from app.services.errors import NotFoundError, PermissionDeniedError
+from app.services.tags import extract_tag_names, get_or_create_tags
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-def _raise_post_http_error(exc: NotFoundError | PermissionDeniedError) -> None:
-    if isinstance(exc, NotFoundError):
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
-    raise HTTPException(status_code=403, detail=exc.detail) from exc
+def get_post_or_404(db: Session, post_id: int) -> Post:
+    post = db.scalar(
+        select(Post)
+        .where(Post.id == post_id)
+        .options(
+            selectinload(Post.author),
+            selectinload(Post.tags),
+        )
+    )
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
 
 
 @router.get("", response_model=PostPage)
@@ -25,7 +33,20 @@ def list_posts(
     q: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> PostPage:
-    posts, total = post_service.list_posts(db, page=page, size=size, q=q)
+    filters = []
+    if q:
+        filters.append(Post.title.ilike(f"%{q}%"))
+
+    total_statement = select(func.count()).select_from(Post)
+    statement = select(Post).options(selectinload(Post.author), selectinload(Post.tags))
+    if filters:
+        total_statement = total_statement.where(*filters)
+        statement = statement.where(*filters)
+
+    total = db.scalar(total_statement) or 0
+    posts = db.scalars(
+        statement.order_by(Post.created_at.desc()).offset((page - 1) * size).limit(size)
+    ).all()
     return PostPage(
         items=[PostListItem.model_validate(post) for post in posts],
         total=total,
@@ -40,15 +61,17 @@ def create_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Post:
-    return post_service.create_post(db, payload, current_user)
+    post = Post(title=payload.title, content=payload.content, author_id=current_user.id)
+    post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    return get_post_or_404(db, post.id)
 
 
 @router.get("/{post_id}", response_model=PostRead)
 def read_post(post_id: int, db: Session = Depends(get_db)) -> Post:
-    try:
-        return post_service.get_post(db, post_id)
-    except NotFoundError as exc:
-        raise HTTPException(status_code=404, detail=exc.detail) from exc
+    return get_post_or_404(db, post_id)
 
 
 @router.put("/{post_id}", response_model=PostRead)
@@ -58,10 +81,15 @@ def update_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Post:
-    try:
-        return post_service.update_post(db, post_id, payload, current_user)
-    except (NotFoundError, PermissionDeniedError) as exc:
-        _raise_post_http_error(exc)
+    post = get_post_or_404(db, post_id)
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can update this post")
+
+    post.title = payload.title
+    post.content = payload.content
+    post.tags = get_or_create_tags(db, extract_tag_names(payload.content))
+    db.commit()
+    return get_post_or_404(db, post.id)
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -70,7 +98,9 @@ def delete_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
-    try:
-        post_service.delete_post(db, post_id, current_user)
-    except (NotFoundError, PermissionDeniedError) as exc:
-        _raise_post_http_error(exc)
+    post = get_post_or_404(db, post_id)
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can delete this post")
+
+    db.delete(post)
+    db.commit()

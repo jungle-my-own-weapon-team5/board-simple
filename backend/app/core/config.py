@@ -14,10 +14,6 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     frontend_origin: AnyUrl = "http://localhost:3000"
     auth_cookie_secure: bool = False
-    openai_api_key: str | None = None
-    openai_embedding_model: str = "text-embedding-3-small"
-    openai_chat_model: str = "gpt-5.5"
-    rag_top_k: int = 5
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),
