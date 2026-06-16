@@ -311,8 +311,8 @@ backend/app/
 8. Agent orchestration
    - MVP는 멀티에이전트가 아니라 단일 Orchestrator Agent 구조입니다.
    - MCP tool은 Agent가 아니며, Orchestrator Agent가 호출하는 제한된 service 경계입니다.
-   - Agent는 bounded state machine으로 tool 선택, 관찰, 초안 작성, citation 검증을 수행합니다.
-   - MVP의 상태 흐름은 `plan -> call_tool -> observe -> decide -> draft -> verify -> persist`입니다.
+   - Agent는 bounded state machine으로 쟁점/source 계획, 내부 검색, 필요 시 공식 source 보강, 관찰, 초안 작성, citation 검증을 수행합니다.
+   - MVP의 상태 흐름은 `plan_issue_sources -> search_internal -> maybe_sync_official_sources -> search_internal_again -> decide -> draft -> verify -> persist`입니다.
    - `max_iterations`와 `max_tool_calls`로 무한 루프를 방지합니다.
 
 9. Prompt assembly
@@ -475,6 +475,10 @@ rag_retrievals
 
 새 시행일이나 새 version이 확인되면 기존 문서를 덮어쓰지 않고 별도 문서 version으로 저장합니다. 반대로 같은 canonical/version인데 전문 재조회 결과 `normalized_checksum`이 달라지면 어떤 것이 최종 진실인지 자동 판단하지 않고 conflict review 상태로 남깁니다. 최신성 확인은 기존 색인을 안전하게 재사용하기 위한 절차이며, 과거 version 삭제 기준이 아닙니다.
 
+사용자 요청 기반 공식 corpus 보강은 다음 순서로 동작합니다. 사용자가 스토리나 질문을 입력하면 Orchestrator LLM은 먼저 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성합니다. 이 결과는 검색 계획일 뿐이며 법률 근거로 인용하지 않습니다. Orchestrator는 먼저 내부 RAG 검색을 수행하고, 근거가 부족할 때만 허용된 공식 source metadata 조회와 제한된 on-demand sync를 실행합니다. sync로 새 문서와 embedding이 준비되면 내부 RAG를 다시 실행한 뒤, retrieved chunk 또는 검증된 공식 source metadata만 답변 근거로 사용합니다.
+
+on-demand로 수집된 법령, 판례, 법령해석례, 행정심판례는 사용자별 private embedding으로 만들지 않고 공용 공식 corpus로 저장합니다. 반대로 사용자 계약서, PDF, 메모는 사용자 또는 tenant 범위의 문서로 취급하며 다른 사용자 요청의 공용 근거로 사용하지 않습니다. on-demand sync는 요청당 후보 문서 수, rate limit, provider timeout, API quota를 제한해야 하며, `conflict_status=review_required` 또는 `index_status=failed` 문서는 citation 가능한 evidence에서 제외합니다.
+
 초기 소스 도입 순서는 다음을 권장합니다.
 
 1. 테스트와 학습 재현성을 위한 fixture 문서
@@ -550,7 +554,10 @@ MVP MCP tool:
 
 MVP Agent 책임:
 
-- 사용자 사실관계와 질문을 바탕으로 필요한 검색 계획을 세웁니다.
+- 사용자 사실관계와 질문에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 추출합니다.
+- 후보 법령명은 공식 근거가 아니라 retrieval과 외부 source 조회를 위한 계획으로만 사용합니다.
+- 내부 RAG 검색을 먼저 실행하고, 근거가 부족할 때만 국가법령정보 Open API 같은 허용된 공식 source 조회 또는 on-demand sync를 시도합니다.
+- on-demand sync와 embedding이 완료되면 같은 요청에서 내부 RAG 검색을 다시 실행합니다.
 - allowlist된 MCP tool 중 필요한 tool만 호출합니다.
 - tool 결과를 관찰하고 근거 부족 여부를 판단합니다.
 - OpenAI API를 사용해 쟁점 정리 또는 답변 초안을 생성합니다.
@@ -571,9 +578,9 @@ SupervisorAgent
 
 - `SupervisorAgent` 또는 `MultiAgentOrchestrator`가 전문 Agent 호출 순서, 재시도, handoff, 중단 조건을 결정합니다.
 - 전문 Agent는 직접 route, repository, provider SDK를 호출하지 않고 정해진 service, MCP tool, provider adapter 경계를 통해 동작합니다.
-- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보를 뽑습니다.
+- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보, 법률 영역, 후보 법령명, 검색 query를 뽑습니다.
 - `RetrievalAgent`는 내부 RAG 검색 전략과 `search_mode`를 선택합니다.
-- `LegalSourceAgent`는 국가법령정보 Open API 같은 외부 공식 source 조회 필요성을 판단합니다.
+- `LegalSourceAgent`는 국가법령정보 Open API 같은 외부 공식 source 조회와 공용 corpus on-demand 보강 필요성을 판단합니다.
 - `DraftingAgent`는 근거 기반 초안을 작성합니다.
 - `CitationVerifierAgent`는 초안의 법률 주장과 citation이 검색 결과 또는 외부 source에 근거하는지 검증합니다.
 - `SafetyReviewAgent`는 과도한 단정, 법률 자문 표현, 개인정보, secret 노출을 검토합니다.
@@ -717,12 +724,13 @@ auth와 AI endpoint는 비용과 보안 위험이 있으므로 외부 공개 전
 2. OpenAI API 기반 generation/embedding provider adapter를 추가합니다.
 3. MCP 서버와 allowlist된 tool registry를 추가합니다.
 4. `search_legal_documents`, `search_law_open_api`, `verify_citations` tool을 구현합니다.
-5. 단일 Orchestrator Agent의 bounded state machine으로 tool 선택, 실행, 관찰, 초안 작성, 검증을 구현합니다.
-6. hybrid retrieval과 citation tracking을 추가합니다.
-7. Gemini와 Claude provider adapter는 동일 인터페이스로 후속 추가합니다.
-8. 단일 Orchestrator가 안정화되면 Supervisor Agent와 전문 Agent 기반 멀티에이전트 workflow로 확장합니다.
-9. LangChain은 provider/tool integration code를 줄이는 효과가 분명할 때만 도입합니다.
-10. LangGraph는 workflow가 durable multi-step orchestration, branching, retry, human-in-the-loop를 요구할 때 도입합니다.
+5. 단일 Orchestrator Agent의 bounded state machine으로 쟁점/source 계획, tool 선택, 실행, 관찰, 초안 작성, 검증을 구현합니다.
+6. 사용자 요청 기반 공용 공식 corpus on-demand 보강과 재검색 흐름을 구현합니다.
+7. hybrid retrieval과 citation tracking을 추가합니다.
+8. Gemini와 Claude provider adapter는 동일 인터페이스로 후속 추가합니다.
+9. 단일 Orchestrator가 안정화되면 Supervisor Agent와 전문 Agent 기반 멀티에이전트 workflow로 확장합니다.
+10. LangChain은 provider/tool integration code를 줄이는 효과가 분명할 때만 도입합니다.
+11. LangGraph는 workflow가 durable multi-step orchestration, branching, retry, human-in-the-loop를 요구할 때 도입합니다.
 
 이 접근은 법률 근거 데이터 모델을 프레임워크에 너무 일찍 종속시키지 않으면서도, 과제의 MCP/Agent 요구사항과 학습 경로, 디버깅 가능성을 함께 만족시킵니다.
 

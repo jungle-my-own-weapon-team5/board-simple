@@ -178,6 +178,8 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 공식 법령, 판례, 법령해석례, 행정심판례 원문은 일반 사용자에게서 직접 업로드받지 않습니다. 해당 corpus는 backend가 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집합니다. 일반 사용자 업로드는 `user_file` 또는 `memo` 성격의 문서로 제한합니다.
 
+사용자 스토리나 질문을 기반으로 답변을 생성할 때는 내부 RAG 검색 전에 Orchestrator LLM이 쟁점과 법률 source 후보를 먼저 계획합니다. 이 계획은 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query로 구성되며, 그 자체가 법률 근거나 citation이 되지는 않습니다. 내부 RAG 근거가 부족하면 backend는 요청 범위와 rate limit 안에서 공식 법률 corpus를 공용 데이터로 수집, chunking, embedding한 뒤 같은 요청의 retrieval을 다시 수행할 수 있습니다.
+
 수용 기준:
 
 - raw text를 보존합니다.
@@ -186,6 +188,7 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 - raw checksum, normalized checksum, dedup status, conflict status를 저장합니다.
 - 같은 법령 또는 문서의 다른 시행일/버전은 삭제하지 않고 별도 version으로 보존합니다.
 - 같은 canonical/version인데 normalized checksum이 다르면 자동으로 최종 진실을 결정하지 않고 conflict review 대상으로 표시합니다.
+- 사용자 요청으로 수집된 공식 법률 corpus는 사용자별로 중복 저장하지 않고 공용 source/document/chunk/embedding으로 재사용합니다.
 - frontend가 PDF text extraction 또는 OCR preview를 제공할 수 있지만, 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 수행합니다.
 - 업로드 content에서 임의 코드를 실행하지 않습니다.
 
@@ -371,7 +374,10 @@ MVP provider:
 
 MVP Agent 역할:
 
-- 사용자 사실관계와 질문을 바탕으로 검색 계획을 세웁니다.
+- 사용자 사실관계와 질문을 바탕으로 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 계획합니다.
+- 후보 법령명과 외부 source query는 검색 계획일 뿐이며, citation 가능한 근거는 retrieved chunk 또는 공식 source metadata 검증을 통과한 결과로 제한합니다.
+- 먼저 내부 RAG 검색을 수행하고, 근거가 부족한 경우에만 허용된 외부 공식 source 조회 또는 공용 법률 corpus on-demand 수집을 시도합니다.
+- on-demand 수집이 성공해 새 chunk embedding이 준비되면 같은 요청의 내부 RAG 검색을 다시 수행합니다.
 - allowlist된 MCP tool 중 필요한 tool을 선택하고 호출합니다.
 - 내부 RAG 검색 결과와 외부 법률 API 결과를 구분해 관찰합니다.
 - 근거 부족, 추가 확인 필요 사실, citation 후보를 정리합니다.
@@ -380,7 +386,7 @@ MVP Agent 역할:
 
 수용 기준:
 
-- Agent 상태 흐름은 `plan -> call_tool -> observe -> decide -> draft -> verify -> persist`를 기준으로 합니다.
+- Agent 상태 흐름은 `plan_issue_sources -> search_internal -> maybe_sync_official_sources -> search_internal_again -> decide -> draft -> verify -> persist`를 기준으로 합니다.
 - 각 step은 `agent_steps`에 저장합니다.
 - `max_iterations`, `max_tool_calls`, timeout을 설정해 무한 루프를 방지합니다.
 - tool 호출 실패 시 run을 실패 처리하거나 근거 부족으로 안전하게 응답합니다.
@@ -393,6 +399,7 @@ MVP Agent는 단일 Orchestrator Agent입니다. MCP tool은 Agent가 아니며,
 
 - `SupervisorAgent`가 전문 Agent 호출 순서, handoff, retry, 중단 조건을 결정합니다.
 - 전문 Agent 후보는 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`입니다.
+- `IssueSpottingAgent`는 후보 쟁점과 법률 source 후보를 추출하고, `LegalSourceAgent`는 공용 공식 corpus의 on-demand 보강 필요성과 범위를 판단합니다.
 - 전문 Agent는 서로를 직접 호출하지 않고, 필요한 다음 작업을 `AgentHandoff`로 Supervisor에게 반환합니다.
 - 전문 Agent는 provider SDK, database, filesystem을 직접 호출하지 않고 service, MCP tool, provider adapter 경계를 사용합니다.
 - citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
@@ -543,7 +550,7 @@ MCP는 MVP 필수 범위입니다. Agent가 내부 RAG와 외부 법률 API를 �
 10. bounded Agent state machine을 추가합니다.
 11. answer draft endpoint를 Agent orchestration에 연결합니다.
 12. 쟁점 정리와 자료 검색 UI를 추가합니다.
-13. 외부 법률 API ingestion 또는 실시간 조회 정책을 추가합니다.
+13. 외부 법률 API ingestion, 사용자 요청 기반 공용 corpus on-demand 보강, 실시간 조회 정책을 추가합니다.
 14. hybrid retrieval을 추가합니다.
 15. admin control과 audit view를 추가합니다.
 16. Gemini/Claude provider adapter를 필요에 따라 추가합니다.

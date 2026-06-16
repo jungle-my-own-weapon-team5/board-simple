@@ -23,6 +23,8 @@ source 수집
   -> persistence/audit
 ```
 
+사용자 요청 처리 흐름에서는 `vector retrieval` 앞에 Orchestrator LLM의 `issue/source planning`이 먼저 실행됩니다. 내부 검색 근거가 부족하면 공식 source on-demand sync와 embedding을 수행한 뒤 retrieval을 다시 실행합니다.
+
 ## 1. Source 수집
 
 입력:
@@ -68,6 +70,41 @@ source 수집
 - 사용자 제공 계약서, PDF 추출 텍스트, 스캔본 OCR 결과, 직접 입력 메모는 `document_type=user_file` 또는 `memo`로 저장합니다.
 - pasted text와 사용자 확인을 거친 업로드 추출 텍스트는 `legal_sources.provider=upload`, fixture는 `legal_sources.provider=fixture`, 국가법령정보 Open API 수집 자료는 `legal_sources.provider=law_open_api`로 저장합니다.
 - frontend가 PDF text extraction을 수행할 수는 있지만, 이는 미리보기와 사용자 확인을 위한 전처리입니다. 최종 normalization, checksum, duplicate/conflict 판정, chunking은 backend가 단일 기준으로 수행합니다.
+
+사용자 요청 기반 공식 corpus 보강 흐름:
+
+```text
+사용자 스토리/질문 입력
+  -> Orchestrator LLM의 issue/source planning
+  -> 내부 RAG 검색
+  -> 근거 부족 시 공식 source metadata 조회
+  -> 요청 한도 안에서 on-demand sync + chunking + embedding
+  -> 내부 RAG 재검색
+  -> 답변 초안
+  -> citation 검증
+  -> 응답
+```
+
+issue/source planning 출력:
+
+```text
+issues[]
+legal_domains[]
+candidate_statutes[]
+rag_queries[]
+external_source_queries[]
+missing_facts[]
+```
+
+planning 규칙:
+
+- `candidate_statutes`와 `external_source_queries`는 검색 계획이며, 그 자체가 citation 가능한 근거가 아닙니다.
+- citation 가능한 evidence는 내부 retrieval로 선택된 chunk 또는 공식 source metadata 검증을 통과한 결과로 제한합니다.
+- 공식 법률 corpus는 사용자별 embedding으로 만들지 않고 공용 `legal_sources`, `legal_documents`, `legal_document_chunks`, `legal_document_chunk_embeddings`로 저장합니다.
+- 사용자 계약서, PDF, 메모는 사용자 또는 tenant 범위의 private corpus로 남기며 다른 사용자 요청의 공용 근거로 사용하지 않습니다.
+- on-demand sync는 요청당 후보 문서 수, provider timeout, API quota, rate limit을 적용합니다.
+- `conflict_status=review_required` 또는 `index_status=failed` 문서는 검색 결과와 citation 후보에서 제외합니다.
+- 새 chunk embedding이 준비되면 같은 요청에서 내부 RAG 검색을 다시 수행해야 합니다.
 
 국가법령정보 Open API preflight 흐름:
 
@@ -371,16 +408,17 @@ MVP MCP tool:
 Agent 상태 흐름:
 
 ```text
-plan
-  -> call_tool
-  -> observe
+plan_issue_sources
+  -> search_internal
+  -> maybe_sync_official_sources
+  -> search_internal_again
   -> decide
   -> draft
   -> verify
   -> persist
 ```
 
-MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP tool은 Agent가 아니며, Agent가 호출하는 제한된 service 경계입니다.
+MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP tool은 Agent가 아니며, Agent가 호출하는 제한된 service 경계입니다. `maybe_sync_official_sources`는 내부 RAG 근거가 부족하고 공식 source 후보가 있을 때만 실행하며, 새 embedding이 만들어지지 않았거나 기존 indexed 문서가 재사용된 경우에도 retrieval 재실행 여부를 audit에 남깁니다.
 
 후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 

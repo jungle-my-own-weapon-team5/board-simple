@@ -233,9 +233,10 @@ invalid: list[CitationValidationError]
 MVP Agent는 하나의 `OrchestratorAgent`이며 다음 상태 흐름을 사용합니다.
 
 ```text
-plan
-  -> call_tool
-  -> observe
+plan_issue_sources
+  -> search_internal
+  -> maybe_sync_official_sources
+  -> search_internal_again
   -> decide
   -> draft
   -> verify
@@ -246,15 +247,24 @@ plan
 
 | State | 책임 |
 | --- | --- |
-| `plan` | 사용자 facts/question을 분석하고 필요한 tool 후보를 정함 |
-| `call_tool` | MCP registry를 통해 allowlist된 tool 호출 |
-| `observe` | tool 결과를 evidence로 정리 |
-| `decide` | 추가 검색이 필요한지, 초안을 작성할 수 있는지 판단 |
+| `plan_issue_sources` | 사용자 facts/question에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성 |
+| `search_internal` | `search_legal_documents`로 기존 공용 corpus와 사용자 범위 corpus를 먼저 검색 |
+| `maybe_sync_official_sources` | 내부 근거가 부족할 때만 `search_law_open_api` 또는 ingestion sync service를 통해 공식 source metadata 확인과 제한된 on-demand sync 수행 |
+| `search_internal_again` | 새 chunk embedding이 준비되었거나 기존 indexed 문서를 재사용할 수 있으면 내부 RAG를 재실행 |
+| `decide` | 추가 검색이 필요한지, 근거 부족으로 응답해야 하는지, 초안을 작성할 수 있는지 판단 |
 | `draft` | provider adapter를 통해 OpenAI generation 호출 |
 | `verify` | `verify_citations`로 citation 검증 |
 | `persist` | `rag_runs`, `rag_retrievals`, `agent_steps` 저장 |
 
 MVP에서는 위 상태를 하나의 `OrchestratorAgent`가 수행합니다. 이 단계에서 MCP tool과 Agent를 혼동하지 않습니다. `search_legal_documents`, `search_law_open_api`, `verify_citations`는 Agent가 아니라 Orchestrator가 호출하는 tool입니다.
+
+사용자 요청 기반 공식 corpus 보강 규칙:
+
+- `plan_issue_sources`가 만든 후보 법령명과 외부 source query는 검색 계획이며, 그 자체를 citation으로 사용하지 않습니다.
+- 공식 법령, 판례, 법령해석례, 행정심판례는 공용 corpus로 sync하고, 사용자 계약서/PDF/메모는 사용자 또는 tenant 범위 corpus로 유지합니다.
+- on-demand sync는 요청당 후보 문서 수, tool 호출 수, provider timeout, API quota, rate limit을 적용합니다.
+- `conflict_status=review_required`, `index_status=failed`, embedding 실패 문서는 evidence와 citation 후보에서 제외합니다.
+- sync 또는 기존 indexed 문서 재사용 후에는 내부 RAG 검색을 다시 실행하고, 이 재검색 결과를 답변 근거로 사용합니다.
 
 Agent는 다음 조건에서 중단합니다.
 
@@ -285,9 +295,9 @@ Agent 역할:
 | Agent | 책임 |
 | --- | --- |
 | `SupervisorAgent` | 전체 계획, Agent 호출 순서, handoff, retry, 중단 조건 결정 |
-| `IssueSpottingAgent` | 사실관계에서 후보 쟁점, 법률 영역, 누락 사실 추출 |
+| `IssueSpottingAgent` | 사실관계에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query, 누락 사실 추출 |
 | `RetrievalAgent` | 내부 RAG 검색, `focused_answer`/`issue_spotting` 선택, 검색 결과 정리 |
-| `LegalSourceAgent` | 국가법령정보 Open API 등 외부 공식 source 조회 필요성 판단과 결과 정리 |
+| `LegalSourceAgent` | 국가법령정보 Open API 등 외부 공식 source 조회와 공용 corpus on-demand 보강 필요성 판단 및 결과 정리 |
 | `DraftingAgent` | 검색된 evidence 기반 쟁점 정리 또는 답변 초안 작성 |
 | `CitationVerifierAgent` | citation이 retrieved chunk 또는 외부 source metadata에 근거하는지 검증 |
 | `SafetyReviewAgent` | 법률 자문 단정, 개인정보, secret, prompt injection 영향 검토 |
