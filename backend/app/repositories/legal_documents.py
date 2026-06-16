@@ -78,6 +78,39 @@ def get_legal_document(db: Session, document_id: int) -> LegalDocument | None:
     )
 
 
+def find_indexed_document_by_identity(
+    db: Session,
+    *,
+    document_type: str,
+    canonical_id: str | None,
+    version_label: str | None,
+    effective_date: date | None,
+    published_date: date | None,
+) -> LegalDocument | None:
+    """공식 source preflight metadata와 같은 indexed 문서를 찾습니다.
+
+    전문 API를 다시 호출하기 전에 이 후보가 있고 chunk/embedding이 최신이면 기존 DB
+    데이터를 재사용할 수 있습니다. 충돌 검토나 중복 문서는 재사용 후보에서 제외합니다.
+    """
+    return db.scalar(
+        select(LegalDocument)
+        .where(
+            *_same_version_filters(
+                document_type=document_type,
+                canonical_id=canonical_id,
+                version_label=version_label,
+                effective_date=effective_date,
+            ),
+            _nullable_equals(LegalDocument.published_date, published_date),
+            LegalDocument.index_status == "indexed",
+            LegalDocument.dedup_status != "duplicate",
+            LegalDocument.conflict_status == "none",
+        )
+        .order_by(LegalDocument.id.asc())
+        .limit(1)
+    )
+
+
 def find_duplicate_document_candidate(
     db: Session,
     *,
