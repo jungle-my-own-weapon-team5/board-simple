@@ -57,3 +57,29 @@ export type RagChatResponse = {
   answer: string;
   sources: RagChatSource[];
 };
+
+export type AgentPendingAction = {
+  type: "create_post";
+  title: string;
+  content: string;
+};
+
+export type AgentSource = {
+  post_id: number;
+  title: string;
+  heading: string | null;
+  anchor: string | null;
+  snippet: string;
+};
+
+export type AgentCreatedPost = {
+  post_id: number;
+  title: string;
+};
+
+export type AgentChatResponse = {
+  answer: string;
+  sources: AgentSource[];
+  pending_action: AgentPendingAction | null;
+  created_post: AgentCreatedPost | null;
+};
