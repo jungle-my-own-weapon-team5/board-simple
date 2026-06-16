@@ -16,10 +16,16 @@ type ChatMessage = {
   sources?: RagChatSource[];
 };
 
+/**
+ * 출처 카드 클릭 시 해당 게시글, 가능하면 해당 헤딩 anchor로 이동할 URL을 만듭니다.
+ */
 function sourceHref(source: RagChatSource) {
   return source.anchor ? `/posts/${source.post_id}#${source.anchor}` : `/posts/${source.post_id}`;
 }
 
+/**
+ * 화면 오른쪽 아래에 떠 있는 게시글 RAG 채팅 위젯입니다.
+ */
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -35,6 +41,7 @@ export default function FloatingChat() {
   const nextId = useRef(2);
 
   const handleSubmit = async (event: FormEvent) => {
+    // 사용자의 메시지를 먼저 화면에 추가한 뒤, 같은 메시지를 RAG API로 전송합니다.
     event.preventDefault();
     const message = draft.trim();
     if (!message || isSending) {

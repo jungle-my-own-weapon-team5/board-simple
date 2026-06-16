@@ -10,10 +10,19 @@ EMBEDDING_DIMENSIONS = 1536
 
 
 class EmbeddingVector(TypeDecorator):
+    """환경별로 RAG 임베딩 컬럼 타입을 선택하는 SQLAlchemy 타입입니다.
+
+    운영 PostgreSQL에서는 pgvector의 Vector(1536)을 사용해 유사도 검색을
+    지원하고, 테스트용 SQLite 등에서는 JSON으로 저장해 모델 생성이 가능하게
+    합니다.
+    """
+
     impl = JSON
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
+        """DB dialect에 맞는 실제 컬럼 타입을 SQLAlchemy에 알려줍니다."""
+
         if dialect.name == "postgresql":
             from pgvector.sqlalchemy import Vector
 
@@ -22,6 +31,8 @@ class EmbeddingVector(TypeDecorator):
 
 
 class PostRagChunk(Base):
+    """게시글 본문을 검색 가능한 단위로 나눈 RAG 청크 테이블 모델입니다."""
+
     __tablename__ = "post_rag_chunks"
     __table_args__ = (
         UniqueConstraint("post_id", "chunk_index", name="uq_post_rag_chunks_post_id_chunk_index"),

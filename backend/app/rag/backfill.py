@@ -5,6 +5,8 @@ from app.services.rag import backfill_post_chunks
 
 
 def main() -> None:
+    """CLI 인자를 읽어 기존 게시글의 RAG 청크를 일괄 생성합니다."""
+
     parser = argparse.ArgumentParser(description="Backfill RAG chunks for posts.")
     parser.add_argument("--all", action="store_true", help="Backfill every post.")
     parser.add_argument(

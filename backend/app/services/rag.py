@@ -15,15 +15,21 @@ logger = logging.getLogger(__name__)
 
 
 class RagNotConfiguredError(Exception):
+    """RAG 실행에 필요한 설정이 없을 때 API 계층으로 전달하는 예외입니다."""
+
     pass
 
 
 class RagGenerationError(Exception):
+    """임베딩 생성이나 답변 생성처럼 외부 AI 호출이 실패했을 때 사용하는 예외입니다."""
+
     pass
 
 
 @dataclass(frozen=True)
 class RagSource:
+    """프론트에서 답변 출처로 보여줄 게시글 청크 정보를 담습니다."""
+
     post_id: int
     title: str
     heading: str | None
@@ -33,12 +39,16 @@ class RagSource:
 
 @dataclass(frozen=True)
 class RagAnswer:
+    """RAG 챗봇의 최종 답변과 그 답변에 사용된 출처 목록입니다."""
+
     answer: str
     sources: list[RagSource]
 
 
 @dataclass(frozen=True)
 class RetrievedChunk:
+    """벡터 검색으로 DB에서 찾아온 게시글 청크 원본입니다."""
+
     post_id: int
     title: str
     heading_path: str | None
@@ -47,12 +57,20 @@ class RetrievedChunk:
 
 
 def _get_openai_client(settings: Settings) -> OpenAI:
+    """OpenAI API 키 설정을 확인하고 클라이언트를 생성합니다."""
+
     if not settings.openai_api_key:
         raise RagNotConfiguredError("OPENAI_API_KEY is not configured")
     return OpenAI(api_key=settings.openai_api_key)
 
 
 def _embed_texts(texts: list[str], settings: Settings) -> list[list[float]]:
+    """문자열 목록을 현재 설정된 임베딩 모델의 벡터 목록으로 변환합니다.
+
+    OpenAI Embeddings API는 입력 순서와 같은 순서로 결과를 돌려주므로,
+    반환된 벡터는 같은 인덱스의 입력 텍스트와 짝을 맞춰 저장할 수 있습니다.
+    """
+
     if not texts:
         return []
     client = _get_openai_client(settings)
@@ -61,6 +79,8 @@ def _embed_texts(texts: list[str], settings: Settings) -> list[list[float]]:
 
 
 def _post_tags(post: Post) -> list[str]:
+    """게시글에 연결된 태그 이름만 RAG 임베딩 텍스트에 넣기 좋게 추출합니다."""
+
     return [tag.name for tag in post.tags]
 
 
@@ -69,6 +89,12 @@ def _has_same_chunks(
     prepared_chunks: list[PreparedRagChunk],
     embedding_model: str,
 ) -> bool:
+    """저장된 청크와 새로 만든 청크가 같은 임베딩 상태인지 확인합니다.
+
+    청크 개수, 임베딩 모델, content_hash가 모두 같으면 게시글 내용/제목/태그가
+    RAG 관점에서 변하지 않은 것이므로 OpenAI 임베딩 재생성을 건너뜁니다.
+    """
+
     if len(existing_chunks) != len(prepared_chunks):
         return False
     return all(
@@ -79,6 +105,18 @@ def _has_same_chunks(
 
 
 def index_post_chunks(db: Session, post: Post) -> int:
+    """게시글 하나를 RAG 검색용 청크로 나누고 임베딩해서 DB에 저장합니다.
+
+    게시글 생성/수정 직후 호출되는 핵심 색인 함수입니다. 먼저 마크다운 본문을
+    청크로 나누고, 제목/태그/헤딩/본문을 합친 embedding_text의 해시를 기존
+    청크와 비교합니다. 변경이 없으면 비용이 드는 OpenAI 임베딩 호출을 하지
+    않고 기존 청크 개수만 반환합니다.
+
+    변경이 있으면 기존 청크를 지운 뒤 새 임베딩을 저장합니다. 단, API 키가
+    없거나 OpenAI 호출이 실패하면 검색용 청크를 새로 만들 수 없으므로 0을
+    반환합니다.
+    """
+
     settings = get_settings()
     prepared_chunks = prepare_post_chunks(post.title, _post_tags(post), post.content)
     existing_chunks = rag_chunk_repository.list_post_chunks(db, post.id)
@@ -116,6 +154,13 @@ def index_post_chunks(db: Session, post: Post) -> int:
 
 
 def backfill_post_chunks(db: Session, *, post_ids: list[int] | None = None) -> list[tuple[int, int]]:
+    """기존 게시글들을 순회하면서 RAG 청크 색인을 다시 생성합니다.
+
+    migration 이후 이미 존재하던 게시글을 검색 가능하게 만들 때 CLI에서
+    사용합니다. 각 게시글 처리 후 commit해서 일부 게시글이 실패하더라도
+    성공한 게시글 색인은 DB에 남깁니다.
+    """
+
     posts = post_repository.list_posts_for_rag_backfill(db, post_ids=post_ids)
     results: list[tuple[int, int]] = []
     for post in posts:
@@ -126,10 +171,19 @@ def backfill_post_chunks(db: Session, *, post_ids: list[int] | None = None) -> l
 
 
 def _format_embedding_for_sql(embedding: list[float]) -> str:
+    """pgvector의 CAST(:embedding AS vector)에 넣을 문자열 표현으로 변환합니다."""
+
     return "[" + ",".join(str(float(value)) for value in embedding) + "]"
 
 
 def search_chunks(db: Session, question: str) -> list[RetrievedChunk]:
+    """사용자 질문과 의미적으로 가까운 게시글 청크를 pgvector로 검색합니다.
+
+    질문 자체를 임베딩한 뒤, 같은 임베딩 모델로 저장된 청크들과 cosine distance
+    기준으로 비교합니다. 테스트에서 쓰는 SQLite 같은 비 PostgreSQL DB에서는
+    vector 타입과 연산자를 사용할 수 없으므로 빈 결과를 반환합니다.
+    """
+
     settings = get_settings()
     if not rag_chunk_repository.supports_vector_search(db):
         return []
@@ -159,6 +213,8 @@ def search_chunks(db: Session, question: str) -> list[RetrievedChunk]:
 
 
 def _source_from_chunk(chunk: RetrievedChunk) -> RagSource:
+    """검색된 청크를 프론트가 보여줄 수 있는 출처 카드 데이터로 바꿉니다."""
+
     snippet = " ".join(chunk.content.split())
     if len(snippet) > 260:
         snippet = f"{snippet[:257]}..."
@@ -173,6 +229,13 @@ def _source_from_chunk(chunk: RetrievedChunk) -> RagSource:
 
 
 def _build_context(chunks: list[RetrievedChunk]) -> str:
+    """LLM 프롬프트에 넣을 게시글 컨텍스트 문자열을 만듭니다.
+
+    각 청크에 번호, 게시글 ID, 제목, 헤딩, 본문을 붙여 모델이 출처별 내용을
+    구분할 수 있게 합니다. 답변은 이 컨텍스트 안의 내용만 사용하도록
+    answer_question의 instructions에서 제한합니다.
+    """
+
     sections = []
     for index, chunk in enumerate(chunks, start=1):
         heading = f"\nHeading: {chunk.heading_path}" if chunk.heading_path else ""
@@ -185,6 +248,13 @@ def _build_context(chunks: list[RetrievedChunk]) -> str:
 
 
 def answer_question(db: Session, question: str) -> RagAnswer:
+    """RAG 챗봇 질문 하나에 대한 답변과 출처를 생성합니다.
+
+    처리 순서는 OpenAI 설정 확인, 질문 임베딩 기반 청크 검색, 출처 목록 생성,
+    검색 컨텍스트를 포함한 Responses API 호출입니다. 검색 결과가 없으면 외부
+    답변 생성을 하지 않고 고정 메시지를 반환합니다.
+    """
+
     settings = get_settings()
     client = _get_openai_client(settings)
     chunks = search_chunks(db, question)

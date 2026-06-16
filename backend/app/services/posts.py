@@ -45,6 +45,7 @@ def create_post(db: Session, payload: PostCreate, current_user: User) -> Post:
     post_id = post.id
     db.commit()
 
+    # 게시글과 태그 관계를 먼저 확정한 뒤 다시 조회해서 RAG 색인에 사용합니다.
     post = _get_post_or_raise(db, post_id)
     rag_service.index_post_chunks(db, post)
     db.commit()
@@ -70,6 +71,7 @@ def update_post(
     )
     db.commit()
 
+    # 수정된 제목, 본문, 태그를 기준으로 기존 RAG 청크를 새 상태로 맞춥니다.
     post = _get_post_or_raise(db, post_id)
     rag_service.index_post_chunks(db, post)
     db.commit()

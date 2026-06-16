@@ -8,15 +8,19 @@ CHUNK_OVERLAP_CHARS = 250
 HEADING_ANCHOR_PREFIX = "user-content-"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True) # 불변객체, __init__, __repr__, __eq__ 자동생성됨
 class RagChunkDraft:
+    """마크다운 본문에서 잘라낸 임베딩 전 단계의 청크입니다."""
+
     heading_path: str | None
-    anchor: str | None
+    anchor: str | None # url id
     content: str
 
 
 @dataclass(frozen=True)
 class PreparedRagChunk:
+    """DB 저장과 OpenAI 임베딩 요청에 필요한 형태로 정리된 RAG 청크입니다."""
+
     chunk_index: int
     heading_path: str | None
     anchor: str | None
@@ -26,6 +30,8 @@ class PreparedRagChunk:
 
 
 def _create_heading_slug(value: str) -> str:
+    """헤딩 텍스트를 URL fragment에 쓰기 좋은 slug로 바꿉니다."""
+
     normalized = unicodedata.normalize("NFKC", value.strip().lower())
     slug = "".join(
         char
@@ -38,6 +44,8 @@ def _create_heading_slug(value: str) -> str:
 
 
 def _normalize_heading_text(value: str) -> str:
+    """마크다운 헤딩 안의 링크, 이미지, 강조 표기 등을 사람이 읽는 텍스트로 정리합니다."""
+
     normalized = re.sub(r"\+\+([^+\n]+?)\+\+", r"\1", value)
     normalized = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", normalized)
     normalized = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", normalized)
@@ -49,9 +57,13 @@ def _normalize_heading_text(value: str) -> str:
 
 
 def _create_heading_id_generator():
+    """중복 헤딩에도 고유 anchor를 만들 수 있는 stateful 생성 함수를 반환합니다."""
+
     seen: dict[str, int] = {}
 
     def create_heading_id(value: str) -> str:
+        """같은 slug가 반복되면 -2, -3 suffix를 붙여 고유 ID를 만듭니다."""
+
         slug = _create_heading_slug(value)
         count = seen.get(slug, 0)
         seen[slug] = count + 1
@@ -65,6 +77,13 @@ def _split_long_text(
     max_chars: int = MAX_CHUNK_CHARS,
     overlap_chars: int = CHUNK_OVERLAP_CHARS,
 ) -> list[str]:
+    """긴 텍스트를 임베딩하기 적당한 크기의 청크 목록으로 나눕니다.
+
+    기본적으로 빈 줄 기준 문단 단위로 합치되, max_chars를 넘으면 이전 청크의
+    마지막 overlap_chars만큼을 다음 청크 앞에 다시 붙입니다. 이 overlap은
+    경계 근처 문맥이 검색에서 사라지는 문제를 줄이기 위한 장치입니다.
+    """
+
     text = content.strip()
     if not text:
         return []
@@ -111,6 +130,13 @@ def _split_long_text(
 
 
 def chunk_markdown(content: str) -> list[RagChunkDraft]:
+    """마크다운 본문을 헤딩 섹션 기준으로 RAG 청크로 나눕니다.
+
+    H1부터 H3까지의 헤딩을 섹션 경계로 사용하고, fenced code block 안의
+    # 문자는 헤딩으로 보지 않습니다. 헤딩이 전혀 없으면 전체 본문을 길이 기준
+    청크로 나눕니다.
+    """
+
     create_heading_id = _create_heading_id_generator()
     heading_stack: list[tuple[int, str]] = []
     sections: list[RagChunkDraft] = []
@@ -120,6 +146,8 @@ def chunk_markdown(content: str) -> list[RagChunkDraft]:
     is_inside_fence = False
 
     def flush_section() -> None:
+        """현재까지 모은 섹션 본문을 길이 제한에 맞춰 sections에 추가합니다."""
+
         text = "\n".join(current_lines).strip()
         if not text:
             return
@@ -180,6 +208,12 @@ def build_embedding_text(
     heading_path: str | None,
     content: str,
 ) -> str:
+    """임베딩에 사용할 텍스트를 제목, 태그, 헤딩, 본문 순서로 구성합니다.
+
+    본문만 임베딩하면 검색어가 제목이나 태그와만 맞는 경우를 놓칠 수 있습니다.
+    그래서 게시글의 메타데이터를 함께 넣어 의미 검색 품질을 높입니다.
+    """
+
     parts = [f"Title: {title}"]
     if tags:
         parts.append("Tags: " + ", ".join(f"#{tag}" for tag in tags))
@@ -194,6 +228,13 @@ def prepare_post_chunks(
     tags: list[str],
     content: str,
 ) -> list[PreparedRagChunk]:
+    """게시글 하나를 색인 가능한 RAG 청크 목록으로 변환합니다.
+
+    각 청크마다 embedding_text를 만들고 그 값을 SHA-256으로 해시합니다.
+    이 해시는 나중에 게시글이 RAG 관점에서 바뀌었는지 판단하는 캐시 키로
+    사용됩니다.
+    """
+
     prepared_chunks: list[PreparedRagChunk] = []
     for index, chunk in enumerate(chunk_markdown(content)):
         embedding_text = build_embedding_text(
