@@ -22,7 +22,7 @@ from app.services.rag.legal_open_api_sync import (
     sync_and_embed_law_open_api_statute,
     sync_law_open_api_statute,
 )
-from app.services.rag.normalization import calculate_text_checksum
+from app.services.rag.normalization import calculate_text_checksum, normalize_text
 
 
 @pytest.fixture()
@@ -124,6 +124,54 @@ def test_sync_fetches_body_and_ingests_when_indexed_document_does_not_exist(
     assert result.document.index_status == "pending"
     assert result.chunks
     assert "제1조" in result.document.raw_text
+
+
+def test_force_refresh_reuses_indexed_document_when_body_checksum_matches(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    body = _body()
+    document, _chunk = _create_indexed_document(db, content=body.raw_text)
+    client = _FakeLawOpenApiClient(metadata=metadata, body=body)
+
+    result = sync_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        force_refresh=True,
+    )
+
+    assert result.status == "reused"
+    assert result.document.id == document.id
+    assert result.body_fetched is True
+    assert client.body_call_count == 1
+    assert db.query(LegalDocument).count() == 1
+
+
+def test_force_refresh_creates_conflict_when_same_version_body_checksum_differs(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    existing_document, _chunk = _create_indexed_document(db)
+    body = _body(
+        raw_text="자동차관리법\n\n제1조(목적) 이 법은 변경된 본문을 가진다.",
+    )
+    client = _FakeLawOpenApiClient(metadata=metadata, body=body)
+
+    result = sync_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        force_refresh=True,
+    )
+
+    assert result.status == "ingested"
+    assert result.body_fetched is True
+    assert result.document.id != existing_document.id
+    assert result.document.conflict_status == "review_required"
+    assert result.ingestion_result.conflicting_document_ids == [existing_document.id]
+    assert client.body_call_count == 1
+    assert db.query(LegalDocument).count() == 2
 
 
 def test_sync_and_embed_reuses_fresh_embeddings_without_provider_call(
@@ -254,6 +302,38 @@ def test_sync_and_embed_marks_document_failed_when_embedding_fails(
     assert {row.embedding_status for row in chunk_embeddings} == {"failed"}
 
 
+def test_sync_and_embed_does_not_call_embedding_provider_for_conflict_document(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    _create_indexed_document(db)
+    body = _body(
+        raw_text="자동차관리법\n\n제1조(목적) 이 법은 변경된 본문을 가진다.",
+    )
+    client = _FakeLawOpenApiClient(metadata=metadata, body=body)
+    profile = _create_embedding_profile(db)
+    ai_client = _CountingEmbeddingClient()
+
+    result = sync_and_embed_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+        ai_client=ai_client,
+        force_refresh=True,
+    )
+
+    assert result.status == "embedding_failed"
+    assert result.sync_result.status == "ingested"
+    assert result.document.conflict_status == "review_required"
+    assert result.embedding_result.skipped_reason == "document_conflict"
+    assert result.document.index_status == "failed"
+    assert result.document.index_error == "document_conflict"
+    assert client.body_call_count == 1
+    assert ai_client.call_count == 0
+    assert embedding_repository.list_chunk_embeddings_by_profile(db, profile.id) == []
+
+
 def _metadata() -> LawOpenApiDocumentMetadata:
     return LawOpenApiDocumentMetadata(
         provider="law_open_api",
@@ -280,10 +360,13 @@ def _metadata() -> LawOpenApiDocumentMetadata:
     )
 
 
-def _body() -> LawOpenApiLawBody:
+def _body(
+    *,
+    raw_text: str = "자동차관리법\n\n제1조(목적) 이 법은 자동차를 효율적으로 관리한다.",
+) -> LawOpenApiLawBody:
     return LawOpenApiLawBody(
         title="자동차관리법",
-        raw_text="자동차관리법\n\n제1조(목적) 이 법은 자동차를 효율적으로 관리한다.",
+        raw_text=raw_text,
         external_id="123456",
         law_id="001234",
         mst="123456",
@@ -302,6 +385,8 @@ def _body() -> LawOpenApiLawBody:
 
 def _create_indexed_document(
     db: Session,
+    *,
+    content: str = "제1조(목적) 이 법은 자동차를 효율적으로 관리한다.",
 ) -> tuple[LegalDocument, LegalDocumentChunk]:
     source = LegalSource(
         provider="law_open_api",
@@ -313,7 +398,7 @@ def _create_indexed_document(
     )
     db.add(source)
     db.flush()
-    content = "제1조(목적) 이 법은 자동차를 효율적으로 관리한다."
+    normalized_content = normalize_text(content)
     document = LegalDocument(
         source_id=source.id,
         document_type="statute",
@@ -323,9 +408,9 @@ def _create_indexed_document(
         published_date=date(2024, 1, 1),
         effective_date=date(2024, 2, 1),
         raw_text=content,
-        normalized_text=content,
+        normalized_text=normalized_content,
         raw_checksum=calculate_text_checksum(content),
-        normalized_checksum=calculate_text_checksum(content),
+        normalized_checksum=calculate_text_checksum(normalized_content),
         dedup_status="unique",
         conflict_status="none",
         index_status="indexed",

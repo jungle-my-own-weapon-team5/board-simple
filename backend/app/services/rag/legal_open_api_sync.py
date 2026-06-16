@@ -30,7 +30,7 @@ from app.services.rag.legal_open_api import (
     LawOpenApiLawBody,
     LawOpenApiSearchResult,
 )
-from app.services.rag.normalization import calculate_text_checksum
+from app.services.rag.normalization import calculate_text_checksum, normalize_document_text
 
 LegalOpenApiSyncStatus = Literal[
     "not_found",
@@ -106,6 +106,7 @@ def sync_law_open_api_statute(
     query: str,
     embedding_profile: EmbeddingProfile | None = None,
     search_limit: int = 1,
+    force_refresh: bool = False,
     commit: bool = True,
 ) -> LegalOpenApiSyncResult:
     """현행법령 1건을 preflight 후 필요할 때만 본문 조회/ingestion합니다.
@@ -143,7 +144,7 @@ def sync_law_open_api_statute(
         effective_date=metadata.effective_date,
         published_date=metadata.published_date,
     )
-    if indexed_document is not None:
+    if indexed_document is not None and not force_refresh:
         return _reuse_indexed_document_if_possible(
             db,
             document=indexed_document,
@@ -155,6 +156,18 @@ def sync_law_open_api_statute(
         mst=metadata.external_id,
         law_id=metadata.canonical_id,
     )
+    if indexed_document is not None and _body_matches_indexed_document(
+        body,
+        indexed_document,
+    ):
+        return _reuse_indexed_document_if_possible(
+            db,
+            document=indexed_document,
+            preflight_metadata=metadata,
+            embedding_profile=embedding_profile,
+            body_fetched=True,
+        )
+
     ingestion_result = ingest_legal_document(
         db,
         _build_ingestion_input(metadata=metadata, body=body),
@@ -184,6 +197,7 @@ def sync_and_embed_law_open_api_statute(
     batch_size: int = 16,
     retry_failed: bool = False,
     force_reembed: bool = False,
+    force_refresh: bool = False,
     commit: bool = True,
 ) -> LegalOpenApiSyncAndEmbedResult:
     """국가법령정보 법령을 검색 가능한 embedding 상태까지 동기화합니다.
@@ -199,6 +213,7 @@ def sync_and_embed_law_open_api_statute(
             query=query,
             embedding_profile=embedding_profile,
             search_limit=search_limit,
+            force_refresh=force_refresh,
             commit=False,
         )
         if sync_result.status == "not_found":
@@ -285,6 +300,7 @@ def _reuse_indexed_document_if_possible(
     document: LegalDocument,
     preflight_metadata: LawOpenApiDocumentMetadata,
     embedding_profile: EmbeddingProfile | None,
+    body_fetched: bool = False,
 ) -> LegalOpenApiSyncResult:
     chunks = chunk_repository.list_chunks_by_document(db, document.id)
     if embedding_profile is None or _has_fresh_chunk_embeddings(
@@ -298,7 +314,7 @@ def _reuse_indexed_document_if_possible(
             document=document,
             source=document.source,
             chunks=chunks,
-            body_fetched=False,
+            body_fetched=body_fetched,
             embeddings_reusable=embedding_profile is not None,
         )
 
@@ -308,7 +324,7 @@ def _reuse_indexed_document_if_possible(
         document=document,
         source=document.source,
         chunks=chunks,
-        body_fetched=False,
+        body_fetched=body_fetched,
         embeddings_reusable=False,
         skipped_reason="embedding_not_fresh",
     )
@@ -336,6 +352,14 @@ def _has_fresh_chunk_embeddings(
         if chunk_embedding.content_checksum != calculate_text_checksum(chunk.content):
             return False
     return True
+
+
+def _body_matches_indexed_document(
+    body: LawOpenApiLawBody,
+    document: LegalDocument,
+) -> bool:
+    normalized = normalize_document_text(body.raw_text)
+    return normalized.normalized_checksum == document.normalized_checksum
 
 
 def _mark_document_indexed(document: LegalDocument) -> None:
