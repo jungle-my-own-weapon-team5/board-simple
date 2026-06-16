@@ -20,6 +20,8 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 - LangChain + OpenAI + PostgreSQL pgvector 기반 기술 뉴스 RAG Q&A
 - 게시글 상세 화면의 vector DB 기반 연관 글 제목 목록
 - Hacker News 수집, 원문 본문 추출, 한국어 요약/핵심 포인트 게시
+- 웹 기사 URL 수집, 중복 의심 게시글 검사, 승인 후 게시
+- Board MCP 기반 뉴스 후보 preview/중복검사 도구
 
 ## Stack
 
@@ -57,7 +59,7 @@ cp .env.example .env
 
 필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
-RAG Q&A와 게시글 상세의 연관 글 기능은 기본적으로 비활성화되어 있습니다. 사용하려면 `.env`에 OpenAI API 키와 RAG 설정을 추가합니다. RAG를 사용할 수 없으면 연관 글 섹션은 숨겨집니다. Hacker News 수집 기능의 요약 생성도 같은 `OPENAI_API_KEY`와 `OPENAI_CHAT_MODEL`을 사용합니다. 키가 없으면 HN 후보는 표시되지만 요약 실패 상태가 되어 게시할 수 없습니다.
+RAG Q&A와 게시글 상세의 연관 글 기능은 기본적으로 비활성화되어 있습니다. 사용하려면 `.env`에 OpenAI API 키와 RAG 설정을 추가합니다. RAG를 사용할 수 없으면 연관 글 섹션은 숨겨집니다. Hacker News와 웹 기사 URL 수집 기능의 요약 생성도 같은 `OPENAI_API_KEY`와 `OPENAI_CHAT_MODEL`을 사용합니다. 키가 없으면 후보는 표시되지만 요약 실패 상태가 되어 게시할 수 없습니다. 중복검사는 RAG가 없어도 URL/제목 기반으로 동작합니다.
 
 ```env
 OPENAI_API_KEY=your-api-key
@@ -122,6 +124,20 @@ uvicorn app.main:app --reload
 
 ```bash
 python -m app.scripts.reindex_rag
+```
+
+Board MCP 서버를 로컬 MCP 클라이언트에 연결하려면 backend 가상환경에서 아래 entrypoint를 stdio 서버로 실행합니다. 이 MCP 서버는 후보 생성과 중복검사만 제공하며 게시글 저장은 웹 UI 승인 흐름에서만 수행합니다.
+
+```json
+{
+  "mcpServers": {
+    "board-simple": {
+      "command": "python",
+      "args": ["-m", "app.mcp.board"],
+      "cwd": "/absolute/path/to/04board-simple/backend"
+    }
+  }
+}
 ```
 
 Windows PowerShell에서는 아래 명령을 사용합니다.
@@ -208,3 +224,5 @@ docker compose down -v
 - `POST /api/rag/ask`: 전체 게시글 기반 RAG Q&A
 - `POST /api/news/hacker-news/preview`: HN 후보 수집과 한국어 요약 preview
 - `POST /api/news/hacker-news/import`: 선택한 HN 요약 후보를 게시글로 저장
+- `POST /api/news/web/preview`: 웹 기사 URL 후보 수집, 한국어 요약, 중복검사 preview
+- `POST /api/news/web/import`: 선택한 웹 기사 요약 후보를 게시글로 저장

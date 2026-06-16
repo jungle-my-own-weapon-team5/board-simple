@@ -9,6 +9,9 @@
 - Keep `OPENAI_API_KEY` in environment only; never hardcode it.
 - `RAG_ENABLED=false` must remain the default.
 - Existing board CRUD must work when RAG, HN import, or OpenAI config is unavailable.
+- News curation Agent work must keep approval-before-publish; do not auto-publish.
+- Board MCP tools must be read/preview/check only unless explicitly requested.
+- MCP stdio servers must not write logs to stdout.
 - Related posts must use existing vector DB/RAG data, not a new table.
 - Show related posts only on post detail unless explicitly requested.
 - Related post API output should expose title links only: `post_id`, `title`, optional `score`.
@@ -16,11 +19,14 @@
 - Return an empty related list if RAG/vector search fails.
 - Do not add migrations for related posts unless storage requirements change.
 - HN import failures must not break existing post create/update/delete.
+- Web article import failures must not break existing post create/update/delete.
 - Do not store full translated articles; store Korean summary, key points, and source links.
-- Use current `posts` table for imported HN articles with nullable source metadata.
+- Use current `posts` table for imported HN/web articles with nullable source metadata.
+- Duplicate checks should prefer existing source URL/id, title similarity, and existing RAG/vector data.
+- RAG/vector duplicate search failure must degrade to URL/title checks, not fail preview.
 - Keep Alembic migrations reversible.
 - SQLite tests must not require pgvector, OpenAI, or external network calls.
-- Mock HN APIs, article fetch, Readability, embeddings, vector store, and LLM behavior in tests.
+- Mock HN APIs, article fetch, Readability, embeddings, vector store, MCP tools, and LLM behavior in tests.
 - Add tests for public API behavior whenever backend endpoints change.
 - Run backend verification with `cd backend && pytest`.
 - Run frontend verification with `cd frontend && npm run build`.

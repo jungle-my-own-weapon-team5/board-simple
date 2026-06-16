@@ -1,56 +1,67 @@
-# Vector DB 연관 글 구현 계획
+# 뉴스 큐레이션/중복검사 Agent 구현 계획
 
-## Milestone 1: 응답 계약과 테스트 기준 고정 (P0)
+## Milestone 1: 계약 정리와 공통 스키마 추가 (P0)
 
-- `GET /api/posts/{post_id}/related` 응답 스키마를 추가하고, 항목은 `post_id`, `title`, `score`로 고정한다.
-- 목록 API(`GET /api/posts`)와 게시글 상세 API(`GET /api/posts/{post_id}`)는 기존 CRUD 계약을 깨지 않는다.
-- RAG가 불가해도 related API는 200 응답과 빈 배열을 반환하는 테스트를 먼저 추가한다.
-- fake RAG service 또는 fake vector store로 SQLite 테스트가 pgvector/OpenAI/네트워크를 요구하지 않게 한다.
+- `docs/spec.md`의 API 계약을 기준으로 backend schema를 추가한다.
+- HN preview item과 Web preview item이 공유할 `duplicate_matches` 응답 타입을 만든다.
+- `DuplicateMatch` 필드는 `post_id`, `title`, `reason`, optional `score`로 고정한다.
+- import 응답은 source별 id만 다르고 기존 `created/skipped` 패턴을 유지한다.
+- 이 단계의 테스트는 schema validation과 기존 HN API 호환성을 우선 확인한다.
 
-## Milestone 2: RAG 서비스 연관 글 검색 구현 (P0)
+## Milestone 2: 중복검사 Agent 구현 (P0)
 
-- `RagService`에 현재 게시글 기준 연관 글 조회 메서드를 추가한다.
-- query text는 `Title: {title}\n\n{content}` 형태로 기존 인덱싱 문서와 맞춘다.
-- `similarity_search_with_score`는 표시 개수보다 넉넉히 요청해 자기 자신과 중복 chunk 제거 후 최대 3개를 확보한다.
-- 결과 처리 규칙:
-  - metadata `post_id`가 없으면 제외한다.
-  - 현재 게시글 id는 제외한다.
-  - 같은 post_id는 첫 결과만 사용한다.
-  - DB에 없는 게시글은 제외한다.
-  - metadata title이 비어 있으면 DB의 `Post.title`을 사용한다.
-- RAG 비활성화, OpenAI 키 없음, vector store 예외는 로깅 후 빈 목록으로 반환한다.
+- `DuplicateCheckService`를 추가한다.
+- URL 정규화는 scheme/host lowercase, fragment 제거, trailing slash 정리 수준으로 제한한다.
+- `same_url`은 `Post.source_url` 정규화 값으로 비교한다.
+- `similar_title`은 최근 게시글 최대 100개를 대상으로 `SequenceMatcher >= 0.86` 기준을 적용한다.
+- `rag`는 RAG 설정이 가능할 때만 vector search를 호출하고, 실패하면 로깅 후 결과를 생략한다.
+- 같은 `post_id`가 여러 기준에 걸리면 우선순위는 `same_url`, `similar_title`, `rag` 순서로 한 번만 반환한다.
+- 단위 테스트로 정확 URL 중복, 제목 유사 중복, RAG 중복, RAG 실패 fallback을 검증한다.
 
-## Milestone 3: 게시글 상세 API 연결 (P0)
+## Milestone 3: URL 뉴스 큐레이션 Agent 구현 (P0)
 
-- `GET /api/posts/{post_id}/related`에서 기존 `get_post_or_404`로 현재 게시글 존재를 확인한 뒤 연관 글을 반환한다.
-- 생성/수정/상세 응답은 기존 `PostRead` 계약을 유지하고, related API가 별도 목록을 제공한다.
-- 기존 CRUD 훅(`sync_post_index`, `delete_post_index_safe`)은 변경하지 않는다.
-- HN import나 OpenAI 설정 실패가 게시글 CRUD를 깨지 않는 기존 정책을 유지한다.
+- `NewsCurationService`를 추가해 URL preview 흐름을 담당한다.
+- article fetch/readability/title extraction은 기존 HN 서비스 패턴을 재사용하되 HN 전용 이름과 분리한다.
+- `article_text`가 요청에 있으면 테스트/수동 입력으로 간주해 외부 fetch를 건너뛴다.
+- LLM prompt는 “전체 번역 금지, 한국어 요약 1문단, 핵심 포인트 3~5개 JSON” 규칙을 유지한다.
+- content builder는 `## 한국어 요약`, `## 핵심 포인트`, `## 원문`, `#technews #webarticle` 형식으로 만든다.
+- OpenAI 키 없음, 본문 부족, JSON 파싱 실패는 item 단위 실패 상태로 반환한다.
 
-## Milestone 4: 백엔드 검증 강화 (P0)
+## Milestone 4: Backend API 연결 (P0)
 
-- 서비스 단위 테스트로 자기 자신 제외, 중복 제거, 최대 3개 제한을 검증한다.
-- API 테스트로 related API 응답 형태와 장애 시 빈 배열 fallback을 검증한다.
-- 기존 `test_auth_posts_comments.py`, `test_hacker_news.py`가 계속 통과하는지 확인한다.
-- 검증 명령은 `cd backend && pytest`를 사용한다.
+- `/api/news/web/preview`와 `/api/news/web/import`를 추가한다.
+- preview는 로그인 사용자만 접근 가능하고 DB 저장은 하지 않는다.
+- import는 성공 item만 저장하고 `source_type/source_id` 중복이면 skip한다.
+- 게시글 저장 후 태그 추출과 RAG indexing 호출은 기존 HN import 흐름을 따른다.
+- RAG indexing 예외는 로깅/rollback 후 import 성공 응답을 유지한다.
+- 기존 `/api/news/hacker-news/preview`에 `duplicate_matches` 계산을 붙인다.
 
-## Milestone 5: 프론트 타입과 상세 UI (P1)
+## Milestone 5: Board MCP 서버 추가 (P1)
 
-- `frontend/src/types.ts`에 `RelatedPost` 타입을 추가한다.
-- `PostDetailPage`에서 related API를 호출하고, 본문 아래, 댓글 위에 `연관 글` 섹션을 추가한다.
-- 연관 글 항목은 제목 링크만 표시하고, score나 excerpt는 화면에 노출하지 않는다.
-- 빈 배열이면 섹션을 렌더링하지 않는다.
-- 긴 제목은 `[overflow-wrap:anywhere]` 등 기존 패턴으로 레이아웃을 보호한다.
+- Python `mcp[cli]` 의존성을 backend requirements에 추가한다.
+- stdio용 `board_mcp` 서버 entrypoint를 추가하고 stdout 출력은 사용하지 않는다.
+- 도구는 `preview_web_article`, `check_news_duplicates`, `preview_hacker_news`만 제공한다.
+- MCP 도구는 저장 API를 호출하지 않고 preview/check 결과만 반환한다.
+- README에 로컬 MCP client 설정 예시와 필요한 env를 문서화한다.
 
-## Milestone 6: 최종 검증과 문서 정리 (P1)
+## Milestone 6: Frontend 뉴스 수집 화면 확장 (P1)
 
-- 백엔드 전체 테스트를 실행한다: `cd backend && pytest`.
-- 프론트 타입/빌드 검증을 실행한다: `cd frontend && npm run build`.
-- README 또는 운영 문서에는 RAG가 비활성화되면 연관 글이 숨겨진다는 점만 간단히 기록한다.
-- 변경 요약에는 수정 파일, 테스트 결과, RAG 비활성화 fallback 동작을 포함한다.
+- `frontend/src/types.ts`와 `frontend/src/api/news.ts`에 Web preview/import 타입과 API 함수를 추가한다.
+- 기존 `NewsImportPage`에 HN/URL 모드 전환을 추가한다.
+- URL 모드에서는 URL 입력, 후보 보기, 중복 의심 게시글 링크, 선택 게시 버튼을 제공한다.
+- 후보 카드 UI는 기존 HN 카드 스타일을 유지하고, 긴 제목/URL은 줄바꿈을 보장한다.
+- 실패 item은 선택 불가 상태로 보여주고 오류 메시지를 한국어로 표시한다.
+
+## Milestone 7: 통합 검증과 문서 마무리 (P1)
+
+- backend 전체 테스트 실행: `cd backend && pytest`.
+- frontend 빌드 실행: `cd frontend && npm run build`.
+- README에 URL 수집, 중복검사 fallback, Board MCP 사용법을 간단히 추가한다.
+- `.env.example`에는 새 secret을 추가하지 않는다. 필요한 경우 MCP 실행 예시만 문서화한다.
+- 최종 요약에는 수정 파일, 테스트 결과, RAG/OpenAI 비활성화 fallback을 포함한다.
 
 ## Priority Notes
 
-- P0는 API 계약, 장애 격리, 기존 CRUD 보존을 위해 먼저 끝낸다.
-- P1은 사용자 화면과 문서 마무리다.
-- 새 DB 구조, background worker, reranking은 MVP 범위에서 제외한다.
+- P0는 기존 게시판 안정성, API 계약, 중복검사 정확도, import 승인 흐름이다.
+- P1은 MCP 노출, 프론트 편의성, 문서화다.
+- GitHub/RSS/검색/자동게시/초안저장은 이번 MVP 이후 별도 계획으로 둔다.
