@@ -53,3 +53,16 @@ def test_prepare_post_chunks_hash_changes_when_embedding_text_changes() -> None:
     assert first.content_hash != changed_tags.content_hash
     assert "Tags: #python" in first.embedding_text
     assert "Heading: Intro" in first.embedding_text
+
+
+def test_prepare_post_chunks_keeps_embedding_text_under_max_chars() -> None:
+    title = "T" * 200
+    tags = [f"tag{index}" for index in range(30)]
+    heading = "H" * 500
+    content = f"# {heading}\n\n" + "\n\n".join("x" * 300 for _ in range(10))
+
+    chunks = prepare_post_chunks(title, tags, content)
+
+    assert len(chunks) > 1
+    assert all(len(chunk.embedding_text) <= MAX_CHUNK_CHARS for chunk in chunks)
+    assert all(chunk.heading_path == heading for chunk in chunks)

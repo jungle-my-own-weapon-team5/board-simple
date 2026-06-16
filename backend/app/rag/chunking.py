@@ -84,6 +84,10 @@ def _split_long_text(
     경계 근처 문맥이 검색에서 사라지는 문제를 줄이기 위한 장치입니다.
     """
 
+    if max_chars <= 0:
+        return []
+    overlap_chars = max(0, min(overlap_chars, max_chars - 1))
+
     text = content.strip()
     if not text:
         return []
@@ -223,6 +227,39 @@ def build_embedding_text(
     return "\n\n".join(parts)
 
 
+def _get_embedding_content_budget(
+    title: str,
+    tags: list[str],
+    heading_path: str | None,
+) -> int:
+    """최종 embedding_text가 MAX_CHUNK_CHARS 안에 들어가도록 본문 예산을 계산합니다."""
+
+    metadata_text = build_embedding_text(
+        title=title,
+        tags=tags,
+        heading_path=heading_path,
+        content="",
+    )
+    return max(1, MAX_CHUNK_CHARS - len(metadata_text))
+
+
+def _build_bounded_embedding_text(
+    title: str,
+    tags: list[str],
+    heading_path: str | None,
+    content: str,
+) -> str:
+    """병적인 메타데이터 입력에서도 임베딩 요청 텍스트 길이를 상한 안에 둡니다."""
+
+    embedding_text = build_embedding_text(
+        title=title,
+        tags=tags,
+        heading_path=heading_path,
+        content=content,
+    )
+    return embedding_text[:MAX_CHUNK_CHARS]
+
+
 def prepare_post_chunks(
     title: str,
     tags: list[str],
@@ -236,21 +273,28 @@ def prepare_post_chunks(
     """
 
     prepared_chunks: list[PreparedRagChunk] = []
-    for index, chunk in enumerate(chunk_markdown(content)):
-        embedding_text = build_embedding_text(
-            title=title,
-            tags=tags,
-            heading_path=chunk.heading_path,
-            content=chunk.content,
-        )
-        prepared_chunks.append(
-            PreparedRagChunk(
-                chunk_index=index,
+    for chunk in chunk_markdown(content):
+        content_budget = _get_embedding_content_budget(title, tags, chunk.heading_path)
+        overlap_chars = min(CHUNK_OVERLAP_CHARS, content_budget - 1)
+        for content_chunk in _split_long_text(
+            chunk.content,
+            max_chars=content_budget,
+            overlap_chars=overlap_chars,
+        ):
+            embedding_text = _build_bounded_embedding_text(
+                title=title,
+                tags=tags,
                 heading_path=chunk.heading_path,
-                anchor=chunk.anchor,
-                content=chunk.content,
-                embedding_text=embedding_text,
-                content_hash=hashlib.sha256(embedding_text.encode("utf-8")).hexdigest(),
+                content=content_chunk,
             )
-        )
+            prepared_chunks.append(
+                PreparedRagChunk(
+                    chunk_index=len(prepared_chunks),
+                    heading_path=chunk.heading_path,
+                    anchor=chunk.anchor,
+                    content=content_chunk,
+                    embedding_text=embedding_text,
+                    content_hash=hashlib.sha256(embedding_text.encode("utf-8")).hexdigest(),
+                )
+            )
     return prepared_chunks
