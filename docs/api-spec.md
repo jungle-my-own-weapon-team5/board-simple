@@ -647,10 +647,13 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 검색 옵션:
 
 - `search_mode`: `focused_answer` 또는 `issue_spotting`. 생략하면 `focused_answer`입니다.
-- `focused_answer`: 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다. `top_k` 생략 시 기본값은 `8`입니다.
-- `issue_spotting`: 한 사건에서 여러 구성요건, 조문, 쟁점을 넓게 탐지해야 할 때 쓰는 모드입니다. `top_k` 생략 시 기본값은 `50`이고, 문서별 chunk 제한은 명시한 경우에만 적용합니다.
+- `focused_answer`: 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다. `top_k` 생략 시 쟁점별 기본값은 `8`입니다.
+- `issue_spotting`: 한 사건에서 여러 구성요건, 조문, 쟁점을 넓게 탐지해야 할 때 쓰는 모드입니다. `top_k` 생략 시 쟁점별 기본값은 `50`이고, 문서별 chunk 제한은 명시한 경우에만 적용합니다.
+- `top_k`: 전체 사용자 입력 하나에 대한 총 결과 수가 아니라, Orchestrator LLM의 issue/source planning으로 생성된 각 쟁점별 RAG query에 적용되는 검색 예산입니다.
 - `score_threshold`: `0` 이상 `1` 이하의 선택값입니다. 지정하면 threshold 미만 결과를 제외합니다.
 - `max_chunks_per_document`: 선택값입니다. 특정 문서 하나가 검색 결과를 과도하게 차지하는 것을 제한합니다. `issue_spotting`에서는 누락 위험을 줄이기 위해 생략할 수 있습니다.
+
+검색 실행 전 backend는 사용자 query에서 후보 쟁점과 공식 source 후보를 먼저 계획할 수 있습니다. 이후 쟁점별 query로 retrieval을 수행하고, 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합합니다. 각 item의 `metadata`에는 가능하면 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries`가 포함됩니다.
 
 #### Response `200`
 
@@ -838,7 +841,7 @@ MVP의 AI Agent API는 멀티에이전트가 아니라 단일 Orchestrator Agent
 }
 ```
 
-Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있습니다.
+Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. `top_k`는 전체 글 기준 결과 수가 아니라 쟁점별 검색 예산입니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있습니다.
 
 #### Response `200`
 

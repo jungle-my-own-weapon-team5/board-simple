@@ -290,9 +290,10 @@ backend/app/
    - 같은 chunk가 여러 embedding profile을 가질 수 있지만, 검색 시에는 하나의 profile만 선택해 비교합니다.
 
 5. Retrieval
-   - 사용자 query를 embedding합니다.
-   - vector similarity로 top-k chunk를 조회합니다.
+   - Orchestrator LLM이 먼저 생성한 쟁점별 내부 RAG query를 embedding합니다.
+   - vector similarity로 각 쟁점별 top-k chunk를 조회합니다.
    - `focused_answer`와 `issue_spotting` 검색 모드를 구분하고, `score_threshold`, `max_chunks_per_document`로 결과 폭과 문서 편중을 조절합니다.
+   - 같은 chunk가 여러 쟁점에서 검색되면 응답에서는 중복을 병합하되, 쟁점 key, 쟁점 제목, 쟁점별 query metadata를 보존합니다.
    - 문서 유형, 날짜, 법원, 법령명, jurisdiction 같은 metadata filter를 적용할 수 있게 합니다.
    - 이후 단계에서 vector search와 PostgreSQL full-text search를 결합한 hybrid search를 도입합니다.
 
@@ -476,7 +477,7 @@ rag_retrievals
 
 새 시행일이나 새 version이 확인되면 기존 문서를 덮어쓰지 않고 별도 문서 version으로 저장합니다. 반대로 같은 canonical/version인데 전문 재조회 결과 `normalized_checksum`이 달라지면 어떤 것이 최종 진실인지 자동 판단하지 않고 conflict review 상태로 남깁니다. 최신성 확인은 기존 색인을 안전하게 재사용하기 위한 절차이며, 과거 version 삭제 기준이 아닙니다.
 
-사용자 요청 기반 공식 corpus 보강은 다음 순서로 동작합니다. 사용자가 스토리나 질문을 입력하면 Orchestrator LLM은 먼저 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성합니다. 이 결과는 검색 계획일 뿐이며 법률 근거로 인용하지 않습니다. Orchestrator는 먼저 내부 RAG 검색을 수행하고, 근거가 부족할 때만 허용된 공식 source metadata 조회와 제한된 on-demand sync를 실행합니다. sync로 새 문서와 embedding이 준비되면 내부 RAG를 다시 실행한 뒤, retrieved chunk 또는 검증된 공식 source metadata만 답변 근거로 사용합니다.
+사용자 요청 기반 공식 corpus 보강은 다음 순서로 동작합니다. 사용자가 스토리나 질문을 입력하면 Orchestrator LLM은 먼저 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query를 생성합니다. 이 결과는 검색 계획일 뿐이며 법률 근거로 인용하지 않습니다. Orchestrator는 계획된 공식 source 후보를 기준으로 허용된 metadata 조회와 제한된 on-demand sync를 먼저 수행할 수 있습니다. sync로 새 문서와 embedding이 준비되면 각 쟁점별 query로 내부 RAG를 실행하고, retrieved chunk 또는 검증된 공식 source metadata만 답변 근거로 사용합니다.
 
 on-demand로 수집된 법령, 판례, 법령해석례, 행정심판례는 사용자별 private embedding으로 만들지 않고 공용 공식 corpus로 저장합니다. 반대로 사용자 계약서, PDF, 메모는 사용자 또는 tenant 범위의 문서로 취급하며 다른 사용자 요청의 공용 근거로 사용하지 않습니다. on-demand sync는 요청당 후보 문서 수, rate limit, provider timeout, API quota를 제한해야 하며, `conflict_status=review_required` 또는 `index_status=failed` 문서는 citation 가능한 evidence에서 제외합니다.
 
@@ -582,7 +583,7 @@ SupervisorAgent
 
 - `SupervisorAgent` 또는 `MultiAgentOrchestrator`가 전문 Agent 호출 순서, 재시도, handoff, 중단 조건을 결정합니다.
 - 전문 Agent는 직접 route, repository, provider SDK를 호출하지 않고 정해진 service, MCP tool, provider adapter 경계를 통해 동작합니다.
-- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보, 법률 영역, 후보 법령명, 검색 query를 뽑습니다.
+- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query와 외부 공식 source query를 뽑습니다.
 - `RetrievalAgent`는 내부 RAG 검색 전략과 `search_mode`를 선택합니다.
 - `LegalSourceAgent`는 국가법령정보 Open API 같은 외부 공식 source 조회와 공용 corpus on-demand 보강 필요성을 판단합니다.
 - `DraftingAgent`는 근거 기반 초안을 작성합니다.

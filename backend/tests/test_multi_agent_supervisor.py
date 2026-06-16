@@ -124,8 +124,11 @@ def test_supervisor_runs_specialized_agents_and_persists_handoff_audit(
     assert steps[4].output_json["output"]["prompt_length"] > 0
     assert "임대차 보증금" not in str(steps[4].output_json)
     assert steps[8].status == "completed"
+    assert len(ai_client.text_requests) == 2
+    assert ai_client.text_requests[0].metadata == {"purpose": "legal_source_planner"}
     assert ai_client.text_requests[0].model == "agent-test-model"
-    assert "임대차 보증금" in ai_client.text_requests[0].prompt
+    assert ai_client.text_requests[1].model == "agent-test-model"
+    assert "임대차 보증금" in ai_client.text_requests[1].prompt
 
 
 def test_supervisor_completes_with_insufficient_evidence_response(
@@ -158,7 +161,8 @@ def test_supervisor_completes_with_insufficient_evidence_response(
     assert [tool_call.tool_name for tool_call in result.tool_calls] == [
         "search_legal_documents"
     ]
-    assert ai_client.text_requests == []
+    assert len(ai_client.text_requests) == 1
+    assert ai_client.text_requests[0].metadata == {"purpose": "legal_source_planner"}
     assert "agent_safety_review" in [step.step_type for step in steps]
     assert "agent_citation_verifier" not in [step.step_type for step in steps]
 
@@ -195,7 +199,8 @@ def test_supervisor_stops_when_handoff_budget_is_exceeded(db: Session) -> None:
     assert result.status == "failed"
     assert result.error_code == "supervisor_handoff_budget_exceeded"
     assert result.answer is None
-    assert ai_client.text_requests == []
+    assert len(ai_client.text_requests) == 1
+    assert ai_client.text_requests[0].metadata == {"purpose": "legal_source_planner"}
     assert steps[-1].step_type == "multi_agent_error"
     assert steps[-1].error_code == "supervisor_handoff_budget_exceeded"
 
@@ -249,6 +254,7 @@ def _settings(
         ai_rag_enabled=False,
         ai_agent_provider="mock",
         ai_agent_model="agent-test-model",
+        ai_source_planner_model="agent-test-model",
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,

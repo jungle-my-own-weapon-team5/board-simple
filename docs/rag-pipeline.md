@@ -91,10 +91,12 @@ issue/source planning 출력:
 issues[]
 legal_domains[]
 candidate_statutes[]
-rag_queries[]
+issue_queries[]
 external_source_queries[]
 missing_facts[]
 ```
+
+각 `issues[]` 항목은 최소한 `issue_key`, `title`, `description`, `internal_rag_query`, `official_source_candidates`를 포함합니다. `top_k`는 전체 사용자 입력 하나에 대해 한 번만 적용하지 않고, 각 `internal_rag_query`별 검색 예산으로 적용합니다.
 
 planning 규칙:
 
@@ -245,9 +247,9 @@ chunk 기준:
 
 입력:
 
-- query
+- query 또는 issue/source planning에서 생성된 쟁점별 query
 - search_mode: `focused_answer` 또는 `issue_spotting`
-- top_k. 생략하면 search_mode별 기본값을 사용합니다.
+- top_k. 생략하면 search_mode별 기본값을 사용하며, 전체 요청이 아니라 쟁점별 query에 적용합니다.
 - score_threshold
 - max_chunks_per_document
 - metadata filters
@@ -260,13 +262,14 @@ chunk 기준:
 
 MVP 방식:
 
-- query embedding 생성
-- 선택된 `embedding_profile_id`의 chunk embedding만 대상으로 pgvector cosine similarity 기반 top-k 검색
+- 쟁점별 query embedding 생성
+- 선택된 `embedding_profile_id`의 chunk embedding만 대상으로 pgvector cosine similarity 기반 쟁점별 top-k 검색
 - document type/date filter는 가능한 범위에서 적용
 - `focused_answer`는 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다.
-- `issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드입니다. 이 모드에서는 기본 top-k를 크게 두고, 문서별 chunk 제한은 호출자가 명시한 경우에만 적용합니다.
+- `issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드입니다. 이 모드에서는 쟁점별 기본 top-k를 크게 두고, 문서별 chunk 제한은 호출자가 명시한 경우에만 적용합니다.
 - `score_threshold`가 지정되면 threshold 미만 결과를 제외합니다.
 - `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
+- 같은 chunk가 여러 쟁점에서 검색되면 최종 응답에서는 중복을 병합하고, 어떤 쟁점 query에서 검색되었는지 metadata로 보존합니다.
 
 후속 방식:
 
@@ -436,7 +439,7 @@ MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP
 
 `sync_official_source`는 내부 RAG 근거가 부족하고 공식 source 후보가 있을 때만 실행합니다. 새 embedding이 만들어지지 않았거나 기존 indexed 문서가 재사용된 경우에도 retrieval 재실행 여부를 audit에 남깁니다.
 
-초기 evidence 부족 판단은 단순하게 시작합니다. 내부 RAG 검색 결과 chunk가 없거나 citation 후보가 없으면 근거 부족으로 보고 공식 source 보강을 시도할 수 있습니다. 이후 평가 품질을 높일 때는 쟁점별 coverage, source type 다양성, 최신 법령 여부, 공식 source 여부, top-k 결과가 하나의 문서 또는 조문에 과도하게 몰리는지까지 함께 평가합니다.
+초기 evidence 부족 판단은 단순하게 시작합니다. 쟁점별 내부 RAG 검색 결과 chunk가 없거나 citation 후보가 없으면 해당 쟁점의 근거 부족으로 보고 공식 source 보강을 시도할 수 있습니다. 이후 평가 품질을 높일 때는 쟁점별 coverage, source type 다양성, 최신 법령 여부, 공식 source 여부, top-k 결과가 하나의 문서 또는 조문에 과도하게 몰리는지까지 함께 평가합니다.
 
 후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 

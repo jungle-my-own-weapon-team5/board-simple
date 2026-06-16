@@ -189,13 +189,13 @@ def test_search_legal_documents_tool_calls_retrieval_service(db: Session) -> Non
                 },
             },
         },
-        context=McpToolCallContext(
-            db=db,
-            user_id=user.id,
-            settings=_settings(),
-            ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
-        ),
-    )
+            context=McpToolCallContext(
+                db=db,
+                user_id=user.id,
+                settings=_settings(law_open_api_oc=""),
+                ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+            ),
+        )
 
     result = response["result"]
     assert result["tool_name"] == "search_legal_documents"
@@ -227,13 +227,13 @@ def test_verify_citations_rejects_non_retrieved_chunk(db: Session) -> None:
                 "arguments": {"query": "인용 검증", "top_k": 1},
             },
         },
-        context=McpToolCallContext(
-            db=db,
-            user_id=user.id,
-            settings=_settings(),
-            ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
-        ),
-    )
+            context=McpToolCallContext(
+                db=db,
+                user_id=user.id,
+                settings=_settings(law_open_api_oc=""),
+                ai_client=_StaticEmbeddingClient([1.0, 0.0, 0.0]),
+            ),
+        )
     run_id = search_response["result"]["run_id"]
 
     verify_response = server.handle(

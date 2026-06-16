@@ -27,6 +27,36 @@ def test_planner_parses_llm_json_candidates() -> None:
     assert ai_client.requests[0].metadata == {"purpose": "legal_source_planner"}
 
 
+def test_planner_parses_issue_queries() -> None:
+    ai_client = _PlanningAIClient(
+        text=(
+            '{"issues":[{"issue_key":"corpse_concealment",'
+            '"title":"corpse concealment",'
+            '"description":"concealing a body after death",'
+            '"internal_rag_query":"corpse abandonment concealment criminal act",'
+            '"official_source_query":"Criminal Act",'
+            '"official_source_candidates":[{"document_type":"statute",'
+            '"title":"Criminal Act","query":"Criminal Act",'
+            '"reason":"criminal liability issue"}]}]}'
+        )
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="A killed B by mistake and buried the body.",
+        question="Find the legal issues.",
+        search_mode="issue_spotting",
+    )
+
+    assert len(plan.issues) == 1
+    assert plan.issues[0].issue_key == "corpse_concealment"
+    assert plan.issues[0].internal_rag_query == (
+        "corpse abandonment concealment criminal act"
+    )
+    assert [candidate.query for candidate in plan.candidates] == ["Criminal Act"]
+
+
 def test_planner_ignores_unsupported_document_types() -> None:
     ai_client = _PlanningAIClient(
         text=(
@@ -99,6 +129,7 @@ def _settings(*, ai_agent_model: str = "planner-test-model") -> Settings:
         ai_rag_enabled=False,
         ai_agent_provider="mock",
         ai_agent_model=ai_agent_model,
+        ai_source_planner_model=ai_agent_model,
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,

@@ -178,7 +178,7 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 공식 법령, 판례, 법령해석례, 행정심판례 원문은 일반 사용자에게서 직접 업로드받지 않습니다. 해당 corpus는 backend가 국가법령정보 Open API 또는 이용 조건이 명확한 공공 API에서 수집합니다. 일반 사용자 업로드는 `user_file` 또는 `memo` 성격의 문서로 제한합니다.
 
-사용자 스토리나 질문을 기반으로 답변을 생성할 때는 내부 RAG 검색 전에 Orchestrator LLM이 쟁점과 법률 source 후보를 먼저 계획합니다. 이 계획은 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query로 구성되며, 그 자체가 법률 근거나 citation이 되지는 않습니다. 내부 RAG 근거가 부족하면 backend는 요청 범위와 rate limit 안에서 공식 법률 corpus를 공용 데이터로 수집, chunking, embedding한 뒤 같은 요청의 retrieval을 다시 수행할 수 있습니다.
+사용자 스토리나 질문을 기반으로 답변을 생성할 때는 내부 RAG 검색 전에 Orchestrator LLM이 쟁점과 법률 source 후보를 먼저 계획합니다. 이 계획은 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query로 구성되며, 그 자체가 법률 근거나 citation이 되지는 않습니다. backend는 계획된 쟁점별로 필요한 공식 법률 corpus를 요청 범위와 rate limit 안에서 수집, chunking, embedding한 뒤 쟁점별 retrieval을 수행할 수 있습니다.
 
 수용 기준:
 
@@ -238,6 +238,8 @@ chunking은 다음 구조를 보존해야 합니다.
 - 검색 요청은 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 지원해야 합니다.
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하는 기본 모드입니다.
 - `search_mode=issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드이며 기본 검색 예산을 더 크게 둡니다.
+- `top_k`는 전체 사용자 입력 하나에 대한 총 결과 수가 아니라, issue/source planning으로 생성된 각 쟁점별 retrieval query에 적용되는 검색 예산입니다.
+- 같은 chunk가 여러 쟁점에서 검색되면 결과는 중복 병합하되, 어떤 쟁점에서 검색되었는지 metadata로 보존해야 합니다.
 
 ## FR-010 Hybrid Retrieval
 
@@ -276,7 +278,7 @@ hybrid retrieval은 다음을 결합합니다.
 - 결과는 cited chunk와 source metadata를 포함합니다.
 - 사용자는 검색된 source excerpt를 확인할 수 있습니다.
 - 검색 기능은 답변 초안 생성과 독립적으로 동작해야 합니다.
-- 다수 쟁점 탐지 시 `issue_spotting` 검색 모드를 사용해 특정 문서의 일부 chunk만 과도하게 선택되는 문제를 완화할 수 있어야 합니다.
+- 다수 쟁점 탐지 시 `issue_spotting` 검색 모드를 사용해 쟁점별 top-k 검색을 수행하고, 특정 문서의 일부 chunk만 과도하게 선택되는 문제를 완화할 수 있어야 합니다.
 
 ## FR-013 답변 초안 보조
 

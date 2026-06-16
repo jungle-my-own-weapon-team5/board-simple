@@ -28,6 +28,7 @@ from app.repositories import (
 from app.services.rag.legal_source_planner import (
     LegalSourceCandidate,
     LegalSourcePlan,
+    PlannedLegalIssue,
 )
 from app.services.rag.normalization import calculate_text_checksum
 
@@ -180,6 +181,80 @@ def test_rag_search_endpoint_supports_embedding_profile_and_document_filters(
     assert body["items"][0]["metadata"]["document_type"] == "case"
 
 
+def test_rag_search_endpoint_applies_top_k_per_planned_issue(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rag_client_context.client, email="issue-top-k@example.com")
+    first_issue_query = "body burial concealment"
+    second_issue_query = "surrender mitigation"
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=8)
+        first_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Body concealment statute",
+            heading="Article A",
+            content="body concealment issue",
+            embedding=_mock_embedding_for_text(first_issue_query, dimensions=8),
+        )
+        second_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Surrender mitigation statute",
+            heading="Article B",
+            content="voluntary surrender issue",
+            embedding=_mock_embedding_for_text(second_issue_query, dimensions=8),
+        )
+        first_chunk_id = first_embedding.chunk_id
+        second_chunk_id = second_embedding.chunk_id
+        db.commit()
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="body_concealment",
+                    title="Body concealment",
+                    description=None,
+                    internal_rag_query=first_issue_query,
+                ),
+                PlannedLegalIssue(
+                    issue_key="surrender",
+                    title="Surrender",
+                    description=None,
+                    internal_rag_query=second_issue_query,
+                ),
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "A buried a body and later surrendered.",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["chunk_id"] for item in body["items"]] == [
+        first_chunk_id,
+        second_chunk_id,
+    ]
+    assert [item["metadata"]["planned_issue_key"] for item in body["items"]] == [
+        "body_concealment",
+        "surrender",
+    ]
+
+
 def test_rag_search_endpoint_creates_default_embedding_profile_when_missing(
     rag_client_context: ApiTestContext,
 ) -> None:
@@ -236,7 +311,7 @@ def test_rag_search_endpoint_syncs_official_source_when_search_is_empty(
         return SimpleNamespace(status="embedded")
 
     monkeypatch.setattr(
-        "app.api.rag.sync_and_embed_law_open_api_statute",
+        "app.services.rag.issue_retrieval.sync_and_embed_law_open_api_statute",
         fake_sync_and_embed_law_open_api_statute,
     )
 
@@ -311,11 +386,11 @@ def test_rag_search_endpoint_syncs_when_existing_results_are_low_relevance(
         return SimpleNamespace(status="embedded")
 
     monkeypatch.setattr(
-        "app.api.rag.plan_legal_source_candidates",
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
         fake_plan_legal_source_candidates,
     )
     monkeypatch.setattr(
-        "app.api.rag.sync_and_embed_law_open_api_statute",
+        "app.services.rag.issue_retrieval.sync_and_embed_law_open_api_statute",
         fake_sync_and_embed_law_open_api_statute,
     )
 

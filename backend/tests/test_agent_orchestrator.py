@@ -192,7 +192,8 @@ def test_orchestrator_agent_stops_before_draft_when_tool_budget_is_exceeded(
     assert [tool_call.tool_name for tool_call in result.tool_calls] == [
         "search_legal_documents"
     ]
-    assert ai_client.text_requests == []
+    assert len(ai_client.text_requests) == 1
+    assert ai_client.text_requests[0].metadata == {"purpose": "legal_source_planner"}
     assert steps[-1].step_type == "error"
     assert steps[-1].error_code == "agent_tool_budget_exceeded"
 
@@ -414,6 +415,7 @@ def _settings(
         app_env="test",
         ai_agent_provider="mock",
         ai_agent_model="agent-test-model",
+        ai_source_planner_model="agent-test-model",
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,

@@ -11,7 +11,7 @@ from app.services.rag.embedding_profiles import (
     EmbeddingProfileConfigError,
     get_active_or_create_default_embedding_profile,
 )
-from app.services.rag.retrieval import search_legal_documents
+from app.services.rag.issue_retrieval import search_legal_documents_by_planned_issues
 
 SUPPORTED_SEARCH_MODES = {"focused_answer", "issue_spotting"}
 
@@ -68,12 +68,14 @@ def search_legal_documents_tool(
     ai_client = context.ai_client or AIClient(settings)
 
     try:
-        result = search_legal_documents(
+        result = search_legal_documents_by_planned_issues(
             db,
             user_id=context.user_id,
-            query=query,
+            facts=query,
+            question=query,
             embedding_profile=embedding_profile,
             ai_client=ai_client,
+            settings=settings,
             search_mode=search_mode,
             top_k=top_k,
             score_threshold=score_threshold,
@@ -81,6 +83,7 @@ def search_legal_documents_tool(
             prompt_version=settings.rag_prompt_version,
             timeout_seconds=settings.ai_request_timeout_seconds,
             document_types=document_types,
+            sync_official_sources=False,
         )
     except ValueError as exc:
         raise McpInvalidParamsError(str(exc)) from exc
@@ -207,4 +210,3 @@ def _select_embedding_profile(
         return get_active_or_create_default_embedding_profile(db, settings)
     except EmbeddingProfileConfigError as exc:
         raise McpToolConfigError(str(exc)) from exc
-

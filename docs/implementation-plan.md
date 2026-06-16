@@ -245,7 +245,9 @@ backend/tests/test_rag_retrieval.py
 - 같은 chunk는 여러 profile로 임베딩될 수 있지만, retrieval은 하나의 profile만 선택해 수행합니다.
 - `/api/rag/search`는 답변 생성 없이 검색 결과만 반환합니다.
 - `/api/rag/search`는 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 지원합니다.
-- `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 기본 검색 예산을 넓게 둡니다.
+- `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 쟁점별 검색 예산을 넓게 둡니다.
+- 내부 RAG 검색 전 issue/source planning을 먼저 수행하고, `top_k`는 전체 입력이 아니라 계획된 각 쟁점별 query에 적용합니다.
+- 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries` metadata를 보존합니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
 
@@ -309,7 +311,7 @@ backend/tests/test_mcp_legal_tools.py
 구현 기준:
 
 - `search_legal_documents`는 5단계 retrieval service를 호출합니다.
-- `search_legal_documents`는 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 service에 전달합니다.
+- `search_legal_documents`는 단일 query retrieval primitive로 유지하고, API/Agent 상위 흐름은 issue/source planning 결과를 바탕으로 쟁점별 query를 여러 번 실행한 뒤 결과를 병합합니다.
 - `search_law_open_api`는 국가법령정보 Open API 등 실제 외부 서비스를 호출합니다.
 - `search_law_open_api.target`은 내부 문서 유형인 `statute`, `case`, `interpretation`, `admin_appeal`을 사용하고, 외부 API별 parameter는 adapter 내부에서 매핑합니다.
 - `verify_citations`는 초안 citation이 해당 run의 retrieved chunk 또는 외부 source metadata에 근거하는지 확인합니다.
@@ -347,7 +349,7 @@ backend/tests/test_agent_orchestrator.py
 
 - 상태 흐름은 `initialize_run -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`를 따릅니다.
 - `reasoning_loop`는 `propose_action -> validate_action -> execute_tool_or_model_step -> observe -> decide_continue_or_stop` 반복으로 구성합니다.
-- `plan_issue_sources`는 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성합니다.
+- `plan_issue_sources`는 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query를 생성합니다.
 - 후보 법령명과 외부 source query는 검색 계획일 뿐이며, citation 가능한 근거는 retrieved chunk 또는 검증된 공식 source metadata로 제한합니다.
 - LLM은 `AgentAction`을 제안하고, Orchestrator는 action type, tool name, arguments, 권한, 반복 여부를 검증한 뒤 실행합니다.
 - 허용 action type은 `search_internal`, `search_external_source`, `sync_official_source`, `draft_answer`, `verify_citations`, `respond_insufficient_evidence`, `stop`입니다.
@@ -384,6 +386,7 @@ backend/tests/test_agent_orchestrator.py
 향후 evidence 평가 개선 기준:
 
 - 쟁점별 coverage 계산
+- 쟁점별 top-k 결과가 충분히 확보되었는지 확인
 - 법령, 판례, 법령해석례, 행정심판례 등 source type 다양성 확인
 - 최신 법령 여부 확인
 - 공식 source 여부 확인
