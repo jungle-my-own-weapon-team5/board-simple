@@ -4,7 +4,7 @@
 
 이 문서는 법률정보 기반 RAG 파이프라인의 단계별 책임과 입출력 계약을 정의합니다.
 
-MVP는 FastAPI service 코드로 명시적으로 구현합니다. MCP 서버와 단일 Orchestrator Agent 기반 bounded state machine은 과제 요구사항을 충족하기 위해 포함하며, LangChain과 LangGraph는 초기 필수 의존성으로 두지 않습니다. 멀티에이전트 workflow는 단일 Orchestrator가 안정화된 뒤 Supervisor Agent와 전문 Agent 구조로 확장합니다.
+MVP는 FastAPI service 코드로 명시적으로 구현합니다. MCP 서버와 단일 Orchestrator Agent 기반 bounded reasoning loop/state machine은 과제 요구사항을 충족하기 위해 포함하며, LangChain과 LangGraph는 초기 필수 의존성으로 두지 않습니다. 멀티에이전트 workflow는 단일 Orchestrator가 안정화된 뒤 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 ## 전체 흐름
 
@@ -408,23 +408,42 @@ MVP MCP tool:
 Agent 상태 흐름:
 
 ```text
-plan_issue_sources
-  -> search_internal
-  -> maybe_sync_official_sources
-  -> search_internal_again
-  -> decide
+initialize_run
+  -> plan_issue_sources
+  -> reasoning_loop
+     -> propose_action
+     -> validate_action
+     -> execute_tool_or_model_step
+     -> observe
+     -> decide_continue_or_stop
   -> draft
   -> verify
+  -> optional_repair_once
   -> persist
 ```
 
-MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP tool은 Agent가 아니며, Agent가 호출하는 제한된 service 경계입니다. `maybe_sync_official_sources`는 내부 RAG 근거가 부족하고 공식 source 후보가 있을 때만 실행하며, 새 embedding이 만들어지지 않았거나 기존 indexed 문서가 재사용된 경우에도 retrieval 재실행 여부를 audit에 남깁니다.
+MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP tool은 Agent가 아니며, Agent가 호출하는 제한된 service 경계입니다. LLM은 다음 action을 제안하지만 직접 tool을 실행하지 않습니다. Orchestrator는 action type, tool name, arguments, 권한, 반복 여부를 검증한 뒤 MCP tool 또는 provider adapter를 호출합니다.
+
+허용 action type:
+
+- `search_internal`
+- `search_external_source`
+- `sync_official_source`
+- `draft_answer`
+- `verify_citations`
+- `respond_insufficient_evidence`
+- `stop`
+
+`sync_official_source`는 내부 RAG 근거가 부족하고 공식 source 후보가 있을 때만 실행합니다. 새 embedding이 만들어지지 않았거나 기존 indexed 문서가 재사용된 경우에도 retrieval 재실행 여부를 audit에 남깁니다.
 
 후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 
 제한:
 
 - `max_iterations`와 `max_tool_calls`를 둡니다.
+- `max_repeated_actions`, `max_external_sync_candidates`, timeout을 둡니다.
+- 같은 action type과 arguments 조합이 반복되면 중단합니다.
+- citation repair는 최대 1회만 수행합니다.
 - allowlist에 없는 tool은 호출하지 않습니다.
 - tool 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
 - tool input/output에는 secret, raw JWT, API key를 포함하지 않습니다.

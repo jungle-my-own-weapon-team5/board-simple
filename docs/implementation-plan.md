@@ -4,7 +4,7 @@
 
 현재 게시판 템플릿을 유지하면서 FastAPI + pgvector 기반 명시적 RAG 구조와 MCP/Agent 기능을 단계적으로 추가합니다.
 
-MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사용합니다. MCP 서버는 실제 외부 법률 API tool을 포함하고, MVP Agent는 단일 `OrchestratorAgent`로 bounded state machine을 통해 tool 호출을 조율합니다. Gemini와 Claude는 같은 provider adapter 인터페이스로 후속 확장합니다.
+MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사용합니다. MCP 서버는 실제 외부 법률 API tool을 포함하고, MVP Agent는 단일 `OrchestratorAgent`로 bounded reasoning loop/state machine을 통해 action 제안, 검증, tool 호출을 조율합니다. Gemini와 Claude는 같은 provider adapter 인터페이스로 후속 확장합니다.
 
 ## 전제
 
@@ -325,7 +325,7 @@ backend/tests/test_mcp_legal_tools.py
 
 목표:
 
-- 쟁점/source 계획, MCP tool 호출, 관찰, 초안 작성, citation 검증을 하나의 제한된 단일 Orchestrator Agent workflow로 묶습니다.
+- 쟁점/source 계획, action 제안, action 검증, MCP tool 호출, 관찰, 초안 작성, citation 검증을 하나의 제한된 단일 Orchestrator Agent reasoning loop로 묶습니다.
 - MVP에서는 멀티에이전트가 아니라 단일 Orchestrator Agent를 구현합니다.
 
 예상 추가 파일:
@@ -341,25 +341,42 @@ backend/tests/test_agent_orchestrator.py
 
 구현 기준:
 
-- 상태 흐름은 `plan_issue_sources -> search_internal -> maybe_sync_official_sources -> search_internal_again -> decide -> draft -> verify -> persist`를 따릅니다.
+- 상태 흐름은 `initialize_run -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`를 따릅니다.
+- `reasoning_loop`는 `propose_action -> validate_action -> execute_tool_or_model_step -> observe -> decide_continue_or_stop` 반복으로 구성합니다.
 - `plan_issue_sources`는 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성합니다.
 - 후보 법령명과 외부 source query는 검색 계획일 뿐이며, citation 가능한 근거는 retrieved chunk 또는 검증된 공식 source metadata로 제한합니다.
+- LLM은 `AgentAction`을 제안하고, Orchestrator는 action type, tool name, arguments, 권한, 반복 여부를 검증한 뒤 실행합니다.
+- 허용 action type은 `search_internal`, `search_external_source`, `sync_official_source`, `draft_answer`, `verify_citations`, `respond_insufficient_evidence`, `stop`입니다.
 - `search_internal`은 기존 내부 RAG를 먼저 호출합니다.
-- `maybe_sync_official_sources`는 내부 근거가 부족할 때만 공용 공식 corpus on-demand 보강을 시도합니다.
-- on-demand 보강으로 새 embedding이 준비되거나 기존 indexed 문서를 재사용할 수 있으면 `search_internal_again`에서 내부 RAG를 다시 호출합니다.
-- `max_iterations`, `max_tool_calls`, timeout을 설정으로 제한합니다.
-- 각 step은 `agent_steps`에 저장합니다.
+- `search_external_source`와 `sync_official_source`는 내부 근거가 부족할 때만 공용 공식 corpus on-demand 보강을 시도합니다.
+- on-demand 보강으로 새 embedding이 준비되거나 기존 indexed 문서를 재사용할 수 있으면 내부 RAG를 다시 호출합니다.
+- `max_iterations`, `max_tool_calls`, `max_repeated_actions`, `max_external_sync_candidates`, timeout을 설정으로 제한합니다.
+- 같은 action type과 arguments 조합이 반복되면 loop를 중단합니다.
+- citation repair는 최대 1회만 허용합니다.
+- 각 step은 `agent_steps`에 action type, tool name, redacted arguments summary, observation summary, decision reason, error metadata를 저장합니다.
 - Agent는 allowlist된 MCP tool만 호출합니다.
 - MCP tool은 Agent가 아니라 Orchestrator가 호출하는 제한된 service 경계입니다.
+- OpenAI function/tool calling을 사용하더라도 모델 출력은 action 제안으로만 취급하고, 실제 실행은 서버 검증 뒤 수행합니다.
 - 모델 응답은 provider adapter를 통해 OpenAI API로 생성합니다.
 - 검색된 문서와 외부 API 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
 
 검증:
 
-- 정상 tool 선택과 step 저장 테스트
+- LLM이 `search_internal` action을 선택하면 `search_legal_documents`가 실행되는지 테스트
+- 허용되지 않은 action 또는 tool name은 실행하지 않고 실패 처리하는지 테스트
+- 같은 action+arguments 반복 시 loop guard가 중단하는지 테스트
+- `max_iterations`, `max_tool_calls`, `max_repeated_actions` 초과 중단 테스트
+- 정상 action, observation, decision reason이 `agent_steps`에 저장되는지 테스트
 - `max_tool_calls` 초과 중단 테스트
 - tool 실패 시 안전 응답 테스트
 - provider 실패 시 `502` 또는 `503` mapping 테스트
+
+권장 커밋 단위:
+
+1. `feat(backend): Agent reasoning loop 계약 추가`
+2. `feat(backend): Agent action 검증 및 loop guard 구현`
+3. `feat(backend): Agent 공식 법령 source 보강 action 추가`
+4. `feat(backend): Agent citation repair 흐름 추가`
 
 ## 9단계: 답변 초안 생성 API
 
@@ -440,7 +457,7 @@ backend/tests/test_legal_open_api_sync.py
 - `LAW_OPEN_API_OC`는 secret으로 취급합니다.
 - `LAW_OPEN_API_BASE_URL`, `LAW_OPEN_API_SERVICE_URL`은 비밀값이 아닌 endpoint 설정이며, ingestion client와 MCP tool이 같은 값을 사용합니다.
 - MCP `search_law_open_api`와 ingestion client가 같은 parsing/error 정책을 공유합니다.
-- 사용자 요청 기반 on-demand sync는 내부 RAG 검색 후 근거 부족이 확인된 경우에만 실행합니다.
+- 사용자 요청 기반 on-demand sync는 Agent reasoning loop의 `sync_official_source` action으로 실행하며, 내부 RAG 검색 후 근거 부족이 확인된 경우에만 허용합니다.
 - on-demand sync 입력은 Orchestrator가 만든 후보 법령명, 외부 source query, target, search reason으로 구성합니다.
 - on-demand sync는 요청당 후보 문서 수, API 호출 수, provider timeout, rate limit, quota를 제한합니다.
 - 공식 법령, 판례, 법령해석례, 행정심판례는 사용자별 사본이 아니라 공용 `legal_sources`, `legal_documents`, `legal_document_chunks`, `legal_document_chunk_embeddings`로 저장합니다.
@@ -603,7 +620,7 @@ MVP 완료 기준:
 - `/api/rag/search`가 관련 chunk를 반환합니다.
 - MCP JSON-RPC endpoint가 allowlist된 tool을 호출합니다.
 - `search_law_open_api`가 실제 외부 법률 API 연동 경계를 제공합니다.
-- Agent가 bounded state machine으로 MCP tool을 호출하고 반복 제한을 지킵니다.
+- Agent가 bounded reasoning loop로 action을 제안, 검증, 실행하고 반복 제한을 지킵니다.
 - Agent가 사용자 facts/question에서 쟁점과 법률 source 후보를 계획하고, 내부 RAG 근거가 부족할 때만 공용 공식 corpus on-demand 보강 후 retrieval을 재실행합니다.
 - MVP Agent는 단일 Orchestrator Agent로 동작하며 MCP tool을 Agent로 취급하지 않습니다.
 - 후속 멀티에이전트 확장에서는 Supervisor Agent가 전문 Agent 호출 순서와 handoff를 관리합니다.

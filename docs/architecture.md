@@ -24,7 +24,7 @@
 - MVP의 AI agent/generation provider는 OpenAI API 사용
 - Gemini와 Claude는 동일한 provider adapter 인터페이스로 이후 확장
 - MVP에 MCP 서버, JSON-RPC tool 호출, 실제 외부 법률 API tool을 포함
-- MVP Agent는 LangGraph 의존성 없이 단일 Orchestrator Agent와 bounded state machine으로 구현합니다.
+- MVP Agent는 LangGraph 의존성 없이 단일 Orchestrator Agent와 bounded reasoning loop/state machine으로 구현합니다.
 - 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 핵심 목표는 RAG의 각 단계를 팀원이 직접 확인하고 테스트할 수 있게 만드는 것입니다.
@@ -311,9 +311,10 @@ backend/app/
 8. Agent orchestration
    - MVP는 멀티에이전트가 아니라 단일 Orchestrator Agent 구조입니다.
    - MCP tool은 Agent가 아니며, Orchestrator Agent가 호출하는 제한된 service 경계입니다.
-   - Agent는 bounded state machine으로 쟁점/source 계획, 내부 검색, 필요 시 공식 source 보강, 관찰, 초안 작성, citation 검증을 수행합니다.
-   - MVP의 상태 흐름은 `plan_issue_sources -> search_internal -> maybe_sync_official_sources -> search_internal_again -> decide -> draft -> verify -> persist`입니다.
-   - `max_iterations`와 `max_tool_calls`로 무한 루프를 방지합니다.
+   - Agent는 bounded reasoning loop로 쟁점/source 계획, action 제안, action 검증, tool 실행, 관찰, 초안 작성, citation 검증을 수행합니다.
+   - MVP의 상태 흐름은 `initialize_run -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`입니다.
+   - `reasoning_loop` 내부는 `propose_action -> validate_action -> execute_tool_or_model_step -> observe -> decide_continue_or_stop` 반복입니다.
+   - `max_iterations`, `max_tool_calls`, `max_repeated_actions`, `max_external_sync_candidates`, timeout, citation repair 최대 1회 제한으로 무한 루프를 방지합니다.
 
 9. Prompt assembly
    - 사용자 사실관계, 검색된 chunk, 답변 규칙을 조합해 prompt를 구성합니다.
@@ -556,13 +557,16 @@ MVP Agent 책임:
 
 - 사용자 사실관계와 질문에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 추출합니다.
 - 후보 법령명은 공식 근거가 아니라 retrieval과 외부 source 조회를 위한 계획으로만 사용합니다.
+- LLM이 다음 action을 제안하면 Orchestrator가 action type, tool name, arguments, 권한, 반복 여부를 검증한 뒤 실행합니다.
+- 허용 action type은 `search_internal`, `search_external_source`, `sync_official_source`, `draft_answer`, `verify_citations`, `respond_insufficient_evidence`, `stop`으로 제한합니다.
 - 내부 RAG 검색을 먼저 실행하고, 근거가 부족할 때만 국가법령정보 Open API 같은 허용된 공식 source 조회 또는 on-demand sync를 시도합니다.
 - on-demand sync와 embedding이 완료되면 같은 요청에서 내부 RAG 검색을 다시 실행합니다.
 - allowlist된 MCP tool 중 필요한 tool만 호출합니다.
 - tool 결과를 관찰하고 근거 부족 여부를 판단합니다.
 - OpenAI API를 사용해 쟁점 정리 또는 답변 초안을 생성합니다.
 - citation 검증을 통과한 결과만 사용자에게 반환합니다.
-- 각 step을 `agent_steps`에 저장하고 `max_iterations`, `max_tool_calls`, timeout으로 무한 루프를 방지합니다.
+- 각 step을 `agent_steps`에 저장하고 action/tool audit, observation summary, decision reason을 남깁니다.
+- OpenAI function/tool calling을 사용하더라도 실제 실행은 서버 MCP registry가 검증한 action에 대해서만 수행합니다.
 
 MVP 이후 멀티에이전트 확장:
 
@@ -585,7 +589,7 @@ SupervisorAgent
 - `CitationVerifierAgent`는 초안의 법률 주장과 citation이 검색 결과 또는 외부 source에 근거하는지 검증합니다.
 - `SafetyReviewAgent`는 과도한 단정, 법률 자문 표현, 개인정보, secret 노출을 검토합니다.
 
-LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator Agent는 명시적 Python state machine으로 구현합니다. 멀티에이전트 확장도 처음에는 같은 계약으로 직접 구현할 수 있으며, handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 해당 상태 모델을 LangGraph graph로 옮깁니다. LangGraph를 도입해도 RAG 문서 모델, MCP tool 계약, provider adapter 계약은 유지합니다.
+LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator Agent는 명시적 Python reasoning loop/state machine으로 구현합니다. 멀티에이전트 확장도 처음에는 같은 계약으로 직접 구현할 수 있으며, handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 해당 상태 모델을 LangGraph graph로 옮깁니다. LangGraph를 도입해도 RAG 문서 모델, MCP tool 계약, provider adapter 계약은 유지합니다.
 
 ## 보안 아키텍처
 
@@ -708,7 +712,7 @@ auth와 AI endpoint는 비용과 보안 위험이 있으므로 외부 공개 전
 
 ### 10. Agent workflow persistence와 loop guard가 필요합니다
 
-쟁점 추출, retrieval, MCP tool 호출, draft 생성, citation 검증, 사용자 검토는 단순 응답으로 끝내지 말고 `rag_runs`와 `agent_steps`로 저장해야 합니다. Agent는 `max_iterations`, `max_tool_calls`, timeout, 실패 상태 저장을 반드시 가져야 합니다.
+쟁점 추출, action 제안, action 검증, retrieval, MCP tool 호출, observation, draft 생성, citation 검증, 사용자 검토는 단순 응답으로 끝내지 말고 `rag_runs`와 `agent_steps`로 저장해야 합니다. Agent는 `max_iterations`, `max_tool_calls`, `max_repeated_actions`, `max_external_sync_candidates`, timeout, 실패 상태 저장을 반드시 가져야 합니다.
 
 ### 11. AI provider 설정은 Docker Compose 전달도 필요합니다
 
@@ -724,7 +728,7 @@ auth와 AI endpoint는 비용과 보안 위험이 있으므로 외부 공개 전
 2. OpenAI API 기반 generation/embedding provider adapter를 추가합니다.
 3. MCP 서버와 allowlist된 tool registry를 추가합니다.
 4. `search_legal_documents`, `search_law_open_api`, `verify_citations` tool을 구현합니다.
-5. 단일 Orchestrator Agent의 bounded state machine으로 쟁점/source 계획, tool 선택, 실행, 관찰, 초안 작성, 검증을 구현합니다.
+5. 단일 Orchestrator Agent의 bounded reasoning loop로 쟁점/source 계획, action 제안, action 검증, tool 실행, 관찰, 초안 작성, 검증을 구현합니다.
 6. 사용자 요청 기반 공용 공식 corpus on-demand 보강과 재검색 흐름을 구현합니다.
 7. hybrid retrieval과 citation tracking을 추가합니다.
 8. Gemini와 Claude provider adapter는 동일 인터페이스로 후속 추가합니다.

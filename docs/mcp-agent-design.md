@@ -11,7 +11,7 @@
 - MVP는 멀티에이전트가 아니라 단일 Orchestrator Agent입니다.
 - MCP tool은 Agent가 아닙니다. tool은 Orchestrator 또는 전문 Agent가 호출하는 제한된 service 경계입니다.
 - Agent는 OpenAI API를 사용하되, Gemini/Claude로 확장 가능한 provider adapter 뒤에서 호출합니다.
-- LangGraph는 MVP 필수 의존성으로 두지 않고, 명시적 bounded state machine으로 "LangGraph 또는 유사 구조" 요구를 충족합니다.
+- LangGraph는 MVP 필수 의존성으로 두지 않고, 명시적 bounded reasoning loop/state machine으로 "LangGraph 또는 유사 구조" 요구를 충족합니다.
 - 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장합니다.
 
 ## 과제 요구사항 대응
@@ -233,13 +233,17 @@ invalid: list[CitationValidationError]
 MVP Agent는 하나의 `OrchestratorAgent`이며 다음 상태 흐름을 사용합니다.
 
 ```text
-plan_issue_sources
-  -> search_internal
-  -> maybe_sync_official_sources
-  -> search_internal_again
-  -> decide
+initialize_run
+  -> plan_issue_sources
+  -> reasoning_loop
+     -> propose_action
+     -> validate_action
+     -> execute_tool_or_model_step
+     -> observe
+     -> decide_continue_or_stop
   -> draft
   -> verify
+  -> optional_repair_once
   -> persist
 ```
 
@@ -247,16 +251,42 @@ plan_issue_sources
 
 | State | 책임 |
 | --- | --- |
+| `initialize_run` | `rag_runs`와 초기 `agent_steps` context를 만들고 loop budget을 설정 |
 | `plan_issue_sources` | 사용자 facts/question에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성 |
-| `search_internal` | `search_legal_documents`로 기존 공용 corpus와 사용자 범위 corpus를 먼저 검색 |
-| `maybe_sync_official_sources` | 내부 근거가 부족할 때만 `search_law_open_api` 또는 ingestion sync service를 통해 공식 source metadata 확인과 제한된 on-demand sync 수행 |
-| `search_internal_again` | 새 chunk embedding이 준비되었거나 기존 indexed 문서를 재사용할 수 있으면 내부 RAG를 재실행 |
-| `decide` | 추가 검색이 필요한지, 근거 부족으로 응답해야 하는지, 초안을 작성할 수 있는지 판단 |
+| `reasoning_loop` | LLM action 제안, 서버 검증, tool/model 실행, observation 저장, 반복 여부 판단을 제한된 횟수만 반복 |
+| `propose_action` | LLM이 현재 evidence와 missing facts를 바탕으로 다음 `AgentAction`을 제안 |
+| `validate_action` | Orchestrator가 action type, tool name, arguments, allowlist, 반복 여부, budget을 검증 |
+| `execute_tool_or_model_step` | 검증된 MCP tool 또는 provider adapter만 실행 |
+| `observe` | 실행 결과를 evidence, missing facts, error, confidence summary로 정리 |
+| `decide_continue_or_stop` | 추가 검색, 공식 source 보강, 초안 작성, 근거 부족 응답, 중단 중 하나를 선택 |
 | `draft` | provider adapter를 통해 OpenAI generation 호출 |
 | `verify` | `verify_citations`로 citation 검증 |
+| `optional_repair_once` | citation 검증 실패 시 citation 없는 법률 주장을 제거하거나 근거 부족 표현으로 고치는 repair를 최대 1회 수행 |
 | `persist` | `rag_runs`, `rag_retrievals`, `agent_steps` 저장 |
 
-MVP에서는 위 상태를 하나의 `OrchestratorAgent`가 수행합니다. 이 단계에서 MCP tool과 Agent를 혼동하지 않습니다. `search_legal_documents`, `search_law_open_api`, `verify_citations`는 Agent가 아니라 Orchestrator가 호출하는 tool입니다.
+MVP에서는 위 상태를 하나의 `OrchestratorAgent`가 수행합니다. 이 단계에서 MCP tool과 Agent를 혼동하지 않습니다. `search_legal_documents`, `search_law_open_api`, `verify_citations`는 Agent가 아니라 Orchestrator가 호출하는 tool입니다. LLM은 action을 제안할 수 있지만 직접 tool을 실행하지 않습니다. 실제 실행은 Orchestrator가 MCP registry와 action schema로 검증한 뒤 수행합니다.
+
+`AgentAction` 허용값:
+
+| Action | 실행 경계 | 설명 |
+| --- | --- | --- |
+| `search_internal` | `search_legal_documents` MCP tool | 기존 공용 corpus와 사용자 범위 corpus를 검색 |
+| `search_external_source` | `search_law_open_api` MCP tool | 공식 source metadata 또는 후보 문서를 조회 |
+| `sync_official_source` | ingestion sync service | 허용된 공식 source를 공용 corpus로 수집, chunking, embedding |
+| `draft_answer` | provider adapter | 현재 evidence로 답변 초안 작성 |
+| `verify_citations` | `verify_citations` MCP tool | 초안 citation 검증 |
+| `respond_insufficient_evidence` | provider adapter 또는 deterministic response | 근거 부족과 추가 확인 필요 사실을 사용자에게 안내 |
+| `stop` | Orchestrator | 완료 또는 복구 불가 상태로 loop 종료 |
+
+Action 검증 규칙:
+
+- action type은 위 enum에 있어야 합니다.
+- tool name은 action type별 허용 tool과 일치해야 합니다.
+- arguments는 tool schema와 service validation을 통과해야 합니다.
+- 클라이언트는 provider, model, tool name, API endpoint를 임의 지정할 수 없습니다.
+- 같은 action type과 arguments 조합이 반복되면 loop를 중단합니다.
+- `search_external_source`와 `sync_official_source`는 내부 RAG 근거 부족, 후보 source 존재, 외부 호출 budget이 모두 충족될 때만 허용합니다.
+- OpenAI function/tool calling을 사용하더라도 실행 전 위 검증을 반드시 통과해야 합니다.
 
 사용자 요청 기반 공식 corpus 보강 규칙:
 
@@ -270,9 +300,11 @@ Agent는 다음 조건에서 중단합니다.
 
 - `max_iterations` 초과
 - `max_tool_calls` 초과
+- `max_repeated_actions` 초과 또는 같은 action+arguments 반복 감지
+- `max_external_sync_candidates` 초과
 - tool timeout
 - provider timeout 또는 provider error
-- citation 검증 실패 후 복구 불가
+- citation repair 1회 실패 후 복구 불가
 
 중단 시에는 `rag_runs.status=failed` 또는 근거 부족 응답을 저장합니다.
 
@@ -358,7 +390,10 @@ MVP에서 모델에게 unrestricted tool 권한을 넘기지 않습니다.
 허용 흐름:
 
 ```text
-Agent orchestrator
+LLM provider
+  -> structured AgentAction proposal
+  -> Agent orchestrator
+  -> action enum + argument validation
   -> MCP tool registry
   -> allowlist/schema validation
   -> backend service or external API client
@@ -371,7 +406,7 @@ LLM provider
   -> arbitrary filesystem/shell/database/API
 ```
 
-OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 실제 실행은 서버의 MCP registry가 검증한 tool name과 arguments에 대해서만 수행합니다.
+OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 모델의 출력은 `AgentAction` 제안으로만 취급합니다. 실제 실행은 서버의 action 검증과 MCP registry 검증을 모두 통과한 tool name과 arguments에 대해서만 수행합니다.
 
 ## 상태 저장
 
@@ -395,9 +430,12 @@ OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 실
 
 - step index
 - step type
+- action type
 - tool name
 - status
-- redacted input/output metadata
+- redacted arguments summary
+- observation summary
+- decision reason
 - error code/message
 
 저장하지 않는 값:

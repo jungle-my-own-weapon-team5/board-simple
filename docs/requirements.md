@@ -23,12 +23,12 @@
 - embedding과 LLM generation은 provider adapter로 분리
 - Gemini와 Claude는 후속 provider adapter로 확장
 - MVP에 MCP 서버, JSON-RPC tool 호출, 실제 외부 법률 API tool 포함
-- MVP Agent는 allowlist된 MCP tool을 사용하는 단일 Orchestrator Agent와 bounded state machine으로 구현
+- MVP Agent는 allowlist된 MCP tool을 사용하는 단일 Orchestrator Agent와 bounded reasoning loop/state machine으로 구현
 - 멀티에이전트 workflow는 MVP 안정화 이후 Supervisor Agent와 전문 Agent 구조로 확장
 - `AI_RAG_ENABLED=false`인 동안에는 provider key와 model 설정이 비어 있어도 됨
 - Next.js UI로 게시판과 AI workflow 제공
 
-LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도 MVP 필수 의존성으로 두지 않고, 같은 개념을 명시적 bounded state machine으로 구현합니다. MCP는 과제 요구사항이므로 MVP에 포함합니다. 멀티에이전트 확장도 처음에는 직접 구현한 Supervisor Agent로 시작할 수 있으며, handoff, branching, retry, human-in-the-loop이 복잡해지면 LangGraph 도입을 검토합니다.
+LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도 MVP 필수 의존성으로 두지 않고, 같은 개념을 명시적 bounded reasoning loop/state machine으로 구현합니다. MCP는 과제 요구사항이므로 MVP에 포함합니다. 멀티에이전트 확장도 처음에는 직접 구현한 Supervisor Agent로 시작할 수 있으며, handoff, branching, retry, human-in-the-loop이 복잡해지면 LangGraph 도입을 검토합니다.
 
 법률 문서 유형의 기본 허용값은 `statute`, `case`, `interpretation`, `admin_appeal`, `user_file`, `memo`로 통일합니다.
 
@@ -376,6 +376,8 @@ MVP Agent 역할:
 
 - 사용자 사실관계와 질문을 바탕으로 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 계획합니다.
 - 후보 법령명과 외부 source query는 검색 계획일 뿐이며, citation 가능한 근거는 retrieved chunk 또는 공식 source metadata 검증을 통과한 결과로 제한합니다.
+- LLM은 다음에 수행할 `AgentAction`을 제안하고, Orchestrator는 action type, tool name, arguments, 권한, 반복 여부를 검증한 뒤 실행합니다.
+- 허용되는 action type은 `search_internal`, `search_external_source`, `sync_official_source`, `draft_answer`, `verify_citations`, `respond_insufficient_evidence`, `stop`으로 제한합니다.
 - 먼저 내부 RAG 검색을 수행하고, 근거가 부족한 경우에만 허용된 외부 공식 source 조회 또는 공용 법률 corpus on-demand 수집을 시도합니다.
 - on-demand 수집이 성공해 새 chunk embedding이 준비되면 같은 요청의 내부 RAG 검색을 다시 수행합니다.
 - allowlist된 MCP tool 중 필요한 tool을 선택하고 호출합니다.
@@ -386,11 +388,14 @@ MVP Agent 역할:
 
 수용 기준:
 
-- Agent 상태 흐름은 `plan_issue_sources -> search_internal -> maybe_sync_official_sources -> search_internal_again -> decide -> draft -> verify -> persist`를 기준으로 합니다.
-- 각 step은 `agent_steps`에 저장합니다.
-- `max_iterations`, `max_tool_calls`, timeout을 설정해 무한 루프를 방지합니다.
+- Agent 상태 흐름은 `initialize_run -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`를 기준으로 합니다.
+- `reasoning_loop`는 `propose_action -> validate_action -> execute_tool_or_model_step -> observe -> decide_continue_or_stop` 반복으로 구성합니다.
+- 각 step은 `agent_steps`에 저장하며 action type, tool name, arguments summary, observation summary, decision reason, error metadata를 포함합니다.
+- `max_iterations`, `max_tool_calls`, `max_repeated_actions`, `max_external_sync_candidates`, timeout을 설정하고 같은 action+arguments 반복을 차단해 무한 루프를 방지합니다.
+- citation repair는 최대 1회만 허용합니다.
 - tool 호출 실패 시 run을 실패 처리하거나 근거 부족으로 안전하게 응답합니다.
 - 클라이언트는 provider나 tool을 임의 선택할 수 없습니다.
+- OpenAI function/tool calling을 사용하더라도 실제 tool 실행은 서버의 MCP registry 검증을 통과한 action에 대해서만 수행합니다.
 - MVP에서는 OpenAI를 사용하고, Gemini/Claude는 provider adapter 확장으로 추가할 수 있어야 합니다.
 
 MVP Agent는 단일 Orchestrator Agent입니다. MCP tool은 Agent가 아니며, Orchestrator가 호출하는 제한된 service 경계입니다.
@@ -516,7 +521,7 @@ LangChain이 legal document schema, citation model, audit record를 소유하게
 
 ### LangGraph
 
-MVP에서는 LangGraph 의존성 없이 명시적 bounded state machine으로 Agent를 구현합니다. 이는 과제에서 요구하는 "LangGraph 또는 유사 구조" 중 유사 구조에 해당합니다.
+MVP에서는 LangGraph 의존성 없이 명시적 bounded reasoning loop/state machine으로 Agent를 구현합니다. 이는 과제에서 요구하는 "LangGraph 또는 유사 구조" 중 유사 구조에 해당합니다.
 
 LangGraph는 workflow가 다음 특성을 갖게 될 때 도입합니다.
 
