@@ -4,6 +4,9 @@ import type {
   HackerNewsPreviewItem,
   HackerNewsPreviewResponse,
   HackerNewsSource,
+  WebArticleImportResponse,
+  WebArticlePreviewItem,
+  WebArticlePreviewResponse,
 } from "../types";
 
 export function previewHackerNews(params: {
@@ -26,6 +29,29 @@ export function importHackerNews(items: HackerNewsPreviewItem[]) {
         title: item.title,
         url: item.url,
         hn_url: item.hn_url,
+        summary: item.summary,
+        key_points: item.key_points,
+      })),
+    },
+  });
+}
+
+export function previewWebArticle(params: { url: string; article_text?: string }) {
+  return apiRequest<WebArticlePreviewResponse>("/api/news/web/preview", {
+    method: "POST",
+    json: params,
+  });
+}
+
+export function importWebArticles(items: WebArticlePreviewItem[]) {
+  return apiRequest<WebArticleImportResponse>("/api/news/web/import", {
+    method: "POST",
+    json: {
+      items: items.map((item) => ({
+        source_type: item.source_type,
+        source_id: item.source_id,
+        title: item.title,
+        url: item.url,
         summary: item.summary,
         key_points: item.key_points,
       })),

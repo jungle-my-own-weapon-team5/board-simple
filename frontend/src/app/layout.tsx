@@ -4,7 +4,7 @@ import AppShell from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Board Simple",
+  title: "tech news",
   description: "A simple markdown board",
 };
 

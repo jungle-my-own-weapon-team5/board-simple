@@ -35,7 +35,7 @@ export default function AppShell({ children }: AppShellProps) {
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <Link href="/" className="text-xl font-extrabold">
-            Board Simple
+            tech news
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
             <Button asChild variant="outline" size="sm">
