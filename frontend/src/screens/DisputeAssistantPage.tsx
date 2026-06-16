@@ -1,10 +1,12 @@
 "use client";
 
 import {
-  FileText,
   Gavel,
   Loader2,
   ListChecks,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RefreshCw,
   Search,
   SlidersHorizontal
 } from "lucide-react";
@@ -48,7 +50,14 @@ const DEFAULT_FACTS =
   "임대차 계약이 종료되었지만 임대인이 보증금을 반환하지 않고 있습니다.";
 const DEFAULT_QUESTION = "검토해야 할 쟁점과 답변 초안 방향을 알려주세요.";
 
-type ActionState = "idle" | "searching" | "issues" | "draft";
+type ActionState =
+  | "idle"
+  | "searching"
+  | "issues"
+  | "draft"
+  | "analysis-searching"
+  | "analysis-issues"
+  | "analysis-draft";
 
 export default function DisputeAssistantPage() {
   // 입력값과 실행 결과를 분리해 검색 결과를 보존한 상태에서 초안만 다시 생성할 수 있게 합니다.
@@ -64,11 +73,16 @@ export default function DisputeAssistantPage() {
   const [draftResult, setDraftResult] = useState<AnswerDraftResponse | null>(null);
   const [activeAction, setActiveAction] = useState<ActionState>("idle");
   const [showWorkingStatus, setShowWorkingStatus] = useState(false);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const trimmedFacts = facts.trim();
   const trimmedQuestion = question.trim();
   const isBusy = activeAction !== "idle";
+  const isFullAnalysisRunning = activeAction.startsWith("analysis");
+  const isSearchRunning = activeAction === "searching" || activeAction === "analysis-searching";
+  const isIssuesRunning = activeAction === "issues" || activeAction === "analysis-issues";
+  const isDraftRunning = activeAction === "draft" || activeAction === "analysis-draft";
   const workingMessage = workingMessageForAction(activeAction);
   const isRunnable = trimmedFacts.length > 0 && trimmedQuestion.length > 0 && !isBusy;
   const retrievalOptions = useMemo(
@@ -94,6 +108,50 @@ export default function DisputeAssistantPage() {
     return () => window.clearTimeout(timerId);
   }, [activeAction]);
 
+  const buildSearchPayload = () => ({
+    query: `${trimmedFacts}\n${trimmedQuestion}`,
+    ...retrievalOptions,
+    filters: documentType ? { document_type: documentType } : undefined
+  });
+
+  const buildAgentPayload = () => ({
+    facts: trimmedFacts,
+    question: trimmedQuestion,
+    ...retrievalOptions
+  });
+
+  const handleFullAnalysis = async (event?: FormEvent) => {
+    event?.preventDefault();
+    if (!isRunnable) {
+      return;
+    }
+
+    setError(null);
+    setSearchResult(null);
+    setIssuesResult(null);
+    setDraftResult(null);
+    try {
+      setActiveAction("analysis-searching");
+      const search = await ragApi.searchRagDocuments(buildSearchPayload());
+      setSearchResult(search);
+
+      setActiveAction("analysis-issues");
+      const issues = await aiApi.createDisputeIssues(buildAgentPayload());
+      setIssuesResult(issues);
+
+      setActiveAction("analysis-draft");
+      const draft = await aiApi.createAnswerDraft({
+        ...buildAgentPayload(),
+        tone: "formal"
+      });
+      setDraftResult(draft);
+    } catch (err) {
+      setError(messageFromError(err, "전체 분석에 실패했습니다."));
+    } finally {
+      setActiveAction("idle");
+    }
+  };
+
   // 자료 검색은 답변 생성을 하지 않고 backend retrieval 결과만 받아옵니다.
   const handleSearch = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -104,11 +162,7 @@ export default function DisputeAssistantPage() {
     setError(null);
     setActiveAction("searching");
     try {
-      const result = await ragApi.searchRagDocuments({
-        query: `${trimmedFacts}\n${trimmedQuestion}`,
-        ...retrievalOptions,
-        filters: documentType ? { document_type: documentType } : undefined
-      });
+      const result = await ragApi.searchRagDocuments(buildSearchPayload());
       setSearchResult(result);
     } catch (err) {
       setError(messageFromError(err, "자료 검색에 실패했습니다."));
@@ -126,11 +180,7 @@ export default function DisputeAssistantPage() {
     setError(null);
     setActiveAction("issues");
     try {
-      const result = await aiApi.createDisputeIssues({
-        facts: trimmedFacts,
-        question: trimmedQuestion,
-        ...retrievalOptions
-      });
+      const result = await aiApi.createDisputeIssues(buildAgentPayload());
       setIssuesResult(result);
     } catch (err) {
       setError(messageFromError(err, "쟁점 정리에 실패했습니다."));
@@ -149,10 +199,8 @@ export default function DisputeAssistantPage() {
     setActiveAction("draft");
     try {
       const result = await aiApi.createAnswerDraft({
-        facts: trimmedFacts,
-        question: trimmedQuestion,
+        ...buildAgentPayload(),
         tone: "formal",
-        ...retrievalOptions
       });
       setDraftResult(result);
     } catch (err) {
@@ -163,7 +211,7 @@ export default function DisputeAssistantPage() {
   };
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className="relative left-1/2 flex w-[min(calc(100vw-2rem),88rem)] -translate-x-1/2 flex-col gap-5">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Gavel className="size-7 text-primary" />
@@ -176,7 +224,7 @@ export default function DisputeAssistantPage() {
         </p>
       </div>
 
-      <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" onSubmit={handleSearch}>
+      <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]" onSubmit={handleFullAnalysis}>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">입력</CardTitle>
@@ -200,35 +248,49 @@ export default function DisputeAssistantPage() {
                 maxLength={5000}
               />
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <ActionButton
-                icon={<Search />}
-                isLoading={activeAction === "searching"}
+                icon={<Gavel />}
+                isLoading={isFullAnalysisRunning}
                 disabled={!isRunnable}
                 type="submit"
+                size="lg"
+                className="w-full sm:w-auto"
               >
-                자료 검색
+                전체 분석
               </ActionButton>
-              <ActionButton
-                icon={<ListChecks />}
-                isLoading={activeAction === "issues"}
-                disabled={!isRunnable}
-                type="button"
-                onClick={handleIssues}
-                variant="outline"
-              >
-                쟁점 정리
-              </ActionButton>
-              <ActionButton
-                icon={<FileText />}
-                isLoading={activeAction === "draft"}
-                disabled={!isRunnable}
-                type="button"
-                onClick={handleDraft}
-                variant="secondary"
-              >
-                답변 초안
-              </ActionButton>
+              <div className="flex flex-wrap gap-2">
+                <ActionButton
+                  icon={<Search />}
+                  isLoading={isSearchRunning && !isFullAnalysisRunning}
+                  disabled={!isRunnable}
+                  type="button"
+                  onClick={handleSearch}
+                  variant="outline"
+                >
+                  근거만 검색
+                </ActionButton>
+                <ActionButton
+                  icon={<ListChecks />}
+                  isLoading={isIssuesRunning && !isFullAnalysisRunning}
+                  disabled={!isRunnable}
+                  type="button"
+                  onClick={handleIssues}
+                  variant="outline"
+                >
+                  쟁점 다시 생성
+                </ActionButton>
+                <ActionButton
+                  icon={<RefreshCw />}
+                  isLoading={isDraftRunning && !isFullAnalysisRunning}
+                  disabled={!isRunnable}
+                  type="button"
+                  onClick={handleDraft}
+                  variant="secondary"
+                >
+                  초안 다시 생성
+                </ActionButton>
+              </div>
             </div>
             {showWorkingStatus && workingMessage ? (
               <div
@@ -312,8 +374,18 @@ export default function DisputeAssistantPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <SearchResultsPanel result={searchResult} />
+      <div
+        className={
+          isSearchPanelOpen
+            ? "grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)] 2xl:grid-cols-[20rem_minmax(0,1fr)]"
+            : "grid gap-4 xl:grid-cols-[3.5rem_minmax(0,1fr)]"
+        }
+      >
+        <SearchResultsPanel
+          result={searchResult}
+          isOpen={isSearchPanelOpen}
+          onToggle={() => setIsSearchPanelOpen((value) => !value)}
+        />
         <GeneratedResultPanel issues={issuesResult} draft={draftResult} />
       </div>
     </section>
@@ -361,20 +433,64 @@ function NumberField({
   );
 }
 
-function SearchResultsPanel({ result }: { result: RagSearchResponse | null }) {
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg">검색 결과</CardTitle>
+function SearchResultsPanel({
+  result,
+  isOpen,
+  onToggle
+}: {
+  result: RagSearchResponse | null;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  if (!isOpen) {
+    return (
+      <Card className="xl:sticky xl:top-20">
+        <CardContent className="flex flex-col items-center gap-3 p-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onToggle}
+            aria-label="검색 결과 펼치기"
+            title="검색 결과 펼치기"
+          >
+            <PanelLeftOpen />
+          </Button>
           {result ? (
-            <Badge variant="secondary">
-              Run #{result.run_id} · {result.items.length}건
+            <Badge variant="secondary" className="px-2 py-1">
+              {result.items.length}
             </Badge>
           ) : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)]">
+      <CardHeader className="pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <CardTitle className="text-lg">검색 결과</CardTitle>
+            {result ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Run #{result.run_id} · {result.items.length}건
+              </p>
+            ) : null}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            aria-label="검색 결과 접기"
+            title="검색 결과 접기"
+          >
+            <PanelLeftClose />
+          </Button>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className="grid max-h-[34rem] gap-2 overflow-y-auto xl:max-h-[calc(100vh-12rem)]">
         {!result ? (
           <EmptyState text="검색을 실행하면 관련 청크가 표시됩니다." />
         ) : result.items.length === 0 ? (
@@ -390,17 +506,19 @@ function SearchResultsPanel({ result }: { result: RagSearchResponse | null }) {
 // 검색 결과는 답변과 분리해 표시하고, 각 청크의 원문·점수·출처를 바로 확인할 수 있게 합니다.
 function SearchResultItemView({ item }: { item: RagSearchItem }) {
   return (
-    <article className="rounded-md border border-border bg-background p-4">
+    <article className="rounded-md border border-border bg-background p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-extrabold [overflow-wrap:anywhere]">{item.title}</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-sm font-extrabold leading-5 [overflow-wrap:anywhere]">
+            {item.title}
+          </h3>
+          <p className="text-xs text-muted-foreground">
             {item.heading || "제목 없음"} · 점수 {item.score.toFixed(3)}
           </p>
         </div>
         <Badge variant="outline">#{item.rank}</Badge>
       </div>
-      <p className="mt-3 whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">
+      <p className="mt-2 max-h-36 overflow-y-auto whitespace-pre-wrap text-xs leading-5 [overflow-wrap:anywhere]">
         {item.content}
       </p>
       {item.source_url ? (
@@ -408,7 +526,7 @@ function SearchResultItemView({ item }: { item: RagSearchItem }) {
           href={item.source_url}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+          className="mt-2 inline-block text-xs font-semibold text-primary hover:underline"
         >
           출처 열기
         </a>
@@ -426,7 +544,7 @@ function GeneratedResultPanel({
   draft: AnswerDraftResponse | null;
 }) {
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-4 xl:grid-cols-2">
       <GeneratedBlock
         title="쟁점 정리"
         runId={issues?.run_id}
@@ -465,7 +583,7 @@ function GeneratedBlock({
   disclaimer?: string | null;
 }) {
   return (
-    <Card>
+    <Card className="min-h-[28rem]">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg">{title}</CardTitle>
@@ -537,14 +655,14 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function workingMessageForAction(action: ActionState): string | null {
-  if (action === "searching") {
-    return "자료를 검색하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  if (action === "searching" || action === "analysis-searching") {
+    return "근거 자료를 검색하고 필요한 경우 공식 법령을 색인하는 중입니다.";
   }
-  if (action === "issues") {
-    return "쟁점을 정리하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  if (action === "issues" || action === "analysis-issues") {
+    return "쟁점을 정리하고 검색된 근거와 대조하는 중입니다.";
   }
-  if (action === "draft") {
-    return "답변 초안을 작성하고 필요한 경우 공식 법령을 색인하는 중입니다.";
+  if (action === "draft" || action === "analysis-draft") {
+    return "답변 초안을 작성하고 citation을 검증하는 중입니다.";
   }
   return null;
 }
