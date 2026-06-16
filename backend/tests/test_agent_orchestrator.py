@@ -26,6 +26,12 @@ from app.services.ai.types import (
     EmbeddingRequest,
     EmbeddingResult,
 )
+from app.services.rag.legal_open_api import (
+    LawOpenApiDocumentMetadata,
+    LawOpenApiLawBody,
+    LawOpenApiSearchItem,
+    LawOpenApiSearchResult,
+)
 from app.services.rag.normalization import calculate_text_checksum
 
 
@@ -191,6 +197,54 @@ def test_orchestrator_agent_stops_before_draft_when_tool_budget_is_exceeded(
     assert steps[-1].error_code == "agent_tool_budget_exceeded"
 
 
+def test_orchestrator_agent_syncs_official_source_when_internal_evidence_is_missing(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    _create_profile(db, dimensions=3)
+    ai_client = _AgentTestAIClient(
+        embedding=[1.0, 0.0, 0.0],
+        draft_text="공식 법령을 보강해 검토한 초안입니다.",
+    )
+    law_client = _FakeLawOpenApiClient()
+
+    result = OrchestratorAgent(
+        settings=_settings(ai_agent_max_tool_calls=5, law_open_api_oc="test-oc"),
+        ai_client=ai_client,
+        law_open_api_client=law_client,
+    ).run(
+        db,
+        AgentRunRequest(
+            user_id=user.id,
+            task_type="answer_draft",
+            facts="상대방이 돈을 받고 연락을 끊었습니다.",
+            question="사기죄 관련 법령을 확인해 주세요.",
+            top_k=3,
+        ),
+    )
+
+    steps = agent_step_repository.list_agent_steps_by_run(db, result.run_id)
+
+    assert result.status == "completed"
+    assert result.answer == "공식 법령을 보강해 검토한 초안입니다."
+    assert result.citations
+    assert [tool_call.tool_name for tool_call in result.tool_calls] == [
+        "search_legal_documents",
+        "search_law_open_api",
+        "search_legal_documents",
+        "verify_citations",
+    ]
+    assert law_client.search_calls == ["사기죄 관련 법령을 확인해 주세요.", "형법"]
+    assert law_client.body_calls == ["MST-CRIMINAL"]
+    assert any(step.step_type == "execute_service" for step in steps)
+    assert any(
+        step.step_type == "observe"
+        and step.output_json
+        and step.output_json.get("after_official_source_sync") is True
+        for step in steps
+    )
+
+
 def test_orchestrator_agent_rejects_invalid_action_before_tool_execution(
     db: Session,
 ) -> None:
@@ -266,7 +320,11 @@ def test_orchestrator_agent_sanitizes_provider_error_message(db: Session) -> Non
     assert steps[-1].error_message == "ProviderUnavailableError"
 
 
-def _settings(*, ai_agent_max_tool_calls: int = 5) -> Settings:
+def _settings(
+    *,
+    ai_agent_max_tool_calls: int = 5,
+    law_open_api_oc: str = "",
+) -> Settings:
     return Settings(
         app_env="test",
         ai_agent_provider="mock",
@@ -275,6 +333,7 @@ def _settings(*, ai_agent_max_tool_calls: int = 5) -> Settings:
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,
         ai_agent_max_tool_calls=ai_agent_max_tool_calls,
+        law_open_api_oc=law_open_api_oc,
     )
 
 
@@ -337,6 +396,75 @@ class _InvalidSearchToolPlanner:
             tool_name="verify_citations",
             arguments={"run_id": rag_run_id, "citations": citations},
             reason="unused",
+        )
+
+
+class _FakeLawOpenApiClient:
+    def __init__(self) -> None:
+        self.search_calls: list[str] = []
+        self.body_calls: list[str] = []
+
+    def search(
+        self,
+        *,
+        query: str,
+        target: str,
+        limit: int = 5,
+        page: int = 1,
+        search_scope: int = 1,
+    ) -> LawOpenApiSearchResult:
+        self.search_calls.append(query)
+        metadata = LawOpenApiDocumentMetadata(
+            provider="law_open_api",
+            provider_target="law",
+            document_type="statute",
+            title="형법",
+            external_id="MST-CRIMINAL",
+            canonical_id="LAW-CRIMINAL",
+            version_label="2026-01-01",
+            published_date=date(2025, 12, 1),
+            effective_date=date(2026, 1, 1),
+            source_url="https://www.law.go.kr/법령/형법",
+            metadata_json={"fixture": "agent_sync"},
+        )
+        return LawOpenApiSearchResult(
+            query=query,
+            target="statute",
+            external_target="law",
+            page=page,
+            limit=limit,
+            total_count=1,
+            items=[
+                LawOpenApiSearchItem(
+                    external_id="MST-CRIMINAL",
+                    title="형법",
+                    source_url="https://www.law.go.kr/법령/형법",
+                    summary="형법 현행 법령",
+                    target="statute",
+                    metadata_json={"fixture": "agent_sync"},
+                    preflight_metadata=metadata,
+                )
+            ],
+        )
+
+    def get_law_body(
+        self,
+        *,
+        mst: str | None = None,
+        law_id: str | None = None,
+    ) -> LawOpenApiLawBody:
+        self.body_calls.append(mst or law_id or "")
+        return LawOpenApiLawBody(
+            title="형법",
+            raw_text="제347조(사기) 사람을 기망하여 재물의 교부를 받거나 재산상의 이익을 취득한 경우를 규정한다.",
+            external_id="MST-CRIMINAL",
+            law_id="LAW-CRIMINAL",
+            mst="MST-CRIMINAL",
+            source_url="https://www.law.go.kr/법령/형법",
+            published_date=date(2025, 12, 1),
+            effective_date=date(2026, 1, 1),
+            version_label="2026-01-01",
+            metadata_json={"fixture": "agent_sync"},
         )
 
 

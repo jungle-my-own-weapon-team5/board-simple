@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.models.rag_run import AgentStep, RagRun
+from app.repositories import embeddings as embedding_repository
 from app.repositories import agent_steps as agent_step_repository
 from app.repositories import rag_runs as rag_run_repository
 from app.services.agent.citations import build_chunk_citations
@@ -16,6 +18,7 @@ from app.services.agent.prompts import build_draft_prompt
 from app.services.agent.state import (
     AgentAction,
     AgentActionType,
+    EvidenceAssessment,
     LEGAL_AI_DISCLAIMER,
     AgentRunRequest,
     AgentRunResult,
@@ -26,6 +29,8 @@ from app.services.ai.errors import ProviderError
 from app.services.ai.types import AITextRequest, AITextResult
 from app.services.mcp.server import McpJsonRpcServer, create_default_server
 from app.services.mcp.types import McpToolCallContext
+from app.services.rag.legal_open_api import LawOpenApiClient
+from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 
 ALLOWED_ACTION_TYPES: set[str] = {
     "search_internal",
@@ -43,6 +48,16 @@ ACTION_TOOL_NAMES: dict[str, str] = {
 }
 
 
+@dataclass(frozen=True)
+class _OfficialSourceEnrichmentResult:
+    rag_run: RagRun
+    evidence_items: list[dict[str, object]]
+    citations: list[dict[str, object]]
+    step_index: int
+    tool_call_count: int
+    iteration_count: int
+
+
 class AgentActionPlanner(Protocol):
     """LLM 또는 deterministic planner가 다음 action을 제안하는 계약입니다."""
 
@@ -56,6 +71,20 @@ class AgentActionPlanner(Protocol):
         citations: list[dict[str, object]],
     ) -> AgentAction:
         """Citation 검증 action을 제안합니다."""
+
+    def propose_external_source_action(
+        self,
+        request: AgentRunRequest,
+        assessment: EvidenceAssessment,
+    ) -> AgentAction:
+        """내부 RAG 근거 부족 시 외부 공식 source 조회 action을 제안합니다."""
+
+    def propose_sync_official_source_action(
+        self,
+        request: AgentRunRequest,
+        external_source_result: dict[str, Any],
+    ) -> AgentAction:
+        """외부 공식 source 후보를 공용 corpus로 보강하는 action을 제안합니다."""
 
 
 class DefaultAgentActionPlanner:
@@ -72,6 +101,33 @@ class DefaultAgentActionPlanner:
     ) -> AgentAction:
         return _build_verify_action(rag_run_id=rag_run_id, citations=citations)
 
+    def propose_external_source_action(
+        self,
+        request: AgentRunRequest,
+        assessment: EvidenceAssessment,
+    ) -> AgentAction:
+        return AgentAction(
+            action_type="search_external_source",
+            tool_name="search_law_open_api",
+            arguments={
+                "query": _official_source_query(request),
+                "target": "statute",
+                "limit": 1,
+            },
+            reason=f"internal_evidence_insufficient:{assessment.reason}",
+        )
+
+    def propose_sync_official_source_action(
+        self,
+        request: AgentRunRequest,
+        external_source_result: dict[str, Any],
+    ) -> AgentAction:
+        return AgentAction(
+            action_type="sync_official_source",
+            arguments={"query": _official_sync_query(request, external_source_result)},
+            reason="sync_first_official_source_candidate",
+        )
+
 
 class OrchestratorAgent:
     """MCP tool을 순서대로 호출하는 MVP 단일 Agent입니다."""
@@ -83,6 +139,7 @@ class OrchestratorAgent:
         ai_client: AIClient | None = None,
         mcp_server: McpJsonRpcServer | None = None,
         action_planner: AgentActionPlanner | None = None,
+        law_open_api_client: Any | None = None,
     ) -> None:
         self.settings = settings
         self.ai_client = ai_client or AIClient(settings)
@@ -90,6 +147,7 @@ class OrchestratorAgent:
             settings.mcp_allowed_tool_names
         )
         self.action_planner = action_planner or DefaultAgentActionPlanner()
+        self.law_open_api_client = law_open_api_client
 
     def run(self, db: Session, request: AgentRunRequest) -> AgentRunResult:
         normalized_request = _validate_request(request)
@@ -230,15 +288,67 @@ class OrchestratorAgent:
             )
             step_index += 1
 
-            _add_step(
-                db,
-                rag_run=rag_run,
-                step_index=step_index,
-                step_type="decide_continue_or_stop",
-                status="completed",
-                output_json={"decision": "draft", "reason": "evidence_available"},
-            )
-            step_index += 1
+            assessment = _assess_evidence(evidence_items, citations)
+            if not assessment.is_sufficient:
+                _add_step(
+                    db,
+                    rag_run=rag_run,
+                    step_index=step_index,
+                    step_type="decide_continue_or_stop",
+                    status="completed",
+                    output_json={
+                        "decision": "search_external_source",
+                        "reason": assessment.reason,
+                    },
+                )
+                step_index += 1
+
+                enrichment_result = self._try_enrich_official_sources(
+                    db,
+                    request=normalized_request,
+                    rag_run=rag_run,
+                    assessment=assessment,
+                    step_index=step_index,
+                    iteration_count=iteration_count,
+                    seen_actions=seen_actions,
+                    tool_calls=tool_calls,
+                    tool_call_count=tool_call_count,
+                )
+                if enrichment_result is None:
+                    return self._complete_with_insufficient_evidence(
+                        db,
+                        rag_run=rag_run,
+                        request=normalized_request,
+                        step_index=step_index,
+                        assessment=assessment,
+                        tool_calls=tool_calls,
+                    )
+                rag_run = enrichment_result.rag_run
+                evidence_items = enrichment_result.evidence_items
+                citations = enrichment_result.citations
+                step_index = enrichment_result.step_index
+                tool_call_count = enrichment_result.tool_call_count
+                iteration_count = enrichment_result.iteration_count
+                assessment = _assess_evidence(evidence_items, citations)
+                if not assessment.is_sufficient:
+                    return self._complete_with_insufficient_evidence(
+                        db,
+                        rag_run=rag_run,
+                        request=normalized_request,
+                        step_index=step_index,
+                        assessment=assessment,
+                        tool_calls=tool_calls,
+                    )
+            else:
+                _add_step(
+                    db,
+                    rag_run=rag_run,
+                    step_index=step_index,
+                    step_type="decide_continue_or_stop",
+                    status="completed",
+                    output_json={"decision": "draft", "reason": assessment.reason},
+                )
+                step_index += 1
 
             if tool_call_count >= self.settings.ai_agent_max_tool_calls:
                 return self._fail_existing_run(
@@ -433,8 +543,303 @@ class OrchestratorAgent:
                 user_id=user_id,
                 settings=self.settings,
                 ai_client=self.ai_client,
+                law_open_api_client=self.law_open_api_client,
             ),
         )
+
+    def _try_enrich_official_sources(
+        self,
+        db: Session,
+        *,
+        request: AgentRunRequest,
+        rag_run: RagRun,
+        assessment: EvidenceAssessment,
+        step_index: int,
+        iteration_count: int,
+        seen_actions: dict[str, int],
+        tool_calls: list[AgentToolCallSummary],
+        tool_call_count: int,
+    ) -> _OfficialSourceEnrichmentResult | None:
+        if not self.settings.law_open_api_oc.strip() and self.law_open_api_client is None:
+            return None
+
+        external_action = self.action_planner.propose_external_source_action(
+            request,
+            assessment,
+        )
+        iteration_count = _next_iteration_count(
+            iteration_count,
+            settings=self.settings,
+        )
+        external_validation = _validate_action(
+            external_action,
+            settings=self.settings,
+            seen_actions=seen_actions,
+            allowed_action_types={"search_external_source"},
+        )
+        _record_action_seen(external_action, seen_actions)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="propose_action",
+            tool_name=external_action.tool_name,
+            status="completed",
+            output_json=_action_summary(external_action),
+        )
+        step_index += 1
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="validate_action",
+            tool_name=external_action.tool_name,
+            status="completed",
+            input_json=_action_validation_input(external_action),
+            output_json=external_validation,
+        )
+        step_index += 1
+
+        _ensure_tool_budget_available(tool_call_count, settings=self.settings)
+        external_response = self._call_tool(
+            db,
+            tool_name=_require_tool_name(external_action),
+            arguments=external_action.arguments,
+            user_id=request.user_id,
+        )
+        tool_call_count += 1
+        external_result = _unwrap_tool_result(external_response)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="execute_tool",
+            tool_name=external_action.tool_name,
+            status="completed",
+            input_json=_safe_tool_arguments(external_action.arguments),
+            output_json=_external_source_summary(external_result),
+        )
+        tool_calls.append(
+            AgentToolCallSummary(
+                step_index=step_index,
+                tool_name=_require_tool_name(external_action),
+                status="completed",
+            )
+        )
+        step_index += 1
+
+        external_items = _external_source_items(external_result)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="observe",
+            status="completed",
+            output_json={
+                "action_type": external_action.action_type,
+                "external_item_count": len(external_items),
+            },
+        )
+        step_index += 1
+        if not external_items:
+            return None
+
+        sync_action = self.action_planner.propose_sync_official_source_action(
+            request,
+            external_result,
+        )
+        iteration_count = _next_iteration_count(
+            iteration_count,
+            settings=self.settings,
+        )
+        sync_validation = _validate_action(
+            sync_action,
+            settings=self.settings,
+            seen_actions=seen_actions,
+            allowed_action_types={"sync_official_source"},
+        )
+        _record_action_seen(sync_action, seen_actions)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="propose_action",
+            status="completed",
+            output_json=_action_summary(sync_action),
+        )
+        step_index += 1
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="validate_action",
+            status="completed",
+            input_json=_action_validation_input(sync_action),
+            output_json=sync_validation,
+        )
+        step_index += 1
+
+        sync_result = self._sync_official_source(db, sync_action)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="execute_service",
+            status="completed",
+            input_json=_safe_tool_arguments(sync_action.arguments),
+            output_json=sync_result,
+        )
+        step_index += 1
+        if sync_result.get("status") not in {"embedded", "reused"}:
+            return None
+
+        rerun_action = self.action_planner.propose_search_action(request)
+        iteration_count = _next_iteration_count(
+            iteration_count,
+            settings=self.settings,
+        )
+        rerun_validation = _validate_action(
+            rerun_action,
+            settings=self.settings,
+            seen_actions=seen_actions,
+            allowed_action_types={"search_internal"},
+        )
+        _record_action_seen(rerun_action, seen_actions)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="propose_action",
+            tool_name=rerun_action.tool_name,
+            status="completed",
+            output_json=_action_summary(rerun_action),
+        )
+        step_index += 1
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="validate_action",
+            tool_name=rerun_action.tool_name,
+            status="completed",
+            input_json=_action_validation_input(rerun_action),
+            output_json=rerun_validation,
+        )
+        step_index += 1
+
+        _ensure_tool_budget_available(tool_call_count, settings=self.settings)
+        rerun_response = self._call_tool(
+            db,
+            tool_name=_require_tool_name(rerun_action),
+            arguments=rerun_action.arguments,
+            user_id=request.user_id,
+        )
+        tool_call_count += 1
+        rerun_result = _unwrap_tool_result(rerun_response)
+        rerun_rag_run = _require_rag_run(db, rerun_result)
+        _prepare_agent_run(
+            rerun_rag_run,
+            request=request,
+            settings=self.settings,
+        )
+        _move_agent_steps_to_run(db, from_run=rag_run, to_run=rerun_rag_run)
+        rag_run = rerun_rag_run
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="execute_tool",
+            tool_name=rerun_action.tool_name,
+            status="completed",
+            input_json=_safe_tool_arguments(rerun_action.arguments),
+            output_json=_search_summary(rerun_result),
+        )
+        tool_calls.append(
+            AgentToolCallSummary(
+                step_index=step_index,
+                tool_name=_require_tool_name(rerun_action),
+                status="completed",
+            )
+        )
+        step_index += 1
+
+        if rerun_result.get("status") != "completed":
+            return None
+        evidence_items = _require_search_items(rerun_result)
+        citations = build_chunk_citations(evidence_items)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="observe",
+            status="completed",
+            output_json={
+                "action_type": rerun_action.action_type,
+                "evidence_count": len(evidence_items),
+                "citation_count": len(citations),
+                "after_official_source_sync": True,
+            },
+        )
+        step_index += 1
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="decide_continue_or_stop",
+            status="completed",
+            output_json={"decision": "draft", "reason": "official_source_enriched"},
+        )
+        step_index += 1
+        return _OfficialSourceEnrichmentResult(
+            rag_run=rag_run,
+            evidence_items=evidence_items,
+            citations=citations,
+            step_index=step_index,
+            tool_call_count=tool_call_count,
+            iteration_count=iteration_count,
+        )
+
+    def _sync_official_source(
+        self,
+        db: Session,
+        action: AgentAction,
+    ) -> dict[str, object]:
+        query = action.arguments.get("query")
+        if not isinstance(query, str) or not query.strip():
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "sync_official_source requires a non-empty query",
+            )
+        active_profiles = embedding_repository.list_active_embedding_profiles(db)
+        if not active_profiles:
+            raise AgentOrchestrationError(
+                "agent_embedding_profile_missing",
+                "No active embedding profile is available",
+            )
+        client = self.law_open_api_client or LawOpenApiClient(
+            oc=self.settings.law_open_api_oc,
+            base_url=self.settings.law_open_api_base_url,
+            service_url=self.settings.law_open_api_service_url,
+            timeout_seconds=self.settings.mcp_request_timeout_seconds,
+        )
+        result = sync_and_embed_law_open_api_statute(
+            db,
+            client=client,
+            query=query.strip(),
+            embedding_profile=active_profiles[0],
+            ai_client=self.ai_client,
+            search_limit=1,
+            timeout_seconds=self.settings.ai_request_timeout_seconds,
+            commit=False,
+        )
+        return {
+            "status": result.status,
+            "document_id": result.document.id if result.document is not None else None,
+            "chunk_count": len(result.chunks or []),
+            "body_fetched": result.body_fetched,
+            "embeddings_reusable": result.embeddings_reusable,
+            "skipped_reason": result.skipped_reason,
+        }
 
     def _draft(
         self,
@@ -485,6 +890,48 @@ class OrchestratorAgent:
             status="failed",
             error_code=error_code,
             error_message=error_message,
+        )
+        db.commit()
+        return _build_result(
+            rag_run,
+            request=request,
+            citations=[],
+            tool_calls=tool_calls,
+        )
+
+    def _complete_with_insufficient_evidence(
+        self,
+        db: Session,
+        *,
+        rag_run: RagRun,
+        request: AgentRunRequest,
+        step_index: int,
+        assessment: EvidenceAssessment,
+        tool_calls: list[AgentToolCallSummary],
+    ) -> AgentRunResult:
+        rag_run.status = "completed"
+        rag_run.answer = _insufficient_evidence_answer(assessment)
+        rag_run.disclaimer = LEGAL_AI_DISCLAIMER
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="respond_insufficient_evidence",
+            status="completed",
+            output_json={
+                "reason": assessment.reason,
+                "relevant_chunk_count": assessment.relevant_chunk_count,
+                "citation_count": assessment.citation_count,
+            },
+        )
+        step_index += 1
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="persist",
+            status="completed",
+            output_json={"status": "completed", "reason": "insufficient_evidence"},
         )
         db.commit()
         return _build_result(
@@ -588,6 +1035,14 @@ def _next_iteration_count(iteration_count: int, *, settings: Settings) -> int:
     return next_count
 
 
+def _ensure_tool_budget_available(tool_call_count: int, *, settings: Settings) -> None:
+    if tool_call_count >= settings.ai_agent_max_tool_calls:
+        raise AgentOrchestrationError(
+            "agent_tool_budget_exceeded",
+            "Agent tool call budget was exceeded",
+        )
+
+
 def _validate_action(
     action: AgentAction,
     *,
@@ -671,6 +1126,26 @@ def _validate_action_arguments(action: AgentAction) -> None:
                 "agent_action_arguments_invalid",
                 "verify_citations requires a citation list",
             )
+    elif action.action_type == "search_external_source":
+        query = action.arguments.get("query")
+        target = action.arguments.get("target")
+        if not isinstance(query, str) or not query.strip():
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "search_external_source requires a non-empty query",
+            )
+        if target not in {"statute", "case", "interpretation", "admin_appeal"}:
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "search_external_source target is invalid",
+            )
+    elif action.action_type == "sync_official_source":
+        query = action.arguments.get("query")
+        if not isinstance(query, str) or not query.strip():
+            raise AgentOrchestrationError(
+                "agent_action_arguments_invalid",
+                "sync_official_source requires a non-empty query",
+            )
 
 
 def _action_signature(action: AgentAction) -> str:
@@ -683,6 +1158,84 @@ def _record_action_seen(
 ) -> None:
     action_signature = _action_signature(action)
     seen_actions[action_signature] = seen_actions.get(action_signature, 0) + 1
+
+
+def _assess_evidence(
+    evidence_items: list[dict[str, object]],
+    citations: list[dict[str, object]],
+) -> EvidenceAssessment:
+    if not evidence_items:
+        return EvidenceAssessment(
+            is_sufficient=False,
+            relevant_chunk_count=0,
+            citation_count=len(citations),
+            reason="no_retrieved_chunks",
+        )
+    if not citations:
+        return EvidenceAssessment(
+            is_sufficient=False,
+            relevant_chunk_count=len(evidence_items),
+            citation_count=0,
+            reason="no_citation_candidates",
+        )
+    return EvidenceAssessment(
+        is_sufficient=True,
+        relevant_chunk_count=len(evidence_items),
+        citation_count=len(citations),
+        reason="evidence_available",
+    )
+
+
+def _insufficient_evidence_answer(assessment: EvidenceAssessment) -> str:
+    return (
+        "현재 내부 검색과 허용된 공식 source 보강만으로는 답변에 필요한 "
+        "citation 근거가 충분하지 않습니다. "
+        f"사유: {assessment.reason}. "
+        "추가 사실관계나 관련 문서를 보강한 뒤 다시 검색해야 합니다."
+    )
+
+
+def _external_source_items(external_result: dict[str, Any]) -> list[dict[str, object]]:
+    items = external_result.get("items")
+    if not isinstance(items, list):
+        return []
+    return [item for item in items if isinstance(item, dict)]
+
+
+def _external_source_summary(external_result: dict[str, Any]) -> dict[str, object]:
+    items = _external_source_items(external_result)
+    return {
+        "tool_name": external_result.get("tool_name"),
+        "target": external_result.get("target"),
+        "item_count": len(items),
+        "total_count": external_result.get("total_count"),
+    }
+
+
+def _official_source_query(request: AgentRunRequest) -> str:
+    return request.question.strip() or request.facts.strip()
+
+
+def _official_sync_query(
+    request: AgentRunRequest,
+    external_source_result: dict[str, Any],
+) -> str:
+    for item in _external_source_items(external_source_result):
+        title = item.get("title")
+        if isinstance(title, str) and title.strip():
+            return title.strip()
+    return _official_source_query(request)
+
+
+def _move_agent_steps_to_run(
+    db: Session,
+    *,
+    from_run: RagRun,
+    to_run: RagRun,
+) -> None:
+    for step in agent_step_repository.list_agent_steps_by_run(db, from_run.id):
+        step.rag_run_id = to_run.id
+    db.flush()
 
 
 def _unwrap_tool_result(response: dict[str, Any]) -> dict[str, Any]:

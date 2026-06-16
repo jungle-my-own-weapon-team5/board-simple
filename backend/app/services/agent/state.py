@@ -64,6 +64,17 @@ class AgentObservation:
 
 
 @dataclass(frozen=True)
+class EvidenceAssessment:
+    """현재 내부 RAG evidence가 답변 생성에 충분한지에 대한 초기 판단입니다."""
+
+    is_sufficient: bool
+    relevant_chunk_count: int
+    citation_count: int
+    reason: str
+    uncovered_issues: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class AgentRunResult:
     run_id: int
     status: AgentRunStatus

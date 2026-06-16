@@ -436,6 +436,8 @@ MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP
 
 `sync_official_source`는 내부 RAG 근거가 부족하고 공식 source 후보가 있을 때만 실행합니다. 새 embedding이 만들어지지 않았거나 기존 indexed 문서가 재사용된 경우에도 retrieval 재실행 여부를 audit에 남깁니다.
 
+초기 evidence 부족 판단은 단순하게 시작합니다. 내부 RAG 검색 결과 chunk가 없거나 citation 후보가 없으면 근거 부족으로 보고 공식 source 보강을 시도할 수 있습니다. 이후 평가 품질을 높일 때는 쟁점별 coverage, source type 다양성, 최신 법령 여부, 공식 source 여부, top-k 결과가 하나의 문서 또는 조문에 과도하게 몰리는지까지 함께 평가합니다.
+
 후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 
 제한:

@@ -371,6 +371,20 @@ backend/tests/test_agent_orchestrator.py
 - tool 실패 시 안전 응답 테스트
 - provider 실패 시 `502` 또는 `503` mapping 테스트
 
+초기 evidence 부족 판단 기준:
+
+- 내부 RAG 검색 결과 chunk가 0개이면 부족으로 판단합니다.
+- citation 후보가 0개이면 부족으로 판단합니다.
+- 위 조건에서만 `search_external_source` 또는 `sync_official_source` action을 허용합니다.
+
+향후 evidence 평가 개선 기준:
+
+- 쟁점별 coverage 계산
+- 법령, 판례, 법령해석례, 행정심판례 등 source type 다양성 확인
+- 최신 법령 여부 확인
+- 공식 source 여부 확인
+- top-k 결과가 하나의 문서 또는 하나의 조문에 과도하게 몰리는지 확인
+
 권장 커밋 단위:
 
 1. `feat(backend): Agent reasoning loop 계약 추가`
