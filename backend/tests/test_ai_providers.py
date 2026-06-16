@@ -14,6 +14,12 @@ from app.services.ai.errors import (
     ProviderTimeoutError,
     ProviderUnavailableError,
 )
+from app.services.ai.providers.anthropic import (
+    ANTHROPIC_API_VERSION,
+    DEFAULT_MAX_TOKENS,
+    AnthropicProvider,
+)
+from app.services.ai.providers.gemini import GeminiProvider
 from app.services.ai.providers.openai import OpenAIProvider
 from app.services.ai.types import AITextRequest, EmbeddingRequest
 
@@ -106,6 +112,31 @@ def test_openai_provider_requires_api_key_for_embedding() -> None:
                 metadata={},
             )
         )
+
+
+@pytest.mark.parametrize(
+    ("provider_name", "expected_type"),
+    [
+        ("gemini", GeminiProvider),
+        ("anthropic", AnthropicProvider),
+    ],
+)
+def test_ai_client_selects_non_openai_generation_provider(
+    provider_name: str,
+    expected_type: type[GeminiProvider | AnthropicProvider],
+) -> None:
+    settings = Settings(
+        ai_rag_enabled=False,
+        ai_agent_provider=provider_name,
+        ai_agent_model="test-model",
+        gemini_api_key="present",
+        anthropic_api_key="present",
+    )
+    client = AIClient(settings)
+
+    provider = client._build_agent_provider()
+
+    assert isinstance(provider, expected_type)
 
 
 def test_generation_provider_without_embedding_support_fails_explicitly() -> None:
@@ -233,6 +264,232 @@ def test_openai_provider_parses_text_generation_output_array() -> None:
 
     assert result.text == "첫 번째 문장. 두 번째 문장."
     assert result.agent_model_name == "gpt-array"
+
+
+def test_gemini_provider_posts_text_generation_request_and_normalizes_response() -> None:
+    captured_requests: list[httpx.Request] = []
+    captured_payloads: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured_requests.append(request)
+        captured_payloads.append(json.loads(request.content.decode("utf-8")))
+        return httpx.Response(
+            200,
+            json={
+                "modelVersion": "gemini-test",
+                "candidates": [
+                    {
+                        "finishReason": "STOP",
+                        "content": {
+                            "parts": [
+                                {"text": "Gemini "},
+                                {"text": "답변입니다."},
+                            ]
+                        },
+                    }
+                ],
+                "usageMetadata": {
+                    "promptTokenCount": 3,
+                    "candidatesTokenCount": 4,
+                    "totalTokenCount": 7,
+                },
+            },
+        )
+
+    provider = GeminiProvider(
+        api_key="test-api-key",
+        base_url="https://gemini.test/v1beta/",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = provider.generate_text(
+        AITextRequest(
+            prompt="쟁점을 정리해주세요.",
+            model="gemini-test",
+            temperature=0.3,
+            timeout_seconds=10,
+            metadata={},
+        )
+    )
+
+    assert len(captured_requests) == 1
+    assert (
+        str(captured_requests[0].url)
+        == "https://gemini.test/v1beta/models/gemini-test:generateContent"
+    )
+    assert captured_requests[0].headers["x-goog-api-key"] == "test-api-key"
+    assert captured_payloads == [
+        {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": "쟁점을 정리해주세요."}],
+                }
+            ],
+            "generationConfig": {"temperature": 0.3},
+        }
+    ]
+    assert result.text == "Gemini 답변입니다."
+    assert result.agent_provider == "gemini"
+    assert result.agent_model_name == "gemini-test"
+    assert result.finish_reason == "STOP"
+    assert result.usage is not None
+    assert result.usage.input_tokens == 3
+    assert result.usage.output_tokens == 4
+    assert result.usage.total_tokens == 7
+
+
+def test_anthropic_provider_posts_text_generation_request_and_normalizes_response() -> None:
+    captured_requests: list[httpx.Request] = []
+    captured_payloads: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured_requests.append(request)
+        captured_payloads.append(json.loads(request.content.decode("utf-8")))
+        return httpx.Response(
+            200,
+            json={
+                "id": "msg-test",
+                "model": "claude-test",
+                "stop_reason": "end_turn",
+                "content": [
+                    {"type": "text", "text": "Claude "},
+                    {"type": "text", "text": "답변입니다."},
+                ],
+                "usage": {
+                    "input_tokens": 5,
+                    "output_tokens": 6,
+                },
+            },
+        )
+
+    provider = AnthropicProvider(
+        api_key="test-api-key",
+        base_url="https://anthropic.test/v1/",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = provider.generate_text(
+        AITextRequest(
+            prompt="쟁점을 정리해주세요.",
+            model="claude-test",
+            temperature=0.1,
+            timeout_seconds=10,
+            metadata={},
+        )
+    )
+
+    assert len(captured_requests) == 1
+    assert str(captured_requests[0].url) == "https://anthropic.test/v1/messages"
+    assert captured_requests[0].headers["x-api-key"] == "test-api-key"
+    assert captured_requests[0].headers["anthropic-version"] == ANTHROPIC_API_VERSION
+    assert captured_payloads == [
+        {
+            "model": "claude-test",
+            "max_tokens": DEFAULT_MAX_TOKENS,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "쟁점을 정리해주세요.",
+                }
+            ],
+            "temperature": 0.1,
+        }
+    ]
+    assert result.text == "Claude 답변입니다."
+    assert result.agent_provider == "anthropic"
+    assert result.agent_model_name == "claude-test"
+    assert result.finish_reason == "end_turn"
+    assert result.raw_response_id == "msg-test"
+    assert result.usage is not None
+    assert result.usage.input_tokens == 5
+    assert result.usage.output_tokens == 6
+    assert result.usage.total_tokens == 11
+
+
+@pytest.mark.parametrize(
+    ("provider", "expected_message"),
+    [
+        (GeminiProvider(api_key=""), "GEMINI_API_KEY"),
+        (AnthropicProvider(api_key=""), "ANTHROPIC_API_KEY"),
+    ],
+)
+def test_non_openai_generation_provider_requires_api_key(
+    provider: GeminiProvider | AnthropicProvider,
+    expected_message: str,
+) -> None:
+    with pytest.raises(ProviderConfigError, match=expected_message):
+        provider.generate_text(_openai_text_request())
+
+
+@pytest.mark.parametrize(
+    "provider",
+    [
+        GeminiProvider(api_key="test-api-key"),
+        AnthropicProvider(api_key="test-api-key"),
+    ],
+)
+def test_non_openai_generation_provider_rejects_embedding(
+    provider: GeminiProvider | AnthropicProvider,
+) -> None:
+    with pytest.raises(ProviderCapabilityError, match="embedding"):
+        provider.embed_texts(_openai_embedding_request())
+
+
+@pytest.mark.parametrize(
+    ("provider_factory", "expected_error"),
+    [
+        (
+            lambda transport: GeminiProvider(
+                api_key="test-api-key",
+                transport=transport,
+            ),
+            ProviderRateLimitError,
+        ),
+        (
+            lambda transport: AnthropicProvider(
+                api_key="test-api-key",
+                transport=transport,
+            ),
+            ProviderRateLimitError,
+        ),
+    ],
+)
+def test_non_openai_generation_provider_maps_rate_limit_errors(
+    provider_factory: object,
+    expected_error: type[Exception],
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(429, json={"error": {"message": "redacted"}})
+
+    provider = provider_factory(httpx.MockTransport(handler))
+
+    with pytest.raises(expected_error):
+        provider.generate_text(_openai_text_request())
+
+
+@pytest.mark.parametrize(
+    "provider_factory",
+    [
+        lambda transport: GeminiProvider(api_key="test-api-key", transport=transport),
+        lambda transport: AnthropicProvider(
+            api_key="test-api-key",
+            transport=transport,
+        ),
+    ],
+)
+def test_non_openai_generation_provider_maps_timeout_errors(
+    provider_factory: object,
+) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("timeout with test-api-key", request=request)
+
+    provider = provider_factory(httpx.MockTransport(handler))
+
+    with pytest.raises(ProviderTimeoutError) as exc_info:
+        provider.generate_text(_openai_text_request())
+
+    assert "test-api-key" not in str(exc_info.value)
 
 
 @pytest.mark.parametrize(

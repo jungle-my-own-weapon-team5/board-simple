@@ -1,6 +1,8 @@
 from app.core.config import Settings
 from app.services.ai.errors import ProviderConfigError
+from app.services.ai.providers.anthropic import AnthropicProvider
 from app.services.ai.providers.base import AIProvider
+from app.services.ai.providers.gemini import GeminiProvider
 from app.services.ai.providers.mock import MockProvider
 from app.services.ai.providers.openai import OpenAIProvider
 from app.services.ai.types import AITextRequest, AITextResult, EmbeddingRequest, EmbeddingResult
@@ -27,6 +29,16 @@ class AIClient:
             return OpenAIProvider(
                 api_key=self.settings.openai_api_key,
                 base_url=self.settings.openai_base_url,
+            )
+        if self.settings.ai_agent_provider == "gemini":
+            return GeminiProvider(
+                api_key=self.settings.gemini_api_key,
+                base_url=self.settings.gemini_base_url,
+            )
+        if self.settings.ai_agent_provider == "anthropic":
+            return AnthropicProvider(
+                api_key=self.settings.anthropic_api_key,
+                base_url=self.settings.anthropic_base_url,
             )
 
         raise ProviderConfigError(
