@@ -191,3 +191,12 @@ RAG_TOP_K=5
 ```bash
 python -m app.rag.backfill --all
 ```
+
+## MCP Server
+
+FastAPI backend는 같은 uvicorn 프로세스에서 Streamable HTTP MCP server도 함께 실행합니다.
+
+- MCP endpoint: `http://localhost:8000/mcp`
+- MCP 작성자 계정: `.env`의 `MCP_AUTHOR_EMAIL`
+
+`create_post` MCP tool은 `MCP_AUTHOR_EMAIL`에 해당하는 기존 사용자를 작성자로 사용합니다. 해당 사용자는 미리 회원가입되어 있어야 합니다.

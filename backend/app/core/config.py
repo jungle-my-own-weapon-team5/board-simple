@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-5.5"
     rag_top_k: int = 5
+    mcp_author_email: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),

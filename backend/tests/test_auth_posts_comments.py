@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
-from app.main import app
+from app.main import create_app
 from app.rag.service import RagAnswer, RagSource
 
 
@@ -28,6 +28,7 @@ def client() -> Generator[TestClient, None, None]:
         finally:
             db.close()
 
+    app = create_app()
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
         yield test_client
