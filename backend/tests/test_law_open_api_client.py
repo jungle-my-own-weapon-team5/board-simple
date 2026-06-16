@@ -4,6 +4,70 @@ import pytest
 from app.services.rag.legal_open_api import LawOpenApiClient
 
 
+def test_search_statute_extracts_preflight_metadata_and_redacts_oc() -> None:
+    captured_urls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured_urls.append(str(request.url))
+        params = dict(request.url.params)
+        assert str(request.url).startswith("https://law.example.test/DRF/lawSearch.do")
+        assert params["OC"] == "test-oc"
+        assert params["target"] == "law"
+        assert params["type"] == "JSON"
+        assert params["query"] == "자동차관리법"
+        return httpx.Response(
+            200,
+            json={
+                "LawSearch": {
+                    "totalCnt": "1",
+                    "law": [
+                        {
+                            "법령일련번호": "123456",
+                            "법령ID": "001234",
+                            "법령명한글": "자동차관리법",
+                            "공포일자": "20240101",
+                            "공포번호": "12345",
+                            "시행일자": "20240201",
+                            "법령상세링크": "/법령/자동차관리법?OC=test-oc",
+                            "소관부처명": "국토교통부",
+                        }
+                    ],
+                }
+            },
+        )
+
+    client = LawOpenApiClient(
+        oc="test-oc",
+        base_url="https://law.example.test/DRF/lawSearch.do",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = client.search(query="자동차관리법", target="statute", limit=1)
+
+    assert result.total_count == 1
+    item = result.items[0]
+    assert item.external_id == "123456"
+    assert item.title == "자동차관리법"
+    assert "[REDACTED]" in item.source_url
+    assert "test-oc" not in str(item.metadata_json)
+    preflight = item.preflight_metadata
+    assert preflight is not None
+    assert preflight.provider == "law_open_api"
+    assert preflight.provider_target == "law"
+    assert preflight.document_type == "statute"
+    assert preflight.external_id == "123456"
+    assert preflight.canonical_id == "001234"
+    assert preflight.published_date.isoformat() == "2024-01-01"
+    assert preflight.effective_date.isoformat() == "2024-02-01"
+    assert preflight.version_label == "2024-02-01,12345,2024-01-01"
+    assert preflight.source_url == "https://www.law.go.kr/법령/자동차관리법"
+    assert preflight.metadata_json["published_date"] == "2024-01-01"
+    assert preflight.metadata_json["effective_date"] == "2024-02-01"
+    assert "[REDACTED]" in preflight.metadata_json["raw_metadata"]["법령상세링크"]
+    assert "test-oc" not in str(preflight.metadata_json)
+    assert "test-oc" in captured_urls[0]
+
+
 def test_get_law_body_calls_service_endpoint_with_mst_and_extracts_articles() -> None:
     captured_urls: list[str] = []
 

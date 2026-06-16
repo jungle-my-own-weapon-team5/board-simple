@@ -65,6 +65,23 @@ class LawOpenApiResponseError(LawOpenApiError):
 
 
 @dataclass(frozen=True)
+class LawOpenApiDocumentMetadata:
+    """전문 조회 전 최신성 비교에 사용하는 외부 법률 문서 metadata입니다."""
+
+    provider: str
+    provider_target: str
+    document_type: LawOpenApiTarget
+    title: str
+    external_id: str | None
+    canonical_id: str | None
+    version_label: str | None
+    published_date: date | None
+    effective_date: date | None
+    source_url: str | None
+    metadata_json: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class LawOpenApiSearchItem:
     external_id: str | None
     title: str
@@ -72,6 +89,7 @@ class LawOpenApiSearchItem:
     summary: str | None
     target: LawOpenApiTarget
     metadata_json: dict[str, Any] = field(default_factory=dict)
+    preflight_metadata: LawOpenApiDocumentMetadata | None = None
 
 
 @dataclass(frozen=True)
@@ -386,16 +404,73 @@ def _normalize_item(
     external_id = _first_text(row, _external_id_keys(target))
     source_url = _normalize_source_url(_first_text(row, _source_url_keys()), oc=oc)
     summary = _first_text(row, _summary_keys(target))
-    return LawOpenApiSearchItem(
+    preflight_metadata = _normalize_preflight_metadata(
+        row,
+        target=target,
+        title=title,
         external_id=external_id,
+        source_url=source_url,
+        oc=oc,
+    )
+    return LawOpenApiSearchItem(
+        external_id=preflight_metadata.external_id or external_id,
         title=title,
         source_url=source_url,
         summary=summary,
         target=target,
+        metadata_json=_redact_mapping_scalars(row, oc),
+        preflight_metadata=preflight_metadata,
+    )
+
+
+def _normalize_preflight_metadata(
+    row: dict[str, Any],
+    *,
+    target: LawOpenApiTarget,
+    title: str,
+    external_id: str | None,
+    source_url: str | None,
+    oc: str,
+) -> LawOpenApiDocumentMetadata:
+    provider_target = TARGET_TO_EXTERNAL_TARGET[target]
+    canonical_id = _first_text(row, _canonical_id_keys(target))
+    if target == "statute" and canonical_id is None:
+        canonical_id = title if title != "제목 없음" else None
+    published_date = _parse_yyyymmdd_date(_first_text(row, _published_date_keys(target)))
+    effective_date = _parse_yyyymmdd_date(_first_text(row, _effective_date_keys(target)))
+    version_label = _build_preflight_version_label(
+        target=target,
+        effective_date=effective_date,
+        version_number=_first_text(row, _version_number_keys(target)),
+        published_date=published_date,
+    )
+    preflight_source_url = _preflight_source_url(
+        target=target,
+        title=title,
+        source_url=source_url,
+    )
+    return LawOpenApiDocumentMetadata(
+        provider="law_open_api",
+        provider_target=provider_target,
+        document_type=target,
+        title=title,
+        external_id=external_id,
+        canonical_id=canonical_id,
+        version_label=version_label,
+        published_date=published_date,
+        effective_date=effective_date,
+        source_url=preflight_source_url,
         metadata_json={
-            key: _redact_oc(str(value), oc)
-            for key, value in row.items()
-            if not isinstance(value, (dict, list))
+            "provider": "law_open_api",
+            "provider_target": provider_target,
+            "document_type": target,
+            "external_id": external_id,
+            "canonical_id": canonical_id,
+            "version_label": version_label,
+            "published_date": _date_to_iso(published_date),
+            "effective_date": _date_to_iso(effective_date),
+            "source_url": preflight_source_url,
+            "raw_metadata": _redact_mapping_scalars(row, oc),
         },
     )
 
@@ -583,6 +658,44 @@ def _build_law_version_label(
     return label or None
 
 
+def _build_preflight_version_label(
+    *,
+    target: LawOpenApiTarget,
+    effective_date: date | None,
+    version_number: str | None,
+    published_date: date | None,
+) -> str | None:
+    if target == "statute":
+        return _build_law_version_label(
+            effective_date=effective_date,
+            promulgation_number=version_number,
+            published_date=published_date,
+        )
+
+    parts = [
+        effective_date.isoformat() if effective_date is not None else None,
+        version_number,
+        published_date.isoformat() if published_date is not None else None,
+    ]
+    label = ",".join(part for part in parts if part)
+    return label or None
+
+
+def _date_to_iso(value: date | None) -> str | None:
+    return value.isoformat() if value is not None else None
+
+
+def _preflight_source_url(
+    *,
+    target: LawOpenApiTarget,
+    title: str,
+    source_url: str | None,
+) -> str | None:
+    if target == "statute":
+        return _law_hangul_url(title) or source_url
+    return source_url
+
+
 def _law_hangul_url(title: str) -> str | None:
     stripped_title = title.strip()
     if not stripped_title or stripped_title == "제목 없음":
@@ -623,6 +736,16 @@ def _external_id_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
     return ("행정심판례일련번호", "재결례일련번호", "사건번호", *common)
 
 
+def _canonical_id_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
+    if target == "statute":
+        return ("법령ID", "ID", "lawId")
+    if target == "case":
+        return ("사건번호", "판례ID", "판례일련번호", "ID")
+    if target == "interpretation":
+        return ("안건번호", "법령해석례일련번호", "해석례일련번호", "ID")
+    return ("사건번호", "행정심판례일련번호", "재결례일련번호", "ID")
+
+
 def _title_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
     if target == "statute":
         return ("법령명한글", "법령명", "현행법령명", "법령약칭명")
@@ -641,6 +764,32 @@ def _summary_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
     if target == "admin_appeal":
         return ("재결요지", "요약", "내용")
     return ("소관부처명", "요약", "내용")
+
+
+def _published_date_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
+    if target == "statute":
+        return ("공포일자", "공포일")
+    if target == "case":
+        return ("선고일자", "판결일자", "판례일자")
+    if target == "interpretation":
+        return ("회신일자", "해석일자", "안건일자")
+    return ("재결일자", "의결일자", "처분일자")
+
+
+def _effective_date_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
+    if target == "statute":
+        return ("시행일자", "시행일")
+    return ()
+
+
+def _version_number_keys(target: LawOpenApiTarget) -> tuple[str, ...]:
+    if target == "statute":
+        return ("공포번호",)
+    if target == "case":
+        return ("사건번호",)
+    if target == "interpretation":
+        return ("안건번호",)
+    return ("사건번호",)
 
 
 def _source_url_keys() -> tuple[str, ...]:
