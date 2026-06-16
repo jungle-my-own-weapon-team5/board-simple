@@ -126,6 +126,38 @@ def test_sync_fetches_body_and_ingests_when_indexed_document_does_not_exist(
     assert "제1조" in result.document.raw_text
 
 
+def test_sync_prefers_exact_preferred_title_from_search_results(
+    db: Session,
+) -> None:
+    wrong_metadata = _metadata_with(
+        title="Military Prison Act",
+        external_id="MST-WRONG",
+        canonical_id="LAW-WRONG",
+    )
+    exact_metadata = _metadata_with(
+        title="Residential Lease Protection Act",
+        external_id="MST-LEASE",
+        canonical_id="LAW-LEASE",
+    )
+    client = _FakeMultiMetadataLawOpenApiClient(
+        metadata_items=[wrong_metadata, exact_metadata],
+        body=_body_for_metadata(exact_metadata),
+    )
+
+    result = sync_law_open_api_statute(
+        db,
+        client=client,
+        query="lease deposit",
+        search_limit=2,
+        preferred_titles=["Residential Lease Protection Act"],
+    )
+
+    assert result.status == "ingested"
+    assert result.document.title == "Residential Lease Protection Act"
+    assert result.preflight_metadata.external_id == "MST-LEASE"
+    assert client.body_calls == ["MST-LEASE"]
+
+
 def test_force_refresh_reuses_indexed_document_when_body_checksum_matches(
     db: Session,
 ) -> None:
@@ -360,6 +392,37 @@ def _metadata() -> LawOpenApiDocumentMetadata:
     )
 
 
+def _metadata_with(
+    *,
+    title: str,
+    external_id: str,
+    canonical_id: str,
+) -> LawOpenApiDocumentMetadata:
+    return LawOpenApiDocumentMetadata(
+        provider="law_open_api",
+        provider_target="law",
+        document_type="statute",
+        title=title,
+        external_id=external_id,
+        canonical_id=canonical_id,
+        version_label="2026-01-01,100,2025-12-01",
+        published_date=date(2025, 12, 1),
+        effective_date=date(2026, 1, 1),
+        source_url=f"https://example.test/statutes/{canonical_id}",
+        metadata_json={
+            "provider": "law_open_api",
+            "provider_target": "law",
+            "document_type": "statute",
+            "external_id": external_id,
+            "canonical_id": canonical_id,
+            "version_label": "2026-01-01,100,2025-12-01",
+            "published_date": "2025-12-01",
+            "effective_date": "2026-01-01",
+            "source_url": f"https://example.test/statutes/{canonical_id}",
+        },
+    )
+
+
 def _body(
     *,
     raw_text: str = "자동차관리법\n\n제1조(목적) 이 법은 자동차를 효율적으로 관리한다.",
@@ -379,6 +442,29 @@ def _body(
             "external_id": "123456",
             "law_id": "001234",
             "mst": "123456",
+        },
+    )
+
+
+def _body_for_metadata(metadata: LawOpenApiDocumentMetadata) -> LawOpenApiLawBody:
+    return LawOpenApiLawBody(
+        title=metadata.title,
+        raw_text=(
+            f"{metadata.title}\n\n"
+            "Article 1 Purpose. This statute is used as an exact-title fixture."
+        ),
+        external_id=metadata.external_id,
+        law_id=metadata.canonical_id,
+        mst=metadata.external_id,
+        source_url=metadata.source_url,
+        published_date=metadata.published_date,
+        effective_date=metadata.effective_date,
+        version_label=metadata.version_label,
+        metadata_json={
+            "provider_target": "law",
+            "external_id": metadata.external_id,
+            "law_id": metadata.canonical_id,
+            "mst": metadata.external_id,
         },
     )
 
@@ -483,6 +569,62 @@ class _CountingEmbeddingClient:
 class _FailingEmbeddingClient:
     def embed_texts(self, request: EmbeddingRequest) -> list[EmbeddingResult]:
         raise ProviderUnavailableError("provider unavailable")
+
+
+class _FakeMultiMetadataLawOpenApiClient:
+    def __init__(
+        self,
+        *,
+        metadata_items: list[LawOpenApiDocumentMetadata],
+        body: LawOpenApiLawBody,
+    ) -> None:
+        self.metadata_items = metadata_items
+        self.body = body
+        self.body_calls: list[str] = []
+
+    def search(
+        self,
+        *,
+        query: str,
+        target: str,
+        limit: int = 5,
+        page: int = 1,
+        search_scope: int = 1,
+    ) -> LawOpenApiSearchResult:
+        assert query == "lease deposit"
+        assert target == "statute"
+        assert limit == 2
+        assert page == 1
+        assert search_scope == 1
+        return LawOpenApiSearchResult(
+            query=query,
+            target="statute",
+            external_target="law",
+            page=page,
+            limit=limit,
+            total_count=len(self.metadata_items),
+            items=[
+                LawOpenApiSearchItem(
+                    external_id=metadata.external_id,
+                    title=metadata.title,
+                    source_url=metadata.source_url,
+                    summary=None,
+                    target="statute",
+                    metadata_json=metadata.metadata_json,
+                    preflight_metadata=metadata,
+                )
+                for metadata in self.metadata_items
+            ],
+        )
+
+    def get_law_body(
+        self,
+        *,
+        mst: str | None = None,
+        law_id: str | None = None,
+    ) -> LawOpenApiLawBody:
+        self.body_calls.append(mst or law_id or "")
+        return self.body
 
 
 class _FakeLawOpenApiClient:

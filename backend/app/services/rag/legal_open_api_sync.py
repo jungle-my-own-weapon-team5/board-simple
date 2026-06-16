@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import re
 from typing import Literal, Protocol
 
 from sqlalchemy.orm import Session
@@ -106,6 +107,7 @@ def sync_law_open_api_statute(
     query: str,
     embedding_profile: EmbeddingProfile | None = None,
     search_limit: int = 1,
+    preferred_titles: list[str] | None = None,
     force_refresh: bool = False,
     commit: bool = True,
 ) -> LegalOpenApiSyncResult:
@@ -120,14 +122,15 @@ def sync_law_open_api_statute(
     if search_limit <= 0:
         raise ValueError("search_limit must be positive")
 
-    metadata = _get_first_statute_metadata(
+    metadata = _select_statute_metadata(
         client.search(
             query=query,
             target="statute",
             limit=search_limit,
             page=1,
             search_scope=1,
-        )
+        ),
+        preferred_titles=preferred_titles or [query],
     )
     if metadata is None:
         return LegalOpenApiSyncResult(
@@ -193,6 +196,7 @@ def sync_and_embed_law_open_api_statute(
     embedding_profile: EmbeddingProfile,
     ai_client: EmbeddingClient,
     search_limit: int = 1,
+    preferred_titles: list[str] | None = None,
     timeout_seconds: int = 60,
     batch_size: int = 16,
     retry_failed: bool = False,
@@ -213,6 +217,7 @@ def sync_and_embed_law_open_api_statute(
             query=query,
             embedding_profile=embedding_profile,
             search_limit=search_limit,
+            preferred_titles=preferred_titles,
             force_refresh=force_refresh,
             commit=False,
         )
@@ -285,13 +290,48 @@ def sync_and_embed_law_open_api_statute(
         raise
 
 
-def _get_first_statute_metadata(
+def _select_statute_metadata(
     result: LawOpenApiSearchResult,
+    *,
+    preferred_titles: list[str],
 ) -> LawOpenApiDocumentMetadata | None:
-    for item in result.items:
-        if item.preflight_metadata is not None:
-            return item.preflight_metadata
-    return None
+    metadata_items = [
+        item.preflight_metadata
+        for item in result.items
+        if item.preflight_metadata is not None
+    ]
+    if not metadata_items:
+        return None
+    ranked = sorted(
+        metadata_items,
+        key=lambda metadata: _metadata_title_rank(metadata, preferred_titles),
+    )
+    return ranked[0]
+
+
+def _metadata_title_rank(
+    metadata: LawOpenApiDocumentMetadata,
+    preferred_titles: list[str],
+) -> tuple[int, int, str]:
+    title = _normalize_title(metadata.title)
+    preferred = [_normalize_title(value) for value in preferred_titles if value.strip()]
+    for candidate in preferred:
+        if title == candidate:
+            return (0, len(title), title)
+    for candidate in preferred:
+        if title.startswith(candidate):
+            return (1, len(title), title)
+    for candidate in preferred:
+        if candidate and candidate in title:
+            return (2, len(title), title)
+    for candidate in preferred:
+        if title and title in candidate:
+            return (3, len(title), title)
+    return (4, len(title), title)
+
+
+def _normalize_title(value: str) -> str:
+    return re.sub(r"\s+", "", value).lower()
 
 
 def _reuse_indexed_document_if_possible(

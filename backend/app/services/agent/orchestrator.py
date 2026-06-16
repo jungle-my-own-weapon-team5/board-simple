@@ -34,6 +34,10 @@ from app.services.rag.embedding_profiles import (
 )
 from app.services.rag.legal_open_api import LawOpenApiClient
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
+from app.services.rag.legal_source_planner import (
+    LegalSourceCandidate,
+    plan_legal_source_candidates,
+)
 
 ALLOWED_ACTION_TYPES: set[str] = {
     "search_internal",
@@ -275,7 +279,10 @@ class OrchestratorAgent:
                     tool_calls=tool_calls,
                 )
 
-            evidence_items = _require_search_items(search_result)
+            evidence_items = _filter_relevant_evidence_items(
+                _require_search_items(search_result),
+                settings=self.settings,
+            )
             citations = build_chunk_citations(evidence_items)
             _add_step(
                 db,
@@ -291,7 +298,11 @@ class OrchestratorAgent:
             )
             step_index += 1
 
-            assessment = _assess_evidence(evidence_items, citations)
+            assessment = _assess_evidence(
+                evidence_items,
+                citations,
+                settings=self.settings,
+            )
             if not assessment.is_sufficient:
                 _add_step(
                     db,
@@ -332,7 +343,11 @@ class OrchestratorAgent:
                 step_index = enrichment_result.step_index
                 tool_call_count = enrichment_result.tool_call_count
                 iteration_count = enrichment_result.iteration_count
-                assessment = _assess_evidence(evidence_items, citations)
+                assessment = _assess_evidence(
+                    evidence_items,
+                    citations,
+                    settings=self.settings,
+                )
                 if not assessment.is_sufficient:
                     return self._complete_with_insufficient_evidence(
                         db,
@@ -566,7 +581,32 @@ class OrchestratorAgent:
         if not self.settings.law_open_api_oc.strip() and self.law_open_api_client is None:
             return None
 
-        external_action = self.action_planner.propose_external_source_action(
+        source_candidates = self._plan_official_source_candidates(request)
+        _add_step(
+            db,
+            rag_run=rag_run,
+            step_index=step_index,
+            step_type="plan_official_sources",
+            status="completed",
+            output_json={
+                "candidate_count": len(source_candidates),
+                "candidates": [
+                    {
+                        "document_type": candidate.document_type,
+                        "title": candidate.title,
+                        "query_length": len(candidate.query),
+                    }
+                    for candidate in source_candidates
+                ],
+            },
+        )
+        step_index += 1
+
+        external_action = _external_source_action_from_candidates(
+            request,
+            assessment,
+            source_candidates,
+        ) or self.action_planner.propose_external_source_action(
             request,
             assessment,
         )
@@ -651,6 +691,7 @@ class OrchestratorAgent:
             request,
             external_result,
         )
+        sync_action = _with_preferred_titles(sync_action, source_candidates)
         iteration_count = _next_iteration_count(
             iteration_count,
             settings=self.settings,
@@ -768,7 +809,10 @@ class OrchestratorAgent:
 
         if rerun_result.get("status") != "completed":
             return None
-        evidence_items = _require_search_items(rerun_result)
+        evidence_items = _filter_relevant_evidence_items(
+            _require_search_items(rerun_result),
+            settings=self.settings,
+        )
         citations = build_chunk_citations(evidence_items)
         _add_step(
             db,
@@ -802,6 +846,24 @@ class OrchestratorAgent:
             iteration_count=iteration_count,
         )
 
+    def _plan_official_source_candidates(
+        self,
+        request: AgentRunRequest,
+    ) -> list[LegalSourceCandidate]:
+        plan = plan_legal_source_candidates(
+            ai_client=self.ai_client,
+            settings=self.settings,
+            facts=request.facts,
+            question=request.question,
+            search_mode=request.search_mode,
+            max_candidates=self.settings.ai_source_planner_max_candidates,
+        )
+        return [
+            candidate
+            for candidate in plan.candidates
+            if candidate.document_type == "statute"
+        ][: self.settings.ai_source_planner_max_candidates]
+
     def _sync_official_source(
         self,
         db: Session,
@@ -813,6 +875,7 @@ class OrchestratorAgent:
                 "agent_action_arguments_invalid",
                 "sync_official_source requires a non-empty query",
             )
+        preferred_titles = _preferred_titles_from_action(action)
         try:
             embedding_profile = get_active_or_create_default_embedding_profile(
                 db,
@@ -835,7 +898,8 @@ class OrchestratorAgent:
             query=query.strip(),
             embedding_profile=embedding_profile,
             ai_client=self.ai_client,
-            search_limit=1,
+            search_limit=min(max(self.settings.ai_source_planner_max_candidates, 1), 20),
+            preferred_titles=preferred_titles,
             timeout_seconds=self.settings.ai_request_timeout_seconds,
             commit=False,
         )
@@ -1001,6 +1065,58 @@ def _build_search_action(request: AgentRunRequest) -> AgentAction:
         arguments=_build_search_arguments(request),
         reason="internal_rag_search_first",
     )
+
+
+def _external_source_action_from_candidates(
+    request: AgentRunRequest,
+    assessment: EvidenceAssessment,
+    candidates: list[LegalSourceCandidate],
+) -> AgentAction | None:
+    if not candidates:
+        return None
+    candidate = candidates[0]
+    return AgentAction(
+        action_type="search_external_source",
+        tool_name="search_law_open_api",
+        arguments={
+            "query": candidate.query,
+            "target": "statute",
+            "limit": min(max(len(candidates), 1), 20),
+        },
+        reason=f"llm_source_planner:{assessment.reason}",
+    )
+
+
+def _with_preferred_titles(
+    action: AgentAction,
+    candidates: list[LegalSourceCandidate],
+) -> AgentAction:
+    preferred_titles = _candidate_preferred_titles(candidates)
+    if not preferred_titles:
+        return action
+    return AgentAction(
+        action_type=action.action_type,
+        tool_name=action.tool_name,
+        arguments={**action.arguments, "preferred_titles": preferred_titles},
+        reason=action.reason,
+    )
+
+
+def _candidate_preferred_titles(candidates: list[LegalSourceCandidate]) -> list[str]:
+    titles: list[str] = []
+    for candidate in candidates:
+        for value in (candidate.title, candidate.query):
+            if value.strip() and value not in titles:
+                titles.append(value)
+    return titles
+
+
+def _preferred_titles_from_action(action: AgentAction) -> list[str] | None:
+    value = action.arguments.get("preferred_titles")
+    if not isinstance(value, list):
+        return None
+    titles = [item.strip() for item in value if isinstance(item, str) and item.strip()]
+    return titles or None
 
 
 def _build_draft_action(request: AgentRunRequest) -> AgentAction:
@@ -1170,6 +1286,8 @@ def _record_action_seen(
 def _assess_evidence(
     evidence_items: list[dict[str, object]],
     citations: list[dict[str, object]],
+    *,
+    settings: Settings,
 ) -> EvidenceAssessment:
     if not evidence_items:
         return EvidenceAssessment(
@@ -1185,12 +1303,32 @@ def _assess_evidence(
             citation_count=0,
             reason="no_citation_candidates",
         )
+    max_score = _max_evidence_score(evidence_items)
+    if max_score < settings.rag_min_relevance_score:
+        return EvidenceAssessment(
+            is_sufficient=False,
+            relevant_chunk_count=len(evidence_items),
+            citation_count=len(citations),
+            reason="low_relevance_score",
+        )
     return EvidenceAssessment(
         is_sufficient=True,
         relevant_chunk_count=len(evidence_items),
         citation_count=len(citations),
         reason="evidence_available",
     )
+
+
+def _max_evidence_score(evidence_items: list[dict[str, object]]) -> float:
+    scores = [_evidence_score(item) for item in evidence_items]
+    return max(scores) if scores else 0.0
+
+
+def _evidence_score(item: dict[str, object]) -> float:
+    score = item.get("score")
+    if isinstance(score, bool) or not isinstance(score, (int, float)):
+        return 0.0
+    return float(score)
 
 
 def _insufficient_evidence_answer(assessment: EvidenceAssessment) -> str:
@@ -1343,6 +1481,18 @@ def _require_search_items(search_result: dict[str, Any]) -> list[dict[str, objec
             "search_legal_documents returned invalid items",
         )
     return [item for item in items if isinstance(item, dict)]
+
+
+def _filter_relevant_evidence_items(
+    evidence_items: list[dict[str, object]],
+    *,
+    settings: Settings,
+) -> list[dict[str, object]]:
+    return [
+        item
+        for item in evidence_items
+        if _evidence_score(item) >= settings.rag_min_relevance_score
+    ]
 
 
 def _add_step(

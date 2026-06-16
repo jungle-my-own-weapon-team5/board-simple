@@ -245,6 +245,54 @@ def test_orchestrator_agent_syncs_official_source_when_internal_evidence_is_miss
     )
 
 
+def test_orchestrator_agent_syncs_when_internal_evidence_has_low_relevance(
+    db: Session,
+) -> None:
+    user = _create_user(db)
+    profile = _create_profile(db, dimensions=3)
+    _create_chunk_embedding(
+        db,
+        profile=profile,
+        title="Wrong low-score statute",
+        heading="Article 1",
+        content="This internal chunk is unrelated to the user story.",
+        embedding=[0.0, 0.0, 0.0],
+    )
+    ai_client = _AgentTestAIClient(
+        embedding=[1.0, 0.0, 0.0],
+        draft_text="Official source enriched answer",
+    )
+    law_client = _FakeLawOpenApiClient()
+
+    result = OrchestratorAgent(
+        settings=_settings(ai_agent_max_tool_calls=5, law_open_api_oc="test-oc"),
+        ai_client=ai_client,
+        law_open_api_client=law_client,
+    ).run(
+        db,
+        AgentRunRequest(
+            user_id=user.id,
+            task_type="answer_draft",
+            facts="The landlord refuses to return the lease deposit.",
+            question="Find the relevant legal basis.",
+            top_k=3,
+        ),
+    )
+
+    citation_titles = [citation["title"] for citation in result.citations]
+
+    assert result.status == "completed"
+    assert result.answer == "Official source enriched answer"
+    assert "Wrong low-score statute" not in citation_titles
+    assert result.citations
+    assert [tool_call.tool_name for tool_call in result.tool_calls] == [
+        "search_legal_documents",
+        "search_law_open_api",
+        "search_legal_documents",
+        "verify_citations",
+    ]
+
+
 def test_orchestrator_agent_bootstraps_profile_before_official_source_sync(
     db: Session,
 ) -> None:

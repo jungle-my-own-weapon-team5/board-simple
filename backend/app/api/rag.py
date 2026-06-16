@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,10 @@ from app.services.rag.embedding_profiles import (
 )
 from app.services.rag.legal_open_api import LawOpenApiClient
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
+from app.services.rag.legal_source_planner import (
+    LegalSourceCandidate,
+    plan_legal_source_candidates,
+)
 from app.services.rag.retrieval import search_legal_documents
 
 router = APIRouter(prefix="/rag", tags=["rag"])
@@ -67,22 +73,33 @@ def search_rag_documents(
     )
     if result.status == "failed":
         _raise_search_failure(result.error_code, result.error_message)
-    if not result.results and _should_try_official_source_sync(settings, payload):
-        sync_result = sync_and_embed_law_open_api_statute(
-            db,
-            client=LawOpenApiClient(
-                oc=settings.law_open_api_oc,
-                base_url=settings.law_open_api_base_url,
-                service_url=settings.law_open_api_service_url,
-                timeout_seconds=settings.mcp_request_timeout_seconds,
-            ),
-            query=payload.query,
-            embedding_profile=embedding_profile,
-            ai_client=ai_client,
-            search_limit=1,
-            timeout_seconds=settings.ai_request_timeout_seconds,
+    if (
+        not _search_result_is_relevant(result, settings=settings, payload=payload)
+        and _should_try_official_source_sync(settings, payload)
+    ):
+        law_open_api_client = LawOpenApiClient(
+            oc=settings.law_open_api_oc,
+            base_url=settings.law_open_api_base_url,
+            service_url=settings.law_open_api_service_url,
+            timeout_seconds=settings.mcp_request_timeout_seconds,
         )
-        if sync_result.status in {"embedded", "reused"}:
+        for candidate in _plan_official_source_candidates(
+            ai_client=ai_client,
+            settings=settings,
+            payload=payload,
+        ):
+            sync_result = sync_and_embed_law_open_api_statute(
+                db,
+                client=law_open_api_client,
+                query=candidate.query,
+                embedding_profile=embedding_profile,
+                ai_client=ai_client,
+                search_limit=_official_source_search_limit(settings),
+                preferred_titles=_preferred_titles_for_candidate(candidate),
+                timeout_seconds=settings.ai_request_timeout_seconds,
+            )
+            if sync_result.status not in {"embedded", "reused"}:
+                continue
             result = search_legal_documents(
                 db,
                 user_id=current_user.id,
@@ -99,6 +116,9 @@ def search_rag_documents(
             )
             if result.status == "failed":
                 _raise_search_failure(result.error_code, result.error_message)
+            if _search_result_is_relevant(result, settings=settings, payload=payload):
+                break
+    result = _with_relevant_results_only(result, settings=settings, payload=payload)
     return RagSearchRead.from_service_result(result)
 
 
@@ -154,6 +174,72 @@ def _should_try_official_source_sync(
         return False
     document_types = _document_types_from_filters(payload)
     return document_types is None or "statute" in document_types
+
+
+def _plan_official_source_candidates(
+    *,
+    ai_client: AIClient,
+    settings: Settings,
+    payload: RagSearchCreate,
+) -> list[LegalSourceCandidate]:
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=settings,
+        facts=payload.query,
+        question=payload.query,
+        search_mode=payload.search_mode,
+        max_candidates=settings.ai_source_planner_max_candidates,
+    )
+    return [
+        candidate
+        for candidate in plan.candidates
+        if candidate.document_type == "statute"
+    ][: settings.ai_source_planner_max_candidates]
+
+
+def _search_result_is_relevant(
+    result,
+    *,
+    settings: Settings,
+    payload: RagSearchCreate,
+) -> bool:
+    if not result.results:
+        return False
+    threshold = (
+        payload.score_threshold
+        if payload.score_threshold is not None
+        else settings.rag_min_relevance_score
+    )
+    return max(item.score for item in result.results) >= threshold
+
+
+def _preferred_titles_for_candidate(candidate: LegalSourceCandidate) -> list[str]:
+    titles: list[str] = []
+    for value in (candidate.title, candidate.query):
+        if value.strip() and value not in titles:
+            titles.append(value)
+    return titles
+
+
+def _with_relevant_results_only(
+    result,
+    *,
+    settings: Settings,
+    payload: RagSearchCreate,
+):
+    threshold = (
+        payload.score_threshold
+        if payload.score_threshold is not None
+        else settings.rag_min_relevance_score
+    )
+    return replace(
+        result,
+        results=[item for item in result.results if item.score >= threshold],
+    )
+
+
+def _official_source_search_limit(settings: Settings) -> int:
+    return min(max(settings.ai_source_planner_max_candidates, 1), 20)
 
 
 def _raise_search_failure(

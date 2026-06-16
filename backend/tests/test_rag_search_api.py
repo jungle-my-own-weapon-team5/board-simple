@@ -25,6 +25,10 @@ from app.repositories import (
     embeddings as embedding_repository,
     legal_documents,
 )
+from app.services.rag.legal_source_planner import (
+    LegalSourceCandidate,
+    LegalSourcePlan,
+)
 from app.services.rag.normalization import calculate_text_checksum
 
 FRONTEND_ORIGIN = "http://localhost:3000"
@@ -251,6 +255,92 @@ def test_rag_search_endpoint_syncs_official_source_when_search_is_empty(
     assert sync_calls == ["official source sync query"]
     assert [item["title"] for item in body["items"]] == ["synced statute"]
     assert body["embedding_provider"] == "mock"
+
+
+def test_rag_search_endpoint_syncs_when_existing_results_are_low_relevance(
+    monkeypatch: pytest.MonkeyPatch,
+    law_open_api_rag_client_context: ApiTestContext,
+) -> None:
+    user_query = "lease deposit return dispute"
+    sync_calls: list[tuple[str, list[str] | None]] = []
+    register_and_login(
+        law_open_api_rag_client_context.client,
+        email="low-relevance-rag@example.com",
+    )
+    with law_open_api_rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Wrong low-score statute",
+            heading="Article 1",
+            content="This chunk is unrelated to the lease dispute.",
+            embedding=[0.0, 0.0, 0.0],
+        )
+        db.commit()
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            candidates=[
+                LegalSourceCandidate(
+                    document_type="statute",
+                    title="Residential Lease Protection Act",
+                    query="Residential Lease Protection Act",
+                    reason="lease deposit issue",
+                )
+            ]
+        )
+
+    def fake_sync_and_embed_law_open_api_statute(
+        db: Session,
+        *,
+        query: str,
+        embedding_profile: EmbeddingProfile,
+        preferred_titles: list[str] | None = None,
+        **_: object,
+    ) -> SimpleNamespace:
+        sync_calls.append((query, preferred_titles))
+        _create_chunk_embedding(
+            db,
+            profile=embedding_profile,
+            title="Residential Lease Protection Act",
+            heading="Article 3",
+            content="The landlord must return the lease deposit after termination.",
+            embedding=_mock_embedding_for_text(user_query, dimensions=3),
+        )
+        return SimpleNamespace(status="embedded")
+
+    monkeypatch.setattr(
+        "app.api.rag.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.sync_and_embed_law_open_api_statute",
+        fake_sync_and_embed_law_open_api_statute,
+    )
+
+    response = law_open_api_rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": user_query,
+            "top_k": 5,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert sync_calls == [
+        (
+            "Residential Lease Protection Act",
+            ["Residential Lease Protection Act"],
+        )
+    ]
+    assert [item["title"] for item in body["items"]] == [
+        "Residential Lease Protection Act"
+    ]
+    assert all(item["score"] >= 0.4 for item in body["items"])
 
 
 def test_rag_search_endpoint_requires_authentication_and_origin(

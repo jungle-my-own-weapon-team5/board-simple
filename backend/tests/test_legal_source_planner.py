@@ -1,0 +1,130 @@
+from app.core.config import Settings
+from app.services.ai.errors import ProviderUnavailableError
+from app.services.ai.types import AITextRequest, AITextResult
+from app.services.rag.legal_source_planner import plan_legal_source_candidates
+
+
+def test_planner_parses_llm_json_candidates() -> None:
+    ai_client = _PlanningAIClient(
+        text=(
+            '{"candidates":[{"document_type":"statute",'
+            '"title":"주택임대차보호법","query":"주택임대차보호법",'
+            '"reason":"임대차 보증금 반환 쟁점"}]}'
+        )
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="임대차 계약이 종료되었지만 보증금을 돌려받지 못했습니다.",
+        question="검토할 법령을 찾아주세요.",
+        search_mode="focused_answer",
+    )
+
+    assert [candidate.title for candidate in plan.candidates] == ["주택임대차보호법"]
+    assert plan.candidates[0].query == "주택임대차보호법"
+    assert ai_client.requests[0].model == "planner-test-model"
+    assert ai_client.requests[0].metadata == {"purpose": "legal_source_planner"}
+
+
+def test_planner_ignores_unsupported_document_types() -> None:
+    ai_client = _PlanningAIClient(
+        text=(
+            '{"candidates":[{"document_type":"case",'
+            '"title":"대법원 판례","query":"대법원 판례"}]}'
+        )
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="사기 피해를 당했습니다.",
+        question="형법상 쟁점을 검토해주세요.",
+        search_mode="issue_spotting",
+    )
+
+    assert [candidate.title for candidate in plan.candidates] == ["형법"]
+    assert plan.candidates[0].reason == "explicit_or_known_statute_fallback"
+
+
+def test_planner_falls_back_to_raw_query_when_llm_returns_invalid_json() -> None:
+    ai_client = _PlanningAIClient(text="not json")
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="The tenant paid a deposit and the landlord refuses repayment.",
+        question="Find the relevant Korean statute.",
+        search_mode="focused_answer",
+    )
+
+    assert len(plan.candidates) == 1
+    assert plan.candidates[0].query == "Find the relevant Korean statute."
+    assert plan.candidates[0].reason == "raw_query_fallback"
+
+
+def test_planner_uses_fallback_when_planner_model_is_not_configured() -> None:
+    ai_client = _PlanningAIClient(text="should not be used")
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(ai_agent_model=""),
+        facts="형법상 사기죄가 문제될 수 있습니다.",
+        question="관련 법령을 찾아주세요.",
+        search_mode="focused_answer",
+    )
+
+    assert [candidate.title for candidate in plan.candidates] == ["형법"]
+    assert ai_client.requests == []
+
+
+def test_planner_falls_back_when_provider_fails() -> None:
+    ai_client = _FailingPlanningAIClient()
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="형법상 사기죄가 문제될 수 있습니다.",
+        question="관련 법령을 찾아주세요.",
+        search_mode="focused_answer",
+    )
+
+    assert [candidate.title for candidate in plan.candidates] == ["형법"]
+    assert len(ai_client.requests) == 1
+
+
+def _settings(*, ai_agent_model: str = "planner-test-model") -> Settings:
+    return Settings(
+        app_env="test",
+        ai_rag_enabled=False,
+        ai_agent_provider="mock",
+        ai_agent_model=ai_agent_model,
+        ai_embedding_provider="mock",
+        ai_embedding_model="mock-embedding",
+        ai_embedding_dimensions=3,
+    )
+
+
+class _PlanningAIClient:
+    def __init__(self, *, text: str) -> None:
+        self.text = text
+        self.requests: list[AITextRequest] = []
+
+    def generate_text(self, request: AITextRequest) -> AITextResult:
+        self.requests.append(request)
+        return AITextResult(
+            text=self.text,
+            agent_provider="mock",
+            agent_model_name=request.model,
+            finish_reason="stop",
+            raw_response_id="planner-test-response",
+        )
+
+
+class _FailingPlanningAIClient:
+    def __init__(self) -> None:
+        self.requests: list[AITextRequest] = []
+
+    def generate_text(self, request: AITextRequest) -> AITextResult:
+        self.requests.append(request)
+        raise ProviderUnavailableError("planner unavailable")

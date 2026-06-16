@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     frontend_origin: AnyUrl = "http://localhost:3000"
+    frontend_extra_origins: str = ""
     auth_cookie_secure: bool = False
     api_request_body_max_bytes: int = 262_144
 
@@ -28,6 +29,8 @@ class Settings(BaseSettings):
     ai_agent_provider: Literal["openai", "gemini", "anthropic", "mock"] = "openai"
     ai_embedding_provider: Literal["openai", "mock"] = "openai"
     ai_agent_model: str = ""
+    ai_source_planner_model: str = ""
+    ai_source_planner_max_candidates: int = 5
     ai_embedding_model: str = ""
     ai_embedding_dimensions: int | None = None
     ai_request_timeout_seconds: int = 60
@@ -38,6 +41,7 @@ class Settings(BaseSettings):
     ai_agent_max_external_sync_candidates: int = 3
     ai_rate_limit_per_minute: int = 20
     rag_top_k: int = 5
+    rag_min_relevance_score: float = 0.4
     rag_prompt_version: str = "v1"
 
     mcp_server_enabled: bool = False
@@ -78,6 +82,22 @@ class Settings(BaseSettings):
             if tool.strip()
         ]
 
+    @property
+    def allowed_frontend_origin_strings(self) -> list[str]:
+        origins = [str(self.frontend_origin).rstrip("/")]
+        origins.extend(
+            origin.strip().rstrip("/")
+            for origin in self.frontend_extra_origins.split(",")
+            if origin.strip()
+        )
+        if self.app_env == "development":
+            origins.extend(["http://localhost:3000", "http://127.0.0.1:3000"])
+        return list(dict.fromkeys(origins))
+
+    @property
+    def source_planner_model_name(self) -> str:
+        return self.ai_source_planner_model.strip() or self.ai_agent_model.strip()
+
     @model_validator(mode="after")
     def validate_ai_rag_settings(self) -> "Settings":
         errors: list[str] = []
@@ -97,6 +117,10 @@ class Settings(BaseSettings):
             ("AI_AGENT_MAX_HANDOFFS", self.ai_agent_max_handoffs),
             ("AI_AGENT_MAX_REPEATED_ACTIONS", self.ai_agent_max_repeated_actions),
             (
+                "AI_SOURCE_PLANNER_MAX_CANDIDATES",
+                self.ai_source_planner_max_candidates,
+            ),
+            (
                 "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",
                 self.ai_agent_max_external_sync_candidates,
             ),
@@ -110,6 +134,9 @@ class Settings(BaseSettings):
 
         if self.mcp_server_enabled and not self.mcp_allowed_tool_names:
             add_error("MCP_ALLOWED_TOOLS is required when MCP_SERVER_ENABLED=true")
+
+        if not 0 <= self.rag_min_relevance_score <= 1:
+            add_error("RAG_MIN_RELEVANCE_SCORE must be between 0 and 1")
 
         # Provider key와 model은 RAG 기능을 명시적으로 켰을 때만 필수입니다.
         if self.ai_rag_enabled:
@@ -164,6 +191,11 @@ class Settings(BaseSettings):
 
         errors: list[str] = []
         frontend_origin = str(self.frontend_origin).rstrip("/")
+        extra_origins = [
+            origin.strip().rstrip("/")
+            for origin in self.frontend_extra_origins.split(",")
+            if origin.strip()
+        ]
         if self.jwt_secret_key == DEFAULT_JWT_SECRET_KEY:
             errors.append("JWT_SECRET_KEY must be changed in production")
         if not self.auth_cookie_secure:
@@ -174,6 +206,11 @@ class Settings(BaseSettings):
             errors.append("FRONTEND_ORIGIN must not be localhost in production")
         if frontend_origin.endswith(".localhost"):
             errors.append("FRONTEND_ORIGIN must not be a localhost domain in production")
+        for origin in extra_origins:
+            if origin.startswith("http://"):
+                errors.append("FRONTEND_EXTRA_ORIGINS must use https in production")
+            if "localhost" in origin or "127.0.0.1" in origin:
+                errors.append("FRONTEND_EXTRA_ORIGINS must not include localhost in production")
         if errors:
             raise ValueError("; ".join(errors))
         return self

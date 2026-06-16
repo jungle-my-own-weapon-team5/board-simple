@@ -21,6 +21,22 @@ def test_law_open_api_url_settings_have_defaults() -> None:
     )
 
 
+def test_development_settings_allow_common_local_frontend_origins() -> None:
+    settings = Settings(app_env="development")
+
+    assert "http://localhost:3000" in settings.allowed_frontend_origin_strings
+    assert "http://127.0.0.1:3000" in settings.allowed_frontend_origin_strings
+
+
+def test_source_planner_model_can_override_agent_model() -> None:
+    settings = Settings(
+        ai_agent_model="agent-model",
+        ai_source_planner_model="planner-model",
+    )
+
+    assert settings.source_planner_model_name == "planner-model"
+
+
 def test_ai_rag_disabled_allows_empty_provider_settings() -> None:
     settings = Settings(
         ai_rag_enabled=False,
@@ -91,6 +107,7 @@ def test_mcp_enabled_requires_allowed_tools() -> None:
         ({"ai_rate_limit_per_minute": 0}, "AI_RATE_LIMIT_PER_MINUTE"),
         ({"ai_agent_max_repeated_actions": 0}, "AI_AGENT_MAX_REPEATED_ACTIONS"),
         ({"ai_agent_max_handoffs": 0}, "AI_AGENT_MAX_HANDOFFS"),
+        ({"ai_source_planner_max_candidates": 0}, "AI_SOURCE_PLANNER_MAX_CANDIDATES"),
         (
             {"ai_agent_max_external_sync_candidates": 0},
             "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",
@@ -111,6 +128,11 @@ def test_agent_loop_guard_settings_must_be_positive(
         ({"auth_cookie_secure": False}, "AUTH_COOKIE_SECURE"),
         ({"frontend_origin": "http://example.com"}, "FRONTEND_ORIGIN"),
         ({"frontend_origin": "https://localhost:3000"}, "FRONTEND_ORIGIN"),
+        (
+            {"frontend_extra_origins": "http://127.0.0.1:3000"},
+            "FRONTEND_EXTRA_ORIGINS",
+        ),
+        ({"rag_min_relevance_score": 1.5}, "RAG_MIN_RELEVANCE_SCORE"),
     ],
 )
 def test_production_settings_reject_insecure_values(
