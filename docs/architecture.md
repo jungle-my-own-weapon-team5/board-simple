@@ -55,7 +55,7 @@ PostgreSQL + pgvector extension
 
 - Frontend: Next.js App Router, React, TypeScript, Tailwind CSS, shadcn 스타일 UI 컴포넌트, Zustand
 - Backend: FastAPI, Pydantic, SQLAlchemy, Alembic
-- Database: PostgreSQL, `pgvector/pgvector:pg16` 이미지
+- Database: PostgreSQL + pgvector. 로컬 개발 기본값은 PostgreSQL 17이며, 전체 Docker 실행은 `pgvector/pgvector:pg17` 이미지를 사용합니다.
 - Auth: HttpOnly 쿠키 기반 JWT
 - Container: Docker Compose (`db`, `migrate`, `backend`, `frontend`)
 
@@ -623,7 +623,7 @@ LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator
 
 ### 로컬 개발
 
-- PostgreSQL은 Docker Compose로 실행합니다.
+- PostgreSQL은 로컬 PostgreSQL 17 + pgvector 설치본을 사용합니다.
 - FastAPI와 Next.js는 hot reload를 위해 로컬에서 실행합니다.
 - 필요한 환경변수 목록은 `.env.example`을 기준으로 합니다.
 - `.env`는 절대 commit하지 않습니다.
@@ -636,7 +636,7 @@ LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator
 - Database: `DATABASE_URL`
 - Auth/JWT: `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `AUTH_COOKIE_SECURE`
 - Frontend/API origin: `FRONTEND_ORIGIN`, `NEXT_PUBLIC_API_BASE_URL`
-- Local Docker database: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- Optional Docker database: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST_PORT`
 - API/AI/RAG: `API_REQUEST_BODY_MAX_BYTES`, `AI_RAG_ENABLED`, `AI_AGENT_PROVIDER`, `AI_EMBEDDING_PROVIDER`, `AI_AGENT_MODEL`, `AI_EMBEDDING_MODEL`, `AI_EMBEDDING_DIMENSIONS`, `AI_REQUEST_TIMEOUT_SECONDS`, `AI_AGENT_MAX_ITERATIONS`, `AI_AGENT_MAX_TOOL_CALLS`, `AI_AGENT_MAX_HANDOFFS`, `AI_RATE_LIMIT_PER_MINUTE`, `RAG_TOP_K`, `RAG_PROMPT_VERSION`
 - MCP: `MCP_SERVER_ENABLED`, `MCP_ALLOWED_TOOLS`, `MCP_REQUEST_TIMEOUT_SECONDS`
 - Provider credentials/endpoints: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `GEMINI_API_KEY`, `GEMINI_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `LAW_OPEN_API_OC`, `LAW_OPEN_API_BASE_URL`, `LAW_OPEN_API_SERVICE_URL`

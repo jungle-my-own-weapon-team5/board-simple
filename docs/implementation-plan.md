@@ -14,6 +14,7 @@ MVP의 AI agent/generation provider와 embedding provider는 OpenAI API를 사�
 - `.env.example`에는 secret placeholder만 둡니다.
 - Docker Compose에서 AI provider 변수를 backend container로 전달하는 작업은 AI 구현 단계에 포함합니다.
 - backend 로컬 개발은 Python 3.12 가상환경과 `python -m pip install -r backend/requirements-dev.txt` 기준으로 의존성을 설치합니다.
+- 로컬 개발 DB는 PostgreSQL 17 + pgvector 설치본을 기본으로 사용하고, 전체 Docker 실행은 별도 검증 경로로 유지합니다.
 - MCP와 Agent는 과제 요구사항 충족을 위해 MVP 범위에 포함합니다.
 
 ## 단계별 계획

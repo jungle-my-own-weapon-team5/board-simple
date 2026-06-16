@@ -56,10 +56,10 @@ cp .env.example .env
 
 `APP_ENV=production`으로 실행하면 운영 안전 설정을 강제합니다. 이 모드에서는 운영용 JWT 시크릿, HTTPS 프론트엔드 origin, secure 인증 쿠키 설정이 필요하며 FastAPI 문서 엔드포인트는 비활성화됩니다. 기본 `docker-compose.yml`은 로컬 개발과 배포 유사 환경 확인용이며, 운영 배포에서는 데이터베이스 포트 공개와 개발용 기본값을 사용하지 마세요.
 
-로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
+로컬 개발에서는 Windows에 설치된 PostgreSQL 17 + pgvector를 사용하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
+DATABASE_URL=postgresql+psycopg://board:<local-dev-password>@localhost:5432/board
 ```
 
 전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
@@ -72,24 +72,25 @@ DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
 
 개발할 때는 아래 방식을 권장합니다.
 
-- PostgreSQL(pgvector)은 Docker에서 실행합니다.
+- PostgreSQL 17(pgvector)은 로컬 설치본을 사용합니다.
 - FastAPI는 로컬에서 reload 모드로 실행합니다.
 - Next.js는 로컬에서 hot reload 모드로 실행합니다.
 
-DB를 실행합니다.
+DB 서비스를 확인합니다.
 
-```bash
-docker compose up -d db
+```powershell
+Get-Service postgresql-x64-17
 ```
 
 backend를 실행합니다.
 
-```bash
+```powershell
 cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
+$env:DATABASE_URL = "postgresql+psycopg://board:<local-dev-password>@localhost:5432/board"
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
@@ -137,10 +138,13 @@ docker compose up --build
 
 서비스 구성:
 
-- `db`: `pgvector/pgvector:pg16`
+- `db`: `pgvector/pgvector:pg17` 기반 PostgreSQL 17 컨테이너
 - `migrate`: `alembic upgrade head`를 한 번 실행하고 종료합니다.
 - `backend`: `http://localhost:8000`에서 실행되는 FastAPI 서버
 - `frontend`: `http://localhost:3000`에서 실행되는 Next.js 서버
+
+로컬 개발 기본값은 PostgreSQL 17입니다. 전체 Docker 실행은 배포 유사 환경 확인용이며, 이때 backend container는 Compose 네트워크의 `db` host를 사용해야 합니다.
+Docker DB를 host에서 직접 접속할 때는 기본 포트 `5433`을 사용합니다. `.env`의 `POSTGRES_HOST_PORT`로 변경할 수 있으며, Compose 내부의 backend/migrate는 계속 `db:5432`로 접속합니다.
 
 상태 확인:
 
