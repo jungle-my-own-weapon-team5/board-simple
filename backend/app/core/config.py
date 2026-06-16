@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     ai_request_timeout_seconds: int = 60
     ai_agent_max_iterations: int = 6
     ai_agent_max_tool_calls: int = 5
+    ai_agent_max_handoffs: int = 8
     ai_agent_max_repeated_actions: int = 2
     ai_agent_max_external_sync_candidates: int = 3
     rag_top_k: int = 5
@@ -90,6 +91,7 @@ class Settings(BaseSettings):
             ("AI_REQUEST_TIMEOUT_SECONDS", self.ai_request_timeout_seconds),
             ("AI_AGENT_MAX_ITERATIONS", self.ai_agent_max_iterations),
             ("AI_AGENT_MAX_TOOL_CALLS", self.ai_agent_max_tool_calls),
+            ("AI_AGENT_MAX_HANDOFFS", self.ai_agent_max_handoffs),
             ("AI_AGENT_MAX_REPEATED_ACTIONS", self.ai_agent_max_repeated_actions),
             (
                 "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",

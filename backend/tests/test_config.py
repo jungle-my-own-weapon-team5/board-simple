@@ -88,6 +88,7 @@ def test_mcp_enabled_requires_allowed_tools() -> None:
     ("overrides", "message"),
     [
         ({"ai_agent_max_repeated_actions": 0}, "AI_AGENT_MAX_REPEATED_ACTIONS"),
+        ({"ai_agent_max_handoffs": 0}, "AI_AGENT_MAX_HANDOFFS"),
         (
             {"ai_agent_max_external_sync_candidates": 0},
             "AI_AGENT_MAX_EXTERNAL_SYNC_CANDIDATES",
