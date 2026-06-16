@@ -1,4 +1,35 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const CONFIGURED_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+function getApiBaseUrl() {
+  if (typeof window === "undefined") {
+    return CONFIGURED_API_BASE_URL;
+  }
+
+  const pageHostname = window.location.hostname;
+  const isLocalPage = pageHostname === "localhost" || pageHostname === "127.0.0.1";
+
+  try {
+    const configuredUrl = new URL(CONFIGURED_API_BASE_URL);
+    const isLocalApi =
+      configuredUrl.hostname === "localhost" || configuredUrl.hostname === "127.0.0.1";
+    if (isLocalPage && isLocalApi) {
+      configuredUrl.hostname = pageHostname;
+      return configuredUrl.toString().replace(/\/$/, "");
+    }
+  } catch {
+    // Fall through to the configured value when it is not an absolute URL.
+  }
+
+  return CONFIGURED_API_BASE_URL;
+}
+
+export function getAssetUrl(pathOrUrl: string) {
+  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+    return pathOrUrl;
+  }
+  return `${getApiBaseUrl()}${pathOrUrl}`;
+}
 
 type RequestOptions = RequestInit & {
   json?: unknown;
@@ -22,12 +53,20 @@ export async function apiRequest<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    credentials: "include",
-    body: options.json !== undefined ? JSON.stringify(options.json) : options.body
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, {
+      ...options,
+      headers,
+      credentials: "include",
+      body: options.json !== undefined ? JSON.stringify(options.json) : options.body
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      "API 서버에 연결하지 못했습니다. 백엔드 서버가 실행 중인지, 프론트와 백엔드 주소가 같은 localhost/127.0.0.1 조합인지 확인해 주세요."
+    );
+  }
 
   if (!response.ok) {
     let message = response.statusText;

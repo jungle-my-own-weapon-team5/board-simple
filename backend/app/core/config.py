@@ -14,6 +14,14 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     frontend_origin: AnyUrl = "http://localhost:3000"
     auth_cookie_secure: bool = False
+    openai_api_key: str | None = None
+    openai_llm_model: str = "gpt-5.4-mini"
+    openai_embedding_model: str = "text-embedding-3-small"
+    openai_image_model: str = "gpt-image-1"
+    openai_thumbnail_size: str = "1536x1024"
+    admin_email: str = "admin@example.com"
+    admin_nickname: str = "관리자"
+    national_library_api_key: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),
