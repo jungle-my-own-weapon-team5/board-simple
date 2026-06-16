@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import ai, auth, comments, mcp, posts, tags
+from app.api import ai, auth, comments, mcp, posts, rag, tags
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -47,6 +47,7 @@ app.include_router(comments.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(mcp.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
+app.include_router(rag.router, prefix="/api")
 
 
 @app.get("/health")
