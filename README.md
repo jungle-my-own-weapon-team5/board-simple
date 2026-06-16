@@ -17,6 +17,9 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 - 댓글 작성과 `View more` 방식 페이지네이션
 - `#태그명` 형식 태그 추출
 - 게시글 제목 검색과 페이지네이션
+- LangChain + OpenAI + PostgreSQL pgvector 기반 기술 뉴스 RAG Q&A
+- 게시글 상세 화면의 vector DB 기반 연관 글 제목 목록
+- Hacker News 수집, 원문 본문 추출, 한국어 요약/핵심 포인트 게시
 
 ## Stack
 
@@ -54,16 +57,40 @@ cp .env.example .env
 
 필요한 환경변수는 `.env.example`에 정리되어 있습니다.
 
+RAG Q&A와 게시글 상세의 연관 글 기능은 기본적으로 비활성화되어 있습니다. 사용하려면 `.env`에 OpenAI API 키와 RAG 설정을 추가합니다. RAG를 사용할 수 없으면 연관 글 섹션은 숨겨집니다. Hacker News 수집 기능의 요약 생성도 같은 `OPENAI_API_KEY`와 `OPENAI_CHAT_MODEL`을 사용합니다. 키가 없으면 HN 후보는 표시되지만 요약 실패 상태가 되어 게시할 수 없습니다.
+
+```env
+OPENAI_API_KEY=your-api-key
+OPENAI_CHAT_MODEL=gpt-5.5
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+NEWS_LLM_DEBUG=false
+RAG_ENABLED=true
+RAG_COLLECTION_NAME=tech_news_posts
+RAG_TOP_K=5
+```
+
+HN 요약 요청/응답 로그를 개발 중 확인하려면 `.env`에 아래 값을 켭니다. 원문 전문과 API 키는 로그에 남기지 않고 모델명, 제목, URL, 본문 길이, 응답 길이, 요약 길이, 핵심 포인트 개수만 기록합니다.
+
+```env
+NEWS_LLM_DEBUG=true
+```
+
+Docker 실행 중에는 아래 명령으로 확인합니다.
+
+```bash
+docker compose logs -f backend
+```
+
 로컬 개발에서는 PostgreSQL만 Docker로 실행하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
 
 ```env
 DATABASE_URL=postgresql+psycopg://board:board@localhost:5432/board
 ```
 
-전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
+전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 `DOCKER_DATABASE_URL`의 DB host는 `db`를 사용합니다.
 
 ```env
-DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
+DOCKER_DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
 ```
 
 ## 개발용 실행 방법
@@ -89,6 +116,12 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 alembic upgrade head
 uvicorn app.main:app --reload
+```
+
+기존 게시글을 RAG 인덱스에 백필하려면 backend 가상환경에서 아래 명령을 실행합니다.
+
+```bash
+python -m app.scripts.reindex_rag
 ```
 
 Windows PowerShell에서는 아래 명령을 사용합니다.
@@ -172,3 +205,6 @@ docker compose down -v
 - `PUT /api/comments/{comment_id}`: 댓글 수정
 - `DELETE /api/comments/{comment_id}`: 댓글 삭제
 - `GET /api/tags`: 태그 목록
+- `POST /api/rag/ask`: 전체 게시글 기반 RAG Q&A
+- `POST /api/news/hacker-news/preview`: HN 후보 수집과 한국어 요약 preview
+- `POST /api/news/hacker-news/import`: 선택한 HN 요약 후보를 게시글로 저장
