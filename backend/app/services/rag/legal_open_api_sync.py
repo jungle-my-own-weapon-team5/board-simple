@@ -15,6 +15,11 @@ from app.models.legal_source import LegalSource
 from app.repositories import document_chunks as chunk_repository
 from app.repositories import embeddings as embedding_repository
 from app.repositories import legal_documents as document_repository
+from app.services.rag.embeddings import (
+    EmbedDocumentChunksResult,
+    EmbeddingClient,
+    embed_document_chunks,
+)
 from app.services.rag.ingestion import (
     IngestLegalDocumentInput,
     IngestLegalDocumentResult,
@@ -32,6 +37,12 @@ LegalOpenApiSyncStatus = Literal[
     "reused",
     "needs_embedding",
     "ingested",
+]
+LegalOpenApiSyncAndEmbedStatus = Literal[
+    "not_found",
+    "reused",
+    "embedded",
+    "embedding_failed",
 ]
 
 
@@ -68,6 +79,21 @@ class LegalOpenApiSyncResult:
     source: LegalSource | None = None
     chunks: list[LegalDocumentChunk] | None = None
     ingestion_result: IngestLegalDocumentResult | None = None
+    body_fetched: bool = False
+    embeddings_reusable: bool = False
+    skipped_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class LegalOpenApiSyncAndEmbedResult:
+    """preflight sync와 embedding 실행까지 포함한 결과입니다."""
+
+    status: LegalOpenApiSyncAndEmbedStatus
+    sync_result: LegalOpenApiSyncResult
+    embedding_result: EmbedDocumentChunksResult | None = None
+    document: LegalDocument | None = None
+    source: LegalSource | None = None
+    chunks: list[LegalDocumentChunk] | None = None
     body_fetched: bool = False
     embeddings_reusable: bool = False
     skipped_reason: str | None = None
@@ -146,6 +172,104 @@ def sync_law_open_api_statute(
     )
 
 
+def sync_and_embed_law_open_api_statute(
+    db: Session,
+    *,
+    client: LawOpenApiSyncClient,
+    query: str,
+    embedding_profile: EmbeddingProfile,
+    ai_client: EmbeddingClient,
+    search_limit: int = 1,
+    timeout_seconds: int = 60,
+    batch_size: int = 16,
+    retry_failed: bool = False,
+    force_reembed: bool = False,
+    commit: bool = True,
+) -> LegalOpenApiSyncAndEmbedResult:
+    """국가법령정보 법령을 검색 가능한 embedding 상태까지 동기화합니다.
+
+    기존 indexed 문서와 최신 embedding이 있으면 외부 본문 API와 embedding provider를
+    모두 호출하지 않습니다. 문서는 최신인데 embedding만 부족하면 본문 API는 생략하고
+    기존 chunk에 embedding만 보강합니다.
+    """
+    try:
+        sync_result = sync_law_open_api_statute(
+            db,
+            client=client,
+            query=query,
+            embedding_profile=embedding_profile,
+            search_limit=search_limit,
+            commit=False,
+        )
+        if sync_result.status == "not_found":
+            return LegalOpenApiSyncAndEmbedResult(
+                status="not_found",
+                sync_result=sync_result,
+                skipped_reason=sync_result.skipped_reason,
+            )
+        if sync_result.status == "reused":
+            return LegalOpenApiSyncAndEmbedResult(
+                status="reused",
+                sync_result=sync_result,
+                document=sync_result.document,
+                source=sync_result.source,
+                chunks=sync_result.chunks,
+                body_fetched=sync_result.body_fetched,
+                embeddings_reusable=True,
+            )
+        if sync_result.document is None:
+            raise ValueError("sync result document is required before embedding")
+
+        embedding_result = embed_document_chunks(
+            db,
+            document_id=sync_result.document.id,
+            embedding_profile=embedding_profile,
+            ai_client=ai_client,
+            timeout_seconds=timeout_seconds,
+            batch_size=batch_size,
+            retry_failed=retry_failed,
+            force_reembed=force_reembed,
+            commit=False,
+        )
+        chunks = sync_result.chunks or chunk_repository.list_chunks_by_document(
+            db,
+            sync_result.document.id,
+        )
+        embeddings_are_fresh = _has_fresh_chunk_embeddings(
+            db,
+            chunks=chunks,
+            embedding_profile=embedding_profile,
+        )
+        if embeddings_are_fresh:
+            _mark_document_indexed(sync_result.document)
+            status: LegalOpenApiSyncAndEmbedStatus = "embedded"
+            skipped_reason = None
+        else:
+            _mark_document_index_failed(sync_result.document, embedding_result)
+            status = "embedding_failed"
+            skipped_reason = sync_result.document.index_error
+
+        db.flush()
+        if commit:
+            db.commit()
+            db.refresh(sync_result.document)
+        return LegalOpenApiSyncAndEmbedResult(
+            status=status,
+            sync_result=sync_result,
+            embedding_result=embedding_result,
+            document=sync_result.document,
+            source=sync_result.source,
+            chunks=chunks,
+            body_fetched=sync_result.body_fetched,
+            embeddings_reusable=embeddings_are_fresh,
+            skipped_reason=skipped_reason,
+        )
+    except Exception:
+        if commit:
+            db.rollback()
+        raise
+
+
 def _get_first_statute_metadata(
     result: LawOpenApiSearchResult,
 ) -> LawOpenApiDocumentMetadata | None:
@@ -212,6 +336,31 @@ def _has_fresh_chunk_embeddings(
         if chunk_embedding.content_checksum != calculate_text_checksum(chunk.content):
             return False
     return True
+
+
+def _mark_document_indexed(document: LegalDocument) -> None:
+    document.index_status = "indexed"
+    document.indexed_at = datetime.now(timezone.utc)
+    document.index_error = None
+
+
+def _mark_document_index_failed(
+    document: LegalDocument,
+    embedding_result: EmbedDocumentChunksResult,
+) -> None:
+    document.index_status = "failed"
+    document.indexed_at = None
+    document.index_error = _summarize_embedding_failure(embedding_result)
+
+
+def _summarize_embedding_failure(result: EmbedDocumentChunksResult) -> str:
+    if result.skipped_reason:
+        return result.skipped_reason
+    if result.failed_count:
+        return f"embedding failed for {result.failed_count} chunk(s)"
+    if result.skipped_failed_count:
+        return f"embedding has {result.skipped_failed_count} failed chunk row(s)"
+    return "embedding did not complete for every chunk"
 
 
 def _build_ingestion_input(

@@ -10,13 +10,18 @@ from app.core.database import Base
 from app.models import LegalDocument, LegalDocumentChunk, LegalSource
 from app.models.embedding import EmbeddingProfile, LegalDocumentChunkEmbedding
 from app.repositories import embeddings as embedding_repository
+from app.services.ai.errors import ProviderUnavailableError
+from app.services.ai.types import EmbeddingRequest, EmbeddingResult
 from app.services.rag.legal_open_api import (
     LawOpenApiDocumentMetadata,
     LawOpenApiLawBody,
     LawOpenApiSearchItem,
     LawOpenApiSearchResult,
 )
-from app.services.rag.legal_open_api_sync import sync_law_open_api_statute
+from app.services.rag.legal_open_api_sync import (
+    sync_and_embed_law_open_api_statute,
+    sync_law_open_api_statute,
+)
 from app.services.rag.normalization import calculate_text_checksum
 
 
@@ -119,6 +124,134 @@ def test_sync_fetches_body_and_ingests_when_indexed_document_does_not_exist(
     assert result.document.index_status == "pending"
     assert result.chunks
     assert "제1조" in result.document.raw_text
+
+
+def test_sync_and_embed_reuses_fresh_embeddings_without_provider_call(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    document, chunk = _create_indexed_document(db)
+    profile = _create_embedding_profile(db)
+    _create_chunk_embedding(
+        db,
+        chunk=chunk,
+        profile=profile,
+        content_checksum=calculate_text_checksum(chunk.content),
+    )
+    client = _FakeLawOpenApiClient(metadata=metadata)
+    ai_client = _CountingEmbeddingClient()
+
+    result = sync_and_embed_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+        ai_client=ai_client,
+    )
+
+    assert result.status == "reused"
+    assert result.embedding_result is None
+    assert result.document.id == document.id
+    assert result.embeddings_reusable is True
+    assert client.body_call_count == 0
+    assert ai_client.call_count == 0
+    assert document.index_status == "indexed"
+
+
+def test_sync_and_embed_embeds_existing_document_without_body_fetch(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    document, chunk = _create_indexed_document(db)
+    profile = _create_embedding_profile(db)
+    client = _FakeLawOpenApiClient(metadata=metadata)
+    ai_client = _CountingEmbeddingClient()
+
+    result = sync_and_embed_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+        ai_client=ai_client,
+    )
+
+    assert result.status == "embedded"
+    assert result.sync_result.status == "needs_embedding"
+    assert result.embedding_result.embedded_count == 1
+    assert result.document.id == document.id
+    assert result.document.index_status == "indexed"
+    assert result.document.indexed_at is not None
+    assert result.document.index_error is None
+    assert client.body_call_count == 0
+    assert ai_client.call_count == 1
+    chunk_embedding = embedding_repository.find_chunk_embedding(
+        db,
+        chunk_id=chunk.id,
+        embedding_profile_id=profile.id,
+    )
+    assert chunk_embedding.embedding_status == "embedded"
+
+
+def test_sync_and_embed_fetches_body_ingests_and_embeds_new_document(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    client = _FakeLawOpenApiClient(metadata=metadata, body=_body())
+    profile = _create_embedding_profile(db)
+    ai_client = _CountingEmbeddingClient()
+
+    result = sync_and_embed_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+        ai_client=ai_client,
+    )
+
+    assert result.status == "embedded"
+    assert result.sync_result.status == "ingested"
+    assert result.embedding_result.embedded_count == len(result.chunks)
+    assert result.document.index_status == "indexed"
+    assert result.document.indexed_at is not None
+    assert result.document.index_error is None
+    assert client.body_call_count == 1
+    assert ai_client.call_count == 1
+    chunk_embeddings = embedding_repository.list_chunk_embeddings_by_profile(
+        db,
+        profile.id,
+    )
+    assert len(chunk_embeddings) == len(result.chunks)
+    assert {row.embedding_status for row in chunk_embeddings} == {"embedded"}
+
+
+def test_sync_and_embed_marks_document_failed_when_embedding_fails(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    client = _FakeLawOpenApiClient(metadata=metadata, body=_body())
+    profile = _create_embedding_profile(db)
+
+    result = sync_and_embed_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+        ai_client=_FailingEmbeddingClient(),
+    )
+
+    assert result.status == "embedding_failed"
+    assert result.sync_result.status == "ingested"
+    assert result.embedding_result.failed_count == len(result.chunks)
+    assert result.document.index_status == "failed"
+    assert result.document.indexed_at is None
+    assert "embedding failed" in result.document.index_error
+    assert client.body_call_count == 1
+    chunk_embeddings = embedding_repository.list_chunk_embeddings_by_profile(
+        db,
+        profile.id,
+    )
+    assert len(chunk_embeddings) == len(result.chunks)
+    assert {row.embedding_status for row in chunk_embeddings} == {"failed"}
 
 
 def _metadata() -> LawOpenApiDocumentMetadata:
@@ -242,6 +375,29 @@ def _create_chunk_embedding(
     db.add(chunk_embedding)
     db.flush()
     return chunk_embedding
+
+
+class _CountingEmbeddingClient:
+    def __init__(self) -> None:
+        self.call_count = 0
+
+    def embed_texts(self, request: EmbeddingRequest) -> list[EmbeddingResult]:
+        self.call_count += 1
+        return [
+            EmbeddingResult(
+                embedding=[1.0, *[0.0 for _ in range(request.dimensions - 1)]],
+                embedding_provider="mock",
+                embedding_model_name=request.model,
+                dimensions=request.dimensions,
+                input_index=index,
+            )
+            for index, _text in enumerate(request.texts)
+        ]
+
+
+class _FailingEmbeddingClient:
+    def embed_texts(self, request: EmbeddingRequest) -> list[EmbeddingResult]:
+        raise ProviderUnavailableError("provider unavailable")
 
 
 class _FakeLawOpenApiClient:
