@@ -292,7 +292,8 @@ backend/app/
 5. Retrieval
    - Orchestrator LLM이 먼저 생성한 쟁점별 내부 RAG query를 embedding합니다.
    - vector similarity로 각 쟁점별 top-k chunk를 조회합니다.
-   - `focused_answer`와 `issue_spotting` 검색 모드를 구분하고, `score_threshold`, `max_chunks_per_document`로 결과 폭과 문서 편중을 조절합니다.
+   - `focused_answer`와 `issue_spotting` 검색 모드를 구분하고, 명시적으로 전달된 `score_threshold`, `max_chunks_per_document`로 결과 폭과 문서 편중을 조절합니다.
+   - `score_threshold`가 없으면 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않고, LLM evidence review와 citation validation 단계에서 관련성을 검토합니다.
    - 같은 chunk가 여러 쟁점에서 검색되면 응답에서는 중복을 병합하되, 쟁점 key, 쟁점 제목, 쟁점별 query metadata를 보존합니다.
    - 문서 유형, 날짜, 법원, 법령명, jurisdiction 같은 metadata filter를 적용할 수 있게 합니다.
    - 이후 단계에서 vector search와 PostgreSQL full-text search를 결합한 hybrid search를 도입합니다.

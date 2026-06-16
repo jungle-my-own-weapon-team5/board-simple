@@ -71,14 +71,17 @@ expected_chunks
 - 불필요한 chunk 비율
 - duplicate document가 검색 결과에 중복 노출되지 않는지 여부
 - 분쟁 기준일이 있는 경우 적절한 effective date version이 검색되는지 여부
-- `score_threshold` 적용 후 낮은 점수의 chunk가 제외되는지 여부
+- `score_threshold`를 명시한 경우에만 낮은 점수의 chunk가 제외되는지 여부
+- `score_threshold`를 명시하지 않은 경우 낮은 vector score라도 필수 쟁점 chunk가 기본 필터로 삭제되지 않는지 여부
 - `max_chunks_per_document` 적용 시 한 문서가 결과를 과도하게 차지하지 않는지 여부
 - `issue_spotting`에서 같은 법령 문서 안의 복수 관련 조문이 누락 없이 포함되는지 여부
+- LLM evidence review가 단순 score cutoff가 아니라 쟁점별 coverage 기준으로 필요한 chunk를 보존하는지 여부
 
 MVP 기준:
 
 - `focused_answer` fixture query에서 expected chunk가 top-5 안에 포함되어야 합니다.
 - `issue_spotting` fixture query에서 복수 expected chunk가 기본 검색 예산 안에 포함되어야 합니다.
+- `issue_spotting` fixture query에서 expected chunk의 vector score가 낮더라도 `score_threshold` 미지정 상태에서는 최종 기본 필터로 제거되지 않아야 합니다.
 - 관련 source가 없는 query에서는 근거 부족을 표시해야 합니다.
 - 완전 중복 fixture는 `dedup_status=duplicate`로 표시되고 원본 document를 참조해야 합니다.
 - 같은 canonical/version의 본문 충돌 fixture는 `conflict_status=review_required`로 표시되어야 합니다.

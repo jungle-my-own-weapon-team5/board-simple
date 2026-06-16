@@ -250,7 +250,7 @@ chunk 기준:
 - query 또는 issue/source planning에서 생성된 쟁점별 query
 - search_mode: `focused_answer` 또는 `issue_spotting`
 - top_k. 생략하면 search_mode별 기본값을 사용하며, 전체 요청이 아니라 쟁점별 query에 적용합니다.
-- score_threshold
+- score_threshold. 사용자가 명시한 경우에만 hard filter로 적용합니다.
 - max_chunks_per_document
 - metadata filters
 
@@ -267,10 +267,11 @@ MVP 방식:
 - document type/date filter는 가능한 범위에서 적용
 - `focused_answer`는 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다.
 - `issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드입니다. 이 모드에서는 쟁점별 기본 top-k를 크게 두고, 문서별 chunk 제한은 호출자가 명시한 경우에만 적용합니다.
-- `score_threshold`가 지정되면 threshold 미만 결과를 제외합니다.
+- vector similarity score는 후보 수집과 정렬을 위한 신호이며, 법률적으로 필요한 근거인지 판단하는 최종 기준으로 사용하지 않습니다.
+- `score_threshold`가 요청에 명시된 경우에만 threshold 미만 결과를 hard filter로 제외합니다. 요청값이 없으면 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않습니다.
 - `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 최종 응답에서는 중복을 병합하고, 어떤 쟁점 query에서 검색되었는지 metadata로 보존합니다.
-- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하고, 필수 쟁점 근거가 부족하면 보강 query를 최대 2개 생성합니다.
+- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하되, 단순 삭제보다 쟁점별 필수 근거 coverage 확인을 우선합니다. 필수 쟁점 근거가 부족하면 보강 query를 최대 2개 생성합니다.
 - 보강 query는 `top_k=2`로 한 번만 추가 검색합니다. 무한 반복을 막기 위해 review와 보강 검색은 단일 pass로 제한합니다.
 - 최종 도출된 chunk만 대표 `rag_run_id`의 `rag_retrievals`에 다시 기록합니다. 따라서 `verify_citations`는 화면이나 Agent 응답에 쓰인 최종 chunk만 유효한 citation으로 인식합니다.
 
@@ -286,8 +287,11 @@ MVP:
 
 - deterministic filter 위주
 - document type, date, source type filter
-- LLM evidence review 기반 1회 필터링과 보강 검색
-- 최종 응답 직전 score threshold 적용 후 rank 재부여
+- 요청에 명시된 `score_threshold`가 있을 때만 score hard filter 적용
+- 서버 기본 관련도 점수에 의한 최종 자동 삭제는 적용하지 않음
+- LLM evidence review 기반 1회 필터링, 쟁점별 coverage 점검, 보강 검색
+- 최종 선택 chunk를 대표 run의 `rag_retrievals`에 반영한 뒤 rank 재부여
+- LLM review는 관련성 판단을 보조하지만 citation 검증을 대체하지 않습니다. 최종 citation은 반드시 retrieved chunk 또는 검증된 공식 source metadata에 근거해야 합니다.
 
 후속:
 

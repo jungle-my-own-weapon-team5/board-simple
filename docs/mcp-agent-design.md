@@ -172,6 +172,8 @@ embedding_model_name: str
 
 `focused_answer`는 답변 생성에 넣을 근거를 좁게 고르는 기본 모드이고, `issue_spotting`은 한 사건에서 여러 조문과 구성요건을 넓게 탐지하는 모드입니다. `issue_spotting`에서는 검색 누락을 줄이기 위해 `top_k` 기본값을 크게 두고, `max_chunks_per_document`는 호출자가 명시한 경우에만 적용합니다.
 
+`score_threshold`는 호출자가 명시한 경우에만 hard filter로 사용합니다. 값이 없으면 서버 기본 관련도 점수로 최종 결과를 삭제하지 않고, 넓게 수집된 후보를 LLM evidence review와 citation validation 단계에서 검토합니다.
+
 ### `search_law_open_api`
 
 국가법령정보 Open API 등 실제 외부 법률 API를 호출합니다.

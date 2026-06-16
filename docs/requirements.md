@@ -239,6 +239,8 @@ chunking은 다음 구조를 보존해야 합니다.
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하는 기본 모드입니다.
 - `search_mode=issue_spotting`은 한 사건에서 여러 조문, 구성요건, 쟁점을 넓게 탐지하기 위한 모드이며 기본 검색 예산을 더 크게 둡니다.
 - `top_k`는 전체 사용자 입력 하나에 대한 총 결과 수가 아니라, issue/source planning으로 생성된 각 쟁점별 retrieval query에 적용되는 검색 예산입니다.
+- `score_threshold`는 사용자가 명시한 경우에만 hard filter로 적용합니다. 명시하지 않은 경우 서버 기본 관련도 점수로 최종 검색 결과를 자동 삭제하지 않습니다.
+- vector similarity score는 후보 수집과 정렬을 위한 신호이며, 최종 법률 관련성 판단은 LLM evidence review와 deterministic citation validation을 함께 사용합니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 결과는 중복 병합하되, 어떤 쟁점에서 검색되었는지 metadata로 보존해야 합니다.
 
 ## FR-010 Hybrid Retrieval
@@ -279,6 +281,7 @@ hybrid retrieval은 다음을 결합합니다.
 - 사용자는 검색된 source excerpt를 확인할 수 있습니다.
 - 검색 기능은 답변 초안 생성과 독립적으로 동작해야 합니다.
 - 다수 쟁점 탐지 시 `issue_spotting` 검색 모드를 사용해 쟁점별 top-k 검색을 수행하고, 특정 문서의 일부 chunk만 과도하게 선택되는 문제를 완화할 수 있어야 합니다.
+- `issue_spotting`에서는 누락 방지를 우선합니다. 낮은 vector score라도 필수 쟁점 근거일 수 있으므로, 기본 score threshold로 삭제하지 않고 LLM evidence review에서 쟁점별 필요성을 검토해야 합니다.
 
 ## FR-013 답변 초안 보조
 

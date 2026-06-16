@@ -246,17 +246,28 @@ backend/tests/test_rag_retrieval.py
 - `/api/rag/search`는 답변 생성 없이 검색 결과만 반환합니다.
 - `/api/rag/search`는 `search_mode`, `top_k`, `score_threshold`, `max_chunks_per_document`, metadata filter를 지원합니다.
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 쟁점별 검색 예산을 넓게 둡니다.
+- `score_threshold`는 사용자가 명시한 경우에만 hard filter로 적용합니다. 요청값이 없으면 `RAG_MIN_RELEVANCE_SCORE` 같은 서버 기본값으로 최종 결과를 자동 삭제하지 않습니다.
 - 내부 RAG 검색 전 issue/source planning을 먼저 수행하고, `top_k`는 전체 입력이 아니라 계획된 각 쟁점별 query에 적용합니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries` metadata를 보존합니다.
+- LLM evidence review는 단순히 점수가 낮은 후보를 제거하는 단계가 아니라, 쟁점별 필수 근거 coverage를 점검하고 부족한 경우 보강 query를 생성하는 단계로 조정합니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
+
+후속 수정 계획:
+
+- `backend/app/api/rag.py`의 최종 관련도 필터에서 `settings.rag_min_relevance_score` 기본 적용을 제거합니다.
+- `payload.score_threshold`가 명시된 경우에만 최종 score filter와 rank 재부여를 수행합니다.
+- `backend/app/services/rag/issue_retrieval.py`의 LLM evidence review prompt를 쟁점별 coverage 확인과 필수 근거 누락 보강 중심으로 수정합니다.
+- 최종 선택 chunk만 대표 run의 `rag_retrievals`에 남기는 현재 citation 검증 경계는 유지합니다.
 
 검증:
 
 - fixture dataset으로 검색 결과 순위 테스트
 - 인증 필요 여부 테스트
 - `top_k` validation 테스트
-- `score_threshold` validation과 filtering 테스트
+- `score_threshold` validation 테스트
+- `score_threshold` 미지정 시 낮은 score chunk도 기본 삭제되지 않는지 테스트
+- `score_threshold` 명시 시에만 threshold 미만 chunk가 제외되는지 테스트
 - `max_chunks_per_document` 적용 테스트
 - `focused_answer`와 `issue_spotting` 기본값 테스트
 
@@ -448,6 +459,8 @@ frontend/src/types.ts
 - 검색 결과와 답변 초안을 분리해 보여줍니다.
 - citation source를 사용자가 확인할 수 있게 합니다.
 - pending/error 상태를 명확히 표시합니다.
+- `issue_spotting` 기본 요청에서는 누락 위험을 줄이기 위해 `top_k`, `score_threshold`, `max_chunks_per_document`를 불필요하게 고정하지 않습니다.
+- 사용자가 고급 검색 설정에서 값을 명시한 경우에만 해당 retrieval 옵션을 backend로 전달합니다.
 - provider API key나 내부 prompt는 frontend에 노출하지 않습니다.
 
 검증:

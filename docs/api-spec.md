@@ -650,10 +650,12 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 - `focused_answer`: 답변 생성에 바로 넣을 근거를 좁게 고르는 기본 모드입니다. `top_k` 생략 시 쟁점별 기본값은 `8`입니다.
 - `issue_spotting`: 한 사건에서 여러 구성요건, 조문, 쟁점을 넓게 탐지해야 할 때 쓰는 모드입니다. `top_k` 생략 시 쟁점별 기본값은 `50`이고, 문서별 chunk 제한은 명시한 경우에만 적용합니다.
 - `top_k`: 전체 사용자 입력 하나에 대한 총 결과 수가 아니라, Orchestrator LLM의 issue/source planning으로 생성된 각 쟁점별 RAG query에 적용되는 검색 예산입니다.
-- `score_threshold`: `0` 이상 `1` 이하의 선택값입니다. 지정하면 threshold 미만 결과를 제외합니다.
+- `score_threshold`: `0` 이상 `1` 이하의 선택값입니다. 명시하면 threshold 미만 결과를 제외하고, `null` 또는 생략이면 score hard filter를 적용하지 않습니다. 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않습니다.
 - `max_chunks_per_document`: 선택값입니다. 특정 문서 하나가 검색 결과를 과도하게 차지하는 것을 제한합니다. `issue_spotting`에서는 누락 위험을 줄이기 위해 생략할 수 있습니다.
 
 검색 실행 전 backend는 사용자 query에서 후보 쟁점과 공식 source 후보를 먼저 계획할 수 있습니다. 이후 쟁점별 query로 retrieval을 수행하고, 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합합니다. 각 item의 `metadata`에는 가능하면 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries`가 포함됩니다.
+
+`issue_spotting` 목적의 클라이언트는 누락 위험을 줄이기 위해 `top_k`, `score_threshold`, `max_chunks_per_document`를 불필요하게 고정하지 않는 것을 권장합니다. 넓은 후보 수집 후 LLM evidence review가 쟁점별 필수 근거 coverage를 점검하고, 최종 citation은 `rag_retrievals`에 기록된 chunk 또는 검증된 공식 source metadata로 제한합니다.
 
 #### Response `200`
 
@@ -841,7 +843,7 @@ MVP의 AI Agent API는 멀티에이전트가 아니라 단일 Orchestrator Agent
 }
 ```
 
-Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. `top_k`는 전체 글 기준 결과 수가 아니라 쟁점별 검색 예산입니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있습니다.
+Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. `top_k`는 전체 글 기준 결과 수가 아니라 쟁점별 검색 예산입니다. `score_threshold`는 명시한 경우에만 hard filter로 적용합니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있으며, 이 경우 누락 방지를 위해 `top_k`, `score_threshold`, `max_chunks_per_document`를 기본적으로 비워둘 수 있습니다.
 
 #### Response `200`
 
