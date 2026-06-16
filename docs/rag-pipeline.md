@@ -270,6 +270,9 @@ MVP 방식:
 - `score_threshold`가 지정되면 threshold 미만 결과를 제외합니다.
 - `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 최종 응답에서는 중복을 병합하고, 어떤 쟁점 query에서 검색되었는지 metadata로 보존합니다.
+- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하고, 필수 쟁점 근거가 부족하면 보강 query를 최대 2개 생성합니다.
+- 보강 query는 `top_k=2`로 한 번만 추가 검색합니다. 무한 반복을 막기 위해 review와 보강 검색은 단일 pass로 제한합니다.
+- 최종 도출된 chunk만 대표 `rag_run_id`의 `rag_retrievals`에 다시 기록합니다. 따라서 `verify_citations`는 화면이나 Agent 응답에 쓰인 최종 chunk만 유효한 citation으로 인식합니다.
 
 후속 방식:
 
@@ -283,6 +286,8 @@ MVP:
 
 - deterministic filter 위주
 - document type, date, source type filter
+- LLM evidence review 기반 1회 필터링과 보강 검색
+- 최종 응답 직전 score threshold 적용 후 rank 재부여
 
 후속:
 

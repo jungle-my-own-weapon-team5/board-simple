@@ -153,22 +153,6 @@ def _build_planner_prompt(
         f"facts:\n{facts.strip()}\n\n"
         f"question:\n{question.strip()}\n"
     )
-    return (
-        "You select Korean official legal source search candidates for RAG.\n"
-        "Return only a JSON object. Do not include markdown.\n"
-        "The candidates are not legal conclusions and must not be cited directly.\n"
-        "Each candidate must target an official statute search.\n"
-        f"Return at most {max_candidates} candidates.\n"
-        "Schema:\n"
-        "{\"candidates\":[{\"document_type\":\"statute\","
-        "\"title\":\"주택임대차보호법\",\"query\":\"주택임대차보호법\","
-        "\"reason\":\"임대차 보증금 반환 쟁점\"}]}\n"
-        "Prefer exact statute titles when possible. If unsure, include a concise "
-        "Korean search query.\n\n"
-        f"search_mode: {search_mode}\n"
-        f"facts:\n{facts.strip()}\n\n"
-        f"question:\n{question.strip()}\n"
-    )
 
 
 def _parse_plan(text: str, *, limit: int) -> LegalSourcePlan:

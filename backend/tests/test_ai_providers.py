@@ -1,4 +1,5 @@
 import json
+import ssl
 
 import httpx2 as httpx
 import pytest
@@ -75,6 +76,7 @@ def test_mock_provider_embeds_texts_with_requested_dimensions() -> None:
 
 def test_openai_provider_requires_api_key_for_generation() -> None:
     settings = Settings(
+        ai_rag_enabled=False,
         ai_agent_provider="openai",
         ai_agent_model="gpt-test",
         openai_api_key="",
@@ -95,6 +97,7 @@ def test_openai_provider_requires_api_key_for_generation() -> None:
 
 def test_openai_provider_requires_api_key_for_embedding() -> None:
     settings = Settings(
+        ai_rag_enabled=False,
         ai_embedding_provider="openai",
         ai_embedding_model="embedding-test",
         ai_embedding_dimensions=8,
@@ -112,6 +115,18 @@ def test_openai_provider_requires_api_key_for_embedding() -> None:
                 metadata={},
             )
         )
+
+
+def test_openai_provider_uses_system_trust_store_by_default() -> None:
+    provider = OpenAIProvider(api_key="test-api-key")
+
+    assert isinstance(provider.verify, ssl.SSLContext)
+
+
+def test_openai_provider_allows_custom_tls_verification() -> None:
+    provider = OpenAIProvider(api_key="test-api-key", verify=False)
+
+    assert provider.verify is False
 
 
 @pytest.mark.parametrize(
@@ -159,6 +174,7 @@ def test_generation_provider_without_embedding_support_fails_explicitly() -> Non
     )
 
     unsupported_settings = Settings(
+        ai_rag_enabled=False,
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=0,

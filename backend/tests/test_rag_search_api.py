@@ -31,6 +31,8 @@ from app.services.rag.legal_source_planner import (
     PlannedLegalIssue,
 )
 from app.services.rag.normalization import calculate_text_checksum
+from app.services.mcp.tools.citations import verify_citations_tool
+from app.services.mcp.types import McpToolCallContext
 
 FRONTEND_ORIGIN = "http://localhost:3000"
 
@@ -55,6 +57,23 @@ def disabled_rag_client_context() -> Generator[ApiTestContext, None, None]:
 def law_open_api_rag_client_context() -> Generator[ApiTestContext, None, None]:
     yield from _client_context(
         _settings(ai_rag_enabled=True, law_open_api_oc="test-oc")
+    )
+
+
+@pytest.fixture()
+def llm_review_rag_client_context() -> Generator[ApiTestContext, None, None]:
+    yield from _client_context(
+        Settings(
+            app_env="test",
+            ai_rag_enabled=True,
+            ai_agent_provider="openai",
+            ai_agent_model="review-test-model",
+            ai_source_planner_model="review-test-model",
+            ai_embedding_provider="mock",
+            ai_embedding_model="mock-embedding",
+            ai_embedding_dimensions=3,
+            openai_api_key="present",
+        )
     )
 
 
@@ -185,7 +204,7 @@ def test_rag_search_endpoint_applies_top_k_per_planned_issue(
     monkeypatch: pytest.MonkeyPatch,
     rag_client_context: ApiTestContext,
 ) -> None:
-    register_and_login(rag_client_context.client, email="issue-top-k@example.com")
+    user = register_and_login(rag_client_context.client, email="issue-top-k@example.com")
     first_issue_query = "body burial concealment"
     second_issue_query = "surrender mitigation"
     with rag_client_context.session_factory() as db:
@@ -253,6 +272,256 @@ def test_rag_search_endpoint_applies_top_k_per_planned_issue(
         "body_concealment",
         "surrender",
     ]
+    assert [item["rank"] for item in body["items"]] == [1, 2]
+    assert all(isinstance(item["retrieval_id"], int) for item in body["items"])
+
+    with rag_client_context.session_factory() as db:
+        retrievals = (
+            db.query(RagRetrieval)
+            .filter(RagRetrieval.rag_run_id == body["run_id"])
+            .order_by(RagRetrieval.rank.asc())
+            .all()
+        )
+        assert [retrieval.chunk_id for retrieval in retrievals] == [
+            first_chunk_id,
+            second_chunk_id,
+        ]
+        assert [retrieval.rank for retrieval in retrievals] == [1, 2]
+        verify_result = verify_citations_tool(
+            {
+                "run_id": body["run_id"],
+                "citations": [
+                    {"chunk_id": first_chunk_id},
+                    {"chunk_id": second_chunk_id},
+                ],
+            },
+            McpToolCallContext(db=db, user_id=user["id"]),
+        )
+        assert verify_result["valid"] is True
+
+
+def test_rag_search_endpoint_reranks_after_relevance_filter(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rag_client_context.client, email="issue-rerank@example.com")
+    first_issue_query = "low relevance issue"
+    second_issue_query = "high relevance issue"
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Low relevance statute",
+            heading="Article Low",
+            content="low relevance content",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        high_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="High relevance statute",
+            heading="Article High",
+            content="high relevance content",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        high_chunk_id = high_embedding.chunk_id
+        db.commit()
+
+    class IssueEmbeddingClient:
+        def embed_texts(self, request):
+            text = request.texts[0]
+            vector = [1.0, 0.0, 0.0]
+            if text == first_issue_query:
+                vector = [0.0, 0.0, 1.0]
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": vector,
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": len(vector),
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="low",
+                    title="Low",
+                    description=None,
+                    internal_rag_query=first_issue_query,
+                ),
+                PlannedLegalIssue(
+                    issue_key="high",
+                    title="High",
+                    description=None,
+                    internal_rag_query=second_issue_query,
+                ),
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.AIClient",
+        lambda settings: IssueEmbeddingClient(),
+    )
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "combined query",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["chunk_id"] for item in body["items"]] == [high_chunk_id]
+    assert [item["rank"] for item in body["items"]] == [1]
+
+
+def test_rag_search_endpoint_indexes_only_llm_reviewed_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+    llm_review_rag_client_context: ApiTestContext,
+) -> None:
+    user = register_and_login(
+        llm_review_rag_client_context.client,
+        email="llm-review-rag@example.com",
+    )
+    irrelevant_query = "irrelevant provision query"
+    relevant_query = "relevant provision query"
+    with llm_review_rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        irrelevant_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Irrelevant statute",
+            heading="Article X",
+            content="unrelated provision",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        relevant_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Relevant statute",
+            heading="Article Y",
+            content="directly relevant provision",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        irrelevant_chunk_id = irrelevant_embedding.chunk_id
+        relevant_chunk_id = relevant_embedding.chunk_id
+        db.commit()
+
+    class ReviewAIClient:
+        def embed_texts(self, request):
+            text = request.texts[0]
+            vector = [0.0, 1.0, 0.0]
+            if text == irrelevant_query:
+                vector = [1.0, 0.0, 0.0]
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": vector,
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": len(vector),
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+        def generate_text(self, request):
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": (
+                        '{"keep_chunk_ids": ['
+                        f"{relevant_chunk_id}"
+                        '], "supplemental_queries": []}'
+                    ),
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="irrelevant",
+                    title="Irrelevant",
+                    description=None,
+                    internal_rag_query=irrelevant_query,
+                ),
+                PlannedLegalIssue(
+                    issue_key="relevant",
+                    title="Relevant",
+                    description=None,
+                    internal_rag_query=relevant_query,
+                ),
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr("app.api.rag.AIClient", lambda settings: ReviewAIClient())
+
+    response = llm_review_rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "review evidence",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["chunk_id"] for item in body["items"]] == [relevant_chunk_id]
+    assert [item["rank"] for item in body["items"]] == [1]
+
+    with llm_review_rag_client_context.session_factory() as db:
+        retrievals = (
+            db.query(RagRetrieval)
+            .filter(RagRetrieval.rag_run_id == body["run_id"])
+            .order_by(RagRetrieval.rank.asc())
+            .all()
+        )
+        assert [retrieval.chunk_id for retrieval in retrievals] == [relevant_chunk_id]
+        verify_result = verify_citations_tool(
+            {
+                "run_id": body["run_id"],
+                "citations": [
+                    {"chunk_id": relevant_chunk_id},
+                    {"chunk_id": irrelevant_chunk_id},
+                ],
+            },
+            McpToolCallContext(db=db, user_id=user["id"]),
+        )
+        assert verify_result["valid"] is False
+        assert verify_result["valid_citations"][0]["chunk_id"] == relevant_chunk_id
+        assert verify_result["invalid_citations"][0]["chunk_id"] == irrelevant_chunk_id
+        assert verify_result["invalid_citations"][0]["reason"] == "citation_not_retrieved"
 
 
 def test_rag_search_endpoint_creates_default_embedding_profile_when_missing(
@@ -360,7 +629,7 @@ def test_rag_search_endpoint_syncs_when_existing_results_are_low_relevance(
                 LegalSourceCandidate(
                     document_type="statute",
                     title="Residential Lease Protection Act",
-                    query="Residential Lease Protection Act",
+                    query="Residential Lease Protection Act deposit return clause",
                     reason="lease deposit issue",
                 )
             ]
@@ -409,7 +678,10 @@ def test_rag_search_endpoint_syncs_when_existing_results_are_low_relevance(
     assert sync_calls == [
         (
             "Residential Lease Protection Act",
-            ["Residential Lease Protection Act"],
+            [
+                "Residential Lease Protection Act",
+                "Residential Lease Protection Act deposit return clause",
+            ],
         )
     ]
     assert [item["title"] for item in body["items"]] == [

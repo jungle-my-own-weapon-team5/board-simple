@@ -128,9 +128,13 @@ def _with_relevant_results_only(
         if payload.score_threshold is not None
         else settings.rag_min_relevance_score
     )
+    relevant_results = [item for item in result.results if item.score >= threshold]
     return replace(
         result,
-        results=[item for item in result.results if item.score >= threshold],
+        results=[
+            replace(item, rank=index)
+            for index, item in enumerate(relevant_results, start=1)
+        ],
     )
 
 

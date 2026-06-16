@@ -1,7 +1,21 @@
+import ssl
+
 import httpx2 as httpx
 import pytest
 
 from app.services.rag.legal_open_api import LawOpenApiClient
+
+
+def test_law_open_api_client_uses_system_trust_store_by_default() -> None:
+    client = LawOpenApiClient(oc="test-oc")
+
+    assert isinstance(client.verify, ssl.SSLContext)
+
+
+def test_law_open_api_client_allows_custom_tls_verification() -> None:
+    client = LawOpenApiClient(oc="test-oc", verify=False)
+
+    assert client.verify is False
 
 
 def test_search_statute_extracts_preflight_metadata_and_redacts_oc() -> None:

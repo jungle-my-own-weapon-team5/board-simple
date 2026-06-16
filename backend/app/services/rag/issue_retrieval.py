@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
+import re
 
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.models.embedding import EmbeddingProfile
+from app.models.rag_run import RagRetrieval
+from app.repositories import rag_runs as rag_run_repository
 from app.services.ai.client import AIClient
+from app.services.ai.errors import ProviderError
+from app.services.ai.types import AITextRequest
 from app.services.rag.legal_open_api import LawOpenApiClient, LawOpenApiError
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 from app.services.rag.legal_source_planner import (
@@ -89,10 +95,29 @@ def search_legal_documents_by_planned_issues(
             return result
         issue_results.append((issue, result))
 
-    return _merge_issue_results(
+    issue_results = _review_and_supplement_issue_results(
+        db,
+        user_id=user_id,
+        facts=facts,
+        question=question,
+        issue_results=issue_results,
+        embedding_profile=embedding_profile,
+        ai_client=ai_client,
+        settings=settings,
+        search_mode=search_mode,
+        score_threshold=score_threshold,
+        max_chunks_per_document=max_chunks_per_document,
+        prompt_version=prompt_version,
+        timeout_seconds=timeout_seconds,
+        document_types=document_types,
+    )
+    result = _merge_issue_results(
+        db,
         original_query=original_query,
         issue_results=issue_results,
     )
+    db.commit()
+    return result
 
 
 def _sync_official_sources_for_plan(
@@ -123,7 +148,7 @@ def _sync_official_sources_for_plan(
             sync_and_embed_law_open_api_statute(
                 db,
                 client=client,
-                query=candidate.query,
+                query=_official_source_sync_query(candidate),
                 embedding_profile=embedding_profile,
                 ai_client=ai_client,
                 search_limit=_official_source_search_limit(settings),
@@ -135,6 +160,7 @@ def _sync_official_sources_for_plan(
 
 
 def _merge_issue_results(
+    db: Session,
     *,
     original_query: str,
     issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
@@ -165,11 +191,268 @@ def _merge_issue_results(
         replace(merged_by_chunk_id[chunk_id], rank=index + 1)
         for index, chunk_id in enumerate(ordered_chunk_ids)
     ]
+    merged_items = _index_merged_retrievals_for_base_run(
+        db,
+        base_result=base_result,
+        merged_items=merged_items,
+    )
     return replace(
         base_result,
         query=original_query,
         results=merged_items,
     )
+
+
+def _index_merged_retrievals_for_base_run(
+    db: Session,
+    *,
+    base_result: SearchLegalDocumentsResult,
+    merged_items: list[RagSearchResultItem],
+) -> list[RagSearchResultItem]:
+    """병합된 최종 chunk를 대표 run의 retrieval로 다시 기록합니다."""
+
+    retrievals_by_chunk_id = {
+        retrieval.chunk_id: retrieval
+        for retrieval in rag_run_repository.list_retrievals_by_run(db, base_result.run_id)
+    }
+    final_chunk_ids = {item.chunk_id for item in merged_items}
+    for chunk_id, retrieval in list(retrievals_by_chunk_id.items()):
+        if chunk_id not in final_chunk_ids:
+            db.delete(retrieval)
+            del retrievals_by_chunk_id[chunk_id]
+    for rank, item in enumerate(merged_items, start=1):
+        retrieval = retrievals_by_chunk_id.get(item.chunk_id)
+        if retrieval is None:
+            retrieval = RagRetrieval(
+                rag_run_id=base_result.run_id,
+                chunk_id=item.chunk_id,
+                chunk_embedding_id=item.chunk_embedding_id,
+                embedding_profile_id=base_result.embedding_profile_id,
+                rank=rank,
+                score=item.score,
+                retrieval_type="vector",
+            )
+            rag_run_repository.add_rag_retrieval(db, retrieval)
+            retrievals_by_chunk_id[item.chunk_id] = retrieval
+        else:
+            retrieval.rank = rank
+            retrieval.score = item.score
+            retrieval.chunk_embedding_id = item.chunk_embedding_id
+            retrieval.embedding_profile_id = base_result.embedding_profile_id
+    db.flush()
+    return [
+        replace(
+            item,
+            rank=rank,
+            retrieval_id=retrievals_by_chunk_id[item.chunk_id].id,
+        )
+        for rank, item in enumerate(merged_items, start=1)
+    ]
+
+
+def _review_and_supplement_issue_results(
+    db: Session,
+    *,
+    user_id: int,
+    facts: str,
+    question: str,
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    embedding_profile: EmbeddingProfile,
+    ai_client: AIClient,
+    settings: Settings,
+    search_mode: str,
+    score_threshold: float | None,
+    max_chunks_per_document: int | None,
+    prompt_version: str,
+    timeout_seconds: int,
+    document_types: list[str] | None,
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    """LLM으로 검색 후보를 1회 검토하고 부족한 쟁점 query를 소량 보강합니다."""
+
+    review = _review_retrieved_evidence(
+        ai_client=ai_client,
+        settings=settings,
+        facts=facts,
+        question=question,
+        issue_results=issue_results,
+    )
+    if review is None:
+        return issue_results
+
+    reviewed_results = _apply_reviewed_chunk_ids(
+        issue_results,
+        keep_chunk_ids=review["keep_chunk_ids"],
+    )
+    for index, supplemental_query in enumerate(review["supplemental_queries"], start=1):
+        supplemental_issue = PlannedLegalIssue(
+            issue_key=f"supplemental_{index}",
+            title=supplemental_query,
+            description="LLM evidence review requested supplemental retrieval.",
+            internal_rag_query=supplemental_query,
+        )
+        supplemental_result = search_legal_documents(
+            db,
+            user_id=user_id,
+            query=supplemental_query,
+            embedding_profile=embedding_profile,
+            ai_client=ai_client,
+            search_mode=search_mode,
+            top_k=2,
+            score_threshold=score_threshold,
+            max_chunks_per_document=max_chunks_per_document,
+            prompt_version=prompt_version,
+            timeout_seconds=timeout_seconds,
+            document_types=document_types,
+        )
+        if supplemental_result.status == "completed":
+            reviewed_results.append((supplemental_issue, supplemental_result))
+    return reviewed_results
+
+
+def _review_retrieved_evidence(
+    *,
+    ai_client: AIClient,
+    settings: Settings,
+    facts: str,
+    question: str,
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> dict[str, list[int] | list[str]] | None:
+    model_name = settings.source_planner_model_name
+    if settings.ai_agent_provider == "mock":
+        return None
+    if not model_name or not hasattr(ai_client, "generate_text"):
+        return None
+    candidates = _review_candidate_payload(issue_results)
+    if not candidates:
+        return None
+    try:
+        result = ai_client.generate_text(
+            AITextRequest(
+                prompt=_build_evidence_review_prompt(
+                    facts=facts,
+                    question=question,
+                    candidates=candidates,
+                ),
+                model=model_name,
+                temperature=0,
+                timeout_seconds=settings.ai_request_timeout_seconds,
+                metadata={"purpose": "rag_evidence_review"},
+            )
+        )
+    except ProviderError:
+        return None
+
+    parsed = _parse_evidence_review(result.text)
+    if parsed is None:
+        return None
+    return parsed
+
+
+def _review_candidate_payload(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> list[dict[str, object]]:
+    candidates: list[dict[str, object]] = []
+    seen_chunk_ids: set[int] = set()
+    for issue, result in issue_results:
+        for item in result.results:
+            if item.chunk_id in seen_chunk_ids:
+                continue
+            seen_chunk_ids.add(item.chunk_id)
+            candidates.append(
+                {
+                    "chunk_id": item.chunk_id,
+                    "issue_key": issue.issue_key,
+                    "issue_title": issue.title,
+                    "query": issue.internal_rag_query,
+                    "title": item.title,
+                    "heading": item.heading,
+                    "score": round(item.score, 4),
+                    "content": item.content[:1000],
+                }
+            )
+            if len(candidates) >= 30:
+                return candidates
+    return candidates
+
+
+def _build_evidence_review_prompt(
+    *,
+    facts: str,
+    question: str,
+    candidates: list[dict[str, object]],
+) -> str:
+    schema = {
+        "keep_chunk_ids": [1, 2],
+        "supplemental_queries": ["형법 사체유기 조문"],
+    }
+    return (
+        "You review Korean legal RAG evidence candidates.\n"
+        "Return only JSON. Do not include markdown.\n"
+        "Keep only chunks that are directly useful for the user facts/question.\n"
+        "Exclude unrelated criminal, civil, or procedure provisions.\n"
+        "If an essential issue is missing, add at most 2 concise supplemental "
+        "Korean retrieval queries. Do not add queries when current evidence is enough.\n"
+        f"Schema example:\n{json.dumps(schema, ensure_ascii=False)}\n\n"
+        f"facts:\n{facts.strip()}\n\n"
+        f"question:\n{question.strip()}\n\n"
+        f"candidates:\n{json.dumps(candidates, ensure_ascii=False)}\n"
+    )
+
+
+def _parse_evidence_review(text: str) -> dict[str, list[int] | list[str]] | None:
+    try:
+        payload = json.loads(_extract_json_object(text))
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    raw_keep_chunk_ids = payload.get("keep_chunk_ids")
+    if not isinstance(raw_keep_chunk_ids, list):
+        return None
+    keep_chunk_ids = [
+        value
+        for value in raw_keep_chunk_ids
+        if isinstance(value, int) and not isinstance(value, bool)
+    ]
+    supplemental_queries = [
+        value.strip()
+        for value in payload.get("supplemental_queries", [])
+        if isinstance(value, str) and value.strip()
+    ][:2]
+    return {
+        "keep_chunk_ids": keep_chunk_ids,
+        "supplemental_queries": supplemental_queries,
+    }
+
+
+def _extract_json_object(text: str) -> str:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?", "", stripped, flags=re.IGNORECASE).strip()
+        stripped = re.sub(r"```$", "", stripped).strip()
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end == -1 or end < start:
+        raise ValueError("JSON object was not found")
+    return stripped[start : end + 1]
+
+
+def _apply_reviewed_chunk_ids(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    *,
+    keep_chunk_ids: list[int],
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    keep_set = set(keep_chunk_ids)
+    return [
+        (
+            issue,
+            replace(
+                result,
+                results=[item for item in result.results if item.chunk_id in keep_set],
+            ),
+        )
+        for issue, result in issue_results
+    ]
 
 
 def _tag_item_with_issue(
@@ -257,6 +540,10 @@ def _preferred_titles_for_candidate(candidate: LegalSourceCandidate) -> list[str
         if value.strip() and value not in titles:
             titles.append(value)
     return titles
+
+
+def _official_source_sync_query(candidate: LegalSourceCandidate) -> str:
+    return candidate.title.strip() or candidate.query.strip()
 
 
 def _official_source_search_limit(settings: Settings) -> int:

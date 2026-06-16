@@ -6,10 +6,12 @@ from dataclasses import dataclass, field
 from datetime import date
 from html import unescape
 import re
+import ssl
 from typing import Any, Literal
 from xml.etree import ElementTree
 
 import httpx2 as httpx
+import truststore
 
 LawOpenApiTarget = Literal["statute", "case", "interpretation", "admin_appeal"]
 DEFAULT_LAW_OPEN_API_BASE_URL = "https://www.law.go.kr/DRF/lawSearch.do"
@@ -130,12 +132,15 @@ class LawOpenApiClient:
         service_url: str = DEFAULT_LAW_OPEN_API_SERVICE_URL,
         timeout_seconds: int = 30,
         transport: httpx.BaseTransport | None = None,
+        verify: ssl.SSLContext | str | bool | None = None,
     ) -> None:
         self.oc = oc
         self.base_url = base_url
         self.service_url = service_url
         self.timeout_seconds = timeout_seconds
         self.transport = transport
+        # 국가법령정보 API 호출도 Windows/보안 프록시 환경의 로컬 신뢰 CA를 사용합니다.
+        self.verify = verify if verify is not None else _build_system_trust_context()
 
     def search(
         self,
@@ -255,6 +260,7 @@ class LawOpenApiClient:
             with httpx.Client(
                 timeout=self.timeout_seconds,
                 transport=self.transport,
+                verify=self.verify,
             ) as client:
                 response = client.get(url or self.base_url, params=params)
         except httpx.TimeoutException as exc:
@@ -299,6 +305,10 @@ def _parse_xml_response(text: str) -> dict[str, Any]:
             "law open api response was not valid JSON or XML"
         ) from exc
     return {root.tag: _element_to_value(root)}
+
+
+def _build_system_trust_context() -> ssl.SSLContext:
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 
 def _element_to_value(element: ElementTree.Element) -> Any:

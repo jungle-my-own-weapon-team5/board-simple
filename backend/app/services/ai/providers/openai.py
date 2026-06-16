@@ -1,8 +1,10 @@
 # 이 파일은 OpenAI SDK/API를 바로 route나 RAG service에서 호출하지 않도록 막는 경계입니다.
 import json
+import ssl
 from typing import Any
 
 import httpx2 as httpx
+import truststore
 
 from app.services.ai.errors import (
     ProviderAuthError,
@@ -36,11 +38,15 @@ class OpenAIProvider(AIProvider):
         api_key: str,
         base_url: str = "",
         transport: httpx.BaseTransport | None = None,
+        verify: ssl.SSLContext | str | bool | None = None,
     ) -> None:
         self.api_key = api_key
         self.base_url = (base_url.strip() or DEFAULT_OPENAI_BASE_URL).rstrip("/")
         # 테스트에서는 MockTransport를 주입해 실제 OpenAI 네트워크 호출 없이 검증합니다.
         self.transport = transport
+        # Windows 개발 환경이나 보안 프록시 환경에서는 certifi bundle만으로
+        # 로컬 신뢰 CA를 찾지 못할 수 있어 OS 인증서 저장소를 기본으로 사용합니다.
+        self.verify = verify if verify is not None else _build_system_trust_context()
 
     def generate_text(self, request: AITextRequest) -> AITextResult:
         self._require_api_key()
@@ -76,6 +82,7 @@ class OpenAIProvider(AIProvider):
             with httpx.Client(
                 timeout=request.timeout_seconds,
                 transport=self.transport,
+                verify=self.verify,
             ) as client:
                 response = client.post(
                     f"{self.base_url}/embeddings",
@@ -110,6 +117,7 @@ class OpenAIProvider(AIProvider):
             with httpx.Client(
                 timeout=request.timeout_seconds,
                 transport=self.transport,
+                verify=self.verify,
             ) as client:
                 response = client.post(
                     f"{self.base_url}/responses",
@@ -254,6 +262,10 @@ def _extract_response_text(response_json: dict[str, Any]) -> str:
             if isinstance(text, str):
                 text_parts.append(text)
     return "".join(text_parts)
+
+
+def _build_system_trust_context() -> ssl.SSLContext:
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 
 def _parse_usage(value: object) -> AIUsage | None:
