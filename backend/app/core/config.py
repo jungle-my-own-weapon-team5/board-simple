@@ -10,6 +10,8 @@ DEFAULT_JWT_SECRET_KEY = "change-me"
 DEFAULT_MCP_ALLOWED_TOOLS = (
     "search_legal_documents,search_law_open_api,verify_citations"
 )
+DEFAULT_LAW_OPEN_API_BASE_URL = "https://www.law.go.kr/DRF/lawSearch.do"
+DEFAULT_LAW_OPEN_API_SERVICE_URL = "https://www.law.go.kr/DRF/lawService.do"
 
 
 class Settings(BaseSettings):
@@ -44,6 +46,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_base_url: str = ""
     law_open_api_oc: str = ""
+    law_open_api_base_url: str = DEFAULT_LAW_OPEN_API_BASE_URL
+    law_open_api_service_url: str = DEFAULT_LAW_OPEN_API_SERVICE_URL
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),

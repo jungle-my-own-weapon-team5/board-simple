@@ -11,6 +11,16 @@ def test_development_settings_allow_local_defaults() -> None:
     assert settings.app_env == "development"
 
 
+def test_law_open_api_url_settings_have_defaults() -> None:
+    settings = Settings(app_env="development")
+
+    assert settings.law_open_api_base_url == "https://www.law.go.kr/DRF/lawSearch.do"
+    assert (
+        settings.law_open_api_service_url
+        == "https://www.law.go.kr/DRF/lawService.do"
+    )
+
+
 def test_ai_rag_disabled_allows_empty_provider_settings() -> None:
     settings = Settings(
         ai_rag_enabled=False,

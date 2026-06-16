@@ -20,6 +20,7 @@ from app.services.ai.types import EmbeddingRequest, EmbeddingResult
 from app.services.mcp.registry import create_default_registry
 from app.services.mcp.server import McpJsonRpcServer
 from app.services.mcp.types import McpToolCallContext
+from app.services.mcp.tools.legal_open_api import _resolve_client
 from app.services.rag.legal_open_api import LawOpenApiClient
 from app.services.rag.normalization import calculate_text_checksum
 
@@ -149,6 +150,18 @@ def test_search_law_open_api_requires_oc_when_default_client_is_used() -> None:
     assert response["error"]["data"]["error_code"] == "mcp_tool_config_error"
 
 
+def test_default_law_open_api_client_uses_configured_urls() -> None:
+    settings = _settings(
+        law_open_api_base_url="https://law.example.test/DRF/lawSearch.do",
+        law_open_api_service_url="https://law.example.test/DRF/lawService.do",
+    )
+
+    client = _resolve_client(McpToolCallContext(settings=settings))
+
+    assert client.base_url == "https://law.example.test/DRF/lawSearch.do"
+    assert client.service_url == "https://law.example.test/DRF/lawService.do"
+
+
 def test_search_legal_documents_tool_calls_retrieval_service(db: Session) -> None:
     user = _create_user(db)
     profile = _create_profile(db, dimensions=3)
@@ -264,13 +277,20 @@ def _create_default_server(allowed_tool_names: list[str]) -> McpJsonRpcServer:
     )
 
 
-def _settings(*, law_open_api_oc: str = "test-oc") -> Settings:
+def _settings(
+    *,
+    law_open_api_oc: str = "test-oc",
+    law_open_api_base_url: str = "https://www.law.go.kr/DRF/lawSearch.do",
+    law_open_api_service_url: str = "https://www.law.go.kr/DRF/lawService.do",
+) -> Settings:
     return Settings(
         app_env="test",
         ai_embedding_provider="mock",
         ai_embedding_model="mock-embedding",
         ai_embedding_dimensions=3,
         law_open_api_oc=law_open_api_oc,
+        law_open_api_base_url=law_open_api_base_url,
+        law_open_api_service_url=law_open_api_service_url,
     )
 
 

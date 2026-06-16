@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
+from html import unescape
+import re
 from typing import Any, Literal
 from xml.etree import ElementTree
 
@@ -10,12 +13,21 @@ import httpx2 as httpx
 
 LawOpenApiTarget = Literal["statute", "case", "interpretation", "admin_appeal"]
 DEFAULT_LAW_OPEN_API_BASE_URL = "https://www.law.go.kr/DRF/lawSearch.do"
+DEFAULT_LAW_OPEN_API_SERVICE_URL = "https://www.law.go.kr/DRF/lawService.do"
 TARGET_TO_EXTERNAL_TARGET: dict[LawOpenApiTarget, str] = {
     "statute": "law",
     "case": "prec",
     "interpretation": "expc",
     "admin_appeal": "decc",
 }
+LAW_BODY_CONTENT_KEYS = {
+    "조문내용",
+    "항내용",
+    "호내용",
+    "목내용",
+    "부칙내용",
+}
+TAG_PATTERN = re.compile(r"<[^>]+>")
 EXTERNAL_TARGET_TO_LIST_KEYS: dict[str, tuple[str, ...]] = {
     "law": ("law", "Law"),
     "prec": ("prec", "Prec"),
@@ -73,6 +85,22 @@ class LawOpenApiSearchResult:
     items: list[LawOpenApiSearchItem]
 
 
+@dataclass(frozen=True)
+class LawOpenApiLawBody:
+    """`lawService.do`에서 받은 법령 본문을 ingestion 가능한 형태로 정규화한 결과입니다."""
+
+    title: str
+    raw_text: str
+    external_id: str | None
+    law_id: str | None
+    mst: str | None
+    source_url: str | None
+    published_date: date | None
+    effective_date: date | None
+    version_label: str | None
+    metadata_json: dict[str, Any] = field(default_factory=dict)
+
+
 class LawOpenApiClient:
     """국가법령정보 공동활용 `lawSearch.do` 목록 검색 client입니다."""
 
@@ -81,11 +109,13 @@ class LawOpenApiClient:
         *,
         oc: str,
         base_url: str = DEFAULT_LAW_OPEN_API_BASE_URL,
+        service_url: str = DEFAULT_LAW_OPEN_API_SERVICE_URL,
         timeout_seconds: int = 30,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         self.oc = oc
         self.base_url = base_url
+        self.service_url = service_url
         self.timeout_seconds = timeout_seconds
         self.transport = transport
 
@@ -136,6 +166,34 @@ class LawOpenApiClient:
             items=items,
         )
 
+    def get_law_body(
+        self,
+        *,
+        mst: str | None = None,
+        law_id: str | None = None,
+    ) -> LawOpenApiLawBody:
+        """현행법령 본문을 조회해 조문 중심 plain text로 변환합니다.
+
+        국가법령정보 `lawService.do?target=law`는 `MST` 또는 `ID` 중 하나로
+        본문을 조회합니다. 둘 다 있으면 목록 응답의 법령일련번호에 해당하는
+        `MST`를 우선 사용합니다.
+        """
+
+        self._validate_law_body_request(mst=mst, law_id=law_id)
+        params: dict[str, object] = {
+            "OC": self.oc,
+            "target": "law",
+            "type": "JSON",
+        }
+        if mst is not None and mst.strip():
+            params["MST"] = mst.strip()
+        elif law_id is not None and law_id.strip():
+            params["ID"] = law_id.strip()
+
+        response = self._get(params, url=self.service_url)
+        payload = self._parse_response_payload(response)
+        return _normalize_law_body(payload, oc=self.oc)
+
     def _validate_request(
         self,
         *,
@@ -158,13 +216,29 @@ class LawOpenApiClient:
         if search_scope not in {1, 2}:
             raise ValueError("search_scope must be 1 or 2")
 
-    def _get(self, params: dict[str, object]) -> httpx.Response:
+    def _validate_law_body_request(
+        self,
+        *,
+        mst: str | None,
+        law_id: str | None,
+    ) -> None:
+        if not self.oc.strip():
+            raise LawOpenApiConfigError("LAW_OPEN_API_OC is required")
+        if (mst is None or not mst.strip()) and (law_id is None or not law_id.strip()):
+            raise ValueError("mst or law_id is required")
+
+    def _get(
+        self,
+        params: dict[str, object],
+        *,
+        url: str | None = None,
+    ) -> httpx.Response:
         try:
             with httpx.Client(
                 timeout=self.timeout_seconds,
                 transport=self.transport,
             ) as client:
-                response = client.get(self.base_url, params=params)
+                response = client.get(url or self.base_url, params=params)
         except httpx.TimeoutException as exc:
             raise LawOpenApiTimeoutError("law open api request timed out") from exc
         except httpx.RequestError as exc:
@@ -324,6 +398,207 @@ def _normalize_item(
             if not isinstance(value, (dict, list))
         },
     )
+
+
+def _normalize_law_body(
+    payload: dict[str, Any],
+    *,
+    oc: str,
+) -> LawOpenApiLawBody:
+    law_root = _extract_law_root(payload)
+    basic_info = _find_first_dict_by_key(law_root, "기본정보") or {}
+    title = (
+        _first_text(basic_info, ("법령명_한글", "법령명한글", "법령명", "현행법령명"))
+        or _first_text(payload, ("법령명_한글", "법령명한글", "법령명", "현행법령명"))
+        or "제목 없음"
+    )
+    mst = _first_text(basic_info, ("법령일련번호", "MST"))
+    law_id = _first_text(basic_info, ("법령ID", "ID"))
+    published_date = _parse_yyyymmdd_date(
+        _first_text(basic_info, ("공포일자", "공포일"))
+    )
+    effective_date = _parse_yyyymmdd_date(
+        _first_text(basic_info, ("시행일자", "시행일"))
+    )
+    promulgation_number = _first_text(basic_info, ("공포번호",))
+    body_parts = _extract_law_body_parts(law_root)
+    raw_text = _join_law_body_text(
+        title=title,
+        published_date=published_date,
+        effective_date=effective_date,
+        body_parts=body_parts,
+    )
+    if not raw_text.strip():
+        raise LawOpenApiResponseError("law open api body text was empty")
+
+    external_id = mst or law_id
+    version_label = _build_law_version_label(
+        effective_date=effective_date,
+        promulgation_number=promulgation_number,
+        published_date=published_date,
+    )
+    source_url = _law_hangul_url(title)
+    return LawOpenApiLawBody(
+        title=title,
+        raw_text=raw_text,
+        external_id=external_id,
+        law_id=law_id,
+        mst=mst,
+        source_url=source_url,
+        published_date=published_date,
+        effective_date=effective_date,
+        version_label=version_label,
+        metadata_json={
+            "provider_target": "law",
+            "external_id": external_id,
+            "law_id": law_id,
+            "mst": mst,
+            "promulgation_number": promulgation_number,
+            "source_url": source_url,
+            "raw_basic_info": _redact_mapping_scalars(basic_info, oc),
+        },
+    )
+
+
+def _extract_law_root(payload: dict[str, Any]) -> dict[str, Any]:
+    law_root = _find_first_dict_by_key(payload, "법령")
+    if law_root is not None:
+        return law_root
+    return payload
+
+
+def _find_first_dict_by_key(value: Any, key: str) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        child = value.get(key)
+        if isinstance(child, dict):
+            return child
+        for nested_value in value.values():
+            found = _find_first_dict_by_key(nested_value, key)
+            if found is not None:
+                return found
+    if isinstance(value, list):
+        for item in value:
+            found = _find_first_dict_by_key(item, key)
+            if found is not None:
+                return found
+    return None
+
+
+def _extract_law_body_parts(law_root: dict[str, Any]) -> list[str]:
+    article_rows = _find_first_list_by_key(law_root, "조문단위")
+    if article_rows is None:
+        article_rows = _find_first_list_by_key(law_root, "부칙단위")
+
+    parts: list[str] = []
+    if article_rows is not None:
+        for row in article_rows:
+            row_parts: list[str] = []
+            _collect_law_content_texts(row, row_parts)
+            parts.extend(row_parts)
+
+    if parts:
+        return _deduplicate_adjacent_texts(parts)
+
+    fallback_parts: list[str] = []
+    _collect_law_content_texts(law_root, fallback_parts)
+    return _deduplicate_adjacent_texts(fallback_parts)
+
+
+def _collect_law_content_texts(value: Any, parts: list[str]) -> None:
+    if isinstance(value, dict):
+        for key, nested_value in value.items():
+            if key in LAW_BODY_CONTENT_KEYS:
+                text = _clean_body_text(nested_value)
+                if text:
+                    parts.append(text)
+                continue
+            _collect_law_content_texts(nested_value, parts)
+        return
+
+    if isinstance(value, list):
+        for item in value:
+            _collect_law_content_texts(item, parts)
+
+
+def _clean_body_text(value: Any) -> str | None:
+    if isinstance(value, (dict, list)):
+        nested_parts: list[str] = []
+        _collect_law_content_texts(value, nested_parts)
+        return "\n".join(nested_parts) if nested_parts else None
+    text = unescape(str(value))
+    text = TAG_PATTERN.sub("", text)
+    lines = [line.strip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    cleaned = "\n".join(line for line in lines if line)
+    return cleaned or None
+
+
+def _deduplicate_adjacent_texts(parts: list[str]) -> list[str]:
+    deduplicated: list[str] = []
+    for part in parts:
+        if deduplicated and deduplicated[-1] == part:
+            continue
+        deduplicated.append(part)
+    return deduplicated
+
+
+def _join_law_body_text(
+    *,
+    title: str,
+    published_date: date | None,
+    effective_date: date | None,
+    body_parts: list[str],
+) -> str:
+    header = [title]
+    if published_date is not None:
+        header.append(f"공포일자: {published_date.isoformat()}")
+    if effective_date is not None:
+        header.append(f"시행일자: {effective_date.isoformat()}")
+    return "\n".join(header + ["", *body_parts]).strip()
+
+
+def _parse_yyyymmdd_date(value: str | None) -> date | None:
+    if value is None:
+        return None
+    digits = "".join(character for character in value if character.isdigit())
+    if len(digits) != 8:
+        return None
+    try:
+        return date(int(digits[:4]), int(digits[4:6]), int(digits[6:8]))
+    except ValueError:
+        return None
+
+
+def _build_law_version_label(
+    *,
+    effective_date: date | None,
+    promulgation_number: str | None,
+    published_date: date | None,
+) -> str | None:
+    parts = [
+        effective_date.isoformat() if effective_date is not None else None,
+        promulgation_number,
+        published_date.isoformat() if published_date is not None else None,
+    ]
+    label = ",".join(part for part in parts if part)
+    return label or None
+
+
+def _law_hangul_url(title: str) -> str | None:
+    stripped_title = title.strip()
+    if not stripped_title or stripped_title == "제목 없음":
+        return None
+    return f"https://www.law.go.kr/법령/{stripped_title}"
+
+
+def _redact_mapping_scalars(
+    mapping: dict[str, Any],
+    oc: str,
+) -> dict[str, str]:
+    return {
+        key: _redact_oc(str(value), oc)
+        for key, value in mapping.items()
+        if not isinstance(value, (dict, list))
+    }
 
 
 def _first_text(row: dict[str, Any], keys: tuple[str, ...]) -> str | None:

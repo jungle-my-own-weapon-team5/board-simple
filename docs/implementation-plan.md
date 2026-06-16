@@ -76,6 +76,8 @@ GEMINI_BASE_URL
 ANTHROPIC_API_KEY
 ANTHROPIC_BASE_URL
 LAW_OPEN_API_OC
+LAW_OPEN_API_BASE_URL
+LAW_OPEN_API_SERVICE_URL
 ```
 
 구현 기준:
@@ -308,6 +310,7 @@ backend/tests/test_mcp_legal_tools.py
 - `search_law_open_api.target`은 내부 문서 유형인 `statute`, `case`, `interpretation`, `admin_appeal`을 사용하고, 외부 API별 parameter는 adapter 내부에서 매핑합니다.
 - `verify_citations`는 초안 citation이 해당 run의 retrieved chunk 또는 외부 source metadata에 근거하는지 확인합니다.
 - `LAW_OPEN_API_OC`는 secret으로 취급합니다.
+- `LAW_OPEN_API_BASE_URL`, `LAW_OPEN_API_SERVICE_URL`은 비밀값이 아닌 endpoint 설정이며, 운영 프록시나 테스트 서버가 필요할 때 환경별로 바꿀 수 있게 합니다.
 - 외부 API 응답 XML/JSON parsing을 명시적으로 처리합니다.
 - 외부 API 실패와 rate limit을 안전하게 처리합니다.
 
@@ -429,6 +432,7 @@ backend/tests/test_legal_open_api_sync.py
 구현 기준:
 
 - `LAW_OPEN_API_OC`는 secret으로 취급합니다.
+- `LAW_OPEN_API_BASE_URL`, `LAW_OPEN_API_SERVICE_URL`은 비밀값이 아닌 endpoint 설정이며, ingestion client와 MCP tool이 같은 값을 사용합니다.
 - MCP `search_law_open_api`와 ingestion client가 같은 parsing/error 정책을 공유합니다.
 - source URL, external ID, fetched_at을 저장합니다.
 - 전문 API를 호출하기 전에 metadata preflight를 수행합니다.

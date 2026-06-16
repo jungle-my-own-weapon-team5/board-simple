@@ -115,6 +115,8 @@ def _resolve_client(context: McpToolCallContext) -> LawOpenApiClient:
     settings = _require_settings(context)
     return LawOpenApiClient(
         oc=settings.law_open_api_oc,
+        base_url=settings.law_open_api_base_url,
+        service_url=settings.law_open_api_service_url,
         timeout_seconds=settings.mcp_request_timeout_seconds,
     )
 
