@@ -251,9 +251,12 @@ backend/tests/test_rag_retrieval.py
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 쟁점별 검색 예산을 넓게 둡니다.
 - `score_threshold`는 사용자가 명시한 경우에만 hard filter로 적용합니다. 요청값이 없으면 `RAG_MIN_RELEVANCE_SCORE` 같은 서버 기본값으로 최종 결과를 자동 삭제하지 않습니다.
 - 내부 RAG 검색 전 issue/source planning을 먼저 수행하고, `top_k`는 전체 입력이 아니라 계획된 각 쟁점별 query에 적용합니다.
+- planning은 사건을 단일 domain으로 고정하지 않고 복수 `legal_domains`와 issue track을 허용합니다. 형사, 민사, 노동, 행정, 임대차 등 여러 영역이 한 사건에 동시에 포함될 수 있습니다.
+- 각 issue track은 `domain`, `facts_slice`, `issue_key`, `title`, `internal_rag_query`, `official_source_candidates`를 가질 수 있습니다. 1차 구현은 순차 실행으로 시작하되, service 함수 계약은 track별 병렬 retrieval로 확장 가능하게 유지합니다.
 - issue/source planning 결과에는 필요 시 `expected_article_refs`를 포함할 수 있지만, 이는 권위 있는 근거가 아니라 reviewer가 검토할 검색 힌트입니다. 사용자가 법률 용어를 쓰지 않아도 사망 결과, 사체 은닉, 자수처럼 사실관계상 명확한 핵심 쟁점은 backend가 조문번호 없는 검색 힌트와 공식 법령 후보로만 보강합니다.
 - reviewer가 활성화된 경로에서는 조문번호 직접 주입 대신 issue query의 핵심 키워드와 chunk heading을 대조해 후보를 보강하고, 해당 후보도 reviewer의 keep/discard 판단을 거친 뒤에만 최종 결과에 남깁니다.
-- 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries` metadata를 보존합니다.
+- 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries`, `domain_tags`, `used_by_tracks` metadata를 보존합니다.
+- 최종 citation 후보는 track별 결과를 그대로 복제하지 않고 전역 evidence index로 병합합니다. Agent 답변 생성 전에는 track별 결과를 단순 나열하지 않고 cross-domain synthesis로 선결문제, 중복 쟁점, 영역 간 영향 관계, 사용자 질문 기준 우선순위를 정리합니다.
 - LLM evidence review는 단순히 점수가 낮은 후보를 제거하는 단계가 아니라, 쟁점별 필수 근거 coverage를 점검하고 부족한 경우 보강 query 또는 `missing_article_refs`를 생성하는 단계로 조정합니다.
 - 조문번호 기반 exact lookup은 planner가 제안한 조문을 자동 승격하는 방식이 아니라, reviewer가 `missing_article_refs`로 직접 필요성을 판단한 경우에만 수행합니다. review가 비활성화된 mock/test 환경에서만 planner `expected_article_refs`를 fallback hint로 사용합니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
@@ -265,6 +268,8 @@ backend/tests/test_rag_retrieval.py
 - `payload.score_threshold`가 명시된 경우에만 최종 score filter와 rank 재부여를 수행합니다.
 - `backend/app/services/rag/issue_retrieval.py`의 LLM evidence review prompt를 쟁점별 coverage 확인, 후보 제거, reviewer 기반 누락 조문 보강 중심으로 수정합니다.
 - `backend/app/services/rag/legal_source_planner.py`에 `expected_article_refs` schema와 핵심 형사 사실관계 검색 힌트 보강 규칙을 추가하되, backend가 조문번호를 직접 확정해 주입하지 않도록 합니다.
+- `backend/app/services/rag/legal_source_planner.py`의 `PlannedLegalIssue`에 `domain`, `facts_slice`를 추가하고, planner prompt/schema가 복수 domain과 복수 issue track을 반환할 수 있게 합니다.
+- `backend/app/services/rag/issue_retrieval.py`의 결과 병합 단계에서 `domain_tags`, `used_by_tracks`, `planned_issue_queries[].domain`, `planned_issue_queries[].facts_slice`를 보존합니다.
 - 최종 선택 chunk만 대표 run의 `rag_retrievals`에 남기는 현재 citation 검증 경계는 유지합니다.
 
 검증:

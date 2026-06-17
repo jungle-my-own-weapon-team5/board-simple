@@ -653,7 +653,21 @@ metadata와 keyword로 색인된 법률 문서를 검색합니다.
 - `score_threshold`: `0` 이상 `1` 이하의 선택값입니다. 명시하면 threshold 미만 결과를 제외하고, `null` 또는 생략이면 score hard filter를 적용하지 않습니다. 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않습니다.
 - `max_chunks_per_document`: 선택값입니다. 특정 문서 하나가 검색 결과를 과도하게 차지하는 것을 제한합니다. `issue_spotting`에서는 누락 위험을 줄이기 위해 생략할 수 있습니다.
 
-검색 실행 전 backend는 사용자 query에서 후보 쟁점과 공식 source 후보를 먼저 계획할 수 있습니다. 이후 쟁점별 query로 retrieval을 수행하고, 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합합니다. 각 item의 `metadata`에는 가능하면 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries`가 포함됩니다.
+검색 실행 전 backend는 사용자 query에서 후보 쟁점과 공식 source 후보를 먼저 계획할 수 있습니다. 하나의 사건은 단일 법률 영역으로 제한하지 않고, `legal_domains[]`와 issue track을 복수로 가질 수 있습니다. 이후 track별 query로 retrieval을 수행하고, 같은 chunk가 여러 track에서 검색되면 중복을 병합합니다. 각 item의 `metadata`에는 가능하면 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries`, `domain_tags`, `used_by_tracks`가 포함됩니다.
+
+`planned_issue_queries`의 각 항목은 다음 필드를 포함할 수 있습니다.
+
+```json
+{
+  "issue_key": "civil_damages",
+  "issue_title": "불법행위 손해배상",
+  "issue_query": "민법 불법행위 손해배상",
+  "domain": "civil",
+  "facts_slice": "손해 발생과 금전 청구 부분"
+}
+```
+
+응답에서 같은 `chunk_id`는 한 번만 노출하며, 여러 track에 쓰이면 `used_by_tracks`로 연결합니다. UI는 이 정보를 사용해 전역 evidence index와 track별 근거 보기를 동시에 제공할 수 있습니다.
 
 `issue_spotting` 목적의 클라이언트는 누락 위험을 줄이기 위해 `top_k`, `score_threshold`, `max_chunks_per_document`를 불필요하게 고정하지 않는 것을 권장합니다. 넓은 후보 수집 후 LLM evidence review가 쟁점별 필수 근거 coverage를 점검하고, 최종 citation은 `rag_retrievals`에 기록된 chunk 또는 검증된 공식 source metadata로 제한합니다.
 
@@ -844,6 +858,8 @@ MVP의 AI Agent API는 멀티에이전트가 아니라 단일 Orchestrator Agent
 ```
 
 Agent API의 retrieval 옵션은 `/api/rag/search`와 같은 의미를 가집니다. `top_k`는 전체 글 기준 결과 수가 아니라 쟁점별 검색 예산입니다. `score_threshold`는 명시한 경우에만 hard filter로 적용합니다. 복수 쟁점 탐지가 목적이면 `search_mode=issue_spotting`을 사용할 수 있으며, 이 경우 누락 방지를 위해 `top_k`, `score_threshold`, `max_chunks_per_document`를 기본적으로 비워둘 수 있습니다.
+
+Agent는 사용자의 사건을 하나의 domain으로 고정하지 않고 복수 issue track으로 계획할 수 있습니다. 쟁점 정리와 답변 초안은 track별 검색 결과를 전역 evidence index로 병합한 뒤 cross-domain synthesis를 거쳐 생성합니다. 따라서 응답 citation은 track별 중복 citation이 아니라 병합된 evidence를 가리켜야 합니다.
 
 #### Response `200`
 

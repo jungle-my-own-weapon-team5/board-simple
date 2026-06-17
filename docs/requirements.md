@@ -180,6 +180,12 @@ LangChain은 첫 RAG milestone의 필수 의존성이 아닙니다. LangGraph도
 
 사용자 스토리나 질문을 기반으로 답변을 생성할 때는 내부 RAG 검색 전에 Orchestrator LLM이 쟁점과 법률 source 후보를 먼저 계획합니다. 이 계획은 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query로 구성되며, 그 자체가 법률 근거나 citation이 되지는 않습니다. backend는 계획된 쟁점별로 필요한 공식 법률 corpus를 요청 범위와 rate limit 안에서 수집, chunking, embedding한 뒤 쟁점별 retrieval을 수행할 수 있습니다.
 
+하나의 사용자 사건은 단일 법률 영역으로 분류하지 않습니다. 시스템은 한 사건 안에 형사, 민사, 노동, 행정, 임대차, 소비자, 가족 등 복수 법률 영역이 동시에 포함될 수 있음을 전제로 해야 합니다. Orchestrator LLM의 planning 결과는 `legal_domains[]`를 multi-label 배열로 유지하고, `issues[]`는 각 영역 또는 사실관계 일부를 담당하는 issue track으로 구성해야 합니다.
+
+각 issue track은 독립적인 `facts_slice`, `domain`, `issue_key`, `internal_rag_query`, `official_source_candidates`를 가질 수 있습니다. retrieval은 track별로 실행되며, 구현상 병렬 실행할 수 있습니다. 최종 응답에서는 track별 근거를 그대로 중복 출력하지 않고 전역 evidence index로 병합하며, 같은 chunk가 여러 track에 쓰이면 `used_by_tracks` metadata로 연결 관계를 보존해야 합니다.
+
+답변 생성 전에는 cross-domain synthesis를 수행해야 합니다. 이 단계는 복수 track의 결과를 단순 나열하지 않고, 중복 쟁점 병합, 선결문제, 법률 영역 간 영향 관계, 사용자 질문 기준 우선순위를 정리해야 합니다.
+
 수용 기준:
 
 - raw text를 보존합니다.

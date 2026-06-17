@@ -291,10 +291,13 @@ backend/app/
 
 5. Retrieval
    - Orchestrator LLM이 먼저 생성한 쟁점별 내부 RAG query를 embedding합니다.
+   - 하나의 사건은 단일 법률 영역으로 고정하지 않고, 복수 `legal_domains`와 복수 issue track으로 계획합니다. 예를 들어 한 사건이 형사, 민사, 노동, 행정, 임대차 쟁점을 동시에 가질 수 있습니다.
+   - 각 issue track은 `domain`, `facts_slice`, `issue_key`, `title`, `internal_rag_query`, `official_source_candidates`를 가질 수 있으며, track별 retrieval은 독립 실행 또는 병렬 실행할 수 있습니다.
    - vector similarity로 각 쟁점별 top-k chunk를 조회합니다.
    - `focused_answer`와 `issue_spotting` 검색 모드를 구분하고, 명시적으로 전달된 `score_threshold`, `max_chunks_per_document`로 결과 폭과 문서 편중을 조절합니다.
    - `score_threshold`가 없으면 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않고, LLM evidence review와 citation validation 단계에서 관련성을 검토합니다.
-   - 같은 chunk가 여러 쟁점에서 검색되면 응답에서는 중복을 병합하되, 쟁점 key, 쟁점 제목, 쟁점별 query metadata를 보존합니다.
+   - 같은 chunk가 여러 쟁점에서 검색되면 응답에서는 중복을 병합하되, 쟁점 key, 쟁점 제목, 쟁점별 query metadata와 `used_by_tracks`를 보존합니다.
+   - 최종 citation 후보는 track별 결과를 그대로 복제하지 않고 전역 evidence index로 병합합니다. 답변 생성 전 cross-domain synthesis 단계에서 영역 간 영향 관계와 사용자 질문 기준 우선순위를 정리합니다.
    - 문서 유형, 날짜, 법원, 법령명, jurisdiction 같은 metadata filter를 적용할 수 있게 합니다.
    - 이후 단계에서 vector search와 PostgreSQL full-text search를 결합한 hybrid search를 도입합니다.
 
@@ -478,7 +481,7 @@ rag_retrievals
 
 새 시행일이나 새 version이 확인되면 기존 문서를 덮어쓰지 않고 별도 문서 version으로 저장합니다. 반대로 같은 canonical/version인데 전문 재조회 결과 `normalized_checksum`이 달라지면 어떤 것이 최종 진실인지 자동 판단하지 않고 conflict review 상태로 남깁니다. 최신성 확인은 기존 색인을 안전하게 재사용하기 위한 절차이며, 과거 version 삭제 기준이 아닙니다.
 
-사용자 요청 기반 공식 corpus 보강은 다음 순서로 동작합니다. 사용자가 스토리나 질문을 입력하면 Orchestrator LLM은 먼저 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query를 생성합니다. 이 결과는 검색 계획일 뿐이며 법률 근거로 인용하지 않습니다. Orchestrator는 계획된 공식 source 후보를 기준으로 허용된 metadata 조회와 제한된 on-demand sync를 먼저 수행할 수 있습니다. sync로 새 문서와 embedding이 준비되면 각 쟁점별 query로 내부 RAG를 실행하고, retrieved chunk 또는 검증된 공식 source metadata만 답변 근거로 사용합니다.
+사용자 요청 기반 공식 corpus 보강은 다음 순서로 동작합니다. 사용자가 스토리나 질문을 입력하면 Orchestrator LLM은 먼저 후보 쟁점, 복수 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query를 생성합니다. 이 결과는 검색 계획일 뿐이며 법률 근거로 인용하지 않습니다. 하나의 사건 안에 여러 영역이 포함되면 Orchestrator는 issue track을 분리하고, track별 공식 source 후보를 기준으로 허용된 metadata 조회와 제한된 on-demand sync를 먼저 수행할 수 있습니다. sync로 새 문서와 embedding이 준비되면 각 track의 query로 내부 RAG를 실행하고, retrieved chunk 또는 검증된 공식 source metadata만 답변 근거로 사용합니다. 최종 응답은 track별 결과를 전역 evidence index로 병합한 뒤 cross-domain synthesis를 거쳐 생성합니다.
 
 on-demand로 수집된 법령, 판례, 법령해석례, 행정심판례는 사용자별 private embedding으로 만들지 않고 공용 공식 corpus로 저장합니다. 반대로 사용자 계약서, PDF, 메모는 사용자 또는 tenant 범위의 문서로 취급하며 다른 사용자 요청의 공용 근거로 사용하지 않습니다. on-demand sync는 요청당 후보 문서 수, rate limit, provider timeout, API quota를 제한해야 하며, `conflict_status=review_required` 또는 `index_status=failed` 문서는 citation 가능한 evidence에서 제외합니다.
 

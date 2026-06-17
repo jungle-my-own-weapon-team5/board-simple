@@ -98,6 +98,42 @@ missing_facts[]
 
 각 `issues[]` 항목은 최소한 `issue_key`, `title`, `description`, `internal_rag_query`, `official_source_candidates`를 포함합니다. `top_k`는 전체 사용자 입력 하나에 대해 한 번만 적용하지 않고, 각 `internal_rag_query`별 검색 예산으로 적용합니다.
 
+### Multi-domain issue tracks
+
+하나의 사용자 사건은 단일 법률 영역으로 고정하지 않습니다. 같은 사실관계 안에 형사, 민사, 노동, 행정, 임대차, 소비자, 가족 등 복수 영역이 동시에 포함될 수 있습니다. 따라서 planning 출력은 `legal_domains[]`를 multi-label 배열로 유지하고, `issues[]`는 각 법률 영역 또는 사실관계 일부를 담당하는 issue track으로 취급합니다.
+
+각 issue track은 다음 정보를 가질 수 있습니다.
+
+```json
+{
+  "issue_key": "criminal_negligent_death",
+  "domain": "criminal",
+  "facts_slice": "사망 결과와 사후 시체 매장 부분",
+  "title": "과실치사 및 사체 처리 행위",
+  "description": "사망 결과, 사체 은닉, 자수, 증명 문제를 분리 검토",
+  "internal_rag_query": "과실치사 과실 사체 은닉 자수 자백 보강증거",
+  "official_source_candidates": []
+}
+```
+
+track은 서로 독립적으로 retrieval될 수 있으며, 구현이 허용하면 병렬 실행할 수 있습니다. 병렬 실행 여부는 최적화 문제이고, citation 계약은 동일하게 유지합니다.
+
+최종 검색 결과는 track별 결과를 그대로 나열하지 않고 전역 evidence index로 병합합니다. 같은 chunk가 여러 track에서 쓰이면 한 번만 노출하고 `used_by_tracks` 또는 `planned_issue_queries` metadata에 연결된 track 목록을 보존합니다.
+
+```json
+{
+  "evidence_id": "E1",
+  "chunk_id": 123,
+  "title": "형법",
+  "heading": "제267조(과실치사)",
+  "domain_tags": ["criminal"],
+  "used_by_tracks": ["criminal_negligent_death"],
+  "evidence_role": "primary"
+}
+```
+
+답변 생성 전에는 cross-domain synthesis 단계를 둡니다. 이 단계는 track별 결론을 단순 연결하지 않고, 중복 쟁점 병합, 선결문제 확인, 영역 간 영향 관계 정리, 사용자 질문 기준 우선순위 재정렬을 수행합니다.
+
 planning 규칙:
 
 - `candidate_statutes`와 `external_source_queries`는 검색 계획이며, 그 자체가 citation 가능한 근거가 아닙니다.
