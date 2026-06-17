@@ -99,8 +99,11 @@ def create_meal(
     meal.meal_type = meal_type
     meal.meal_time = meal_time
     meal.memo = memo
-    meal.image_path = save_upload(image, current_user.id, "original")
-    meal.crop_image_path = save_upload(crop_image, current_user.id, "crop")
+    new_image = save_upload(image, current_user.id, "original")
+    new_crop = save_upload(crop_image, current_user.id, "crop")
+    if new_image is not None or new_crop is not None:
+        meal.image_path = new_image or meal.image_path
+        meal.crop_image_path = new_crop
     meal.crop_x = crop_x
     meal.crop_y = crop_y
     meal.crop_width = crop_width
@@ -108,7 +111,7 @@ def create_meal(
     foods = parse_foods(foods_json)
     if not foods and (image is not None or crop_image is not None):
         foods = hardcoded_image_foods()
-    apply_foods(db, meal, foods)
+    apply_foods(db, meal, foods, current_user.id)
     db.commit()
     return get_meal_for_user(db, meal.id, current_user.id)
 
@@ -163,12 +166,13 @@ def update_meal(
     meal.crop_height = crop_height
     new_image = save_upload(image, current_user.id, "original")
     new_crop = save_upload(crop_image, current_user.id, "crop")
-    meal.image_path = new_image or meal.image_path
-    meal.crop_image_path = new_crop or meal.crop_image_path
+    if new_image is not None or new_crop is not None:
+        meal.image_path = new_image or meal.image_path
+        meal.crop_image_path = new_crop
     foods = parse_foods(foods_json)
     if not foods and (image is not None or crop_image is not None or meal.image_path or meal.crop_image_path):
         foods = hardcoded_image_foods()
-    apply_foods(db, meal, foods)
+    apply_foods(db, meal, foods, current_user.id)
     db.commit()
     return get_meal_for_user(db, meal.id, current_user.id)
 

@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -85,7 +86,7 @@ export default function PostDetailPage() {
         ))}
       </div>
       <section className="markdown-body border-y border-border py-5">
-        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{post.content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{post.content}</ReactMarkdown>
       </section>
       <CommentList postId={post.id} />
     </article>

@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MealLog } from "@/types";
 
+const mealTypeLabels: Record<MealLog["meal_type"], string> = {
+  breakfast: "아침",
+  lunch: "점심",
+  dinner: "저녁",
+  snack: "간식",
+};
+
 export default function FitlogMealDetailPage() {
   const router = useRouter();
   const params = useParams<{ mealId: string }>();
@@ -17,48 +24,67 @@ export default function FitlogMealDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fitlogApi.getMeal(mealId).then(setMeal).catch((err) => setError(err instanceof Error ? err.message : "Failed to load meal"));
+    fitlogApi
+      .getMeal(mealId)
+      .then(setMeal)
+      .catch((err) => setError(err instanceof Error ? err.message : "식단 기록을 불러오지 못했습니다."));
   }, [mealId]);
 
   const remove = async () => {
     await fitlogApi.deleteMeal(mealId);
-    router.push("/fitlog");
+    router.push("/fitlog/meals");
   };
 
   if (error) return <p className="font-semibold text-destructive">{error}</p>;
-  if (!meal) return <p className="text-muted-foreground">Loading...</p>;
+  if (!meal) return <p className="text-muted-foreground">불러오는 중...</p>;
 
   return (
     <section className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold">{meal.meal_type} · {meal.meal_date}</h1>
+        <h1 className="text-3xl font-extrabold">
+          {mealTypeLabels[meal.meal_type]} · {meal.meal_date}
+        </h1>
         <div className="flex gap-2">
-          <Button asChild variant="outline"><Link href={`/fitlog/meals/${meal.id}/edit`}>Edit</Link></Button>
-          <Button type="button" variant="destructive" onClick={remove}>Delete</Button>
+          <Button asChild variant="outline">
+            <Link href={`/fitlog/meals/${meal.id}/edit`}>수정</Link>
+          </Button>
+          <Button type="button" variant="destructive" onClick={remove}>
+            삭제
+          </Button>
         </div>
       </div>
+
       <Card>
-        <CardHeader><CardTitle>Nutrition</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>영양 요약</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-2 text-sm md:grid-cols-4">
-          <p>{meal.total_calories} kcal</p><p>{meal.carbs_g}g carbs</p><p>{meal.protein_g}g protein</p><p>{meal.fat_g}g fat</p>
+          <p>{meal.total_calories} kcal</p>
+          <p>탄수화물 {meal.carbs_g}g</p>
+          <p>단백질 {meal.protein_g}g</p>
+          <p>지방 {meal.fat_g}g</p>
         </CardContent>
       </Card>
-      {(meal.image_path || meal.crop_image_path) ? (
-        <Card>
-          <CardHeader><CardTitle>Images</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            {meal.image_path ? <img src={assetUrl(meal.image_path)} alt="" className="max-h-80 rounded-md border object-contain" /> : null}
-            {meal.crop_image_path ? <img src={assetUrl(meal.crop_image_path)} alt="" className="max-h-80 rounded-md border object-contain" /> : null}
-          </CardContent>
-        </Card>
-      ) : null}
+
       <Card>
-        <CardHeader><CardTitle>Foods</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>음식</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-2">
           {meal.foods.map((food) => (
-            <div key={food.id} className="flex flex-wrap justify-between gap-2 rounded-md border p-3 text-sm">
-              <strong>{food.name}</strong>
-              <span>{food.calories} kcal · C {food.carbs_g}g · P {food.protein_g}g · F {food.fat_g}g</span>
+            <div key={food.id} className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-md border p-3 text-sm">
+              {food.image_path ? (
+                <img src={assetUrl(food.image_path)} alt="" className="h-16 w-16 rounded-md border object-cover" />
+              ) : (
+                <div className="h-16 w-16 rounded-md border bg-muted/10" />
+              )}
+              <div className="grid gap-1">
+                <strong>{food.name}</strong>
+                <span className="text-xs text-muted-foreground">{food.portion_text || "1인분"}</span>
+                <span>
+                  {food.calories} kcal · 탄 {food.carbs_g}g · 단 {food.protein_g}g · 지 {food.fat_g}g
+                </span>
+              </div>
             </div>
           ))}
         </CardContent>

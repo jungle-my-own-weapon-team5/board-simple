@@ -36,6 +36,8 @@ class MealFoodItemInput(BaseModel):
     protein_g: float = Field(default=0, ge=0)
     fat_g: float = Field(default=0, ge=0)
     portion_text: str | None = Field(default=None, max_length=100)
+    image_path: str | None = Field(default=None, max_length=500)
+    image_data_url: str | None = None
 
 
 class MealFoodItemRead(MealFoodItemInput):

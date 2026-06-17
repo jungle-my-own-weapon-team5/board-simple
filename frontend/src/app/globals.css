@@ -125,3 +125,23 @@ textarea {
   background: transparent;
   padding: 0;
 }
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+  font-size: 0.95rem;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-body th {
+  background: hsl(var(--muted));
+  font-weight: 700;
+}

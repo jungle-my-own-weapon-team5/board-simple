@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import { Card, CardContent } from "./ui/card";
 import { Textarea } from "./ui/textarea";
 
@@ -26,7 +27,7 @@ export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps)
         <CardContent className="p-4">
           <span className="mb-2 block text-sm font-extrabold">Preview</span>
           <div className="markdown-body">
-            <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{value}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{value}</ReactMarkdown>
           </div>
         </CardContent>
       </Card>

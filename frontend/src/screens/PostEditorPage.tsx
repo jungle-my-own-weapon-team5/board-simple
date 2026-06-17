@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as postApi from "../api/posts";
 import PostForm from "../components/PostForm";
@@ -10,6 +10,7 @@ import type { Post } from "../types";
 export default function PostEditorPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const params = useParams<{ postId?: string }>();
   const postId = params.postId;
   const { user } = useAuthStore();
@@ -17,6 +18,8 @@ export default function PostEditorPage() {
   const [error, setError] = useState<string | null>(null);
   const isEditing = Boolean(postId);
   const numericPostId = Number(postId);
+  const initialTitle = isEditing ? post?.title : searchParams.get("title") ?? "";
+  const initialContent = isEditing ? post?.content : searchParams.get("content") ?? "";
 
   useEffect(() => {
     if (!isEditing) {
@@ -59,8 +62,8 @@ export default function PostEditorPage() {
         {isEditing ? "Edit Post" : "Write Post"}
       </h1>
       <PostForm
-        initialTitle={post?.title}
-        initialContent={post?.content}
+        initialTitle={initialTitle}
+        initialContent={initialContent}
         submitLabel={isEditing ? "Update post" : "Create post"}
         onSubmit={handleSubmit}
       />

@@ -57,6 +57,7 @@ class MealFoodItem(Base):
     protein_g: Mapped[float] = mapped_column(Numeric(8, 2), default=0)
     fat_g: Mapped[float] = mapped_column(Numeric(8, 2), default=0)
     portion_text: Mapped[str | None] = mapped_column(String(100))
+    image_path: Mapped[str | None] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

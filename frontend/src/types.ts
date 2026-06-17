@@ -65,6 +65,8 @@ export type MealFoodItem = {
   protein_g: number;
   fat_g: number;
   portion_text?: string | null;
+  image_path?: string | null;
+  image_data_url?: string | null;
 };
 
 export type MealLog = {

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import * as fitlogApi from "@/api/fitlog";
 import { assetUrl } from "@/api/client";
 import ImageCropPicker from "@/components/ImageCropPicker";
@@ -12,8 +13,9 @@ import { todayString } from "@/lib/date";
 import type { ImageRagCandidate, ImageRagSearchResponse, MealFoodItem } from "@/types";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+type FormFoodItem = MealFoodItem & { imagePreviewUrl?: string | null };
 
-const blankFood: MealFoodItem = { name: "", calories: 0, carbs_g: 0, protein_g: 0, fat_g: 0, portion_text: "" };
+const blankFood: FormFoodItem = { name: "", calories: 0, carbs_g: 0, protein_g: 0, fat_g: 0, portion_text: "" };
 const defaultMealTimes: Record<MealType, string> = {
   breakfast: "09:00",
   lunch: "12:00",
@@ -40,19 +42,35 @@ function defaultTimeFor(type: MealType) {
   return type === "snack" ? currentTimeValue() : defaultMealTimes[type];
 }
 
-function resetNutrition(food: MealFoodItem, patch: Partial<MealFoodItem>): MealFoodItem {
+function resetNutrition(food: FormFoodItem, patch: Partial<MealFoodItem>): FormFoodItem {
   return { ...food, ...patch, calories: 0, carbs_g: 0, protein_g: 0, fat_g: 0 };
 }
 
-function imageCandidateToFood(candidate: ImageRagCandidate): MealFoodItem {
+function imageCandidateToFood(candidate: ImageRagCandidate, imagePreviewUrl?: string | null): FormFoodItem {
   return {
     name: candidate.food_name,
     calories: candidate.estimated_calories,
     carbs_g: candidate.carbs_g,
     protein_g: candidate.protein_g,
     fat_g: candidate.fat_g,
+    imagePreviewUrl,
+    image_data_url: imagePreviewUrl?.startsWith("data:") ? imagePreviewUrl : undefined,
     portion_text: "1인분",
   };
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read image preview"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function stripFoodPreview(food: FormFoodItem): MealFoodItem {
+  const { imagePreviewUrl: _imagePreviewUrl, ...foodPayload } = food;
+  return foodPayload;
 }
 
 export default function FitlogMealFormPage() {
@@ -66,43 +84,75 @@ export default function FitlogMealFormPage() {
   const [mealType, setMealType] = useState<MealType>(initialType);
   const [mealTime, setMealTime] = useState(defaultTimeFor(initialType));
   const [memo, setMemo] = useState("");
-  const [foods, setFoods] = useState<MealFoodItem[]>([]);
-  const [imageState, setImageState] = useState<{ image: File | null; cropImage: Blob | null; crop: { x: number; y: number; width: number; height: number } | null }>({ image: null, cropImage: null, crop: null });
+  const [foods, setFoods] = useState<FormFoodItem[]>([]);
+  const [imageState, setImageState] = useState<{
+    image: File | null;
+    cropImage: Blob | null;
+    crop: { x: number; y: number; width: number; height: number } | null;
+    previewUrl: string | null;
+    cropPreviewUrl: string | null;
+  }>({ image: null, cropImage: null, crop: null, previewUrl: null, cropPreviewUrl: null });
   const [existingImages, setExistingImages] = useState<{ image?: string | null; crop?: string | null }>({});
   const [imageAnalysis, setImageAnalysis] = useState<ImageRagSearchResponse | null>(null);
+  const [imagePickerVersion, setImagePickerVersion] = useState(0);
+  const [isImageCandidateApplied, setIsImageCandidateApplied] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [imageAnalysisError, setImageAnalysisError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mealId) return;
-    fitlogApi.getMeal(mealId).then((meal) => {
-      setMealDate(meal.meal_date);
-      setMealType(meal.meal_type);
-      setMealTime(meal.meal_time ?? defaultTimeFor(meal.meal_type));
-      setMemo(meal.memo ?? "");
-      setFoods(meal.foods);
-      setExistingImages({ image: meal.image_path, crop: meal.crop_image_path });
-    }).catch((err) => setError(err instanceof Error ? err.message : "식단 기록을 불러오지 못했습니다."));
+    fitlogApi.getMeal(mealId)
+      .then((meal) => {
+        setMealDate(meal.meal_date);
+        setMealType(meal.meal_type);
+        setMealTime(meal.meal_time ?? defaultTimeFor(meal.meal_type));
+        setMemo(meal.memo ?? "");
+        setFoods(meal.foods.map((food) => ({ ...food, imagePreviewUrl: food.image_path ? assetUrl(food.image_path) : null })));
+        setExistingImages({ image: meal.image_path, crop: meal.crop_image_path });
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "식단 기록을 불러오지 못했습니다."));
   }, [mealId]);
 
   const updateFood = (index: number, patch: Partial<MealFoodItem>) => {
-    setFoods((current) => current.map((food, itemIndex) => itemIndex === index ? resetNutrition(food, patch) : food));
+    setFoods((current) => current.map((food, itemIndex) => (itemIndex === index ? resetNutrition(food, patch) : food)));
   };
 
-  const applyImageCandidate = (candidate: ImageRagCandidate) => {
-    const nextFood = imageCandidateToFood(candidate);
+  const applyImageCandidate = async (candidate: ImageRagCandidate) => {
+    const previewSource = imageState.cropImage ?? imageState.image;
+    const stablePreviewUrl = previewSource ? await blobToDataUrl(previewSource) : null;
+    const nextFood = imageCandidateToFood(candidate, stablePreviewUrl ?? imageState.cropPreviewUrl ?? imageState.previewUrl);
     setFoods((current) => {
+      const duplicateIndex = current.findIndex((food) => food.name.trim().toLowerCase() === nextFood.name.trim().toLowerCase());
+      if (duplicateIndex >= 0) {
+        return current.map((food, index) => (index === duplicateIndex ? nextFood : food));
+      }
       const emptyIndex = current.findIndex((food) => !food.name.trim());
       if (emptyIndex >= 0) {
-        return current.map((food, index) => index === emptyIndex ? nextFood : food);
+        return current.map((food, index) => (index === emptyIndex ? nextFood : food));
       }
       return [...current, nextFood];
     });
+    setImageAnalysis(null);
+    setImageAnalysisError(null);
+    setIsImageCandidateApplied(true);
+  };
+
+  const removeFood = (index: number) => {
+    setFoods((current) => current.filter((_, itemIndex) => itemIndex !== index));
   };
 
   const analyzeImage = async () => {
-    const targetImage = imageState.cropImage ?? imageState.image;
+    if (isImageCandidateApplied) {
+      setImageAnalysisError("이미 반영된 이미지입니다. 다시 분석하려면 다른 이미지를 선택하거나 선택 취소 후 다시 선택해 주세요.");
+      return;
+    }
+    const selectedCrop = imageState.crop && imageState.crop.width >= 8 && imageState.crop.height >= 8 ? imageState.crop : null;
+    if (selectedCrop && !imageState.cropImage) {
+      setImageAnalysisError("선택 영역 이미지를 준비 중입니다. 잠시 후 다시 분석해 주세요.");
+      return;
+    }
+    const targetImage = selectedCrop ? imageState.cropImage : imageState.image;
     if (!targetImage) {
       setImageAnalysisError("분석할 이미지를 먼저 선택해 주세요.");
       return;
@@ -114,7 +164,7 @@ export default function FitlogMealFormPage() {
       const result = await fitlogApi.searchImageRag(targetImage);
       setImageAnalysis(result);
       if (result.action === "auto_accept_label" && result.top_k[0]) {
-        applyImageCandidate(result.top_k[0]);
+        await applyImageCandidate(result.top_k[0]);
       }
     } catch (err) {
       setImageAnalysisError(err instanceof Error ? err.message : "이미지 분석에 실패했습니다.");
@@ -131,12 +181,24 @@ export default function FitlogMealFormPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
-    const filledFoods = foods.filter((food) => food.name.trim()).map((food) => ({ ...food, portion_text: food.portion_text?.trim() || "1인분" }));
+    const filledFoods = foods
+      .filter((food) => food.name.trim())
+      .map(stripFoodPreview)
+      .map((food) => ({ ...food, portion_text: food.portion_text?.trim() || "1인분" }));
     if (filledFoods.length === 0 && !imageState.image && !existingImages.image && !existingImages.crop) {
       setError("음식을 하나 이상 추가하거나 식단 이미지를 선택해 주세요.");
       return;
     }
-    const payload = { meal_date: mealDate, meal_type: mealType, meal_time: mealTime || defaultTimeFor(mealType), memo, foods: filledFoods, image: imageState.image, cropImage: imageState.cropImage, crop: imageState.crop };
+    const payload = {
+      meal_date: mealDate,
+      meal_type: mealType,
+      meal_time: mealTime || defaultTimeFor(mealType),
+      memo,
+      foods: filledFoods,
+      image: imageState.image,
+      cropImage: imageState.cropImage,
+      crop: imageState.crop,
+    };
     try {
       if (mealId) {
         await fitlogApi.updateMeal(mealId, payload);
@@ -149,6 +211,8 @@ export default function FitlogMealFormPage() {
     }
   };
 
+  const hasSelectedCrop = Boolean(imageState.crop && imageState.crop.width >= 8 && imageState.crop.height >= 8);
+
   return (
     <section className="grid gap-5">
       <h1 className="text-3xl font-extrabold">{mealId ? "식단 수정" : "식단 추가"}</h1>
@@ -158,7 +222,7 @@ export default function FitlogMealFormPage() {
           <CardContent className="grid gap-4">
             <div className="grid gap-4 md:grid-cols-3">
               <label className="grid gap-2 text-sm font-semibold">날짜<Input type="date" value={mealDate} onChange={(e) => setMealDate(e.target.value)} required /></label>
-              <label className="grid gap-2 text-sm font-semibold">끼니
+              <label className="grid gap-2 text-sm font-semibold">시간대
                 <select className="h-10 rounded-md border bg-background px-3" value={mealType} onChange={(e) => changeMealType(e.target.value as MealType)}>
                   {mealTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
@@ -173,14 +237,15 @@ export default function FitlogMealFormPage() {
               <span className="text-xs font-normal text-muted-foreground">
                 선택 입력입니다. 어디서 먹었는지, 포만감, 특이사항처럼 코치가 참고하면 좋은 내용을 적습니다.
               </span>
-              <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 외식, 국물은 거의 남김, 포만감 높음" />
+              <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 외식, 국물은 거의 안 먹음, 포만감 높음" />
             </label>
             {existingImages.image ? <img src={assetUrl(existingImages.image)} alt="" className="max-h-56 rounded-md border object-contain" /> : null}
             {existingImages.crop ? <img src={assetUrl(existingImages.crop)} alt="" className="max-h-40 rounded-md border object-contain" /> : null}
-            <ImageCropPicker onChange={(value) => {
-              setImageState({ image: value.image, cropImage: value.cropImage, crop: value.crop });
+            <ImageCropPicker key={imagePickerVersion} onChange={(value) => {
+              setImageState({ image: value.image, cropImage: value.cropImage, crop: value.crop, previewUrl: value.previewUrl, cropPreviewUrl: value.cropPreviewUrl });
               setImageAnalysis(null);
               setImageAnalysisError(null);
+              setIsImageCandidateApplied(false);
             }} />
             <div className="grid gap-3 rounded-md border p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -188,7 +253,7 @@ export default function FitlogMealFormPage() {
                   <p className="text-sm font-semibold">이미지 음식 분석</p>
                   <p className="text-xs text-muted-foreground">선택 영역이 있으면 잘라낸 이미지를 우선 분석합니다.</p>
                 </div>
-                <Button type="button" variant="outline" onClick={analyzeImage} disabled={isAnalyzingImage || (!imageState.image && !imageState.cropImage)}>
+                <Button type="button" variant="outline" onClick={analyzeImage} disabled={isAnalyzingImage || isImageCandidateApplied || !imageState.image || (hasSelectedCrop && !imageState.cropImage)}>
                   {isAnalyzingImage ? "분석 중..." : "음식 분석"}
                 </Button>
               </div>
@@ -196,7 +261,7 @@ export default function FitlogMealFormPage() {
               {imageAnalysis ? (
                 <div className="grid gap-2">
                   <p className="text-xs text-muted-foreground">
-                    {imageAnalysis.action === "auto_accept_label" ? "신뢰도가 높아 첫 번째 후보를 Foods에 반영했습니다." : "후보를 확인하고 하나를 선택해 Foods에 반영하세요."}
+                    {imageAnalysis.action === "auto_accept_label" ? "신뢰도가 높아 첫 번째 후보를 Foods에 반영했습니다." : "후보를 확인하고 하나를 선택하면 Foods에 반영됩니다."}
                   </p>
                   <div className="grid gap-2 md:grid-cols-3">
                     {imageAnalysis.top_k.map((candidate) => (
@@ -204,7 +269,7 @@ export default function FitlogMealFormPage() {
                         key={`${candidate.food_name}-${candidate.confidence}`}
                         type="button"
                         className="grid gap-1 rounded-md border p-3 text-left text-sm hover:bg-accent"
-                        onClick={() => applyImageCandidate(candidate)}
+                        onClick={() => { void applyImageCandidate(candidate); }}
                       >
                         <span className="font-semibold">{candidate.food_name}</span>
                         <span className="text-xs text-muted-foreground">신뢰도 {(candidate.confidence * 100).toFixed(1)}%</span>
@@ -223,15 +288,23 @@ export default function FitlogMealFormPage() {
           <CardHeader><CardTitle>음식</CardTitle></CardHeader>
           <CardContent className="grid gap-3">
             <p className="text-sm text-muted-foreground">
-              음식명과 분량만 입력하세요. 저장 시 서버가 영양성분을 자동으로 채우고 같은 음식/분량은 DB 캐시를 재사용합니다.
+              음식명과 분량만 입력하세요. 저장할 때 서버가 영양성분을 자동으로 채우고 같은 음식/분량은 DB 캐시를 재사용합니다.
             </p>
-            <div className="hidden grid-cols-[1fr_1fr_auto] gap-2 px-1 text-xs font-semibold text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[1fr_1fr_auto_auto] gap-2 px-1 text-xs font-semibold text-muted-foreground md:grid">
               <span>음식명</span>
               <span>분량</span>
               <span>예상 영양성분</span>
+              <span>삭제</span>
             </div>
             {foods.map((food, index) => (
-              <div key={index} className="grid gap-2 rounded-md border p-3 md:grid-cols-[1fr_1fr_auto]">
+              <div key={index} className="grid grid-cols-[72px_minmax(0,1fr)] gap-2 rounded-md border p-3 md:grid-cols-[80px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <div className="row-span-3 h-20 w-20 self-start overflow-hidden rounded-md border bg-muted/20 md:row-span-2">
+                  {food.imagePreviewUrl ? (
+                    <img src={food.imagePreviewUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full" />
+                  )}
+                </div>
                 <label className="grid gap-1 text-xs font-semibold md:block">
                   <span className="md:hidden">음식명</span>
                   <Input placeholder="김치찌개" value={food.name} onChange={(e) => updateFood(index, { name: e.target.value })} required />
@@ -240,14 +313,17 @@ export default function FitlogMealFormPage() {
                   <span className="md:hidden">분량</span>
                   <Input placeholder="1인분, 200g, 한 그릇" value={food.portion_text ?? ""} onChange={(e) => updateFood(index, { portion_text: e.target.value })} />
                 </label>
-                <div className="self-center text-xs text-muted-foreground">
+                <div className="col-start-2 self-center text-xs text-muted-foreground md:col-span-2">
                   {food.calories > 0 ? `${food.calories} kcal · 탄 ${food.carbs_g}g · 단 ${food.protein_g}g · 지 ${food.fat_g}g` : "저장 시 자동 추정"}
                 </div>
+                <Button type="button" variant="outline" size="sm" className="col-start-2 w-fit self-center md:col-start-5 md:row-start-2" onClick={() => removeFood(index)} aria-label={`${food.name || "음식"} 삭제`}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
             {foods.length === 0 ? (
               <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                아직 추가된 음식이 없습니다. 아래 버튼으로 음식 입력 행을 추가하거나 이미지만 선택해서 테스트 분석을 사용할 수 있습니다.
+                아직 추가한 음식이 없습니다. 아래 버튼으로 음식 입력 행을 추가하거나 이미지를 선택해서 테스트 분석을 사용할 수 있습니다.
               </p>
             ) : null}
             <Button type="button" variant="outline" className="w-fit" onClick={() => setFoods((current) => [...current, { ...blankFood }])}>음식 추가</Button>

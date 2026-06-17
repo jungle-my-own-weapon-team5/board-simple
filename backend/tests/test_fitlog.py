@@ -164,7 +164,18 @@ def test_fitlog_main_meal_upsert_and_snack_time_order(client: TestClient) -> Non
     assert [item["meal_time"] for item in snacks] == ["10:00", "15:00"]
 
 
-def test_fitlog_estimates_nutrition_from_food_name_and_portion(client: TestClient) -> None:
+def test_fitlog_estimates_nutrition_from_food_name_and_portion(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_llm(name: str, portion_text: str) -> dict:
+        return {
+            "calories": 90,
+            "carbs_g": 23,
+            "protein_g": 1,
+            "fat_g": 0,
+            "source": "llm",
+            "raw_response_json": {"unit_calories": 90, "unit_carbs_g": 23, "unit_protein_g": 1, "unit_fat_g": 0},
+        }
+
+    monkeypatch.setattr(fitlog_service, "llm_nutrition_estimate", fake_llm)
     login(client, "fitlog-estimate@example.com")
     target_date = str(date.today())
     foods = '[{"name":"banana","portion_text":"1"}]'
@@ -182,10 +193,24 @@ def test_fitlog_estimates_nutrition_from_food_name_and_portion(client: TestClien
     assert body["carbs_g"] == 23
 
 
-def test_fitlog_scales_fallback_nutrition_by_portion_count(client: TestClient) -> None:
+def test_fitlog_scales_llm_unit_nutrition_by_portion_count(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, str]] = []
+
+    def fake_llm(name: str, portion_text: str) -> dict:
+        calls.append((name, portion_text))
+        return {
+            "calories": 500,
+            "carbs_g": 78,
+            "protein_g": 10,
+            "fat_g": 16,
+            "source": "llm",
+            "raw_response_json": {"unit_calories": 500, "unit_carbs_g": 78, "unit_protein_g": 10, "unit_fat_g": 16},
+        }
+
+    monkeypatch.setattr(fitlog_service, "llm_nutrition_estimate", fake_llm)
     login(client, "fitlog-portion@example.com")
     target_date = str(date.today())
-    foods = '[{"name":"라면","portion_text":"12봉지"}]'
+    foods = '[{"name":"ramen","portion_text":"12bags"}]'
 
     meal = client.post(
         "/api/fitlog/meals",
@@ -194,27 +219,48 @@ def test_fitlog_scales_fallback_nutrition_by_portion_count(client: TestClient) -
 
     assert meal.status_code == 201
     body = meal.json()
-    assert body["foods"][0]["portion_text"] == "12봉지"
+    assert body["foods"][0]["portion_text"] == "12bags"
     assert body["total_calories"] == 6000
     assert body["carbs_g"] == 936
     assert body["protein_g"] == 120
     assert body["fat_g"] == 192
+    assert calls == [("ramen", "1bags")]
 
 
-def test_fitlog_scales_fallback_nutrition_by_grams(client: TestClient) -> None:
+def test_fitlog_reuses_unit_nutrition_cache_by_grams(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str, str]] = []
+
+    def fake_llm(name: str, portion_text: str) -> dict:
+        calls.append((name, portion_text))
+        return {
+            "calories": 1,
+            "carbs_g": 0.07,
+            "protein_g": 0.083333,
+            "fat_g": 0.08,
+            "source": "llm",
+            "raw_response_json": {
+                "unit_calories": 430 / 3,
+                "unit_carbs_g": 20 / 3,
+                "unit_protein_g": 25 / 3,
+                "unit_fat_g": 24 / 3,
+            },
+        }
+
+    monkeypatch.setattr(fitlog_service, "llm_nutrition_estimate", fake_llm)
     login(client, "fitlog-grams@example.com")
     target_date = str(date.today())
 
     tiny = client.post(
         "/api/fitlog/meals",
-        data={"meal_date": target_date, "meal_type": "snack", "meal_time": "20:00", "foods_json": '[{"name":"김치찌개","portion_text":"2g"}]'},
+        data={"meal_date": target_date, "meal_type": "snack", "meal_time": "20:00", "foods_json": '[{"name":"kimchi stew","portion_text":"2g"}]'},
     )
     large = client.post(
         "/api/fitlog/meals",
-        data={"meal_date": target_date, "meal_type": "snack", "meal_time": "21:00", "foods_json": '[{"name":"김치찌개","portion_text":"500g"}]'},
+        data={"meal_date": target_date, "meal_type": "snack", "meal_time": "21:00", "foods_json": '[{"name":"kimchi stew","portion_text":"500g"}]'},
     )
 
     assert tiny.status_code == 201
     assert large.status_code == 201
     assert tiny.json()["total_calories"] == 3
     assert large.json()["total_calories"] == 717
+    assert calls == [("kimchi stew", "100g")]

@@ -2,6 +2,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from datetime import date
 
 from fastapi import HTTPException
@@ -11,6 +12,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import get_settings
 from app.models.fitlog import FoodNutritionEstimate, GoalProfile, MealFoodItem, MealLog, NutritionKnowledgeDoc, StrategyAdvice
 from app.schemas.fitlog import AgentStep, DailyReport, MealFoodItemInput, MealSummary, RagEvidence, StrategyResponse
+from app.services.uploads import save_data_url
 
 EMBEDDING_DIM = 1536
 
@@ -78,51 +80,64 @@ def scale_nutrition(calories: int, carbs: float, protein: float, fat: float, mul
     )
 
 
-def fallback_nutrition_estimate(name: str, portion_text: str) -> dict:
-    text_value = f"{name} {portion_text}".lower()
-    if any(keyword in text_value for keyword in ["라면", "ramen"]):
-        calories, carbs, protein, fat = 500, 78, 10, 16
-        base_grams = 120
-    elif any(keyword in text_value for keyword in ["김치찌개", "kimchi stew"]):
-        calories, carbs, protein, fat = 430, 20, 25, 24
-        base_grams = 300
-    elif any(keyword in text_value for keyword in ["바나나", "banana"]):
-        calories, carbs, protein, fat = 90, 23, 1, 0
-        base_grams = 100
-    elif any(keyword in text_value for keyword in ["계란", "egg"]):
-        calories, carbs, protein, fat = 80, 1, 7, 5
-        base_grams = 50
-    else:
-        calories, carbs, protein, fat = 350, 45, 18, 10
-        base_grams = 250
-    multiplier = portion_multiplier(portion_text, base_grams)
-    calories, carbs, protein, fat = scale_nutrition(calories, carbs, protein, fat, multiplier)
-    return {
-        "calories": calories,
-        "carbs_g": carbs,
-        "protein_g": protein,
-        "fat_g": fat,
-        "source": "fallback",
-        "raw_response_json": {
-            "reason": "OPENAI_API_KEY not configured or LLM estimate failed",
-            "portion_multiplier": multiplier,
-        },
+
+
+
+
+@dataclass(frozen=True)
+class PortionSpec:
+    raw_text: str
+    amount: float
+    unit_key: str
+    unit_portion_text: str
+
+
+def parse_portion_spec(portion_text: str | None) -> PortionSpec:
+    raw_text = (portion_text or "1인분").strip() or "1인분"
+    compact = re.sub(r"\s+", "", raw_text.lower())
+    match = re.search(r"(\d+(?:\.\d+)?)", compact)
+    amount = float(match.group(1)) if match else 1.0
+    if amount <= 0:
+        amount = 1.0
+    unit_text = compact[match.end():] if match else compact
+    unit_text = re.sub(r"^[~x*]+", "", unit_text) or "인분"
+    if unit_text in {"kg", "킬로", "키로"}:
+        return PortionSpec(raw_text=raw_text, amount=(amount * 1000) / 100, unit_key="100g", unit_portion_text="100g")
+    if unit_text in {"g", "gram", "grams", "그램"}:
+        return PortionSpec(raw_text=raw_text, amount=amount / 100, unit_key="100g", unit_portion_text="100g")
+    aliases = {
+        "serving": "인분",
+        "servings": "인분",
+        "portion": "인분",
+        "portions": "인분",
+        "plate": "접시",
+        "plates": "접시",
+        "cup": "컵",
+        "cups": "컵",
+        "egg": "개",
+        "eggs": "개",
+        "piece": "개",
+        "pieces": "개",
     }
+    unit_key = aliases.get(unit_text, unit_text)
+    return PortionSpec(raw_text=raw_text, amount=amount, unit_key=unit_key, unit_portion_text=f"1{unit_key}")
+
+
 
 
 def llm_nutrition_estimate(name: str, portion_text: str) -> dict:
     settings = get_settings()
     if not settings.openai_api_key:
-        return fallback_nutrition_estimate(name, portion_text)
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is required to estimate food nutrition")
     body = json.dumps(
         {
             "model": settings.openai_strategy_agent_model,
             "input": [
                 {
                     "role": "system",
-                    "content": "Return strict JSON only with keys calories, carbs_g, protein_g, fat_g. Estimate nutrition for the given food and portion. Use one reasonable serving estimate. No medical advice.",
+                    "content": "Return strict JSON only with keys calories, carbs_g, protein_g, fat_g. Estimate nutrition for exactly the given food and unit portion. No medical advice.",
                 },
-                {"role": "user", "content": json.dumps({"food": name, "portion": portion_text}, ensure_ascii=False)},
+                {"role": "user", "content": json.dumps({"food": name, "unit_portion": portion_text}, ensure_ascii=False)},
             ],
         }
     ).encode("utf-8")
@@ -135,25 +150,42 @@ def llm_nutrition_estimate(name: str, portion_text: str) -> dict:
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
             payload = json.loads(response.read().decode("utf-8"))
-        parsed = json.loads(payload.get("output_text") or "{}")
-        return {
-            "calories": max(0, int(round(float(parsed["calories"])))),
-            "carbs_g": max(0.0, float(parsed["carbs_g"])),
-            "protein_g": max(0.0, float(parsed["protein_g"])),
-            "fat_g": max(0.0, float(parsed["fat_g"])),
-            "source": "llm",
-            "raw_response_json": parsed,
+        parsed = parse_json_text(extract_openai_response_text(payload))
+        calories = max(0.0, float(parsed["calories"]))
+        carbs_g = max(0.0, float(parsed["carbs_g"]))
+        protein_g = max(0.0, float(parsed["protein_g"]))
+        fat_g = max(0.0, float(parsed["fat_g"]))
+        raw_response_json = {
+            **parsed,
+            "unit_calories": calories,
+            "unit_carbs_g": carbs_g,
+            "unit_protein_g": protein_g,
+            "unit_fat_g": fat_g,
         }
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, TypeError, ValueError):
-        return fallback_nutrition_estimate(name, portion_text)
+        return {
+            "calories": int(round(calories)),
+            "carbs_g": carbs_g,
+            "protein_g": protein_g,
+            "fat_g": fat_g,
+            "source": "llm",
+            "raw_response_json": raw_response_json,
+        }
+    except urllib.error.HTTPError as exc:
+        error_text = exc.read().decode("utf-8", errors="replace")[:500]
+        raise HTTPException(status_code=502, detail=f"OpenAI nutrition estimate failed {exc.code}: {error_text}") from exc
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI nutrition estimate connection failed: {exc}") from exc
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI nutrition estimate parsing failed: {exc}") from exc
 
 
 def get_or_create_nutrition_estimate(db: Session, item: MealFoodItemInput) -> MealFoodItemInput:
     if food_has_nutrition(item):
         return item
     portion_text = item.portion_text or "1인분"
+    portion_spec = parse_portion_spec(portion_text)
     normalized_name = normalize_food_key(item.name)
-    normalized_portion = normalize_food_key(portion_text)
+    normalized_portion = normalize_food_key(portion_spec.unit_key)
     cached = db.scalar(
         select(FoodNutritionEstimate).where(
             FoodNutritionEstimate.normalized_name == normalized_name,
@@ -161,11 +193,11 @@ def get_or_create_nutrition_estimate(db: Session, item: MealFoodItemInput) -> Me
         )
     )
     if cached is None:
-        estimated = llm_nutrition_estimate(item.name, portion_text)
+        estimated = llm_nutrition_estimate(item.name, portion_spec.unit_portion_text)
         cached = FoodNutritionEstimate(
             name=item.name,
             normalized_name=normalized_name,
-            portion_text=portion_text,
+            portion_text=portion_spec.unit_portion_text,
             normalized_portion=normalized_portion,
             calories=estimated["calories"],
             carbs_g=estimated["carbs_g"],
@@ -176,25 +208,27 @@ def get_or_create_nutrition_estimate(db: Session, item: MealFoodItemInput) -> Me
         )
         db.add(cached)
         db.flush()
-    elif cached.source == "fallback":
-        estimated = fallback_nutrition_estimate(item.name, portion_text)
-        cached.calories = estimated["calories"]
-        cached.carbs_g = estimated["carbs_g"]
-        cached.protein_g = estimated["protein_g"]
-        cached.fat_g = estimated["fat_g"]
-        cached.raw_response_json = estimated["raw_response_json"]
-        db.flush()
+    raw_response = cached.raw_response_json if isinstance(cached.raw_response_json, dict) else {}
+    calories, carbs_g, protein_g, fat_g = scale_nutrition(
+        float(raw_response.get("unit_calories", cached.calories)),
+        float(raw_response.get("unit_carbs_g", cached.carbs_g)),
+        float(raw_response.get("unit_protein_g", cached.protein_g)),
+        float(raw_response.get("unit_fat_g", cached.fat_g)),
+        portion_spec.amount,
+    )
     return MealFoodItemInput(
         name=item.name,
         portion_text=portion_text,
-        calories=cached.calories,
-        carbs_g=float(cached.carbs_g),
-        protein_g=float(cached.protein_g),
-        fat_g=float(cached.fat_g),
+        calories=calories,
+        carbs_g=carbs_g,
+        protein_g=protein_g,
+        fat_g=fat_g,
+        image_path=item.image_path,
+        image_data_url=item.image_data_url,
     )
 
 
-def apply_foods(db: Session, meal: MealLog, foods: list[MealFoodItemInput]) -> None:
+def apply_foods(db: Session, meal: MealLog, foods: list[MealFoodItemInput], user_id: int) -> None:
     if not foods:
         raise HTTPException(status_code=400, detail="At least one food item is required")
     foods = [get_or_create_nutrition_estimate(db, item) for item in foods]
@@ -206,6 +240,7 @@ def apply_foods(db: Session, meal: MealLog, foods: list[MealFoodItemInput]) -> N
             protein_g=item.protein_g,
             fat_g=item.fat_g,
             portion_text=item.portion_text,
+            image_path=save_data_url(item.image_data_url, user_id, "food") or item.image_path,
         )
         for item in foods
     ]

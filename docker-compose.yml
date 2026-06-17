@@ -26,6 +26,12 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
       FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:3000}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_STRATEGY_AGENT_MODEL: "${OPENAI_STRATEGY_AGENT_MODEL:-gpt-5.4-mini}"
+      OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}"
+      OPENAI_EMBEDDING_DIMENSIONS: "${OPENAI_EMBEDDING_DIMENSIONS:-1536}"
+      OPENAI_FALLBACK_MODEL: "${OPENAI_FALLBACK_MODEL:-gpt-5.4-mini}"
+      UPLOAD_DIR: "${UPLOAD_DIR:-uploads}"
     depends_on:
       db:
         condition: service_healthy
@@ -33,6 +39,8 @@ services:
   backend:
     build:
       context: ./backend
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
     environment:
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-board}:${POSTGRES_PASSWORD:-board}@db:5432/${POSTGRES_DB:-board}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me}"
@@ -40,6 +48,17 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
       FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:3000}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_STRATEGY_AGENT_MODEL: "${OPENAI_STRATEGY_AGENT_MODEL:-gpt-5.4-mini}"
+      OPENAI_EMBEDDING_MODEL: "${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}"
+      OPENAI_EMBEDDING_DIMENSIONS: "${OPENAI_EMBEDDING_DIMENSIONS:-1536}"
+      OPENAI_FALLBACK_MODEL: "${OPENAI_FALLBACK_MODEL:-gpt-5.4-mini}"
+      UPLOAD_DIR: "${UPLOAD_DIR:-uploads}"
+      FOOD_CLASSIFIER_MODEL_PATH: "${FOOD_CLASSIFIER_MODEL_PATH:-app/services/resnet34_food_fc_only.pt}"
+      FOOD_CLASSIFIER_DEVICE: "${FOOD_CLASSIFIER_DEVICE:-auto}"
+      FOOD_CLASSIFIER_TOP_K: "${FOOD_CLASSIFIER_TOP_K:-3}"
+      FOOD_CLASSIFIER_AUTO_ACCEPT_THRESHOLD: "${FOOD_CLASSIFIER_AUTO_ACCEPT_THRESHOLD:-0.8}"
+      FOOD_CLASSIFIER_USER_CONFIRM_THRESHOLD: "${FOOD_CLASSIFIER_USER_CONFIRM_THRESHOLD:-0.5}"
     ports:
       - "8000:8000"
     depends_on:
