@@ -1,0 +1,428 @@
+{
+  "schema_version": "sillok-v2-expansion-plan-v1",
+  "generated_at": "2026-06-17T15:24:42.248566+00:00",
+  "source": "legacy_db_candidates",
+  "live_fetch": false,
+  "target_per_period": 100,
+  "total_legacy_candidates_after_dedupe": 3246,
+  "selected_count": 1148,
+  "remaining_after_legacy_total": 1652,
+  "periods": {
+    "경종수정실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 10,
+        "person_relation": 3,
+        "time_distribution": 22
+      }
+    },
+    "경종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 2,
+        "person_relation": 4,
+        "system_life": 4,
+        "time_distribution": 25
+      }
+    },
+    "고종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 32,
+      "selected_from_legacy": 32,
+      "remaining_after_legacy": 53,
+      "bucket_counts": {
+        "event": 2,
+        "system_life": 2,
+        "time_distribution": 28
+      }
+    },
+    "광해군정초본": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 12,
+      "selected_from_legacy": 12,
+      "remaining_after_legacy": 73,
+      "bucket_counts": {
+        "person_relation": 1,
+        "time_distribution": 11
+      }
+    },
+    "광해군중초본": {
+      "current_sillok_v2": 13,
+      "target": 100,
+      "needed": 87,
+      "legacy_available_after_dedupe": 33,
+      "selected_from_legacy": 33,
+      "remaining_after_legacy": 54,
+      "bucket_counts": {
+        "person_relation": 4,
+        "system_life": 2,
+        "time_distribution": 27
+      }
+    },
+    "단종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 3,
+        "time_distribution": 32
+      }
+    },
+    "명종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 33,
+      "selected_from_legacy": 33,
+      "remaining_after_legacy": 52,
+      "bucket_counts": {
+        "event": 7,
+        "time_distribution": 26
+      }
+    },
+    "문종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 2,
+        "time_distribution": 33
+      }
+    },
+    "선조수정실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 31,
+      "selected_from_legacy": 31,
+      "remaining_after_legacy": 54,
+      "bucket_counts": {
+        "event": 11,
+        "person_relation": 1,
+        "time_distribution": 19
+      }
+    },
+    "선조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 13,
+        "person_relation": 1,
+        "system_life": 3,
+        "time_distribution": 18
+      }
+    },
+    "성종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "time_distribution": 35
+      }
+    },
+    "세조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 3,
+        "time_distribution": 32
+      }
+    },
+    "세종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 1,
+        "system_life": 2,
+        "time_distribution": 32
+      }
+    },
+    "숙종보궐정오": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 16,
+        "time_distribution": 19
+      }
+    },
+    "숙종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 34,
+      "selected_from_legacy": 34,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "person_relation": 9,
+        "time_distribution": 25
+      }
+    },
+    "순조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 1,
+        "time_distribution": 34
+      }
+    },
+    "순종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 5,
+        "person_relation": 2,
+        "system_life": 6,
+        "time_distribution": 22
+      }
+    },
+    "순종실록부록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 33,
+      "selected_from_legacy": 33,
+      "remaining_after_legacy": 52,
+      "bucket_counts": {
+        "person_relation": 2,
+        "time_distribution": 31
+      }
+    },
+    "연산군일기": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 3,
+        "time_distribution": 32
+      }
+    },
+    "영조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 33,
+      "selected_from_legacy": 33,
+      "remaining_after_legacy": 52,
+      "bucket_counts": {
+        "event": 4,
+        "system_life": 2,
+        "time_distribution": 27
+      }
+    },
+    "예종실록": {
+      "current_sillok_v2": 13,
+      "target": 100,
+      "needed": 87,
+      "legacy_available_after_dedupe": 37,
+      "selected_from_legacy": 37,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "person_relation": 1,
+        "system_life": 1,
+        "time_distribution": 35
+      }
+    },
+    "인조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "event": 14,
+        "person_relation": 3,
+        "time_distribution": 18
+      }
+    },
+    "인종실록": {
+      "current_sillok_v2": 14,
+      "target": 100,
+      "needed": 86,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "event": 2,
+        "person_relation": 2,
+        "time_distribution": 31
+      }
+    },
+    "정조실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 34,
+      "selected_from_legacy": 34,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "event": 2,
+        "person_relation": 1,
+        "time_distribution": 31
+      }
+    },
+    "정종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "time_distribution": 35
+      }
+    },
+    "중종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 32,
+      "selected_from_legacy": 32,
+      "remaining_after_legacy": 53,
+      "bucket_counts": {
+        "system_life": 1,
+        "time_distribution": 31
+      }
+    },
+    "철종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 34,
+      "selected_from_legacy": 34,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "event": 1,
+        "time_distribution": 33
+      }
+    },
+    "태조실록": {
+      "current_sillok_v2": 25,
+      "target": 100,
+      "needed": 75,
+      "legacy_available_after_dedupe": 2173,
+      "selected_from_legacy": 75,
+      "remaining_after_legacy": 0,
+      "bucket_counts": {
+        "event": 30,
+        "person_relation": 19,
+        "system_life": 18,
+        "time_distribution": 8
+      }
+    },
+    "태종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 36,
+      "selected_from_legacy": 36,
+      "remaining_after_legacy": 49,
+      "bucket_counts": {
+        "event": 2,
+        "person_relation": 3,
+        "time_distribution": 31
+      }
+    },
+    "헌종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 35,
+      "selected_from_legacy": 35,
+      "remaining_after_legacy": 50,
+      "bucket_counts": {
+        "system_life": 4,
+        "time_distribution": 31
+      }
+    },
+    "현종개수실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 34,
+      "selected_from_legacy": 34,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "person_relation": 11,
+        "time_distribution": 23
+      }
+    },
+    "현종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 34,
+      "selected_from_legacy": 34,
+      "remaining_after_legacy": 51,
+      "bucket_counts": {
+        "event": 1,
+        "person_relation": 10,
+        "time_distribution": 23
+      }
+    },
+    "효종실록": {
+      "current_sillok_v2": 15,
+      "target": 100,
+      "needed": 85,
+      "legacy_available_after_dedupe": 31,
+      "selected_from_legacy": 31,
+      "remaining_after_legacy": 54,
+      "bucket_counts": {
+        "event": 10,
+        "person_relation": 4,
+        "system_life": 1,
+        "time_distribution": 16
+      }
+    }
+  }
+}

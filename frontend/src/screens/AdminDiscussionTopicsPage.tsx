@@ -58,12 +58,7 @@ export default function AdminDiscussionTopicsPage() {
   }, [topicDate, user?.is_admin]);
 
   if (!user?.is_admin) {
-    return (
-      <section className="mx-auto max-w-lg border border-border bg-card p-6">
-        <h1 className="font-serif-display text-2xl font-bold">관리자 권한이 필요합니다</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">토론거리 관리는 관리자 계정으로만 접근할 수 있습니다.</p>
-      </section>
-    );
+    return <p className="font-semibold text-destructive">관리자 권한이 필요합니다.</p>;
   }
 
   const updateDraft = (topicId: number, patch: Partial<DiscussionTopic>) => {
@@ -115,21 +110,20 @@ export default function AdminDiscussionTopicsPage() {
   };
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <header className="flex flex-col justify-between gap-4 border-b border-border/70 pb-5 md:flex-row md:items-end">
+    <section className="flex flex-col gap-5">
+      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Topic Desk</p>
-          <h1 className="font-serif-display text-3xl font-bold leading-[1.35] sm:text-4xl">토론거리 관리</h1>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">날짜별 추천 카드의 문구, 고정, 숨김, 글쓰기 초안을 관리합니다.</p>
+          <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">토론거리 관리</h1>
+          <p className="text-sm text-muted-foreground">날짜별 추천 카드의 문구, 고정, 숨김, 글쓰기 초안을 관리합니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Input className="rounded-sm" type="date" value={topicDate} onChange={(event) => setTopicDate(event.target.value)} />
-          <Button type="button" variant="outline" className="rounded-sm" onClick={() => void refreshTopics()} disabled={isLoading}>
+          <Input type="date" value={topicDate} onChange={(event) => setTopicDate(event.target.value)} />
+          <Button type="button" variant="outline" onClick={() => void refreshTopics()} disabled={isLoading}>
             <RefreshCw />
             <span>{isLoading ? "처리 중" : "재생성"}</span>
           </Button>
         </div>
-      </header>
+      </div>
 
       {error ? <p className="font-semibold text-destructive">{error}</p> : null}
 
@@ -140,30 +134,29 @@ export default function AdminDiscussionTopicsPage() {
           }
           const draft = editing[topic.id] ?? topic;
           return (
-            <Card key={topic.id} className="bal-card relative overflow-hidden rounded-sm">
+            <Card key={topic.id}>
               <CardContent className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="flex min-w-0 flex-col gap-3">
                   <div className="flex flex-wrap gap-2">
-                    <Badge className="rounded-sm" variant={draft.is_pinned ? "default" : "outline"}>고정 {draft.is_pinned ? "ON" : "OFF"}</Badge>
-                    <Badge className="rounded-sm" variant={draft.is_hidden ? "outline" : "secondary"}>{draft.is_hidden ? "숨김" : "노출"}</Badge>
-                    <Badge className="rounded-sm" variant="outline">{draft.topic_date}</Badge>
+                    <Badge variant={draft.is_pinned ? "default" : "outline"}>고정 {draft.is_pinned ? "ON" : "OFF"}</Badge>
+                    <Badge variant={draft.is_hidden ? "outline" : "secondary"}>{draft.is_hidden ? "숨김" : "노출"}</Badge>
+                    <Badge variant="outline">{draft.topic_date}</Badge>
                   </div>
-                  <Input className="rounded-sm" value={draft.source} onChange={(event) => updateDraft(topic.id as number, { source: event.target.value })} />
-                  <Input className="font-serif-display rounded-sm text-lg font-bold" value={draft.title} onChange={(event) => updateDraft(topic.id as number, { title: event.target.value })} />
-                  <Textarea className="rounded-sm leading-7" value={draft.summary} rows={3} onChange={(event) => updateDraft(topic.id as number, { summary: event.target.value })} />
-                  <Textarea className="font-serif-display rounded-sm font-bold leading-7" value={draft.question} rows={2} onChange={(event) => updateDraft(topic.id as number, { question: event.target.value })} />
-                  <Textarea className="rounded-sm leading-7" value={draft.reason} rows={2} onChange={(event) => updateDraft(topic.id as number, { reason: event.target.value })} />
+                  <Input value={draft.source} onChange={(event) => updateDraft(topic.id as number, { source: event.target.value })} />
+                  <Input value={draft.title} onChange={(event) => updateDraft(topic.id as number, { title: event.target.value })} />
+                  <Textarea value={draft.summary} rows={3} onChange={(event) => updateDraft(topic.id as number, { summary: event.target.value })} />
+                  <Textarea value={draft.question} rows={2} onChange={(event) => updateDraft(topic.id as number, { question: event.target.value })} />
+                  <Textarea value={draft.reason} rows={2} onChange={(event) => updateDraft(topic.id as number, { reason: event.target.value })} />
                   <Input
-                    className="rounded-sm"
                     value={draft.tags.join(", ")}
                     onChange={(event) => updateDraft(topic.id as number, { tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })}
                   />
                   {draft.citations.length > 0 ? (
-                    <div className="rounded-sm border border-border bg-background p-3 text-sm">
+                    <div className="rounded-md border border-border bg-background p-3 text-sm">
                       <p className="mb-2 font-bold">추천 근거</p>
                       <div className="flex flex-col gap-2">
                         {draft.citations.map((citation) => (
-                          <a key={citation.id} href={citation.source_url} target="_blank" rel="noreferrer" className="leading-6 text-muted-foreground hover:text-foreground">
+                          <a key={citation.id} href={citation.source_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
                             {citation.title} · 관련도 {citation.relevance}
                           </a>
                         ))}
@@ -172,22 +165,22 @@ export default function AdminDiscussionTopicsPage() {
                   ) : null}
                 </div>
                 <div className="flex flex-col gap-3">
-                  <Input className="font-serif-display rounded-sm font-bold" value={draft.draft_title ?? ""} onChange={(event) => updateDraft(topic.id as number, { draft_title: event.target.value })} />
+                  <Input value={draft.draft_title ?? ""} onChange={(event) => updateDraft(topic.id as number, { draft_title: event.target.value })} />
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                    <Input className="rounded-sm" value={draft.draft_post_type} onChange={(event) => updateDraft(topic.id as number, { draft_post_type: event.target.value })} />
-                    <Input className="rounded-sm" value={draft.draft_category} onChange={(event) => updateDraft(topic.id as number, { draft_category: event.target.value })} />
+                    <Input value={draft.draft_post_type} onChange={(event) => updateDraft(topic.id as number, { draft_post_type: event.target.value })} />
+                    <Input value={draft.draft_category} onChange={(event) => updateDraft(topic.id as number, { draft_category: event.target.value })} />
                   </div>
-                  <Textarea className="rounded-sm leading-7" value={draft.draft_content ?? ""} rows={10} onChange={(event) => updateDraft(topic.id as number, { draft_content: event.target.value })} />
+                  <Textarea value={draft.draft_content ?? ""} rows={10} onChange={(event) => updateDraft(topic.id as number, { draft_content: event.target.value })} />
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" className="rounded-sm" variant={draft.is_pinned ? "default" : "outline"} onClick={() => updateDraft(topic.id as number, { is_pinned: !draft.is_pinned })}>
+                    <Button type="button" variant={draft.is_pinned ? "default" : "outline"} onClick={() => updateDraft(topic.id as number, { is_pinned: !draft.is_pinned })}>
                       <Pin />
                       <span>고정</span>
                     </Button>
-                    <Button type="button" className="rounded-sm" variant={draft.is_hidden ? "default" : "outline"} onClick={() => updateDraft(topic.id as number, { is_hidden: !draft.is_hidden })}>
+                    <Button type="button" variant={draft.is_hidden ? "default" : "outline"} onClick={() => updateDraft(topic.id as number, { is_hidden: !draft.is_hidden })}>
                       {draft.is_hidden ? <EyeOff /> : <Eye />}
                       <span>{draft.is_hidden ? "숨김" : "노출"}</span>
                     </Button>
-                    <Button type="button" className="rounded-sm" onClick={() => void saveTopic(draft)}>
+                    <Button type="button" onClick={() => void saveTopic(draft)}>
                       <Save />
                       <span>저장</span>
                     </Button>

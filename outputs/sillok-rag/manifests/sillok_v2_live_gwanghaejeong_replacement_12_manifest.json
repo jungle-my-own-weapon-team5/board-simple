@@ -1,0 +1,297 @@
+{
+  "schema_version": "sillok-seed-manifest-v1",
+  "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+  "generated_at": "2026-06-17T15:29:57.099598+00:00",
+  "status": "selected",
+  "source": "sillok_list_pages",
+  "live_fetch": true,
+  "detail_fetch": false,
+  "record_count": 12,
+  "selected_count": 12,
+  "source_report_policy": {
+    "replacement_for": "../sillok_v2_live_gwanghaejeong_35_manifest.json",
+    "needed_good_records": 6
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection.",
+  "quality": {
+    "available_after_existing_and_selected_exclusion": 207
+  },
+  "records": [
+    {
+      "selected_rank": 1,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_003",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_003",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 빈청에서 대신들이 임해군의 유배지에 관하여 의논하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_003",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_003"
+      }
+    },
+    {
+      "selected_rank": 2,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_004",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_004",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 임해군에 관한 사건을 추국하라고 국청에 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_004",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_004"
+      }
+    },
+    {
+      "selected_rank": 3,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_005",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_005",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 양사가 합계하여 유영경·홍식·송보의 삭탈 관작과 문외 출송을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_005",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_005"
+      }
+    },
+    {
+      "selected_rank": 4,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_006",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_006",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 사간 박이서가 윤효선·이사경·임장 등의 처신에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_006",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_006"
+      }
+    },
+    {
+      "selected_rank": 5,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_008",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_008",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 옥당이 유영경을 삭출시킬 것을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_008",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_008"
+      }
+    },
+    {
+      "selected_rank": 6,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_009",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_009",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 추국청에서 고언백·박명현 등을 추국하는 일에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_009",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_009"
+      }
+    },
+    {
+      "selected_rank": 7,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_010",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_010",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 이원익·정협·윤효선·이호신에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_010",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_010"
+      }
+    },
+    {
+      "selected_rank": 8,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002017_012",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002017_012",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 대행 대왕의 묘호에 관하여 예조에서 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002017_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002017_012",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002017_012"
+      }
+    },
+    {
+      "selected_rank": 9,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002018_001",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002018_001",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 양사가 합계하여 유영경을 삭출시키고 홍식을 삭탈시킬 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002018_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002018_001",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002018_001"
+      }
+    },
+    {
+      "selected_rank": 10,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002018_002",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002018_002",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 지평 정광성과 정언 이사경이 정인홍·이이첨·이경전 등의 처신에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002018_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002018_002",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002018_002"
+      }
+    },
+    {
+      "selected_rank": 11,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002018_003",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002018_003",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 사간 박이서가 박명현·고언백의 추국을 지체시킨 죄로 체직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002018_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002018_003",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002018_003"
+      }
+    },
+    {
+      "selected_rank": 12,
+      "seed_version": "sillok-v2-live-gwanghaejeong-replacement-12",
+      "status": "selected",
+      "sillok_id": "kob_10002018_005",
+      "source_url": "https://sillok.history.go.kr/id/kob_10002018_005",
+      "period": "광해군정초본",
+      "title": "광해군정초본: 지평 민덕남이 자신의 잘못으로 역적의 추국이 지체된 일로 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "kob_10002018_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "kob_10002018_005",
+        "source_url": "https://sillok.history.go.kr/id/kob_10002018_005"
+      }
+    }
+  ]
+}

@@ -40,12 +40,12 @@ export default function AiPlaygroundPage() {
 
   if (!user?.is_admin) {
     return (
-      <section className="mx-auto flex max-w-lg flex-col gap-4 border border-border bg-card p-6">
-        <h1 className="font-serif-display text-3xl font-bold leading-[1.35] sm:text-4xl">관리자 전용</h1>
-        <p className="text-sm leading-6 text-muted-foreground">
-          AI 실험실은 RAG, 외부 자료, 실행 로그를 점검하는 관리자 도구입니다.
+      <section className="mx-auto flex max-w-lg flex-col gap-4">
+        <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">관리자 전용</h1>
+        <p className="text-sm text-muted-foreground">
+          AI Playground는 RAG, 외부 자료, Agent 로그를 점검하는 관리자 도구입니다.
         </p>
-        <Button asChild className="w-fit rounded-sm">
+        <Button asChild className="w-fit">
           <Link href="/">홈으로 이동</Link>
         </Button>
       </section>
@@ -86,16 +86,15 @@ export default function AiPlaygroundPage() {
   };
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <header className="border-b border-border/70 pb-5">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">AI Operations</p>
-        <h1 className="font-serif-display text-3xl font-bold leading-[1.35] sm:text-4xl">AI 실험실</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">RAG 검색, 외부 자료 호출, 실행 로그를 한 번에 확인합니다.</p>
-      </header>
-      <form className="bal-card relative flex flex-col gap-2 overflow-hidden border border-border bg-card p-4 md:grid md:grid-cols-[minmax(0,1fr)_220px_auto]" onSubmit={handleSubmit}>
-        <Input className="rounded-sm" value={query} onChange={(event) => setQuery(event.target.value)} />
+    <section className="flex flex-col gap-5">
+      <div>
+        <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">AI Playground</h1>
+        <p className="text-sm text-muted-foreground">RAG 검색, 외부 자료 호출, Agent 실행 로그를 한 번에 확인합니다.</p>
+      </div>
+      <form className="flex flex-col gap-2 md:flex-row" onSubmit={handleSubmit}>
+        <Input value={query} onChange={(event) => setQuery(event.target.value)} />
         <select
-          className="h-10 rounded-sm border border-input bg-background px-3 text-sm font-medium"
+          className="h-10 border border-input bg-background px-3 text-sm font-medium"
           value={corpus}
           onChange={(event) => setCorpus(event.target.value as RagCorpusMode)}
         >
@@ -103,16 +102,15 @@ export default function AiPlaygroundPage() {
           <option value="encykorea">encykorea</option>
           <option value="legacy">legacy</option>
           <option value="sinpyeon_hanguksa">sinpyeon_hanguksa</option>
-          <option value="sillok-v2">sillok-v2</option>
           <option value="all">all</option>
         </select>
-        <Button type="submit" className="rounded-sm" disabled={isSubmitting}>{isSubmitting ? "실행 중" : "실행"}</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "실행 중" : "실행"}</Button>
       </form>
       {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
       <div className="grid gap-4 xl:grid-cols-4">
-        <Card className="bal-card relative overflow-hidden rounded-sm">
+        <Card>
           <CardContent className="p-4">
-            <h2 className="font-serif-display mb-3 font-bold">RAG 검색</h2>
+            <h2 className="mb-3 font-extrabold">RAG 검색</h2>
             {rag ? (
               <p className="mb-2 text-xs font-semibold text-muted-foreground">
                 검색 corpus: {rag.searched_corpora.join(" → ")}
@@ -121,7 +119,7 @@ export default function AiPlaygroundPage() {
             {rag?.weak_evidence ? (
               <p className="mb-2 text-xs font-semibold text-destructive">기준치 이상의 내부 근거가 부족합니다.</p>
             ) : null}
-            <p className="text-sm leading-6 text-muted-foreground">{rag?.answer_summary ?? "아직 실행 전입니다."}</p>
+            <p className="text-sm text-muted-foreground">{rag?.answer_summary ?? "아직 실행 전입니다."}</p>
             <div className="mt-3 flex flex-col gap-2">
               {rag && rag.citations.length === 0 ? (
                 <p className="border-t border-border pt-2 text-sm text-muted-foreground">
@@ -132,9 +130,9 @@ export default function AiPlaygroundPage() {
                 <div key={item.id} className="border-t border-border pt-2 text-sm">
                   <p className="font-bold">{item.title}</p>
                   <p className="text-muted-foreground">{item.period} · 관련도 {item.relevance}</p>
-                  <p className="mt-1 leading-6">{item.summary}</p>
+                  <p>{item.summary}</p>
                   {item.source_url ? (
-                    <Button asChild variant="outline" size="sm" className="mt-2 rounded-sm">
+                    <Button asChild variant="outline" size="sm" className="mt-2">
                       <a href={item.source_url} target="_blank" rel="noreferrer">
                         <ExternalLink />
                         <span>근거 원문</span>
@@ -146,9 +144,9 @@ export default function AiPlaygroundPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bal-card relative overflow-hidden rounded-sm">
+        <Card>
           <CardContent className="p-4">
-            <h2 className="font-serif-display mb-3 font-bold">RAG 품질 점검</h2>
+            <h2 className="mb-3 font-extrabold">RAG 품질 Agent</h2>
             {ragAgent ? (
               <p className="mb-2 text-xs font-semibold text-muted-foreground">
                 검색 corpus: {ragAgent.searched_corpora.join(" → ")}
@@ -157,7 +155,7 @@ export default function AiPlaygroundPage() {
             {ragAgent?.weak_evidence ? (
               <p className="mb-2 text-xs font-semibold text-destructive">외부 검색 보강이 필요합니다.</p>
             ) : null}
-            <p className="text-sm leading-6 text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {ragAgent?.answer_summary ?? "아직 실행 전입니다."}
             </p>
             {ragAgent ? (
@@ -167,8 +165,8 @@ export default function AiPlaygroundPage() {
                 </p>
                 {ragAgent.attempts.map((attempt) => (
                   <div key={attempt.query} className="border-t border-border pt-2 text-sm">
-                    <p className="font-bold leading-6">{attempt.query}</p>
-                    <p className="leading-6 text-muted-foreground">
+                    <p className="font-bold">{attempt.query}</p>
+                    <p className="text-muted-foreground">
                       {attempt.decision} · citation {attempt.citation_count} · 최고 관련도 {attempt.max_relevance}
                     </p>
                   </div>
@@ -183,11 +181,11 @@ export default function AiPlaygroundPage() {
                     <p className="mb-2 text-sm font-bold">최종 근거 원문</p>
                     <div className="flex flex-col gap-2">
                       {ragAgent.citations.map((item) => (
-                        <div key={item.id} className="rounded-sm border border-border bg-background p-2 text-sm">
+                        <div key={item.id} className="rounded-md border border-border bg-background p-2 text-sm">
                           <p className="font-semibold">{item.title}</p>
                           <p className="text-xs text-muted-foreground">{item.period} · 관련도 {item.relevance}</p>
                           {item.source_url ? (
-                            <Button asChild variant="outline" size="sm" className="mt-2 rounded-sm">
+                            <Button asChild variant="outline" size="sm" className="mt-2">
                               <a href={item.source_url} target="_blank" rel="noreferrer">
                                 <ExternalLink />
                                 <span>근거 원문</span>
@@ -203,9 +201,9 @@ export default function AiPlaygroundPage() {
             ) : null}
           </CardContent>
         </Card>
-        <Card className="bal-card relative overflow-hidden rounded-sm">
+        <Card>
           <CardContent className="p-4">
-            <h2 className="font-serif-display mb-3 font-bold">외부 자료</h2>
+            <h2 className="mb-3 font-extrabold">외부 자료</h2>
             {!external ? <p className="text-sm text-muted-foreground">아직 실행 전입니다.</p> : null}
             {external && external.resources.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -218,24 +216,24 @@ export default function AiPlaygroundPage() {
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block rounded-sm border border-border bg-background p-2 text-sm transition-colors hover:bg-accent"
+                className="block rounded-md border border-border bg-background p-2 text-sm hover:bg-accent"
               >
                 <span className="block font-bold">{item.title}</span>
                 <span className="block text-muted-foreground">{item.provider}</span>
-                <span className="block leading-6">{item.description}</span>
+                <span className="block">{item.description}</span>
               </a>
             ))}
             {external ? <p className="mt-3 text-xs text-muted-foreground">{external.tool_log.tool} · {external.tool_log.status}</p> : null}
           </CardContent>
         </Card>
-        <Card className="bal-card relative overflow-hidden rounded-sm">
+        <Card>
           <CardContent className="p-4">
-            <h2 className="font-serif-display mb-3 font-bold">실행 로그</h2>
+            <h2 className="mb-3 font-extrabold">Agent 로그</h2>
             <div className="flex flex-col gap-2">
               {agent?.steps.map((step) => (
                 <div key={step.name} className="text-sm">
                   <p className="font-bold">{step.name}</p>
-                  <p className="leading-6 text-muted-foreground">{step.output}</p>
+                  <p className="text-muted-foreground">{step.output}</p>
                 </div>
               )) ?? <p className="text-sm text-muted-foreground">아직 실행 전입니다.</p>}
             </div>

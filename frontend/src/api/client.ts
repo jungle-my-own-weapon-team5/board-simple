@@ -1,7 +1,7 @@
 const CONFIGURED_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-export function getApiBaseUrl() {
+function getApiBaseUrl() {
   if (typeof window === "undefined") {
     return CONFIGURED_API_BASE_URL;
   }
@@ -179,64 +179,4 @@ export async function uncachedApiRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   return apiRequest<T>(path, { ...options, cacheTtlMs: undefined });
-}
-
-export async function streamNdjson<T>(
-  path: string,
-  options: RequestOptions & {
-    onEvent: (event: T) => void;
-  }
-): Promise<void> {
-  const { onEvent, ...requestOptions } = options;
-  const headers = new Headers(options.headers);
-  if (options.json !== undefined) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    ...requestOptions,
-    headers,
-    credentials: "include",
-    body: options.json !== undefined ? JSON.stringify(options.json) : options.body
-  });
-
-  if (!response.ok) {
-    let message = response.statusText;
-    try {
-      const payload = await response.json();
-      message = payload.detail ?? message;
-    } catch {
-      // Keep the response status text when the server does not send JSON.
-    }
-    throw new ApiError(response.status, message);
-  }
-
-  if (!response.body) {
-    throw new ApiError(0, "스트리밍 응답을 읽을 수 없습니다.");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed) {
-        onEvent(JSON.parse(trimmed) as T);
-      }
-    }
-    if (done) {
-      break;
-    }
-  }
-
-  const trimmed = buffer.trim();
-  if (trimmed) {
-    onEvent(JSON.parse(trimmed) as T);
-  }
 }

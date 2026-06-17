@@ -7,6 +7,7 @@ from app.schemas.ai import (
     RagCitation,
     RagSearchResponse,
     ToolLog,
+    WritingAssistResponse,
 )
 
 SEED_CITATIONS = [
@@ -64,6 +65,41 @@ def get_discussion_topics() -> list[DiscussionTopic]:
             tags=["세종", "훈민정음", "문화"],
         ),
     ]
+
+
+def make_writing_assist(title: str, content: str, post_type: str) -> WritingAssistResponse:
+    text = f"{title} {content}".lower()
+    tags = []
+    for keyword in ["세조", "단종", "계유정난", "세종", "훈민정음", "문종", "붕당"]:
+        if keyword.lower() in text:
+            tags.append(keyword)
+    if not tags:
+        tags = ["조선", "토론", post_type]
+
+    category = "왕과 권력" if any(tag in tags for tag in ["세조", "단종", "문종"]) else "생활사와 문화"
+    base_title = title.strip() or "이 역사 이야기, 어떻게 봐야 할까?"
+    return WritingAssistResponse(
+        improved_titles=[
+            f"{base_title}, 다르게 보면 어떤 이야기가 될까?",
+            f"{base_title}: 사실과 해석 사이에서",
+        ],
+        suggested_content=(
+            f"{base_title}\n\n"
+            "이 일화는 단순히 재미있는 뒷이야기로만 소비하기보다, 당시 인물의 성격과 시대 분위기를 함께 보며 읽을 때 더 흥미롭습니다. "
+            "기록에 남은 장면은 짧더라도, 그 안에는 권력자와 주변 사람들의 관계, 체면과 욕망, 그리고 후대가 인물을 기억하는 방식이 겹쳐 있습니다. "
+            "다만 자료가 말하지 않는 부분까지 단정하기보다는, 확인되는 사실을 중심에 두고 해석의 여지를 열어 두는 편이 좋습니다. "
+            "그래서 이 글은 사건 자체의 재미와 함께, 그 사건이 왜 기록되고 오래 회자되었는지를 묻는 방향으로 풀어가면 좋겠습니다.\n\n"
+            f"#{' #'.join(tags[:4])}"
+        ),
+        tags=tags[:5],
+        category=category,
+        questions=[
+            "이 사건에서 명분과 결과 중 무엇을 더 중요하게 봐야 할까요?",
+            "당시 사람들의 입장에서는 어떤 선택지가 현실적이었을까요?",
+            "오늘날 기준으로 평가할 때 조심해야 할 부분은 무엇일까요?",
+        ],
+        keywords=tags[:5],
+    )
 
 
 def search_rag(query: str, top_k: int) -> RagSearchResponse:

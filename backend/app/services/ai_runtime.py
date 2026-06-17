@@ -4,11 +4,10 @@ import json
 import math
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 from pathlib import Path
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -25,9 +24,11 @@ from app.schemas.ai import (
     RagCitation,
     RagSearchResponse,
     ToolLog,
+    WritingAssistResponse,
 )
 from app.services.ai_demo import (
     get_discussion_topics as get_demo_discussion_topics,
+    make_writing_assist as make_demo_writing_assist,
     run_agent as run_demo_agent,
     search_external as search_demo_external,
     search_rag as search_demo_rag,
@@ -38,9 +39,7 @@ from app.services.safety import agent_response_from_safety, moderate_input
 RAG_SEED_DIR = Path(__file__).resolve().parents[2] / "rag_seed"
 _SYNCED_SEED_BINDS: set[int] = set()
 EMBEDDING_MIN_RELEVANCE = 0.45
-PGVECTOR_MIN_RELEVANCE = 0.40
 OVERVIEW_CORPUS = "encykorea"
-SILLOK_V2_CORPUS = "sillok-v2"
 LEGACY_CORPUS_LABEL = "legacy"
 PRIMARY_SOURCE_QUERY_TERMS = [
     "실록",
@@ -52,53 +51,6 @@ PRIMARY_SOURCE_QUERY_TERMS = [
     "왕이",
     "교지",
 ]
-PRIMARY_SOURCE_RECONSTRUCTION_TERMS = [
-    "사건",
-    "일화",
-    "경위",
-    "정황",
-    "인과관계",
-    "어떻게",
-    "왜",
-]
-CATEGORY_GROUP_RULES = [
-    ("royal_family", ["왕실-", "국왕", "종친", "비빈", "궁중", "행행", "사급", "종사", "의식"]),
-    ("appointment", ["인사-", "임면", "관리", "선발", "관직"]),
-    ("judicial", ["사법-", "탄핵", "행형", "법제", "재판", "송사"]),
-    ("social_status", ["사회-", "신분", "노비", "가족", "향촌"]),
-    ("economy", ["재정-", "상공", "전세", "공물", "호구", "농업", "토지"]),
-    ("diplomacy", ["외교-", "명(", "왜(", "야인", "여진", "청("]),
-    ("military", ["군사-", "군정", "관방", "병법", "훈련"]),
-    ("astronomy_weather", ["과학-천기", "천기", "재이", "역법"]),
-    ("thought_religion", ["사상-", "불교", "유학", "토속신앙"]),
-    ("historiography", ["역사-", "고사", "전사", "편사"]),
-    ("publication", ["출판-", "서책", "문서"]),
-]
-CATEGORY_QUERY_HINTS = [
-    (
-        "royal_family",
-        ["왕", "임금", "왕실", "공주", "대군", "군", "후궁", "궁녀", "세자", "왕비", "총애", "하가", "혼인", "생애", "인물", "관계", "일화"],
-    ),
-    ("appointment", ["관직", "임명", "승진", "제수", "파직", "인사", "벼슬", "등용"]),
-    ("judicial", ["탄핵", "처벌", "죄", "주살", "폐출", "송사", "재판", "옥사", "사건"]),
-    ("social_status", ["노비", "가비", "여종", "신분", "백성", "생활", "가노", "비"]),
-    ("economy", ["토지", "전세", "공물", "상업", "시장", "집", "노비문권", "재산"]),
-    ("diplomacy", ["외교", "명나라", "왜", "일본", "여진", "사신", "조공"]),
-    ("military", ["전쟁", "군사", "전투", "의병", "왜란", "호란", "군대"]),
-    ("astronomy_weather", ["천문", "날씨", "가뭄", "비", "일식", "월식", "재이"]),
-    ("thought_religion", ["불교", "유교", "성리학", "신앙", "제사", "사상"]),
-    ("historiography", ["편찬", "기록", "사관", "실록", "역사서"]),
-    ("publication", ["책", "문서", "서책", "출판", "원문", "국역"]),
-]
-CATEGORY_AVOID_GROUPS = {
-    "royal_family": {"astronomy_weather", "diplomacy", "military"},
-    "appointment": {"astronomy_weather"},
-    "judicial": {"astronomy_weather", "diplomacy"},
-    "social_status": {"astronomy_weather", "diplomacy"},
-    "economy": {"astronomy_weather"},
-    "diplomacy": {"astronomy_weather"},
-    "military": {"astronomy_weather"},
-}
 
 KNOWN_RAG_TERMS = [
     "계유정난",
@@ -117,63 +69,6 @@ KNOWN_RAG_TERMS = [
     "재위",
     "왕권",
 ]
-
-QUERY_REQUEST_STOP_TERMS = {
-    "알려줘",
-    "알려주세요",
-    "소개해줘",
-    "소개해주세요",
-    "정리해줘",
-    "정리해주세요",
-    "설명해줘",
-    "설명해주세요",
-    "써줘",
-    "작성해줘",
-    "누구",
-    "무엇",
-    "뭐",
-    "어떤",
-    "몇",
-    "명",
-    "가지",
-    "대표",
-    "대표적",
-    "대표적인",
-    "활약",
-    "활약한",
-    "관련",
-    "대해",
-    "대해서",
-}
-QUERY_PARTICLE_SUFFIXES = [
-    "으로부터",
-    "로부터",
-    "에게서",
-    "에서",
-    "에게",
-    "으로",
-    "까지",
-    "부터",
-    "처럼",
-    "보다",
-    "하고",
-    "하며",
-    "이나",
-    "나",
-    "이나마",
-    "은",
-    "는",
-    "이",
-    "가",
-    "을",
-    "를",
-    "의",
-    "와",
-    "과",
-    "로",
-]
-COUNT_REQUEST_PATTERN = re.compile(r"^\d+(명|개|가지|건|편|명만)?$")
-PERSON_LIST_TERMS = {"인물", "사람", "왕", "왕비", "공주", "대군", "신하", "장수", "장군", "의병", "승병", "학자"}
 
 RAG_HANJA_ALIASES = [
     ("訓民正音", "훈민정음"),
@@ -199,6 +94,36 @@ RAG_HANJA_ALIASES = [
 
 def get_discussion_topics() -> list[DiscussionTopic]:
     return get_demo_discussion_topics()
+
+
+def make_writing_assist(
+    db: Session,
+    settings: Settings,
+    title: str,
+    content: str,
+    post_type: str,
+) -> WritingAssistResponse:
+    fallback = make_demo_writing_assist(title, content, post_type)
+    if not settings.openai_api_key:
+        return fallback
+
+    prompt = (
+        "너는 역사 커뮤니티 게시판의 글쓰기 Agent다. "
+        "사용자 요청이 본문 작성, 확장, 수정, 분량 지정이면 suggested_content에 완성된 본문을 작성한다. "
+        "사실 기반으로 쓰고, 근거에 없는 내용은 단정하지 말아라. "
+        "분량 요청이 있으면 그 분량에 가깝게 맞추고, 태그 요청이 있으면 suggested_content 마지막 줄에 해시태그를 붙인다. "
+        "JSON만 반환한다. 스키마: "
+        '{"improved_titles":[""],"suggested_content":"","tags":[""],"category":"","questions":[""],"keywords":[""]}\n'
+        f"글 유형: {post_type}\n제목: {title}\n본문: {content[:3000]}"
+    )
+    try:
+        output = _generate_text(settings, prompt)
+        payload = _extract_json(output)
+        result = WritingAssistResponse.model_validate(payload)
+        _save_ai_response(db, "writing_assist", prompt, result.model_dump_json(), settings.openai_llm_model)
+        return result
+    except Exception:
+        return fallback
 
 
 def make_post_search_summary(
@@ -264,15 +189,14 @@ def search_rag(
         if settings.openai_api_key:
             query_embedding = _embed_text(settings, query)
             citations = _search_by_corpus_priority(
-                lambda target_corpus: _search_chunks_by_embedding_or_keyword(
-                    db,
-                    query_embedding,
-                    query,
-                    top_k,
-                    target_corpus,
-                ),
+                lambda target_corpus: _search_chunks_by_embedding(db, query_embedding, query, top_k, target_corpus),
                 corpus_priority,
             )
+            if not citations:
+                citations = _search_by_corpus_priority(
+                    lambda target_corpus: _search_chunks_by_keyword(db, query, top_k, target_corpus),
+                    corpus_priority,
+                )
         else:
             citations = _search_by_corpus_priority(
                 lambda target_corpus: _search_chunks_by_keyword(db, query, top_k, target_corpus),
@@ -514,342 +438,250 @@ def _suggest_external_keywords(
     return _dedupe_query_candidates(keywords)[:3]
 
 
-def search_external(db: Session, keyword: str, settings: Settings | None = None) -> ExternalSearchResponse:
+TRUSTED_EXTERNAL_DOMAINS = (
+    "sillok.history.go.kr",
+    "encykorea.aks.ac.kr",
+    "db.history.go.kr",
+    "contents.history.go.kr",
+    "museum.go.kr",
+    "kostma.aks.ac.kr",
+    "nl.go.kr",
+)
+
+def search_external(db: Session, settings: Settings, keyword: str) -> ExternalSearchResponse:
     from app.services import mcp_server
 
     started = time.perf_counter()
-    search_error = False
-    query_candidates = _external_query_candidates(settings, keyword)
-    try:
-        raw_resources = _search_external_candidates(mcp_server, keyword, query_candidates)
-        clue_queries = _external_clue_queries(keyword, raw_resources)
-        if clue_queries:
-            raw_resources = _merge_external_raw_resources(
-                keyword,
-                raw_resources,
-                _search_external_candidates(mcp_server, keyword, clue_queries),
-            )
-    except Exception:
-        search_error = True
-        raw_resources = []
-    resources = [
-        ExternalResource(
-            title=str(item.get("title") or ""),
-            provider=str(item.get("provider") or "국사편찬위원회 조선왕조실록"),
-            url=str(item.get("url") or ""),
-            description=str(item.get("description") or "조선왕조실록 검색 결과에서 조회한 기사입니다."),
-            source_type=str(item.get("source_type") or ""),
-            result_type=str(item.get("result_type") or ""),
-            verification_status=str(item.get("verification_status") or ""),
-            content_excerpt=str(item.get("content_excerpt") or "") or None,
-            confidence=float(item.get("confidence") or 0.0),
-            can_quote=str(item.get("can_quote") or "").lower() == "true" or item.get("can_quote") is True,
+    query = _external_search_query(keyword)
+    cache_key = make_cache_key(
+        "external_evidence_bundle:v1",
+        {
+            "query": query,
+            "naver_enabled": bool(settings.naver_client_id and settings.naver_client_secret),
+            "web_enabled": False,
+        },
+    )
+    cached = get_json_cache(settings, cache_key)
+    if cached is not None:
+        response = ExternalSearchResponse.model_validate(cached)
+        return response.model_copy(
+            update={
+                "tool_log": response.tool_log.model_copy(
+                    update={"status": f"cache_hit:{response.tool_log.status}", "elapsed_ms": 0}
+                )
+            }
         )
-        for item in raw_resources
-        if str(item.get("url") or "").startswith(("http://", "https://"))
-    ]
-    verified_count = sum(1 for item in raw_resources if item.get("result_type") == "verified")
-    link_count = sum(1 for item in raw_resources if item.get("result_type") == "search_link")
-    if verified_count:
+
+    raw_resources: list[dict[str, str]] = []
+    statuses: list[str] = []
+
+    naver_resources, naver_status = _safe_naver_discovery(settings, query)
+    statuses.append(f"naver:{naver_status}")
+    raw_resources.extend(naver_resources)
+
+    sillok_queries = [] if _is_fast_person_discovery(query, naver_resources) else _sillok_queries_from_discovery(query, naver_resources)
+    sillok_resources: list[dict[str, str]] = []
+    for sillok_query in sillok_queries:
+        try:
+            sillok_resources = mcp_server._search_sillok(sillok_query)
+        except Exception:
+            statuses.append("sillok:error")
+            sillok_resources = []
+            break
+        statuses.append(f"sillok:{'ok' if sillok_resources else 'no_results'}")
+        if sillok_resources:
+            break
+    raw_resources.extend(sillok_resources)
+
+    if not raw_resources:
+        statuses.append("web:disabled")
+
+    resources = _rank_external_resources(raw_resources, query)
+    if resources:
         status = "ok"
-        description = f"외부 자료 provider에서 확인된 자료 {verified_count}건과 검색 링크 {link_count}건을 확인했습니다."
-    elif link_count:
-        status = "link_ready"
-        description = f"확인된 자료는 없지만 추가 확인용 검색 링크 {link_count}건을 제공했습니다."
-    elif search_error:
+        description = f"외부 검색 bundle 결과 {len(resources)}건을 확인했습니다. 흐름: {', '.join(statuses)}"
+    elif any(item.endswith(":error") for item in statuses):
         status = "error"
-        description = "외부 검색 provider 호출에 실패했습니다. 외부 자료 링크를 제공하지 않습니다."
+        description = f"외부 검색 호출 일부가 실패했습니다. 흐름: {', '.join(statuses)}"
+    elif statuses and all(item.endswith(":not_configured") for item in statuses):
+        status = "not_configured"
+        description = f"설정된 외부 검색 키가 부족합니다. 흐름: {', '.join(statuses)}"
     else:
         status = "no_results"
-        description = "외부 검색 provider에서 결과를 확인하지 못했습니다. 외부 자료 링크를 제공하지 않습니다."
+        description = f"표시할 외부 검색 결과를 찾지 못했습니다. 흐름: {', '.join(statuses)}"
 
     elapsed_ms = int((time.perf_counter() - started) * 1000)
     tool_log = ToolLog(
-        tool="history.search",
-        input=" | ".join(query_candidates[:6]) or keyword,
+        tool="history.external_evidence_bundle",
+        input=query,
         status=status,
         elapsed_ms=elapsed_ms,
     )
     _save_tool_log(db, tool_log, description)
-    return ExternalSearchResponse(
+    response = ExternalSearchResponse(
         resources=resources,
         tool_log=tool_log,
     )
+    set_json_cache(settings, cache_key, response.model_dump(mode="json"), settings.rag_cache_ttl_seconds)
+    return response
 
 
-def _search_external_candidates(mcp_server, original_keyword: str, candidates: list[str]) -> list[dict[str, str]]:
-    raw_resources: list[dict[str, str]] = []
-    primary_candidates = candidates[:4]
-    with ThreadPoolExecutor(max_workers=max(1, len(primary_candidates))) as executor:
-        futures = {
-            executor.submit(mcp_server.search_history_providers, candidate, ["sillok"]): candidate
-            for candidate in primary_candidates
-        }
-        for future, candidate in futures.items():
-            try:
-                found_items = future.result()
-            except Exception:
-                found_items = []
-            for item in found_items:
-                raw_resources.append(_external_resource_with_planner_score(original_keyword, candidate, item))
+def _safe_naver_discovery(settings: Settings, query: str) -> tuple[list[dict[str, str]], str]:
+    from app.services import mcp_server
 
-    if any(item.get("verification_status") == "primary_verified" for item in raw_resources):
-        return _rank_external_raw_resources(original_keyword, raw_resources)
-
-    for candidate in candidates[:1]:
-        for item in mcp_server.search_history_providers(candidate, _external_secondary_providers(candidate)):
-            raw_resources.append(
-                _external_resource_with_planner_score(original_keyword, candidate, item)
-            )
-    return _rank_external_raw_resources(original_keyword, raw_resources)
-
-
-def _external_resource_with_planner_score(
-    original_keyword: str,
-    candidate: str,
-    item: dict[str, str],
-) -> dict[str, str]:
-    return {
-        **item,
-        "planner_query": candidate,
-        "relevance_score": str(
-            float(item.get("relevance_score") or 0)
-            + _planner_query_bonus(original_keyword, candidate, item)
-        ),
-    }
-
-
-def _merge_external_raw_resources(
-    original_keyword: str,
-    first: list[dict[str, str]],
-    second: list[dict[str, str]],
-) -> list[dict[str, str]]:
-    seen: set[str] = set()
-    merged: list[dict[str, str]] = []
-    for item in [*first, *second]:
-        url = str(item.get("url") or "")
-        if not url or url in seen:
-            continue
-        seen.add(url)
-        merged.append(item)
-    return _rank_external_raw_resources(original_keyword, merged)
-
-
-def _rank_external_raw_resources(original_keyword: str, resources: list[dict[str, str]]) -> list[dict[str, str]]:
-    seen: set[str] = set()
-    unique: list[dict[str, str]] = []
-    for item in sorted(resources, key=lambda resource: _external_resource_rank_key(original_keyword, resource), reverse=True):
-        url = str(item.get("url") or "")
-        if not url or url in seen:
-            continue
-        seen.add(url)
-        unique.append(item)
-    return unique[:12]
-
-
-def _external_resource_rank_key(original_keyword: str, resource: dict[str, str]) -> tuple[float, float, float, float, float, float]:
-    planner_query = str(resource.get("planner_query") or resource.get("matched_query") or "")
-    haystack = " ".join(
-        str(resource.get(key) or "")
-        for key in ["title", "description", "content_excerpt"]
-    )
-    planner_terms = _query_keywords(planner_query)
-    original_terms = _query_keywords(original_keyword)
-    planner_matches = sum(1 for term in planner_terms if term in haystack)
-    planner_ratio = planner_matches / max(1, len(planner_terms))
-    specificity = min(1.0, len(planner_terms) / 5)
-    original_matches = sum(1 for term in original_terms if term in haystack)
-    original_ratio = original_matches / max(1, len(original_terms))
-    primary = 1.0 if str(resource.get("verification_status") or "") == "primary_verified" else 0.0
-    verified = 1.0 if str(resource.get("result_type") or "") == "verified" else 0.0
-    score = float(resource.get("relevance_score") or 0)
-    return (primary, verified, planner_ratio, specificity, original_ratio, score)
-
-
-def _external_secondary_providers(candidate: str) -> list[str]:
-    compact = candidate.replace(" ", "")
-    if any(term in compact for term in ["어찰", "편지", "서찰", "고문서", "문집", "원문"]):
-        return ["kostma", "nlk", "encykorea", "web"]
-    if any(term in compact for term in ["복식", "유물", "소장품", "그림", "초상", "어진", "이미지"]):
-        return ["museum", "encykorea", "web"]
-    return ["encykorea", "web"]
-
-
-def _planner_query_bonus(original_keyword: str, candidate: str, item: dict[str, str]) -> float:
-    haystack = " ".join(
-        str(item.get(key) or "")
-        for key in ["title", "description", "content_excerpt", "matched_query", "planner_query"]
-    )
-    bonus = 0.0
-    for term in _query_keywords(original_keyword):
-        if term in candidate:
-            bonus += 0.08
-        if term in haystack:
-            bonus += 0.08
-    if str(item.get("verification_status") or "") == "primary_verified":
-        bonus += 0.25
-    if candidate.strip() != original_keyword.strip():
-        bonus += 0.25
-    for term in _query_keywords(candidate):
-        if term in haystack:
-            bonus += 0.18
-        else:
-            bonus -= 0.45
-    return bonus
-
-
-def _external_query_candidates(settings: Settings | None, query: str) -> list[str]:
-    local_queries = _local_external_query_candidates(query)
-    if not settings or not settings.openai_api_key:
-        return local_queries
-
-    cache_key = make_cache_key(
-        "external_query_planner:v1",
-        {
-            "query": query,
-            "model": settings.openai_llm_model,
-        },
-    )
-    cached = get_json_cache(settings, cache_key)
-    if isinstance(cached, list):
-        cached_queries = [str(item).strip() for item in cached if str(item).strip()]
-        return _dedupe_query_candidates([*cached_queries, *local_queries])[:8]
-
-    prompt = (
-        "너는 답변자가 아니라 한국사 자료 검색 query planner다. "
-        "사용자 질문은 현대어, 별칭, 후대 표현일 수 있다. "
-        "조선시대 자료에는 당시 지위명, 책봉명, 한자명, 사건명, 제도명으로 기록될 수 있다. "
-        "사실을 단정하지 말고 검색 후보만 만들어라. "
-        "사용자 원문 후보 1개, 당시 표현/지위명 후보, 한자어 후보, 더 넓은 상위 개념 후보를 포함한다. "
-        "JSON만 반환한다. 스키마: {\"queries\":[\"\"]}. 최대 8개.\n"
-        f"사용자 질문: {query}"
-    )
     try:
-        payload = _extract_json(_generate_text(settings, prompt))
-        llm_queries = [str(item).strip() for item in payload.get("queries", []) if str(item).strip()]
-        candidates = _dedupe_query_candidates([*llm_queries, *local_queries])[:8]
-        set_json_cache(settings, cache_key, candidates, settings.rag_cache_ttl_seconds)
-        return candidates
+        resources, status = mcp_server._search_naver(settings, _naver_discovery_query(query), ["encyc"], 5)
+        if resources or status == "not_configured":
+            return resources, status
+        return mcp_server._search_naver(settings, _naver_discovery_query(query), ["webkr"], 5)
     except Exception:
-        return local_queries
+        return [], "error"
 
 
-def _local_external_query_candidates(query: str) -> list[str]:
-    cleaned = re.sub(r"\s+", " ", query).strip()
-    compact = cleaned.replace(" ", "")
-    noun_terms = _extract_query_noun_terms(cleaned)
-    normalized_query = " ".join(noun_terms) if noun_terms else cleaned
-    candidates = [normalized_query]
-    keywords = _query_keywords(normalized_query)
-    if keywords:
-        candidates.append(keywords[0])
-        candidates.append(" ".join(keywords[:5]))
-    if len(keywords) >= 2:
-        candidates.append(f"{keywords[0]} {keywords[1]}")
-    candidates.extend(_expand_query_by_question_type(cleaned, noun_terms))
-
-    return _dedupe_query_candidates(candidates)[:8]
-
-
-def _expand_query_by_question_type(original_query: str, noun_terms: list[str]) -> list[str]:
-    if not noun_terms:
-        return []
-    compact = original_query.replace(" ", "")
-    base = " ".join(noun_terms[:4])
-    expansions: list[str] = []
-    asks_for_representative_list = (
-        bool(re.search(r"\d+\s*(명|개|가지|건|편)", original_query))
-        or any(term in compact for term in ["대표", "꼽", "추천", "몇명", "세명", "3명"])
-    )
-    has_person_topic = any(term in base for term in PERSON_LIST_TERMS)
-    if asks_for_representative_list:
-        expansions.append(f"{base} 대표")
-        expansions.append(f"{base} 대표 사례")
-        if has_person_topic:
-            expansions.append(f"{base} 대표 인물")
-            expansions.append(f"{base} 인물")
-    if any(term in compact for term in ["개괄", "요약", "정리", "설명", "뜻", "의미"]):
-        expansions.append(f"{base} 개괄")
-        expansions.append(f"{base} 설명")
-    return expansions
-
-
-def _external_clue_queries(original_query: str, resources: list[dict[str, str]]) -> list[str]:
+def _is_fast_person_discovery(query: str, resources: list[dict[str, str]]) -> bool:
     if not resources:
-        return []
-    text = " ".join(
-        str(resource.get(key) or "")
-        for resource in resources[:6]
-        for key in ["title", "description", "content_excerpt"]
-    )
-    clues: list[str] = []
-    base_terms = _query_keywords(original_query)[:2]
-    subject = base_terms[0] if base_terms else ""
-    for match in re.findall(r"([가-힣]{2,5})\([^)]+\)", text):
-        clue = match.strip()
-        if _valid_external_clue(clue, original_query, subject):
-            clues.append(clue)
-    patterns = [
-        r"[가-힣]{2,6}\s?대군",
-        r"[가-힣]{2,6}\s?공주",
-        r"[가-힣]{2,6}\s?옹주",
-        r"[가-힣]{2,6}\s?왕후",
-        r"[가-힣]{1,4}\s?빈\s?[가-힣]씨",
-        r"[가-힣]{1,4}빈\s?[가-힣]씨",
-        r"[가-힣]{2,4}\s?김씨",
-        r"[가-힣]{2,5}술",
-        r"[가-힣]{2,6}폐출",
-        r"[가-힣]{2,4}\s?고양이",
-        r"[가-힣]{2,5}위",
-        r"[가-힣]{2,5}군",
-        r"[가-힣]{2,5}부원군",
-        r"[가-힣]{2,5}\s?정씨",
-        r"[가-힣]{2,4}수",
+        return False
+    entity = _entity_query_from_question(query)
+    if not entity:
+        return False
+    return any(entity in str(resource.get("title") or "") for resource in resources[:3])
+
+
+def _external_search_query(keyword: str) -> str:
+    question_match = re.search(r"사용자 질문:\s*(.+)", keyword)
+    text = question_match.group(1) if question_match else keyword
+    text = re.sub(r"현재 화면:\s*\S+", " ", text)
+    text = re.sub(r"사용자:\s*\S+", " ", text)
+    text = re.sub(r"게시글 ID:\s*\d+", " ", text)
+    text = re.sub(r"게시글 제목:\s*", " ", text)
+    text = re.sub(r"게시글 검색 요약:\s*", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:80] or keyword[:80]
+
+
+def _naver_discovery_query(query: str) -> str:
+    entity_query = _entity_query_from_question(query)
+    if entity_query:
+        return entity_query
+    if any(term in query for term in ["조선", "실록", "한국사", "역사", "어찰", "사료"]):
+        return query
+    if any(term in query for term in ["누구", "인물", "사람"]):
+        return f"{query} 조선 인물"
+    return f"{query} 조선 역사"
+
+
+def _entity_query_from_question(query: str) -> str | None:
+    text = _strip_question_words(query)
+    text = re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if " " in text:
+        return None
+    if re.fullmatch(r"[가-힣A-Za-z0-9·]{2,12}", text):
+        return text
+    return None
+
+
+def _sillok_queries_from_discovery(query: str, resources: list[dict[str, str]]) -> list[str]:
+    candidates = [_strip_question_words(query), query]
+    for resource in resources:
+        text = " ".join(
+            [
+                str(resource.get("title") or ""),
+                str(resource.get("description") or ""),
+                str(resource.get("url") or ""),
+            ]
+        )
+        if "sillok.history.go.kr" in text or "실록" in text:
+            candidates.extend(_history_keyword_candidates(text))
+        elif _looks_like_joseon_person_result(text):
+            candidates.extend(_history_keyword_candidates(text))
+    return _dedupe_query_candidates([candidate for candidate in candidates if candidate])[:4]
+
+
+def _strip_question_words(query: str) -> str:
+    text = query
+    for term in ["알려줘", "설명해줘", "찾아줘", "누구야", "누구", "뭐야", "일부"]:
+        text = text.replace(term, " ")
+    text = re.sub(r"[?!.~,;:()\[\]{}]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _history_keyword_candidates(text: str) -> list[str]:
+    cleaned = re.sub(r"<.*?>", " ", text)
+    cleaned = re.sub(r"https?://\S+", " ", cleaned)
+    cleaned = re.sub(r"[^\w가-힣一-龥\s]", " ", cleaned)
+    words = [
+        re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", word)
+        for word in cleaned.split()
     ]
-    for pattern in patterns:
-        for match in re.findall(pattern, text):
-            clue = re.sub(r"\s+", " ", match).strip()
-            if _valid_external_clue(clue, original_query, subject):
-                clues.append(clue)
+    words = [word for word in words if 2 <= len(word) <= 12 and word not in {"네이버", "검색", "결과", "자료", "후보"}]
     candidates: list[str] = []
-    for clue in _dedupe_query_candidates(clues)[:6]:
-        if subject:
-            candidates.append(f"{subject} {clue}")
-        else:
-            candidates.append(clue)
-    return _dedupe_query_candidates(candidates)[:6]
+    person = next((word for word in words if word.endswith(("군", "대군", "왕", "수", "동"))), None)
+    king = next((name for name in KNOWN_RAG_TERMS + ["성종", "연산군", "정조", "태종"] if name in cleaned), None)
+    source = next((term for term in ["실록", "어찰", "편지", "사료", "기록"] if term in cleaned), None)
+    if king and person and king != person:
+        candidates.append(f"{king} {person}")
+    if person and source:
+        candidates.append(f"{person} {source}")
+    if person:
+        candidates.append(person)
+    return candidates
 
 
-def _valid_external_clue(clue: str, original_query: str, subject: str) -> bool:
-    compact = clue.replace(" ", "")
-    if len(compact) < 2:
-        return False
-    if compact in original_query.replace(" ", ""):
-        return False
-    if subject and compact == subject.replace(" ", ""):
-        return False
-    if compact in _generic_external_clues():
-        return False
-    if "되니" in compact or "하니" in compact or "하며" in compact:
-        return False
-    if len(compact) > 5 and not compact.endswith(("대군", "공주", "옹주", "왕후", "부원군")):
+def _looks_like_joseon_person_result(text: str) -> bool:
+    return any(term in text for term in ["조선", "왕조", "성종", "연산군", "중종", "실록", "인물", "궁인", "문신"])
+
+
+def _rank_external_resources(raw_resources: list[dict[str, str]], query: str) -> list[ExternalResource]:
+    resources = [
+        ExternalResource(
+            title=str(item.get("title") or ""),
+            provider=str(item.get("provider") or ""),
+            url=str(item.get("url") or ""),
+            description=str(item.get("description") or ""),
+        )
+        for item in raw_resources
+        if str(item.get("title") or "").strip() and str(item.get("url") or "").strip()
+        and _is_allowed_external_resource(str(item.get("url") or ""))
+    ]
+    unique: dict[str, ExternalResource] = {}
+    for resource in resources:
+        unique.setdefault(resource.url, resource)
+    query_terms = _external_rank_terms(query)
+    return sorted(unique.values(), key=lambda resource: _external_resource_rank(resource, query_terms))[:5]
+
+
+def _is_allowed_external_resource(url: str) -> bool:
+    if "sillok.history.go.kr/search/" in url:
         return False
     return True
 
 
-def _generic_external_clues() -> set[str]:
-    return {
-        "공주",
-        "옹주",
-        "대군",
-        "왕후",
-        "임금",
-        "전하",
-        "세자",
-        "문무",
-        "신하",
-        "사신",
-    }
+def _external_rank_terms(query: str) -> list[str]:
+    text = _strip_question_words(query)
+    text = re.sub(r"[^\w가-힣一-龥\s]", " ", text)
+    terms = [
+        re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", term)
+        for term in text.split()
+    ]
+    return [term for term in terms if len(term) >= 2]
+
+
+def _external_resource_rank(resource: ExternalResource, query_terms: list[str]) -> tuple[int, int, str]:
+    haystack = f"{resource.title} {resource.description}".lower()
+    relevance_penalty = -sum(1 for term in query_terms if term.lower() in haystack)
+    url = resource.url.lower()
+    if "sillok.history.go.kr/id/" in url:
+        return (relevance_penalty, 0, resource.title)
+    if any(domain in url for domain in TRUSTED_EXTERNAL_DOMAINS):
+        return (relevance_penalty, 1, resource.title)
+    if "naver.com" in url and "encyc" in resource.provider:
+        return (relevance_penalty, 2, resource.title)
+    if any(source in resource.provider.lower() for source in ["blog", "news"]):
+        return (relevance_penalty, 5, resource.title)
+    return (relevance_penalty, 3, resource.title)
+
 
 
 def run_agent(db: Session, settings: Settings, goal: str, topic: str) -> AgentRunResponse:
@@ -862,7 +694,7 @@ def run_agent(db: Session, settings: Settings, goal: str, topic: str) -> AgentRu
 
     try:
         rag = search_rag(db, settings, topic, 3)
-        external = search_external(db, topic, settings)
+        external = search_external(db, settings, topic)
         steps = [
             AgentStep(name="intent", output=f"목표 `{goal}`에 맞춰 필요한 도구를 선택했습니다."),
             AgentStep(name="rag.search", output=f"내부 근거 {len(rag.citations)}건을 조회했습니다."),
@@ -873,11 +705,12 @@ def run_agent(db: Session, settings: Settings, goal: str, topic: str) -> AgentRu
                 "아래 도구 실행 결과를 바탕으로 역사 게시판 사용자에게 줄 짧은 최종 답변을 작성해라. "
                 "사실과 해석을 구분하고, 단정하지 말아라.\n"
                 f"목표: {goal}\n주제: {topic}\nRAG 요약: {rag.answer_summary}\n"
-                f"근거 제목: {[citation.title for citation in rag.citations]}"
+                f"근거 제목: {[citation.title for citation in rag.citations]}\n"
+                f"외부 자료: {json.dumps([resource.model_dump() for resource in external.resources], ensure_ascii=False)}"
             )
             final_answer = _generate_text(settings, prompt)
         else:
-            final_answer = run_demo_agent(goal, topic).final_answer
+            final_answer = _make_local_agent_answer(rag, external)
 
         return AgentRunResponse(
             steps=steps,
@@ -889,6 +722,22 @@ def run_agent(db: Session, settings: Settings, goal: str, topic: str) -> AgentRu
         )
     except Exception:
         return run_demo_agent(goal, topic)
+
+
+def _make_local_agent_answer(rag: RagSearchResponse, external: ExternalSearchResponse) -> str:
+    if external.resources:
+        first = external.resources[0]
+        return (
+            f"외부 자료 후보를 확인했습니다. 우선 `{first.title}`({first.provider})를 근거 후보로 볼 수 있습니다. "
+            "자료 내용을 열어 직접 확인한 뒤, 확인된 사실과 해석을 분리해 답변하는 흐름이 좋습니다."
+        )
+    if rag.citations and not rag.weak_evidence:
+        titles = ", ".join(citation.title for citation in rag.citations[:2])
+        return f"내부 RAG에서 {titles} 자료를 찾았습니다. 이 근거 범위 안에서 사실과 해석을 나눠 설명할 수 있습니다."
+    return (
+        "현재 내부 RAG와 외부 검색에서 직접 확인 가능한 근거를 찾지 못했습니다. "
+        "인물의 한자명, 관련 왕대, 사건명, 사료 종류를 함께 주면 검색 정확도가 올라갑니다."
+    )
 
 
 def _ensure_seed_documents(db: Session) -> None:
@@ -959,24 +808,8 @@ def _rag_corpus_priority(query: str, corpus: RagCorpusMode = "auto") -> list[str
     if corpus != "auto":
         return [corpus]
     if any(term in query for term in PRIMARY_SOURCE_QUERY_TERMS):
-        return [SILLOK_V2_CORPUS, "", OVERVIEW_CORPUS]
-    if _looks_like_primary_source_reconstruction(query):
-        return [SILLOK_V2_CORPUS, "", OVERVIEW_CORPUS]
-    return [OVERVIEW_CORPUS, SILLOK_V2_CORPUS, ""]
-
-
-def _looks_like_primary_source_reconstruction(query: str) -> bool:
-    compact = query.replace(" ", "")
-    if not any(term in compact for term in PRIMARY_SOURCE_RECONSTRUCTION_TERMS):
-        return False
-    keywords = _query_keywords(query)
-    has_specific_subject = any(
-        len(keyword) >= 3
-        and keyword not in PRIMARY_SOURCE_RECONSTRUCTION_TERMS
-        and keyword not in {"어떻게", "무엇", "어떤", "대해", "관계"}
-        for keyword in keywords
-    )
-    return has_specific_subject
+        return ["", OVERVIEW_CORPUS]
+    return [OVERVIEW_CORPUS, ""]
 
 
 def _public_corpus_name(corpus: str | None) -> str:
@@ -999,41 +832,13 @@ def _search_by_corpus_priority(search, corpus_priority: list[str | None]) -> lis
     return []
 
 
-def _search_chunks_by_embedding_or_keyword(
-    db: Session,
-    query_embedding: list[float],
-    query: str,
-    top_k: int,
-    corpus: str | None = None,
-) -> list[RagCitation]:
-    citations = _search_chunks_by_embedding(db, query_embedding, query, top_k, corpus)
-    if citations:
-        return citations
-    return _search_chunks_by_keyword(db, query, top_k, corpus)
-
-
 def _load_seed_documents() -> list[dict[str, str]]:
     documents = []
     for path in sorted(RAG_SEED_DIR.rglob("*.md")):
-        if _is_managed_seed_artifact_markdown(path):
-            continue
         parsed = _parse_seed_markdown(path)
         if parsed is not None:
             documents.append(parsed)
     return documents
-
-
-def _is_managed_seed_artifact_markdown(path: Path) -> bool:
-    for parent in path.parents:
-        if parent == RAG_SEED_DIR.parent:
-            return False
-        if (
-            (parent / "manifest.json").exists()
-            and (parent / "metadata_json").is_dir()
-            and (parent / "embedding_text").is_dir()
-        ):
-            return True
-    return False
 
 
 def _parse_seed_markdown(path: Path) -> dict[str, str] | None:
@@ -1142,98 +947,22 @@ def _search_chunks_by_keyword(
 
     scored = []
     for chunk in chunks:
-        document = documents[chunk.document_id]
-        haystack = chunk.content + " " + document.title
+        haystack = chunk.content + " " + documents[chunk.document_id].title
         score = sum(1 for keyword in keywords if keyword in haystack)
         if score >= required_matches:
-            metadata_score = _metadata_relevance_boost(query, document)
-            scored.append((score + metadata_score, score, metadata_score, chunk))
-    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
-
-    return _dedupe_citations(
-        [
-            _citation_from_chunk(
-                documents[chunk.document_id],
-                chunk,
-                max(0.0, min(1.0, 0.5 + min(raw_score, 5) * 0.1 + metadata_score)),
-            )
-            for _rank_score, raw_score, metadata_score, chunk in scored
-        ],
-        top_k,
-    )
-
-
-def _search_chunks_by_embedding(
-    db: Session,
-    query_embedding: list[float],
-    query: str,
-    top_k: int,
-    corpus: str | None = None,
-) -> list[RagCitation]:
-    if db.get_bind().dialect.name == "postgresql":
-        citations = _search_chunks_by_pgvector(db, query_embedding, query, top_k, corpus)
-        if citations:
-            return citations
-    return _search_chunks_by_embedding_json(db, query_embedding, query, top_k, corpus)
-
-
-def _search_chunks_by_pgvector(
-    db: Session,
-    query_embedding: list[float],
-    query: str,
-    top_k: int,
-    corpus: str | None = None,
-) -> list[RagCitation]:
-    where = ["chunk.embedding IS NOT NULL"]
-    params: dict[str, object] = {
-        "query_embedding": _pgvector_literal(query_embedding),
-        "limit": max(top_k * 10, 20),
-    }
-    if corpus is not None:
-        where.append("document.corpus = :corpus")
-        params["corpus"] = corpus
-    sql = text(
-        f"""
-        SELECT
-            chunk.id AS chunk_id,
-            1 - (chunk.embedding <=> (:query_embedding)::vector) AS vector_score
-        FROM rag_chunks AS chunk
-        JOIN rag_documents AS document ON document.id = chunk.document_id
-        WHERE {" AND ".join(where)}
-        ORDER BY chunk.embedding <=> (:query_embedding)::vector
-        LIMIT :limit
-        """
-    )
-    try:
-        rows = db.execute(sql, params).all()
-    except Exception:
-        db.rollback()
-        return []
-    if not rows:
-        return []
-
-    chunk_scores = {int(row.chunk_id): float(row.vector_score or 0.0) for row in rows}
-    chunks = db.scalars(select(RagChunk).where(RagChunk.id.in_(chunk_scores))).all()
-    documents = _documents_by_ids(db, [chunk.document_id for chunk in chunks])
-    scored = []
-    for chunk in chunks:
-        document = documents.get(chunk.document_id)
-        if document is None:
-            continue
-        score = min(chunk_scores[chunk.id] + _metadata_relevance_boost(query, document), 1.0)
-        if score >= PGVECTOR_MIN_RELEVANCE:
             scored.append((score, chunk))
     scored.sort(key=lambda item: item[0], reverse=True)
+
     return _dedupe_citations(
         [
-            _citation_from_chunk(documents[chunk.document_id], chunk, max(0.0, min(score, 1.0)))
+            _citation_from_chunk(documents[chunk.document_id], chunk, 0.5 + min(score, 5) * 0.1)
             for score, chunk in scored
         ],
         top_k,
     )
 
 
-def _search_chunks_by_embedding_json(
+def _search_chunks_by_embedding(
     db: Session,
     query_embedding: list[float],
     query: str,
@@ -1266,12 +995,6 @@ def _search_chunks_by_embedding_json(
     )
 
 
-def _documents_by_ids(db: Session, document_ids: list[int]) -> dict[int, RagDocument]:
-    if not document_ids:
-        return {}
-    return {document.id: document for document in db.scalars(select(RagDocument).where(RagDocument.id.in_(document_ids))).all()}
-
-
 def _documents_by_corpus(db: Session, corpus: str | None) -> dict[int, RagDocument]:
     statement = select(RagDocument)
     if corpus is not None:
@@ -1279,16 +1002,11 @@ def _documents_by_corpus(db: Session, corpus: str | None) -> dict[int, RagDocume
     return {document.id: document for document in db.scalars(statement).all()}
 
 
-def _pgvector_literal(values: list[float]) -> str:
-    return "[" + ",".join(f"{value:.10g}" for value in values) + "]"
-
-
 def _metadata_relevance_boost(query: str, document: RagDocument) -> float:
-    boost = 0.0
     normalized_query = re.sub(r"\s+", "", query)
     normalized_title = re.sub(r"\s+", "", document.title)
     if normalized_title and normalized_title in normalized_query:
-        boost += 0.18
+        return 0.18
 
     metadata = {}
     if document.metadata_json:
@@ -1298,44 +1016,8 @@ def _metadata_relevance_boost(query: str, document: RagDocument) -> float:
             metadata = {}
     keywords = str(metadata.get("keywords", ""))
     if keywords and any(keyword.strip() and keyword.strip() in query for keyword in keywords.split(",")):
-        boost += 0.08
-    boost += _category_relevance_adjustment(query, metadata)
-    return round(boost, 3)
-
-
-def _category_relevance_adjustment(query: str, metadata: dict[str, object]) -> float:
-    document_groups = _metadata_category_groups(metadata)
-    if not document_groups:
-        return 0.0
-    preferred_groups = _query_category_groups(query)
-    if not preferred_groups:
-        return 0.0
-
-    matched = document_groups & preferred_groups
-    avoid_groups = set().union(*(CATEGORY_AVOID_GROUPS.get(group, set()) for group in preferred_groups))
-    avoided = document_groups & avoid_groups
-    adjustment = min(0.12, 0.06 * len(matched))
-    if avoided and not matched:
-        adjustment -= min(0.06, 0.03 * len(avoided))
-    return adjustment
-
-
-def _metadata_category_groups(metadata: dict[str, object]) -> set[str]:
-    raw_categories = str(metadata.get("categories") or metadata.get("category") or "")
-    groups: set[str] = set()
-    for group, markers in CATEGORY_GROUP_RULES:
-        if any(marker in raw_categories for marker in markers):
-            groups.add(group)
-    return groups
-
-
-def _query_category_groups(query: str) -> set[str]:
-    compact = query.replace(" ", "")
-    groups: set[str] = set()
-    for group, hints in CATEGORY_QUERY_HINTS:
-        if any(hint in query or hint in compact for hint in hints):
-            groups.add(group)
-    return groups
+        return 0.08
+    return 0.0
 
 
 def _citation_from_chunk(document: RagDocument, chunk: RagChunk, relevance: float) -> RagCitation:
@@ -1399,12 +1081,12 @@ def _make_local_post_search_summary(
     ).strip()
 
 
-def _generate_text(settings: Settings, prompt: str, model: str | None = None) -> str:
+def _generate_text(settings: Settings, prompt: str) -> str:
     from openai import OpenAI
 
     client = OpenAI(api_key=settings.openai_api_key)
     response = client.responses.create(
-        model=model or settings.openai_llm_model,
+        model=settings.openai_llm_model,
         input=prompt,
     )
     return response.output_text
@@ -1444,50 +1126,25 @@ def _cosine_similarity(left: list[float], right: list[float]) -> float:
 
 
 def _query_keywords(query: str) -> list[str]:
-    normalized = re.sub(r"[#,?!.~,;:()\[\]{}]", " ", query)
+    normalized = (
+        query.replace("#", " ")
+        .replace("의", " ")
+        .replace("와", " ")
+        .replace("과", " ")
+        .replace(",", " ")
+    )
     seen: set[str] = set()
     keywords: list[str] = []
     for term in KNOWN_RAG_TERMS:
         if term in query and term not in seen:
             seen.add(term)
             keywords.append(term)
-    for word in _extract_query_noun_terms(normalized):
+    for word in normalized.split():
+        word = word.strip()
         if len(word) >= 2 and word not in seen:
             seen.add(word)
             keywords.append(word)
     return keywords
-
-
-def _extract_query_noun_terms(query: str) -> list[str]:
-    tokens = re.findall(r"[0-9A-Za-z가-힣一-龥]+", query)
-    terms: list[str] = []
-    seen: set[str] = set()
-    for token in tokens:
-        term = _normalize_query_token(token)
-        if not term or term in seen:
-            continue
-        seen.add(term)
-        terms.append(term)
-    return terms
-
-
-def _normalize_query_token(token: str) -> str:
-    term = token.strip().strip("_-")
-    if not term:
-        return ""
-    if COUNT_REQUEST_PATTERN.match(term):
-        return ""
-    for suffix in QUERY_PARTICLE_SUFFIXES:
-        if len(term) > len(suffix) + 1 and term.endswith(suffix):
-            term = term[: -len(suffix)]
-            break
-    if term.endswith("한") and len(term) > 2 and term[:-1] in QUERY_REQUEST_STOP_TERMS:
-        term = term[:-1]
-    if term in QUERY_REQUEST_STOP_TERMS:
-        return ""
-    if len(term) < 2:
-        return ""
-    return term
 
 
 def _extract_json(text: str) -> dict:
@@ -1520,8 +1177,6 @@ def _save_ai_response(
 
 
 def _save_tool_log(db: Session, tool_log: ToolLog, result_summary: str) -> None:
-    if db is None:
-        return
     try:
         db.add(
             ToolLogRecord(

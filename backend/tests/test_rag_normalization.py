@@ -1,19 +1,12 @@
 from app.models.ai import RagDocument
-from app.services import ai_runtime
 from app.services.ai_runtime import (
     _chunk_seed_content,
-    _metadata_category_groups,
     _is_unique_seed_source_url,
-    _is_managed_seed_artifact_markdown,
-    _load_seed_documents,
     _metadata_relevance_boost,
     _normalize_for_rag_content,
     _parse_seed_markdown,
-    _pgvector_literal,
     _public_corpus_name,
-    _query_category_groups,
     _rag_corpus_priority,
-    _search_chunks_by_embedding_or_keyword,
 )
 
 
@@ -77,36 +70,6 @@ article_id: "E0029857"
     assert "E0029857" in parsed["metadata_json"]
 
 
-def test_managed_seed_artifact_markdown_is_skipped_by_legacy_loader(tmp_path) -> None:
-    root = tmp_path / "sillok-v2-demo-500"
-    path = root / "documents" / "태종실록" / "0001-kca_11711024_002.md"
-    (root / "metadata_json").mkdir(parents=True)
-    (root / "embedding_text").mkdir(parents=True)
-    path.parent.mkdir(parents=True)
-    (root / "manifest.json").write_text("{}", encoding="utf-8")
-    path.write_text("# 문서", encoding="utf-8")
-
-    assert _is_managed_seed_artifact_markdown(path)
-
-
-def test_yangnyeong_cat_sillok_seed_is_available_for_rag() -> None:
-    documents = _load_seed_documents()
-    target = next(
-        (
-            document
-            for document in documents
-            if document["source_url"] == "https://sillok.history.go.kr/id/kca_11711024_002"
-        ),
-        None,
-    )
-
-    assert target is not None
-    assert "세자가 금빛 고양이를 구하려 하다" in target["title"]
-    assert "신효창" in target["content"]
-    assert "탁신" in target["content"]
-    assert "양녕대군" in target["content"]
-
-
 def test_overview_chunks_are_larger_than_primary_source_chunks() -> None:
     content = "\n\n".join(["가" * 500, "나" * 500, "다" * 500])
 
@@ -115,15 +78,12 @@ def test_overview_chunks_are_larger_than_primary_source_chunks() -> None:
 
 
 def test_rag_corpus_priority_uses_encykorea_before_legacy() -> None:
-    assert _rag_corpus_priority("세종은 어떤 왕인가", "auto") == ["encykorea", "sillok-v2", ""]
-    assert _rag_corpus_priority("세종 실록 원문 기록", "auto") == ["sillok-v2", "", "encykorea"]
-    assert _rag_corpus_priority("양녕대군 고양이 사건", "auto") == ["sillok-v2", "", "encykorea"]
-    assert _rag_corpus_priority("경혜공주의 생애를 알려줘", "auto") == ["encykorea", "sillok-v2", ""]
+    assert _rag_corpus_priority("세종은 어떤 왕인가", "auto") == ["encykorea", ""]
+    assert _rag_corpus_priority("세종 실록 원문 기록", "auto") == ["", "encykorea"]
     assert _rag_corpus_priority("세종", "all") == [None]
     assert _rag_corpus_priority("세종", "encykorea") == ["encykorea"]
     assert _rag_corpus_priority("세종", "legacy") == [""]
     assert _rag_corpus_priority("세종", "sinpyeon_hanguksa") == ["sinpyeon_hanguksa"]
-    assert _rag_corpus_priority("세종", "sillok-v2") == ["sillok-v2"]
 
 
 def test_public_corpus_name_maps_internal_legacy_label() -> None:
@@ -132,53 +92,8 @@ def test_public_corpus_name_maps_internal_legacy_label() -> None:
     assert _public_corpus_name("encykorea") == "encykorea"
 
 
-def test_embedding_search_falls_back_to_keyword_within_same_corpus(monkeypatch) -> None:
-    calls = []
-
-    def fake_embedding(db, query_embedding, query, top_k, corpus):
-        calls.append(("embedding", corpus))
-        return []
-
-    def fake_keyword(db, query, top_k, corpus):
-        calls.append(("keyword", corpus))
-        return ["keyword-result"]
-
-    monkeypatch.setattr(ai_runtime, "_search_chunks_by_embedding", fake_embedding)
-    monkeypatch.setattr(ai_runtime, "_search_chunks_by_keyword", fake_keyword)
-
-    assert _search_chunks_by_embedding_or_keyword(None, [0.1], "질의", 3, "sillok-v2") == ["keyword-result"]
-    assert calls == [("embedding", "sillok-v2"), ("keyword", "sillok-v2")]
-
-
-def test_pgvector_literal_formats_vector_for_sql_cast() -> None:
-    assert _pgvector_literal([0.1, -2.25, 3.0]) == "[0.1,-2.25,3]"
-
-
 def test_metadata_relevance_boost_uses_document_title() -> None:
     document = RagDocument(title="세종", period="조선 전기", source_url="")
 
     assert _metadata_relevance_boost("세종은 어떤 왕인가", document) == 0.18
     assert _metadata_relevance_boost("문종은 어떤 왕인가", document) == 0.0
-
-
-def test_metadata_relevance_boost_uses_sillok_category_groups() -> None:
-    royal_document = RagDocument(
-        title="연산군과 장녹수",
-        period="연산군일기",
-        source_url="https://sillok.history.go.kr/id/example",
-        metadata_json='{"categories":"왕실-비빈(妃嬪) / 인사-임면(任免)"}',
-    )
-    weather_document = RagDocument(
-        title="천둥과 비",
-        period="연산군일기",
-        source_url="https://sillok.history.go.kr/id/weather",
-        metadata_json='{"categories":"과학-천기(天氣)"}',
-    )
-
-    assert _metadata_category_groups({"categories": "왕실-비빈(妃嬪) / 인사-임면(任免)"}) == {
-        "royal_family",
-        "appointment",
-    }
-    assert "royal_family" in _query_category_groups("장녹수와 연산군의 관계를 보여주는 일화")
-    assert _metadata_relevance_boost("장녹수와 연산군의 관계를 보여주는 일화", royal_document) > 0
-    assert _metadata_relevance_boost("장녹수와 연산군의 관계를 보여주는 일화", weather_document) < 0

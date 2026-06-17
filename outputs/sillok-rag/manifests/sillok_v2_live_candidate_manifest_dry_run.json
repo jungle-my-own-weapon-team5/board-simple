@@ -1,0 +1,213 @@
+{
+  "schema_version": "sillok-live-candidate-manifest-v1",
+  "seed_version": "sillok-v2-live-to-100",
+  "generated_at": "2026-06-17T15:29:10.885622+00:00",
+  "source": "shortage_plan_only",
+  "live_fetch": false,
+  "detail_fetch": false,
+  "target_per_period": 100,
+  "candidate_multiplier": 4,
+  "record_count": 0,
+  "quality": {
+    "duplicates": {
+      "sillok_ids": [],
+      "source_urls": []
+    },
+    "period_counts": {}
+  },
+  "periods": {
+    "광해군정초본": {
+      "status": "dry_run",
+      "record_code": "kob",
+      "remaining_after_legacy": 73,
+      "wanted_candidates": 292
+    },
+    "광해군중초본": {
+      "status": "dry_run",
+      "record_code": "koa",
+      "remaining_after_legacy": 54,
+      "wanted_candidates": 216
+    },
+    "선조수정실록": {
+      "status": "dry_run",
+      "record_code": "knb",
+      "remaining_after_legacy": 54,
+      "wanted_candidates": 216
+    },
+    "효종실록": {
+      "status": "dry_run",
+      "record_code": "kqa",
+      "remaining_after_legacy": 54,
+      "wanted_candidates": 216
+    },
+    "고종실록": {
+      "status": "dry_run",
+      "record_code": "kza",
+      "remaining_after_legacy": 53,
+      "wanted_candidates": 212
+    },
+    "중종실록": {
+      "status": "dry_run",
+      "record_code": "kka",
+      "remaining_after_legacy": 53,
+      "wanted_candidates": 212
+    },
+    "명종실록": {
+      "status": "dry_run",
+      "record_code": "kma",
+      "remaining_after_legacy": 52,
+      "wanted_candidates": 208
+    },
+    "순종실록부록": {
+      "status": "dry_run",
+      "record_code": "kzc",
+      "remaining_after_legacy": 52,
+      "wanted_candidates": 208
+    },
+    "영조실록": {
+      "status": "dry_run",
+      "record_code": "kua",
+      "remaining_after_legacy": 52,
+      "wanted_candidates": 208
+    },
+    "숙종실록": {
+      "status": "dry_run",
+      "record_code": "ksa",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "인종실록": {
+      "status": "dry_run",
+      "record_code": "kla",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "정조실록": {
+      "status": "dry_run",
+      "record_code": "kva",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "철종실록": {
+      "status": "dry_run",
+      "record_code": "kya",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "현종개수실록": {
+      "status": "dry_run",
+      "record_code": "krb",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "현종실록": {
+      "status": "dry_run",
+      "record_code": "kra",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 204
+    },
+    "경종수정실록": {
+      "status": "dry_run",
+      "record_code": "ktb",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "경종실록": {
+      "status": "dry_run",
+      "record_code": "kta",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "단종실록": {
+      "status": "dry_run",
+      "record_code": "kfa",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "문종실록": {
+      "status": "dry_run",
+      "record_code": "kea",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "선조실록": {
+      "status": "dry_run",
+      "record_code": "kna",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "성종실록": {
+      "status": "dry_run",
+      "record_code": "kia",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "세조실록": {
+      "status": "dry_run",
+      "record_code": "kga",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "세종실록": {
+      "status": "dry_run",
+      "record_code": "kda",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "숙종보궐정오": {
+      "status": "dry_run",
+      "record_code": "ksb",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "순조실록": {
+      "status": "dry_run",
+      "record_code": "kwa",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "순종실록": {
+      "status": "dry_run",
+      "record_code": "kzb",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "연산군일기": {
+      "status": "dry_run",
+      "record_code": "kja",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "예종실록": {
+      "status": "dry_run",
+      "record_code": "kha",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "인조실록": {
+      "status": "dry_run",
+      "record_code": "kpa",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "정종실록": {
+      "status": "dry_run",
+      "record_code": "kba",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "헌종실록": {
+      "status": "dry_run",
+      "record_code": "kxa",
+      "remaining_after_legacy": 50,
+      "wanted_candidates": 200
+    },
+    "태종실록": {
+      "status": "dry_run",
+      "record_code": "kca",
+      "remaining_after_legacy": 49,
+      "wanted_candidates": 196
+    }
+  },
+  "records": []
+}

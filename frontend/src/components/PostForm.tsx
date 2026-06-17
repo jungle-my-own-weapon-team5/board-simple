@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeft, Bot, Check, ExternalLink, FileInput, ImageIcon, Loader2, MessageSquarePlus, PanelRightClose, Plus, Save, Send, UserRound, Wand2, X } from "lucide-react";
-import Link from "next/link";
+import { Bot, Check, ChevronLeft, ExternalLink, ImageIcon, Loader2, PanelRightClose, Plus, Save, Send, UserRound, Wand2, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import * as aiApi from "../api/ai";
 import { ApiError, getAssetUrl } from "../api/client";
@@ -31,17 +30,15 @@ type AgentChatMessage = {
   result?: EditorAgentResponse;
 };
 
-type AgentProgress = Extract<aiApi.EditorAgentStreamEvent, { type: "progress" }>;
-
 const TAG_NAME_PATTERN = /^[0-9A-Za-z가-힣_]{1,50}$/;
 const AGENT_CHAT_STORAGE_PREFIX = "history-board:editor-agent-chat:";
 const MAX_STORED_AGENT_MESSAGES = 24;
-const INITIAL_AGENT_PROGRESS: AgentProgress = {
-  type: "progress",
-  step: "queued",
-  label: "요청 준비",
-  percent: 1,
-};
+const AGENT_PROGRESS_STEPS = [
+  { label: "요청 의도 분석", percent: 25 },
+  { label: "RAG 근거 검색", percent: 50 },
+  { label: "외부 자료 확인", percent: 75 },
+  { label: "답변 구성", percent: 90 },
+];
 
 function normalizeTagName(value: string) {
   const tag = value.trim().replace(/^#/, "").toLowerCase();
@@ -136,65 +133,45 @@ function AgentResultPanel({
       </div>
 
       {externalResources.length > 0 ? (
-        <details className="rounded-sm border border-border bg-background p-2 text-xs">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold">
-            <span className="flex items-center gap-2">
-              <ExternalLink size={14} />
-              외부 자료 {externalResources.length}건
-            </span>
-            <span className="text-muted-foreground">펼치기</span>
-          </summary>
-          <div className="mt-2 flex flex-col gap-2">
-            {externalResources.slice(0, 6).map((resource) => (
-              <div
-                key={`${resource.provider}-${resource.url}`}
-                className="rounded-sm border border-border/70 bg-card p-2"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="block break-words font-semibold leading-5">{resource.title}</span>
-                    <span className="mt-1 block truncate text-muted-foreground">{resource.provider}</span>
-                  </div>
-                  <Button type="button" variant="outline" size="sm" asChild className="h-8 shrink-0 rounded-sm px-2 text-xs">
-                    <a href={resource.url} target="_blank" rel="noreferrer">
-                      원문 보기
-                    </a>
-                  </Button>
-                </div>
-                {resource.description ? (
-                  <p className="mt-2 line-clamp-2 break-words leading-5 text-muted-foreground">
-                    {resource.description}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-            {externalResources.length > 6 ? (
-              <p className="text-xs text-muted-foreground">나머지 {externalResources.length - 6}건은 AI 실행 로그에서 확인할 수 있습니다.</p>
-            ) : null}
-          </div>
-        </details>
+        <div className="flex flex-col gap-2">
+          <p className="flex items-center gap-2 text-xs font-bold">
+            <ExternalLink size={14} />
+            외부 자료
+          </p>
+          {externalResources.map((resource) => (
+            <a
+              key={`${resource.provider}-${resource.url}`}
+              href={resource.url}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md border border-border bg-background p-2 text-xs hover:bg-accent"
+            >
+              <span className="block break-words font-semibold">{resource.title}</span>
+              <span className="mt-1 block break-words text-muted-foreground">
+                {resource.provider} · {resource.description}
+              </span>
+            </a>
+          ))}
+        </div>
       ) : externalSearchLog ? (
-        <div className="rounded-sm border border-border bg-background p-2 text-xs text-muted-foreground">
+        <div className="rounded-md border border-border bg-background p-2 text-xs text-muted-foreground">
           조선왕조실록에서 표시할 수 있는 외부 기사 링크를 찾지 못했습니다. 상태: {externalSearchLog.status}
         </div>
       ) : null}
 
       {result.suggested_content ? (
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" onClick={() => onApplyContent(result.suggested_content ?? "")}>
-                <FileInput size={14} />
-                에디터에 넣기
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => onAppendContent(result.suggested_content ?? "")}>
-                아래에 추가
-              </Button>
-            </div>
-            <p className="text-xs font-bold text-muted-foreground">본문 초안</p>
-          </div>
-          <div className="max-h-64 overflow-auto rounded-sm border border-border bg-background p-3 text-sm leading-6 whitespace-pre-wrap break-words">
+          <p className="text-xs font-bold">본문 초안</p>
+          <div className="max-h-64 overflow-auto rounded-md border border-border bg-background p-3 text-sm leading-6 whitespace-pre-wrap break-words">
             {result.suggested_content}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" onClick={() => onApplyContent(result.suggested_content ?? "")}>
+              본문에 적용
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => onAppendContent(result.suggested_content ?? "")}>
+              아래에 추가
+            </Button>
           </div>
         </div>
       ) : null}
@@ -233,7 +210,7 @@ function AgentResultPanel({
             <button
               key={item}
               type="button"
-              className="rounded-sm border border-border bg-background p-2 text-left text-xs leading-5 text-muted-foreground hover:bg-accent"
+              className="rounded-md border border-border bg-background p-2 text-left text-xs leading-5 text-muted-foreground hover:bg-accent"
               onClick={() => onAppendQuestion(item)}
             >
               {item}
@@ -243,8 +220,8 @@ function AgentResultPanel({
       ) : null}
 
       {agentSteps.length ? (
-        <details className="rounded-sm border border-border bg-background p-2 text-xs">
-          <summary className="cursor-pointer font-bold">AI 실행 로그</summary>
+        <details className="rounded-md border border-border bg-background p-2 text-xs">
+          <summary className="cursor-pointer font-bold">Agent 실행 로그</summary>
           <div className="mt-2 flex flex-col gap-2">
             {agentSteps.map((step) => (
               <div key={`${step.name}-${step.output}`} className="rounded-sm bg-accent/40 p-2">
@@ -260,25 +237,26 @@ function AgentResultPanel({
   );
 }
 
-function AgentProgressBubble({ progress }: { progress: AgentProgress }) {
+function AgentProgressBubble({ stepIndex }: { stepIndex: number }) {
+  const currentStep = AGENT_PROGRESS_STEPS[Math.min(stepIndex, AGENT_PROGRESS_STEPS.length - 1)];
   return (
     <div className="flex justify-start gap-2">
       <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
         <Bot size={15} />
       </div>
-      <div className="w-[86%] rounded-sm border border-border bg-accent/50 px-3 py-3 text-sm shadow-sm">
+      <div className="w-[86%] rounded-lg border border-border bg-accent/50 px-3 py-3 text-sm shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Loader2 className="shrink-0 animate-spin" size={16} />
-            <span className="truncate font-semibold">{progress.label}</span>
+            <span className="truncate font-semibold">{currentStep.label}</span>
           </div>
-          <span className="shrink-0 text-xs font-bold text-muted-foreground">{progress.percent}%</span>
+          <span className="shrink-0 text-xs font-bold text-muted-foreground">{currentStep.percent}%</span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
-          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress.percent}%` }} />
+          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${currentStep.percent}%` }} />
         </div>
         <p className="mt-2 text-xs leading-5 text-muted-foreground">
-          백엔드 Agent가 실제 처리 단계별로 진행 상태를 보내고 있습니다.
+          Agent가 단계별로 작업 중입니다. 완료되면 아래에 답변과 적용 버튼이 표시됩니다.
         </p>
       </div>
     </div>
@@ -308,10 +286,9 @@ export default function PostForm({
   const [agentInput, setAgentInput] = useState("");
   const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([]);
   const [agentStorageKey, setAgentStorageKey] = useState<string | null>(null);
-  const [agentProgress, setAgentProgress] = useState<AgentProgress>(INITIAL_AGENT_PROGRESS);
+  const [agentProgressIndex, setAgentProgressIndex] = useState(0);
   const [isAgentCollapsed, setIsAgentCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssisting, setIsAssisting] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -355,6 +332,17 @@ export default function PostForm({
     chatEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [agentMessages, isAssisting]);
 
+  useEffect(() => {
+    if (!isAssisting) {
+      setAgentProgressIndex(0);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setAgentProgressIndex((current) => Math.min(current + 1, AGENT_PROGRESS_STEPS.length - 1));
+    }, 1200);
+    return () => window.clearInterval(timer);
+  }, [isAssisting]);
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -373,23 +361,6 @@ export default function PostForm({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleSaveDraft = () => {
-    const savedAt = new Date();
-    window.localStorage.setItem(
-      `${AGENT_CHAT_STORAGE_PREFIX}draft:${window.location.pathname}`,
-      JSON.stringify({
-        title,
-        content,
-        post_type: postType,
-        category,
-        tags: selectedTags,
-        thumbnail_url: selectedThumbnailUrl,
-        saved_at: savedAt.toISOString()
-      })
-    );
-    setDraftSavedAt(savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
   };
 
   const handleAgentSend = async () => {
@@ -411,33 +382,18 @@ export default function PostForm({
     setError(null);
     setAgentInput("");
     setAgentMessages((current) => [...current, userMessage]);
-    setAgentProgress(INITIAL_AGENT_PROGRESS);
+    setAgentProgressIndex(0);
     setIsAssisting(true);
 
     try {
-      const payload: aiApi.EditorAgentPayload = {
+      const result = await aiApi.runEditorAgent({
         title,
         content,
         post_type: postType,
         category,
         message,
         history
-      };
-      let result: EditorAgentResponse | null = null;
-      try {
-        await aiApi.streamEditorAgent(payload, (event) => {
-          if (event.type === "progress") {
-            setAgentProgress(event);
-            return;
-          }
-          result = event.response;
-        });
-      } catch {
-        result = await aiApi.runEditorAgent(payload);
-      }
-      if (!result) {
-        throw new ApiError(0, "AI 응답을 받지 못했습니다.");
-      }
+      });
       const assistantMessage: AgentChatMessage = {
         id: makeMessageId(),
         role: "assistant",
@@ -551,35 +507,34 @@ export default function PostForm({
 
   return (
     <form
-      className={`grid gap-6 ${
-        isAgentCollapsed ? "lg:grid-cols-[minmax(0,1fr)_56px]" : "lg:grid-cols-[minmax(0,1fr)_360px]"
+      className={`grid gap-5 ${
+        isAgentCollapsed ? "lg:grid-cols-[minmax(0,1fr)_56px]" : "lg:grid-cols-[minmax(0,1fr)_380px]"
       }`}
       onSubmit={handleSubmit}
     >
-      <div className="flex min-w-0 flex-col gap-6">
-        <label className="block">
-          <span className="sr-only">제목</span>
+      <div className="flex min-w-0 flex-col gap-5">
+        <label className="flex flex-col gap-2 text-sm font-semibold">
+          <span>Title</span>
           <Input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={200}
             required
-            placeholder="역사적 통찰의 제목을 입력하세요"
-            className="h-auto rounded-none border-0 border-b border-border/60 bg-transparent px-0 py-4 font-serif-display text-3xl font-bold leading-[1.25] shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-4xl"
+            placeholder="제목"
           />
         </label>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold">
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">게시글 유형</span>
-            <select className="h-11 rounded-sm border border-input bg-accent/55 px-3 text-sm font-semibold outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40" value={postType} onChange={(event) => setPostType(event.target.value)}>
+            <span>글 유형</span>
+            <select className="h-10 rounded-md border border-input bg-card px-3" value={postType} onChange={(event) => setPostType(event.target.value)}>
               {["질문", "토론", "발견", "사료 해석 요청", "가벼운 썰"].map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold">
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">카테고리</span>
-            <select className="h-11 rounded-sm border border-input bg-accent/55 px-3 text-sm font-semibold outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40" value={category} onChange={(event) => setCategory(event.target.value)}>
+            <span>카테고리</span>
+            <select className="h-10 rounded-md border border-input bg-card px-3" value={category} onChange={(event) => setCategory(event.target.value)}>
               {["왕과 권력", "붕당과 정치", "전쟁과 외교", "인물 열전", "생활사와 문화", "사건 사고", "사료 발견", "오늘의 떡밥"].map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
@@ -587,10 +542,25 @@ export default function PostForm({
           </label>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground" htmlFor="post-tags">태그</label>
-          <div className="flex min-h-12 flex-wrap items-center gap-2 border border-border bg-accent/45 p-2">
+          <label className="text-sm font-semibold" htmlFor="post-tags">태그</label>
+          <div className="flex gap-2">
+            <Input
+              id="post-tags"
+              value={tagInput}
+              onChange={(event) => setTagInput(event.target.value)}
+              onKeyDown={handleTagKeyDown}
+              placeholder="태그 입력 후 Enter"
+              maxLength={50}
+            />
+            <Button type="button" variant="outline" onClick={handleAddTag} disabled={!tagInput.trim() || selectedTags.length >= 10}>
+              <Plus size={16} />
+              추가
+            </Button>
+          </div>
+          <div className="flex min-h-8 flex-wrap gap-2">
+            {selectedTags.length === 0 ? <span className="text-sm text-muted-foreground">태그 없음</span> : null}
             {selectedTags.map((tag) => (
-              <Badge variant="secondary" key={tag} className="gap-1 border-secondary/20 bg-secondary/10 pr-1 text-secondary">
+              <Badge variant="secondary" key={tag} className="gap-1 pr-1">
                 #{tag}
                 <button
                   type="button"
@@ -602,27 +572,13 @@ export default function PostForm({
                 </button>
               </Badge>
             ))}
-            <Input
-              id="post-tags"
-              value={tagInput}
-              onChange={(event) => setTagInput(event.target.value)}
-              onKeyDown={handleTagKeyDown}
-              placeholder="태그 입력 후 Enter"
-              maxLength={50}
-              className="h-8 min-w-40 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-            <Button type="button" variant="outline" onClick={handleAddTag} disabled={!tagInput.trim() || selectedTags.length >= 10}>
-              <Plus size={16} />
-              추가
-            </Button>
           </div>
-          {selectedTags.length === 0 ? <span className="text-xs text-muted-foreground">태그는 본문 주제와 사료 키워드 중심으로 추가하세요.</span> : null}
         </div>
         <MarkdownEditor value={content} onChange={setContent} onUploadImage={handleUploadImage} />
-        <section className="bal-card relative flex flex-col gap-3 overflow-hidden border border-border bg-accent/40 p-4">
+        <section className="flex flex-col gap-3 border border-border bg-accent/40 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="font-serif-display flex items-center gap-2 text-lg font-bold">
+              <h2 className="flex items-center gap-2 text-base font-extrabold">
                 <ImageIcon size={18} />
                 AI 썸네일
               </h2>
@@ -630,14 +586,14 @@ export default function PostForm({
                 제목과 본문을 바탕으로 조선 시각 taxonomy를 적용한 후보 3개를 만듭니다.
               </p>
             </div>
-            <Button type="button" variant="outline" className="rounded-sm" onClick={handleGenerateThumbnails} disabled={isGeneratingThumbnails}>
+            <Button type="button" variant="outline" onClick={handleGenerateThumbnails} disabled={isGeneratingThumbnails}>
               {isGeneratingThumbnails ? <Loader2 className="animate-spin" /> : <Wand2 />}
               <span>{isGeneratingThumbnails ? "생성 중" : "AI 썸네일 만들기"}</span>
             </Button>
           </div>
           {thumbnailError ? <p className="text-sm font-semibold text-destructive">{thumbnailError}</p> : null}
           {selectedThumbnailUrl ? (
-            <div className="flex items-center gap-3 rounded-sm border border-border bg-background p-2 text-sm">
+            <div className="flex items-center gap-3 rounded-md border border-border bg-background p-2 text-sm">
               <img
                 src={getAssetUrl(selectedThumbnailUrl)}
                 alt="선택된 AI 썸네일"
@@ -688,171 +644,142 @@ export default function PostForm({
           ) : null}
         </section>
         {error ? <p className="font-semibold text-destructive">{error}</p> : null}
+        <Button type="submit" className="w-fit" disabled={isSubmitting}>
+          <Save />
+          <span>{isSubmitting ? "Saving..." : submitLabel}</span>
+        </Button>
       </div>
 
       <aside
-        className={`min-w-0 lg:sticky lg:top-20 lg:h-[calc(100vh-13rem)] ${
-          isAgentCollapsed
-            ? "flex min-h-0 items-start justify-center border-0 bg-transparent px-0 py-2"
-            : "bal-card relative flex min-h-[620px] flex-col overflow-hidden border border-border bg-accent/45 shadow-sm lg:min-h-0"
+        className={`flex min-h-[620px] min-w-0 flex-col border border-border bg-accent/40 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] ${
+          isAgentCollapsed ? "items-center gap-3 p-2" : "gap-3 p-4"
         }`}
       >
         {isAgentCollapsed ? (
-          <div className="sticky top-24">
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setIsAgentCollapsed(false)}
+              aria-label="에디터 Agent 열기"
+              title="에디터 Agent 열기"
+            >
+              <ChevronLeft />
+            </Button>
             <button
               type="button"
+              className="flex flex-1 items-center justify-center rounded-md border border-border bg-background px-2 py-3 text-xs font-bold text-muted-foreground [writing-mode:vertical-rl] hover:bg-accent"
               onClick={() => setIsAgentCollapsed(false)}
-              className="flex h-12 w-12 items-center justify-center rounded-sm border border-border bg-card text-foreground shadow-sm transition hover:bg-accent"
-              aria-label="AI 도우미 열기"
-              title="AI 도우미 열기"
+              aria-label="에디터 Agent 열기"
             >
-              <Wand2 size={18} />
-              <span className="sr-only">AI 도우미 열기</span>
+              에디터 Agent
             </button>
-          </div>
+          </>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-3 border-b border-border bg-accent/70 p-4">
-              <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold uppercase tracking-[0.08em] text-primary">
-                <Wand2 size={18} className="shrink-0 text-secondary" />
-                <span className="truncate">Archivist AI</span>
-              </h2>
-              <div className="flex shrink-0 items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClearAgentChat}
-                  disabled={isAssisting}
-                  aria-label="새 대화"
-                  title="새 대화"
-                >
-                  <MessageSquarePlus />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsAgentCollapsed(true)}
-                  aria-label="AI 도우미 접기"
-                  title="AI 도우미 접기"
-                >
-                  <PanelRightClose />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
-                {agentMessages.length === 0 ? (
-                  <div className="rounded-sm border border-dashed border-border p-4 text-sm leading-6 text-muted-foreground">
-                    <p className="font-semibold text-foreground">무엇을 도와드릴까요?</p>
-                    <div className="mt-3 flex flex-col gap-2">
-                      {["양녕대군은 어떤 사람이야?", "이 이야기로 게시글 본문 800자로 채워줘"].map((sample) => (
-                        <button
-                          key={sample}
-                          type="button"
-                          className="rounded-sm border border-border bg-card px-3 py-2 text-left text-sm hover:bg-accent"
-                          onClick={() => setAgentInput(sample)}
-                        >
-                          {sample}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {agentMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
-                        <Bot size={15} />
-                      </div>
-                    ) : null}
-                    <div
-                      className={`max-w-[86%] rounded-sm px-3 py-2 text-sm leading-6 shadow-sm ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border bg-accent/50 text-foreground"
-                      }`}
-                    >
-                      <div className="whitespace-pre-wrap break-words">{message.content}</div>
-                      {message.result ? (
-                        <AgentResultPanel
-                          result={message.result}
-                          onApplyContent={setContent}
-                          onAppendContent={(nextContent) => setContent((current) => `${current.trim()}\n\n${nextContent}`.trim())}
-                          onApplyTitle={setTitle}
-                          onAppendTags={appendTags}
-                          onAppendQuestion={(question) => setContent((current) => `${current.trim()}\n\n${question}`.trim())}
-                        />
-                      ) : null}
-                    </div>
-                    {message.role === "user" ? (
-                      <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
-                        <UserRound size={15} />
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-
-                {isAssisting ? <AgentProgressBubble progress={agentProgress} /> : null}
-                <div ref={chatEndRef} />
-              </div>
-
-              <div className="border-t border-border bg-accent/70 p-3">
-                <div className="flex items-end gap-2">
-                  <Textarea
-                    value={agentInput}
-                    onChange={(event) => setAgentInput(event.target.value)}
-                    onKeyDown={handleAgentKeyDown}
-                    rows={3}
-                    className="max-h-40 resize-none"
-                    placeholder="메시지를 입력하세요"
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    onClick={() => void handleAgentSend()}
-                    disabled={isAssisting || !agentInput.trim()}
-                    aria-label="AI 도우미 메시지 보내기"
-                  >
-                    {isAssisting ? <Loader2 className="animate-spin" /> : <Send />}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </aside>
-
-      <footer className="col-span-full -mx-4 border-t border-border bg-background/95 px-4 py-4 shadow-[0_-12px_28px_-26px_rgba(28,27,27,0.6)] sm:-mx-6 sm:px-6 lg:col-span-1 lg:col-start-1 lg:mx-0 lg:px-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-4">
-            <Button type="button" variant="ghost" asChild className="rounded-sm">
-              <Link href="/">
-                <ArrowLeft />
-                <span>게시판으로 돌아가기</span>
-              </Link>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-base font-extrabold">
+            <Wand2 size={18} />
+            에디터 Agent
+          </h2>
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="icon" onClick={() => setIsAgentCollapsed(true)} aria-label="에디터 Agent 접기" title="에디터 Agent 접기">
+              <PanelRightClose />
             </Button>
-            <span className="text-xs font-semibold text-muted-foreground">
-              {draftSavedAt ? `초안이 저장되었습니다 (${draftSavedAt})` : "초안은 이 브라우저에 임시 저장할 수 있습니다"}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button type="button" variant="outline" disabled={isSubmitting} onClick={handleSaveDraft}>
-              임시 저장
-            </Button>
-            <Button type="submit" className="bg-secondary text-secondary-foreground hover:bg-secondary/90" disabled={isSubmitting}>
-              <Save />
-              <span>{isSubmitting ? "저장 중..." : submitLabel}</span>
+            <Button type="button" variant="ghost" size="sm" onClick={handleClearAgentChat} disabled={isAssisting}>
+              <Plus size={14} />
+              새 대화
             </Button>
           </div>
         </div>
-      </footer>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-background">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
+            {agentMessages.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-4 text-sm leading-6 text-muted-foreground">
+                <p className="font-semibold text-foreground">무엇을 도와드릴까요?</p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {["양녕대군은 어떤 사람이야?", "이 이야기로 게시글 본문 800자로 채워줘"].map((sample) => (
+                    <button
+                      key={sample}
+                      type="button"
+                      className="rounded-md border border-border bg-card px-3 py-2 text-left text-sm hover:bg-accent"
+                      onClick={() => setAgentInput(sample)}
+                    >
+                      {sample}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {agentMessages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {message.role === "assistant" ? (
+                  <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
+                    <Bot size={15} />
+                  </div>
+                ) : null}
+                <div
+                  className={`max-w-[86%] rounded-lg px-3 py-2 text-sm leading-6 shadow-sm ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-accent/50 text-foreground"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                  {message.result ? (
+                    <AgentResultPanel
+                      result={message.result}
+                      onApplyContent={setContent}
+                      onAppendContent={(nextContent) => setContent((current) => `${current.trim()}\n\n${nextContent}`.trim())}
+                      onApplyTitle={setTitle}
+                      onAppendTags={appendTags}
+                      onAppendQuestion={(question) => setContent((current) => `${current.trim()}\n\n${question}`.trim())}
+                    />
+                  ) : null}
+                </div>
+                {message.role === "user" ? (
+                  <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
+                    <UserRound size={15} />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+
+            {isAssisting ? <AgentProgressBubble stepIndex={agentProgressIndex} /> : null}
+            <div ref={chatEndRef} />
+          </div>
+
+          <div className="border-t border-border p-3">
+            <div className="flex items-end gap-2">
+              <Textarea
+                value={agentInput}
+                onChange={(event) => setAgentInput(event.target.value)}
+                onKeyDown={handleAgentKeyDown}
+                rows={3}
+                className="max-h-40 resize-none"
+                placeholder="메시지를 입력하세요"
+              />
+              <Button
+                type="button"
+                size="icon"
+                onClick={() => void handleAgentSend()}
+                disabled={isAssisting || !agentInput.trim()}
+                aria-label="Agent 메시지 보내기"
+              >
+                {isAssisting ? <Loader2 className="animate-spin" /> : <Send />}
+              </Button>
+            </div>
+          </div>
+        </div>
+          </>
+        )}
+      </aside>
     </form>
   );
 }

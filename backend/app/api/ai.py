@@ -1,11 +1,6 @@
 from datetime import date
 
-import json
-from collections.abc import Iterator
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -13,7 +8,6 @@ from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.ai import (
-    AgentStep,
     AgentChatRequest,
     EditorAgentRequest,
     EditorAgentResponse,
@@ -32,7 +26,8 @@ from app.schemas.ai import (
     WritingAssistResponse,
 )
 from app.services.chat_agent import run_chat_agent
-from app.services.editor_agent import run_editor_agent, run_editor_agent_stream
+from app.services.editor_agent import run_editor_agent
+from app.services.writing_agent import run_writing_assist_agent
 from app.services.ai_runtime import run_agent, run_rag_quality_agent, search_external, search_rag
 from app.services.discussion_topics import get_public_discussion_topics
 
@@ -54,41 +49,13 @@ def writing_assist(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> WritingAssistResponse:
-    editor_response = run_editor_agent(
+    return run_writing_assist_agent(
         db,
         settings,
         payload.title,
         payload.content,
         payload.post_type,
-        "",
-        _legacy_writing_assist_message(payload),
-        [],
-    )
-    return WritingAssistResponse(
-        improved_titles=[editor_response.suggested_title] if editor_response.suggested_title else [],
-        suggested_content=editor_response.suggested_content or editor_response.agent_message,
-        tags=editor_response.tags,
-        category=editor_response.category or "오늘의 떡밥",
-        questions=editor_response.questions,
-        keywords=editor_response.tags,
-        agent_steps=[
-            AgentStep(
-                name="writing_assist.deprecated",
-                output="구형 writing-assist 요청을 에디터 Agent로 위임했습니다.",
-            ),
-            *editor_response.agent_steps,
-        ],
-        evidence_summary=editor_response.evidence_summary,
-        weak_evidence=editor_response.weak_evidence,
-    )
-
-
-def _legacy_writing_assist_message(payload: WritingAssistRequest) -> str:
-    instruction = payload.instruction or "현재 초안을 바탕으로 글쓰기 추천을 만들어줘."
-    return (
-        f"{instruction}\n"
-        "제목 후보, 본문 초안, 추천 태그, 카테고리, 토론 질문을 제안해줘. "
-        "본문 작성이나 수정이 필요하면 suggested_content에 바로 적용 가능한 초안을 넣어줘."
+        payload.instruction,
     )
 
 
@@ -109,29 +76,6 @@ def editor_agent_run(
         payload.message,
         payload.history,
     )
-
-
-@router.post("/editor-agent/stream")
-def editor_agent_stream(
-    payload: EditorAgentRequest,
-    db: Session = Depends(get_db),
-    settings: Settings = Depends(get_settings),
-    current_user: User = Depends(get_current_user),
-) -> StreamingResponse:
-    def events() -> Iterator[str]:
-        for event in run_editor_agent_stream(
-            db,
-            settings,
-            payload.title,
-            payload.content,
-            payload.post_type,
-            payload.category,
-            payload.message,
-            payload.history,
-        ):
-            yield json.dumps(jsonable_encoder(event), ensure_ascii=False) + "\n"
-
-    return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
 @router.post("/rag/search", response_model=RagSearchResponse)
@@ -158,7 +102,7 @@ def external_search(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> ExternalSearchResponse:
-    return search_external(db, payload.keyword, settings)
+    return search_external(db, settings, payload.keyword)
 
 
 @router.post("/agent/run", response_model=AgentRunResponse)

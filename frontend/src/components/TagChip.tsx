@@ -10,7 +10,7 @@ type TagChipProps = {
 export default function TagChip({ name, compact = false }: TagChipProps) {
   return (
     <span
-      className={`inline-flex max-w-full items-center gap-1 rounded-sm border border-secondary/25 bg-secondary/10 font-semibold text-secondary shadow-sm ${
+      className={`inline-flex max-w-full items-center gap-1 rounded-full border border-primary/25 bg-primary/10 font-semibold text-primary shadow-sm ${
         compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
       }`}
       title={`#${name}`}

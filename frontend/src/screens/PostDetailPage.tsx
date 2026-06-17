@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarDays, ExternalLink, Eye, ImageIcon, MessageCircle, Pencil, Sparkles, Trash2, UserRound } from "lucide-react";
+import { BookOpen, ExternalLink, ImageIcon, Pencil, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -54,10 +54,6 @@ function aiErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "AI 보조 자료를 불러오지 못했습니다.";
 }
 
-function authorInitial(name: string) {
-  return name.trim().slice(0, 1) || "덕";
-}
-
 export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams<{ postId: string }>();
@@ -75,7 +71,7 @@ export default function PostDetailPage() {
   const [thumbnailCandidates, setThumbnailCandidates] = useState<ThumbnailCandidate[]>([]);
 
   const numericPostId = Number(postId);
-  const canManagePost = Boolean(user && post && (user.id === post.author.id || user.is_admin));
+  const isAuthor = user && post && user.id === post.author.id;
 
   useEffect(() => {
     if (!Number.isFinite(numericPostId)) {
@@ -181,34 +177,34 @@ export default function PostDetailPage() {
   }
 
   if (!post) {
-    return <p className="text-muted-foreground">게시글을 불러오는 중입니다.</p>;
+    return <p className="text-muted-foreground">Loading...</p>;
   }
 
-  const actionButtons = canManagePost ? (
+  const actionButtons = isAuthor ? (
     <div className="flex flex-wrap items-center gap-2">
-      <Button asChild variant="outline" className="rounded-sm">
+      <Button asChild variant="outline">
         <Link href={`/posts/${post.id}/edit`}>
           <Pencil />
-          <span>수정</span>
+          <span>Edit</span>
         </Link>
       </Button>
-      <Button type="button" variant="outline" className="rounded-sm" onClick={handleGenerateThumbnail} disabled={isThumbnailLoading}>
+      <Button type="button" variant="outline" onClick={handleGenerateThumbnail} disabled={isThumbnailLoading}>
         <ImageIcon />
         <span>{isThumbnailLoading ? "후보 생성 중..." : "AI 썸네일 후보"}</span>
       </Button>
-      <Button type="button" variant="destructive" className="rounded-sm" onClick={handleDelete}>
+      <Button type="button" variant="destructive" onClick={handleDelete}>
         <Trash2 />
-        <span>삭제</span>
+        <span>Delete</span>
       </Button>
     </div>
   ) : null;
 
   return (
-    <article className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <article className="flex flex-col gap-5">
       {post.thumbnail_url ? (
         <>
           <div className="flex justify-end">{actionButtons}</div>
-          <header className="bal-card relative min-h-[440px] overflow-hidden border border-border bg-card sm:min-h-[560px]">
+          <header className="relative min-h-[480px] overflow-hidden border border-border bg-card sm:min-h-[620px]">
             <img
               src={getAssetUrl(post.thumbnail_url)}
               alt={`${post.title} 썸네일`}
@@ -217,23 +213,17 @@ export default function PostDetailPage() {
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[hsl(var(--background))] via-[hsl(var(--background)/0.82)] to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-5 sm:p-8">
               <div className="max-w-4xl">
-                <p className="mb-3 w-fit bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
-                  조선의 맥락
-                </p>
-                <h1 className="font-serif-display break-words text-3xl font-bold leading-[1.35] sm:text-5xl">
+                <h1 className="break-words text-3xl font-extrabold leading-tight sm:text-5xl">
                   {post.title}
                 </h1>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm leading-6 text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><UserRound className="size-4" />{post.author.nickname}</span>
-                  <span className="inline-flex items-center gap-1.5"><MessageCircle className="size-4" />댓글 {post.comment_count}</span>
-                  <span className="inline-flex items-center gap-1.5"><Eye className="size-4" />조회 {post.view_count}</span>
-                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" />{new Date(post.created_at).toLocaleString()}</span>
-                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {post.author.nickname} · 댓글 {post.comment_count} · 조회 {post.view_count} · {new Date(post.created_at).toLocaleString()}
+                </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge className="rounded-sm">{post.post_type}</Badge>
-                  <Badge variant="outline" className="rounded-sm bg-background/80">{post.category}</Badge>
+                  <Badge>{post.post_type}</Badge>
+                  <Badge variant="outline" className="bg-background/80">{post.category}</Badge>
                   {post.tags.map((tag) => (
-                    <Badge key={tag.id} variant="secondary" className="rounded-sm bg-background/80">
+                    <Badge key={tag.id} variant="secondary" className="bg-background/80">
                       #{tag.name}
                     </Badge>
                   ))}
@@ -244,54 +234,43 @@ export default function PostDetailPage() {
         </>
       ) : (
         <>
-          <header className="bal-card relative overflow-hidden border border-border bg-card p-6 sm:p-8">
-            <div className="absolute inset-y-0 left-0 w-1 bg-secondary/80" />
-            <div className="flex flex-col items-start justify-between gap-5 md:flex-row">
-            <div className="min-w-0">
-              <p className="mb-3 w-fit bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
-                조선의 맥락
-              </p>
-              <h1 className="font-serif-display break-words text-3xl font-bold leading-[1.35] sm:text-4xl">
+          <header className="flex flex-col items-start justify-between gap-4 md:flex-row">
+            <div>
+              <h1 className="break-words text-3xl font-extrabold leading-tight sm:text-4xl">
                 {post.title}
               </h1>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm leading-6 text-muted-foreground">
-                <span className="grid size-7 place-items-center rounded-full bg-accent text-xs font-bold text-primary">
-                  {authorInitial(post.author.nickname)}
-                </span>
-                <span className="inline-flex items-center gap-1.5"><UserRound className="size-4" />{post.author.nickname}</span>
-                <span className="inline-flex items-center gap-1.5"><MessageCircle className="size-4" />댓글 {post.comment_count}</span>
-                <span className="inline-flex items-center gap-1.5"><Eye className="size-4" />조회 {post.view_count}</span>
-                <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" />{new Date(post.created_at).toLocaleString()}</span>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                {post.author.nickname} · 댓글 {post.comment_count} · 조회 {post.view_count} · {new Date(post.created_at).toLocaleString()}
+              </p>
             </div>
             {actionButtons}
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2 border-t border-border/60 pt-4">
-              <Badge className="rounded-sm">{post.post_type}</Badge>
-              <Badge variant="outline" className="rounded-sm">{post.category}</Badge>
-              {post.tags.map((tag) => (
-                <Badge key={tag.id} variant="secondary" className="rounded-sm">#{tag.name}</Badge>
-              ))}
-            </div>
           </header>
+          <div className="flex flex-wrap gap-2">
+            <Badge>{post.post_type}</Badge>
+            <Badge variant="outline">{post.category}</Badge>
+            <Badge variant="secondary">{post.has_ai_evidence ? "근거 있음" : "AI 미확인"}</Badge>
+            {post.tags.map((tag) => (
+              <Badge key={tag.id} variant="secondary">#{tag.name}</Badge>
+            ))}
+          </div>
         </>
       )}
       {thumbnailCandidates.length > 0 ? (
-        <section className="bal-card relative flex flex-col gap-3 overflow-hidden border border-border bg-card p-5">
+        <section className="flex flex-col gap-3 border border-border bg-card p-4">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="font-serif-display text-xl font-bold">AI 썸네일 후보</h2>
+              <h2 className="text-lg font-extrabold">AI 썸네일 후보</h2>
               <p className="text-sm text-muted-foreground">
                 마음에 드는 후보만 선택하세요. 선택하지 않으면 게시글 썸네일은 바뀌지 않습니다.
               </p>
             </div>
-            <Button type="button" variant="outline" className="rounded-sm" onClick={() => setThumbnailCandidates([])}>
+            <Button type="button" variant="outline" onClick={() => setThumbnailCandidates([])}>
               후보 닫기
             </Button>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {thumbnailCandidates.map((candidate, index) => (
-              <div key={`${candidate.image_url ?? "empty"}-${index}`} className="flex flex-col gap-3 rounded-sm border border-border bg-background p-3">
+              <div key={`${candidate.image_url ?? "empty"}-${index}`} className="flex flex-col gap-3 rounded-md border border-border bg-background p-3">
                 {candidate.image_url ? (
                   <img
                     src={getAssetUrl(candidate.image_url)}
@@ -320,19 +299,14 @@ export default function PostDetailPage() {
           </div>
         </section>
       ) : null}
-      <section>
-        <MarkdownContent
-          value={post.content}
-          className="bal-card relative overflow-hidden border border-border bg-card p-6 text-[15px] leading-8 shadow-[0_18px_40px_-34px_rgba(28,27,27,0.45)] sm:p-8"
-        />
-      </section>
-      <section className="bal-card relative flex flex-col gap-4 overflow-hidden border border-border bg-accent/40 p-5">
+      <MarkdownContent value={post.content} className="border-y border-border py-5" />
+      <section className="flex flex-col gap-3 border border-border bg-accent/40 p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-serif-display text-xl font-bold">AI 근거와 토론 보조</h2>
-            <p className="text-sm leading-6 text-muted-foreground">사용자 댓글과 분리된 보조 자료 영역입니다.</p>
+            <h2 className="text-lg font-extrabold">AI 근거와 토론 보조</h2>
+            <p className="text-sm text-muted-foreground">사용자 댓글과 분리된 보조 자료 영역입니다.</p>
           </div>
-          <Button type="button" variant="outline" className="rounded-sm" onClick={handleAiContext} disabled={isAiLoading}>
+          <Button type="button" variant="outline" onClick={handleAiContext} disabled={isAiLoading}>
             <Sparkles />
             <span>{isAiLoading ? "확인 중..." : "근거 찾아보기"}</span>
           </Button>
@@ -340,9 +314,9 @@ export default function PostDetailPage() {
         {aiError ? <p className="text-sm font-semibold text-destructive">{aiError}</p> : null}
         {rag ? (
           <div className="grid gap-3 lg:grid-cols-3">
-            <Card className="bal-card relative overflow-hidden">
+            <Card>
               <CardContent className="p-4">
-                <h3 className="mb-2 flex items-center gap-2 font-bold"><BookOpen size={18} /> RAG 요약</h3>
+                <h3 className="mb-2 flex items-center gap-2 font-extrabold"><BookOpen size={18} /> RAG 요약</h3>
                 {rag.weak_evidence ? (
                   <Badge variant="outline" className="mb-2">근거 부족</Badge>
                 ) : null}
@@ -351,24 +325,24 @@ export default function PostDetailPage() {
                     검색 corpus: {rag.searched_corpora.join(" → ")}
                   </p>
                 ) : null}
-                <p className="text-sm leading-6 text-muted-foreground">{rag.answer_summary}</p>
+                <p className="text-sm text-muted-foreground">{rag.answer_summary}</p>
               </CardContent>
             </Card>
             {rag.citations.length === 0 ? (
-              <Card className="bal-card relative overflow-hidden">
+              <Card>
                 <CardContent className="p-4 text-sm text-muted-foreground">
                   내부 seed에서 기준치 이상의 근거를 찾지 못했습니다. 외부 자료를 확인하거나 seed 문서를 보강해야 합니다.
                 </CardContent>
               </Card>
             ) : null}
             {rag.citations.slice(0, 2).map((item) => (
-              <Card key={item.id} className="bal-card relative overflow-hidden">
+              <Card key={item.id}>
                 <CardContent className="p-4 text-sm">
                   <p className="font-bold">{item.title}</p>
                   <p className="text-muted-foreground">{item.period} · 관련도 {item.relevance}</p>
-                  <p className="mt-2 leading-6">{item.summary}</p>
+                  <p>{item.summary}</p>
                   {item.source_url ? (
-                    <Button asChild variant="outline" size="sm" className="mt-3 rounded-sm">
+                    <Button asChild variant="outline" size="sm" className="mt-3">
                       <a href={item.source_url} target="_blank" rel="noreferrer">
                         <ExternalLink />
                         <span>근거 원문 보기</span>
@@ -383,13 +357,13 @@ export default function PostDetailPage() {
         {external || agent ? (
           <div className="grid gap-3 md:grid-cols-2">
             <div className="border-t border-border pt-3 text-sm">
-              <h3 className="mb-2 flex items-center gap-2 font-bold"><ExternalLink size={18} /> 외부 자료</h3>
+              <h3 className="mb-2 flex items-center gap-2 font-extrabold"><ExternalLink size={18} /> 외부 자료</h3>
               {external?.resources.map((item) => (
-                <p key={item.title} className="leading-6 text-muted-foreground">{item.provider}: {item.description}</p>
+                <p key={item.title} className="text-muted-foreground">{item.provider}: {item.description}</p>
               ))}
             </div>
             <div className="border-t border-border pt-3 text-sm">
-              <h3 className="mb-2 font-bold">AI 실행 로그</h3>
+              <h3 className="mb-2 font-extrabold">Agent 실행 로그</h3>
               {agent?.steps.map((step) => (
                 <p key={step.name}><span className="font-semibold">{step.name}</span>: {step.output}</p>
               ))}

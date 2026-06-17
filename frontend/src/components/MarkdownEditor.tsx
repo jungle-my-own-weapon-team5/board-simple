@@ -116,8 +116,8 @@ export default function MarkdownEditor({ value, onChange, onUploadImage }: Markd
   const editorFontClass = fontClass(editorFont);
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-accent/55 p-2">
+    <section className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border border-border bg-card p-2">
         <div className="flex flex-wrap items-center gap-1">
           <Button type="button" variant="ghost" size="icon" title="굵게" onClick={() => wrapSelection("**", "**", "굵은 글씨")}>
             <Bold />
@@ -160,16 +160,16 @@ export default function MarkdownEditor({ value, onChange, onUploadImage }: Markd
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
-            className="h-9 rounded-sm border border-input bg-background px-2 text-sm font-semibold"
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm font-semibold"
             value={editorFont}
             onChange={(event) => setEditorFont(event.target.value as EditorFont)}
             aria-label="에디터 글꼴"
           >
-            <option value="sans">고딕</option>
-            <option value="serif">명조</option>
-            <option value="mono">고정폭</option>
+            <option value="sans">Sans</option>
+            <option value="serif">Serif</option>
+            <option value="mono">Mono</option>
           </select>
-          <div className="flex rounded-sm border border-input bg-background p-0.5">
+          <div className="flex rounded-md border border-input bg-background p-0.5">
             <Button type="button" variant={mode === "write" ? "secondary" : "ghost"} size="sm" onClick={() => setMode("write")}>
               작성
             </Button>
@@ -185,17 +185,17 @@ export default function MarkdownEditor({ value, onChange, onUploadImage }: Markd
           value={value}
           onChange={(event) => onChange(event.target.value)}
           rows={22}
-          className={`min-h-[440px] resize-y border-0 bg-transparent p-6 leading-8 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 ${editorFontClass}`}
-          placeholder="이곳에 역사적 맥락과 당신의 통찰을 자유롭게 서술하세요..."
+          className={`min-h-[520px] resize-y leading-7 ${editorFontClass}`}
+          placeholder="내용을 작성하세요. #태그 형식으로 태그를 추가할 수 있습니다."
         />
       ) : (
         <MarkdownContent
           value={value}
           emptyText="미리볼 내용이 없습니다."
-          className={`min-h-[440px] bg-background p-6 leading-8 ${editorFontClass}`}
+          className={`min-h-[520px] rounded-md border border-input bg-background p-4 ${editorFontClass}`}
         />
       )}
-      {uploadError ? <p className="border-t border-border px-4 py-3 text-sm font-semibold text-destructive">{uploadError}</p> : null}
+      {uploadError ? <p className="text-sm font-semibold text-destructive">{uploadError}</p> : null}
     </section>
   );
 }

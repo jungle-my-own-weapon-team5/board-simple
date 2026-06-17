@@ -1,0 +1,3759 @@
+{
+  "schema_version": "sillok-live-candidate-manifest-v1",
+  "seed_version": "sillok-v2-live-to-100",
+  "generated_at": "2026-06-17T16:14:50.467180+00:00",
+  "source": "sillok_list_pages",
+  "live_fetch": true,
+  "detail_fetch": false,
+  "target_per_period": 100,
+  "candidate_multiplier": 3,
+  "record_count": 162,
+  "quality": {
+    "duplicates": {
+      "sillok_ids": [],
+      "source_urls": []
+    },
+    "period_counts": {
+      "광해군중초본": 162
+    }
+  },
+  "periods": {
+    "광해군중초본": {
+      "status": "fetched_refs",
+      "record_code": "koa",
+      "remaining_after_legacy": 54,
+      "refs_total": 250,
+      "wanted_candidates": 162,
+      "selected_candidates": 162,
+      "excluded_existing": 46
+    }
+  },
+  "records": [
+    {
+      "selected_rank": 1,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002001_011",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002001_011",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 왕세자가 열을 다스릴 약을 준비하라고 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002001_011",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002001_011",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002001_011"
+      }
+    },
+    {
+      "selected_rank": 2,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002001_015",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002001_015",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 선조가 승하하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002001_015",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002001_015",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002001_015"
+      }
+    },
+    {
+      "selected_rank": 3,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002002_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002002_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 묘시에 목욕시키고 병시에 염습하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002002_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002002_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002002_006"
+      }
+    },
+    {
+      "selected_rank": 4,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002005_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002005_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 유시에 성빈하고 전을 실행하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002005_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002005_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002005_008"
+      }
+    },
+    {
+      "selected_rank": 5,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002005_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002005_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정원과 사관이 모두 밤을 새우다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002005_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002005_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002005_009"
+      }
+    },
+    {
+      "selected_rank": 6,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_001"
+      }
+    },
+    {
+      "selected_rank": 7,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 내중문을 열고 입시하는 예를 이루게 할 것을 허락하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_003"
+      }
+    },
+    {
+      "selected_rank": 8,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 상복의 요대가 옳지 않다고 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_004"
+      }
+    },
+    {
+      "selected_rank": 9,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 성복례를 거행하고 전을 끝낸 뒤 여차로 돌아가다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_005"
+      }
+    },
+    {
+      "selected_rank": 10,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 선왕의 존호에 대하여 옥당에서 차자를 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_006"
+      }
+    },
+    {
+      "selected_rank": 11,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이호민·오억령·이호의 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_008"
+      }
+    },
+    {
+      "selected_rank": 12,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002006_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002006_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 승지와 사관이 모두 물러나 본원에 가 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002006_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002006_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002006_009"
+      }
+    },
+    {
+      "selected_rank": 13,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 유자신·박홍로·박승종·정창연 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_001"
+      }
+    },
+    {
+      "selected_rank": 14,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대신들이 선왕의 행장·자·휘, 원자의 이름을 문서에 기록하는 일을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_002"
+      }
+    },
+    {
+      "selected_rank": 15,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 유영경이 소장을 올려 사직하였으나 허락하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_004"
+      }
+    },
+    {
+      "selected_rank": 16,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 대행 대왕의 존호를 예문에 쓰는 것이 온당하다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_005"
+      }
+    },
+    {
+      "selected_rank": 17,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이조에서 유자신과 김제남의 관작에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_006"
+      }
+    },
+    {
+      "selected_rank": 18,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002007_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002007_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대사간 이효원과 정언 이사경이 체직시켜 줄 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002007_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002007_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002007_007"
+      }
+    },
+    {
+      "selected_rank": 19,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002008_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002008_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 송종하는 예를 극진히 하라고 빈청에 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002008_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002008_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002008_002"
+      }
+    },
+    {
+      "selected_rank": 20,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002008_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002008_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대신들에게 정성을 다하여 보좌해 달라고 빈청에 비망기를 내리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002008_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002008_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002008_003"
+      }
+    },
+    {
+      "selected_rank": 21,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002008_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002008_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 박이장·박이서·박건·윤호선·임장에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002008_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002008_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002008_004"
+      }
+    },
+    {
+      "selected_rank": 22,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002009_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002009_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 총호사 허욱 등이 건원릉의 지리에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002009_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002009_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002009_001"
+      }
+    },
+    {
+      "selected_rank": 23,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002009_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002009_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 경상도 유생 강인 등이 정인홍의 무고함을 아뢰는 소장을 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002009_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002009_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002009_003"
+      }
+    },
+    {
+      "selected_rank": 24,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002010_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002010_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 이사경이 대행 대왕의 호를 조라 하는 것은 다시 의논해야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002010_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002010_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002010_001"
+      }
+    },
+    {
+      "selected_rank": 25,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002010_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002010_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 영의정 유영경이 정사하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002010_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002010_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002010_002"
+      }
+    },
+    {
+      "selected_rank": 26,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002010_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002010_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 이번 승습 때에 방물을 마련하지 않는 것이 옳다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002010_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002010_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002010_004"
+      }
+    },
+    {
+      "selected_rank": 27,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002010_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002010_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 승습을 청하는 일을 극진하게 해야 된다는 형조 판서 홍여순의 차자",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002010_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002010_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002010_005"
+      }
+    },
+    {
+      "selected_rank": 28,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 김신원·정창연·윤양·민덕남 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_001"
+      }
+    },
+    {
+      "selected_rank": 29,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 호위하는 무사들의 거처에 대하여 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_002"
+      }
+    },
+    {
+      "selected_rank": 30,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 고부 이호민 등이 준봉을 청할 때 방물을 써야 한다는 것 등에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_004"
+      }
+    },
+    {
+      "selected_rank": 31,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 어보에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_005"
+      }
+    },
+    {
+      "selected_rank": 32,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 의정부의 신정 방물도 마련하는 것이 좋겠다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_006"
+      }
+    },
+    {
+      "selected_rank": 33,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 병조에서 궁성 호위를 파거해야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_007"
+      }
+    },
+    {
+      "selected_rank": 34,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002011_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002011_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성이 김대래를 파직해야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002011_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002011_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002011_009"
+      }
+    },
+    {
+      "selected_rank": 35,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002012_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002012_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 이사경이 색승지와 내관 민희건·영의정 유영경을 파직해야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002012_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002012_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002012_001"
+      }
+    },
+    {
+      "selected_rank": 36,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002012_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002012_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 완산군 이축이 유영경의 죄에 대한 소장을 올렸으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002012_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002012_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002012_002"
+      }
+    },
+    {
+      "selected_rank": 37,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002012_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002012_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이축이 유영경의 죄에 대하여 올린 소장의 내용",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002012_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002012_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002012_003"
+      }
+    },
+    {
+      "selected_rank": 38,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002013_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002013_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 행 대사헌 김신원 등이 영의정 유영경과 그 심복들을 파직시키라고 합계하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002013_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002013_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002013_002"
+      }
+    },
+    {
+      "selected_rank": 39,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002013_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002013_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 영의정 유영경을 삭직시켜야 한다는 홍문관 부제학 송응순 등의 차자",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002013_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002013_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002013_003"
+      }
+    },
+    {
+      "selected_rank": 40,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002013_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002013_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 함흥 판관 이귀의 새로운 정치에 힘써야 할 네 가지 일에 대한 상소문",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002013_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002013_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002013_004"
+      }
+    },
+    {
+      "selected_rank": 41,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002013_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002013_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 김신원·정협에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002013_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002013_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002013_005"
+      }
+    },
+    {
+      "selected_rank": 42,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002013_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002013_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 박건과 지평 정광성이 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002013_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002013_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002013_007"
+      }
+    },
+    {
+      "selected_rank": 43,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대행왕의 조호에 관한 비망기를 내리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_001"
+      }
+    },
+    {
+      "selected_rank": 44,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 선왕의 능을 어디에 쓸 것인가에 대하여 이항복·기자헌 등과 의논하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_002"
+      }
+    },
+    {
+      "selected_rank": 45,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 박건, 지평 정광성 등을 출사하게 해야 한다는 부제학 송응순 등의 차자",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_003"
+      }
+    },
+    {
+      "selected_rank": 46,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 합계하여 유영경·김대래 등의 삭직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_005"
+      }
+    },
+    {
+      "selected_rank": 47,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 사간원이 내관 민희건을 유찬시킬 것을 아뢰었으나 허락하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_006"
+      }
+    },
+    {
+      "selected_rank": 48,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 옥당이 유영경의 삭출을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_007"
+      }
+    },
+    {
+      "selected_rank": 49,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이진이 사병을 양성하니 절도로 유배해야 한다는 부제학 송응순 등의 차자",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_009"
+      }
+    },
+    {
+      "selected_rank": 50,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군 이진을 선처할 수 있는 방법을 강구하라고 정원에 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_010"
+      }
+    },
+    {
+      "selected_rank": 51,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_011",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_011",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군 이진의 집을 엄히 지키고 출입하는 사람을 금하게 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_011",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_011",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_011"
+      }
+    },
+    {
+      "selected_rank": 52,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_012",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_012",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 무장 고언백·박명현 등이 이심을 품고 있다고 지평 민덕남 등이 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_012",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_012"
+      }
+    },
+    {
+      "selected_rank": 53,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_014",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_014",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군이 집을 나가다 발각되자 비변사에 가두다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_014",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_014",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_014"
+      }
+    },
+    {
+      "selected_rank": 54,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_015",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_015",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군의 집을 엄중히 포위해야 한다고 병조에서 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_015",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_015",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_015"
+      }
+    },
+    {
+      "selected_rank": 55,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_016",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_016",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 윤양 등이 임해군의 일에 대해 속히 결단을 내려야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_016",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_016",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_016"
+      }
+    },
+    {
+      "selected_rank": 56,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_017",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_017",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 도성 밖의 집에 가두고 엄히 지키도록 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_017",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_017",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_017"
+      }
+    },
+    {
+      "selected_rank": 57,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_019",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_019",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 홍문관에서 양사의 논계를 따를 것에 대한 차자를 올리자 이에 따르다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_019",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_019",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_019"
+      }
+    },
+    {
+      "selected_rank": 58,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_020",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_020",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 진도에 안치하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_020",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_020",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_020"
+      }
+    },
+    {
+      "selected_rank": 59,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_021",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_021",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 진도에 정배하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_021",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_021",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_021"
+      }
+    },
+    {
+      "selected_rank": 60,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_022",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_022",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정원에서 임해군을 무사로 하여금 압송하는 것이 타당하다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_022",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_022",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_022"
+      }
+    },
+    {
+      "selected_rank": 61,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002014_024",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002014_024",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이원익·유희분·김상준에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002014_024",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002014_024",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002014_024"
+      }
+    },
+    {
+      "selected_rank": 62,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조가 임해군을 절도에 정배하는 일에 대하여 계청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_001"
+      }
+    },
+    {
+      "selected_rank": 63,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 이사경이 장령 윤양, 지평 민덕남 등을 출사시켜야 한다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_002"
+      }
+    },
+    {
+      "selected_rank": 64,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 윤양, 헌납 윤효선 등이 합사하여 유영경·이효원 등을 삭출하라고 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_003"
+      }
+    },
+    {
+      "selected_rank": 65,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성 등이 민희건은 유찬시키고 이덕온은 파직할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_005"
+      }
+    },
+    {
+      "selected_rank": 66,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군이 배소로 갈 때 각도의 감사들에게 부족한 것이 없도록 하라고 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_006"
+      }
+    },
+    {
+      "selected_rank": 67,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 의금부에서 임해군을 정배하는 일에 대해서 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_007"
+      }
+    },
+    {
+      "selected_rank": 68,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정광적·이필영에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_008"
+      }
+    },
+    {
+      "selected_rank": 69,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002015_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002015_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 영의정 이원익이 사직하는 차자를 올렸으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002015_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002015_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002015_010"
+      }
+    },
+    {
+      "selected_rank": 70,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_001"
+      }
+    },
+    {
+      "selected_rank": 71,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 유영경의 삭탈 관작과 문외 출송을 계청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_002"
+      }
+    },
+    {
+      "selected_rank": 72,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성이 민희건을 유찬해야 한다고 하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_004"
+      }
+    },
+    {
+      "selected_rank": 73,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 무함하고 유영경을 파출시키고 정인홍을 복구시키는 것에 대한 사론",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_005"
+      }
+    },
+    {
+      "selected_rank": 74,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군에 관한 일을 대신들이 의논하라고 정원에 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_006"
+      }
+    },
+    {
+      "selected_rank": 75,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002016_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002016_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 영의정 이원익이 정국을 삼사나 외처에 모여 하는 것이 의당하다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002016_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002016_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002016_007"
+      }
+    },
+    {
+      "selected_rank": 76,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 윤양과 지평 민덕남이 파직을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_002"
+      }
+    },
+    {
+      "selected_rank": 77,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 헌납 윤효선, 정언 이사경·임장이 파직을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_003"
+      }
+    },
+    {
+      "selected_rank": 78,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 빈청에서 대신들이 임해군의 유배지에 관하여 의논하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_004"
+      }
+    },
+    {
+      "selected_rank": 79,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군에 관한 사건을 추국하라고 국청에 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_005"
+      }
+    },
+    {
+      "selected_rank": 80,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 사간 박이서가 윤효선·이사경·임장 등의 처신에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_007"
+      }
+    },
+    {
+      "selected_rank": 81,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성이 윤양·민덕남·성영 등의 처신에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_008"
+      }
+    },
+    {
+      "selected_rank": 82,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 옥당이 유영경을 삭출시킬 것을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_009"
+      }
+    },
+    {
+      "selected_rank": 83,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 고언백·박명현 등을 추국하는 일에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_010"
+      }
+    },
+    {
+      "selected_rank": 84,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_012",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_012",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 비변사에서 노추에 관한 일을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_012",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_012"
+      }
+    },
+    {
+      "selected_rank": 85,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002017_013",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002017_013",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대행 대왕의 묘호에 관하여 예조에서 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002017_013",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002017_013",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002017_013"
+      }
+    },
+    {
+      "selected_rank": 86,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_001"
+      }
+    },
+    {
+      "selected_rank": 87,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 합계하여 유영경을 삭출시키고 홍식을 삭탈시킬 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_002"
+      }
+    },
+    {
+      "selected_rank": 88,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 사간 박이서가 박명현·고언백의 추국을 지체시킨 죄로 체직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_004"
+      }
+    },
+    {
+      "selected_rank": 89,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 윤양이 고언백의 추국을 지체시킨 죄로 체직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_005"
+      }
+    },
+    {
+      "selected_rank": 90,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 민덕남이 자신의 잘못으로 역적의 추국이 지체된 일로 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_006"
+      }
+    },
+    {
+      "selected_rank": 91,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 집의 목장흠이 역적의 추국을 지체시킨 죄로 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_007"
+      }
+    },
+    {
+      "selected_rank": 92,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성이 역적의 추국을 지체시킨 죄로 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_009"
+      }
+    },
+    {
+      "selected_rank": 93,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 군기시에 추국청을 설치하여 대신들이 함께 추국하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_010"
+      }
+    },
+    {
+      "selected_rank": 94,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_011",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_011",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군의 종인 정용·지순·하문을리 등을 추국하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_011",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_011",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_011"
+      }
+    },
+    {
+      "selected_rank": 95,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_013",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_013",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 그대로 배소에 압송하라고 간원에게 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_013",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_013",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_013"
+      }
+    },
+    {
+      "selected_rank": 96,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_014",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_014",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 옥당이 유영경을 삭출시키고 정인홍을 석방시켜야 한다는 차자를 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_014",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_014",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_014"
+      }
+    },
+    {
+      "selected_rank": 97,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_015",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_015",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 병조에서 승종이 밤에 적간할 때 직접 살피겠다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_015",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_015",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_015"
+      }
+    },
+    {
+      "selected_rank": 98,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002018_016",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002018_016",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 밤 1경에 손방과 건방에 불빛 같은 기운이 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002018_016",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002018_016",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002018_016"
+      }
+    },
+    {
+      "selected_rank": 99,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 합계하여 유영경을 삭출시키고 홍식을 삭탈시킬 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_002"
+      }
+    },
+    {
+      "selected_rank": 100,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 정광성 등이 민희건을 유찬시키는 일 등에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_003"
+      }
+    },
+    {
+      "selected_rank": 101,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 고부사의 복색에 대해 대신들과 의논한 것을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_004"
+      }
+    },
+    {
+      "selected_rank": 102,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 지순과 하문을리를 형신하는 일을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_005"
+      }
+    },
+    {
+      "selected_rank": 103,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군의 종을 모두 잡아 추국하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_007"
+      }
+    },
+    {
+      "selected_rank": 104,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정용·하문을리는 가형하고, 고언백 등은 가두고, 종들은 엄히 국문하라고 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_008"
+      }
+    },
+    {
+      "selected_rank": 105,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 고언백과 박명현의 공초",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_009"
+      }
+    },
+    {
+      "selected_rank": 106,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 고언백·정용·하문을리 등을 철저히 신문하라고 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_010"
+      }
+    },
+    {
+      "selected_rank": 107,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_012",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_012",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 유영경의 삭출과 정인홍의 석방에 관해 옥당에서 차자를 올렸으나 듣지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_012",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_012"
+      }
+    },
+    {
+      "selected_rank": 108,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_013",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_013",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 밤 1경에 손방·곤방·건방에 불빛 같은 기운이 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_013",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_013",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_013"
+      }
+    },
+    {
+      "selected_rank": 109,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002019_014",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002019_014",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군의 종들을 공초하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002019_014",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002019_014",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002019_014"
+      }
+    },
+    {
+      "selected_rank": 110,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_001"
+      }
+    },
+    {
+      "selected_rank": 111,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 박이서·이호신·이사경·임장이 파직을 청하였으나 들어주지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_003"
+      }
+    },
+    {
+      "selected_rank": 112,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 행 대사헌 김신원, 집의 목장흠 등이 체직을 청하였으나 들어주지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_004"
+      }
+    },
+    {
+      "selected_rank": 113,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 합사하여 유영경의 삭출과 홍식의 삭탈을 계청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_005"
+      }
+    },
+    {
+      "selected_rank": 114,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 이사경이 정인홍·이경전·이이첨을 석방하는 일 등에 관하여 계청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_006"
+      }
+    },
+    {
+      "selected_rank": 115,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군을 교동으로 이배하라고 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_008"
+      }
+    },
+    {
+      "selected_rank": 116,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지순·순남과 김환 등의 추국에 관하여 답하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_009"
+      }
+    },
+    {
+      "selected_rank": 117,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 임해군의 종인 충립과 춘동 등을 공초하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_010"
+      }
+    },
+    {
+      "selected_rank": 118,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_012",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_012",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 홍문관에서 유영경을 삭출하는 등의 일에 대하여 차자를 올렸으나 들어주지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_012",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_012"
+      }
+    },
+    {
+      "selected_rank": 119,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_013",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_013",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이조 판서의 망은 정1품도 아울러 의망하도록 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_013",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_013",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_013"
+      }
+    },
+    {
+      "selected_rank": 120,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_014",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_014",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 가합한 사람을 다수 가망하라고 전교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_014",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_014",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_014"
+      }
+    },
+    {
+      "selected_rank": 121,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002020_015",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002020_015",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정창연을 이조 판서로 삼다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002020_015",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002020_015",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002020_015"
+      }
+    },
+    {
+      "selected_rank": 122,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이호민과 오억령이 경사로 떠나다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_002"
+      }
+    },
+    {
+      "selected_rank": 123,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 어제 추국청에서 올린 계사에 답하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_003"
+      }
+    },
+    {
+      "selected_rank": 124,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 양사가 합계하여 유영경을 문외로 출송할 것을 청하여 억지로 따르다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_004"
+      }
+    },
+    {
+      "selected_rank": 125,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정광성과 이사경이 정인홍 등과 구혜 등의 처리에 관하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_005"
+      }
+    },
+    {
+      "selected_rank": 126,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_007",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_007",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에 이득·이철·이효일·이언형과 서천군을 심문하라고 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_007",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_007",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_007"
+      }
+    },
+    {
+      "selected_rank": 127,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에 몰로와 낙인·종이 등의 심문 방법에 대하여 말하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_008"
+      }
+    },
+    {
+      "selected_rank": 128,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 옥당이 차자를 올려 유영경에 대해 공론을 따를 것을 청하자 억지로 따르다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_009"
+      }
+    },
+    {
+      "selected_rank": 129,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 빈청 대신들이 선조의 묘호를 종으로 부르는 것이 당연하다고 하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_010"
+      }
+    },
+    {
+      "selected_rank": 130,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002021_012",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002021_012",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 소경 대왕의 행장",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002021_012",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002021_012",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002021_012"
+      }
+    },
+    {
+      "selected_rank": 131,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002022_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002022_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002022_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002022_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002022_001"
+      }
+    },
+    {
+      "selected_rank": 132,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002022_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002022_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정광성과 이사경이 정인홍 등의 관작을 회복시키는 일 등을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002022_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002022_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002022_002"
+      }
+    },
+    {
+      "selected_rank": 133,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002022_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002022_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 임해군의 역모에 관계된 이들을 국문한 것을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002022_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002022_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002022_003"
+      }
+    },
+    {
+      "selected_rank": 134,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002022_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002022_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 밤에는 추국하지 말라고 비망기를 내리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002022_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002022_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002022_005"
+      }
+    },
+    {
+      "selected_rank": 135,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002022_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002022_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 장지에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002022_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002022_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002022_006"
+      }
+    },
+    {
+      "selected_rank": 136,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_001"
+      }
+    },
+    {
+      "selected_rank": 137,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 이사경이 사사로운 혐의로 번거러움을 끼치는 이유로 사퇴를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_002"
+      }
+    },
+    {
+      "selected_rank": 138,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 헌납 이호신이 파직을 청하였으나 들어주지 아니하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_004"
+      }
+    },
+    {
+      "selected_rank": 139,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 사간 박이서가 파직을 청하였으나 들어주지 아니하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_005"
+      }
+    },
+    {
+      "selected_rank": 140,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 임장이 파직을 청하였으나 들어주지 아니하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_006"
+      }
+    },
+    {
+      "selected_rank": 141,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정인홍을 방송하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_008"
+      }
+    },
+    {
+      "selected_rank": 142,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 예조에서 대행 대왕의 묘호를 종이라 하는 것이 의당하다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_009"
+      }
+    },
+    {
+      "selected_rank": 143,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_010",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_010",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 역모 가담자를 형추하는 일에 대해 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_010",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_010",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_010"
+      }
+    },
+    {
+      "selected_rank": 144,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002023_011",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002023_011",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 역모 가담자를 형추하는 일에 대해 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002023_011",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002023_011",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002023_011"
+      }
+    },
+    {
+      "selected_rank": 145,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002024_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002024_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002024_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002024_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002024_001"
+      }
+    },
+    {
+      "selected_rank": 146,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002024_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002024_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 윤길이 인피한 김신원·목장흠 등에게 출사를 명하도록 청하여 윤허하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002024_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002024_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002024_002"
+      }
+    },
+    {
+      "selected_rank": 147,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002024_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002024_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 임장이 부사직 황근중의 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002024_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002024_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002024_003"
+      }
+    },
+    {
+      "selected_rank": 148,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_001"
+      }
+    },
+    {
+      "selected_rank": 149,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 근시의 입시를 감기로 인하여 뒷날로 미루다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_003"
+      }
+    },
+    {
+      "selected_rank": 150,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정언 임장이 황근중과 박승종의 파직을 계청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_004"
+      }
+    },
+    {
+      "selected_rank": 151,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_005",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_005",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 지평 민덕남이 박승종과 황근중의 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_005",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_005"
+      }
+    },
+    {
+      "selected_rank": 152,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 검오송·성창령·이함 등의 죄에 대하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_006"
+      }
+    },
+    {
+      "selected_rank": 153,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_008",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_008",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 이필영·윤형언에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_008",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_008"
+      }
+    },
+    {
+      "selected_rank": 154,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002025_009",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002025_009",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대행 대왕의 묘호와 휘호 등을 정하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002025_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002025_009",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002025_009"
+      }
+    },
+    {
+      "selected_rank": 155,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002026_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002026_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002026_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002026_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002026_001"
+      }
+    },
+    {
+      "selected_rank": 156,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002026_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002026_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 추국청에서 죄인들의 공초내용을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002026_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002026_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002026_002"
+      }
+    },
+    {
+      "selected_rank": 157,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002027_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002027_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002027_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002027_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002027_001"
+      }
+    },
+    {
+      "selected_rank": 158,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002027_002",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002027_002",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 행 대사헌 김신원 등이 유영경의 벌을 가볍게 한 것에 대해 체직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002027_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002027_002",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002027_002"
+      }
+    },
+    {
+      "selected_rank": 159,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002027_003",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002027_003",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 박이서·이호신·임장이 유영경과 정인홍의 일로 인하여 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002027_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002027_003",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002027_003"
+      }
+    },
+    {
+      "selected_rank": 160,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002027_004",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002027_004",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 장령 이필영이 파직을 청하였으나 윤허하지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002027_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002027_004",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002027_004"
+      }
+    },
+    {
+      "selected_rank": 161,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002027_006",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002027_006",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 대행 대왕의 명정의 존호에 대한 홍문관 전한 최유원 등의 차자",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002027_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002027_006",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002027_006"
+      }
+    },
+    {
+      "selected_rank": 162,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "koa_10002028_001",
+      "source_url": "https://sillok.history.go.kr/id/koa_10002028_001",
+      "period": "광해군중초본",
+      "title": "광해군중초본: 정릉동 행궁의 여차에 있다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "koa_10002028_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "koa_10002028_001",
+        "source_url": "https://sillok.history.go.kr/id/koa_10002028_001"
+      }
+    }
+  ]
+}

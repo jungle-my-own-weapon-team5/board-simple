@@ -40,18 +40,6 @@ def set_json_cache(settings: Settings, key: str, value: Any, ttl_seconds: int) -
         return
 
 
-def delete_cache_prefix(settings: Settings, prefix: str) -> None:
-    client = _get_redis_client(settings.redis_url)
-    if client is None:
-        return
-    try:
-        keys = list(client.scan_iter(f"{prefix}*"))
-        if keys:
-            client.delete(*keys)
-    except Exception:
-        return
-
-
 @lru_cache
 def _get_redis_client(redis_url: str | None):
     if not redis_url:

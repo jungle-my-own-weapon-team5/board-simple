@@ -1,5 +1,4 @@
 from collections.abc import Generator
-import json
 import threading
 import time
 
@@ -32,7 +31,12 @@ def client() -> Generator[TestClient, None, None]:
             db.close()
 
     def override_get_settings() -> Settings:
-        return Settings(openai_api_key=None)
+        return Settings(
+            openai_api_key=None,
+            naver_client_id=None,
+            naver_client_secret=None,
+            brave_search_api_key=None,
+        )
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_settings] = override_get_settings
@@ -186,57 +190,6 @@ def test_post_crud_search_tags_and_permissions(client: TestClient, monkeypatch: 
     assert thumbnail_response.status_code == 200
     assert thumbnail_response.json()["thumbnail_url"].startswith("/static/generated/")
 
-    client.post("/api/auth/login", json={"email": "user@example.com", "password": "password123"})
-    admin_target_response = client.post(
-        "/api/posts",
-        json={
-            "title": "관리자 권한 테스트용 게시글",
-            "content": (
-                "관리자가 작성자가 아닌 게시글도 운영상 필요한 경우 수정하고 삭제할 수 있는지 검증하기 위한 글입니다. "
-                "조선 시대 사료 해석과 게시판 관리 맥락을 충분히 포함합니다."
-            ),
-            "category": "사료 발견",
-            "tags": ["관리", "사료"],
-        },
-    )
-    assert admin_target_response.status_code == 201
-    admin_target = admin_target_response.json()
-
-    admin_user = register_and_login(client, "admin@example.com")
-    assert admin_user["is_admin"] is True
-
-    admin_update_response = client.put(
-        f"/api/posts/{admin_target['id']}",
-        json={
-            "title": "관리자가 수정한 게시글",
-            "content": (
-                "관리자가 작성자가 아닌 게시글의 제목, 본문, 카테고리, 태그를 수정할 수 있는지 검증합니다. "
-                "역사 게시판 운영에서 부적절한 표현 정정과 사료 맥락 보강이 필요한 상황을 다룹니다."
-            ),
-            "post_type": "발견",
-            "category": "사료 발견",
-            "tags": ["관리자", "수정"],
-        },
-    )
-    assert admin_update_response.status_code == 200
-    assert admin_update_response.json()["title"] == "관리자가 수정한 게시글"
-
-    admin_candidates_response = client.post(f"/api/posts/{admin_target['id']}/thumbnail/candidates")
-    assert admin_candidates_response.status_code == 200
-    admin_candidates = admin_candidates_response.json()["candidates"]
-    assert len(admin_candidates) == 3
-
-    admin_thumbnail_response = client.patch(
-        f"/api/posts/{admin_target['id']}/thumbnail",
-        json={"image_url": admin_candidates[0]["image_url"]},
-    )
-    assert admin_thumbnail_response.status_code == 200
-    assert admin_thumbnail_response.json()["thumbnail_url"].startswith("/static/generated/")
-
-    admin_delete_response = client.delete(f"/api/posts/{admin_target['id']}")
-    assert admin_delete_response.status_code == 204
-    assert client.get(f"/api/posts/{admin_target['id']}").status_code == 404
-
 
 def test_thumbnail_candidates_are_generated_in_parallel(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     from app.services import mcp_server
@@ -276,89 +229,6 @@ def test_thumbnail_candidates_are_generated_in_parallel(client: TestClient, monk
     assert max_active_calls > 1
 
 
-def test_thumbnail_candidates_use_cache_for_same_input(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.services import mcp_server
-
-    cache_store: dict[str, object] = {}
-    image_call_count = 0
-
-    def fake_get_json_cache(settings: Settings, key: str):
-        return cache_store.get(key)
-
-    def fake_set_json_cache(settings: Settings, key: str, value: object, ttl_seconds: int) -> None:
-        cache_store[key] = value
-
-    def fake_generate_thumbnail_image(settings: Settings, prompt: str) -> tuple[str, str]:
-        nonlocal image_call_count
-        image_call_count += 1
-        return f"/static/generated/cached-{image_call_count}.png", "ok"
-
-    monkeypatch.setattr(mcp_server, "get_json_cache", fake_get_json_cache)
-    monkeypatch.setattr(mcp_server, "set_json_cache", fake_set_json_cache)
-    monkeypatch.setattr(mcp_server, "_generate_thumbnail_image", fake_generate_thumbnail_image)
-
-    register_and_login(client)
-    payload = {
-        "title": "정조의 편지와 정치적 말투",
-        "content": (
-            "정조가 신하들에게 보낸 편지와 어찰을 둘러싼 이야기입니다. "
-            "왕의 감정, 정치적 긴장, 문서 문화, 조선 후기 궁중 분위기를 썸네일로 표현할 수 있습니다."
-        ),
-        "category": "인물 열전",
-        "tags": ["정조", "어찰"],
-    }
-
-    first_response = client.post("/api/posts/thumbnail/candidates", json=payload)
-    second_response = client.post("/api/posts/thumbnail/candidates", json=payload)
-
-    assert first_response.status_code == 200
-    assert second_response.status_code == 200
-    assert image_call_count == 3
-    assert second_response.json()["candidates"][0]["tool_log"]["status"] == "cache_hit"
-    assert second_response.json()["candidates"][0]["image_url"] == first_response.json()["candidates"][0]["image_url"]
-
-
-def test_thumbnail_visual_profile_uses_place_props_and_mood() -> None:
-    from app.services.mcp_server import _make_thumbnail_visual_profile
-
-    profile = _make_thumbnail_visual_profile(
-        title="정조의 어찰과 궁궐 안 정치 논쟁",
-        content=(
-            "정조가 편전에서 신하들에게 보낸 어찰과 상소를 둘러싼 논쟁입니다. "
-            "궁궐 내부의 문서, 인장, 붓, 낮은 책상, 조용하지만 긴장감 있는 정무 장면을 썸네일로 표현하려 합니다."
-        ),
-        category="왕과 권력",
-        tags=["정조", "어찰", "상소"],
-    )
-
-    assert profile["role"] == "king"
-    assert profile["place_label"] == "palace or royal interior"
-    assert "palace hall" in profile["space_keywords"]
-    assert "royal documents" in profile["prop_keywords"]
-    assert "seal" in profile["prop_keywords"]
-    assert "tense but restrained" in profile["mood_keywords"]
-
-
-def test_thumbnail_visual_profile_handles_everyday_food_scene() -> None:
-    from app.services.mcp_server import _make_thumbnail_visual_profile
-
-    profile = _make_thumbnail_visual_profile(
-        title="조선 장터의 음식과 백성의 식생활",
-        content=(
-            "장터와 마을에서 백성들이 밥, 술, 차, 약재를 어떻게 나누고 소비했는지 다루는 글입니다. "
-            "민가와 시장의 일상적인 도구, 소반, 그릇, 바구니가 핵심 소품입니다."
-        ),
-        category="생활사와 문화",
-        tags=["음식", "식생활", "장터"],
-    )
-
-    assert profile["role"] == "general"
-    assert profile["place_label"] == "village or everyday life space"
-    assert "market stall" in profile["space_keywords"]
-    assert "soban table" in profile["prop_keywords"]
-    assert "warm everyday mood" in profile["mood_keywords"]
-
-
 def test_editor_external_keyword_prioritizes_historical_source_terms() -> None:
     from app.services.editor_agent import _external_keyword
 
@@ -381,248 +251,134 @@ def test_editor_external_keyword_prioritizes_historical_source_terms() -> None:
     assert keyword == "정조 어찰"
 
 
-def test_editor_external_keyword_uses_clean_noun_phrase_for_representative_list() -> None:
-    from app.services.editor_agent import _external_keyword
+def test_naver_discovery_query_uses_entity_extraction_without_hardcoded_context() -> None:
+    from app.services.ai_runtime import _naver_discovery_query
 
-    keyword = _external_keyword(
-        {
-            "title": "",
-            "content": "",
-            "post_type": "질문",
-            "category": "전쟁과 외교",
-            "message": "임진왜란에서 활약한 의병 3명 알려줘",
-            "history": [],
-            "agent_steps": [],
-            "graph_mode": "local_fallback",
-        }
-    )
-
-    assert keyword == "임진왜란 의병"
-    assert "에서" not in keyword
-    assert "알려줘" not in keyword
-    assert "3명" not in keyword
+    assert _naver_discovery_query("어우동이 누구야") == "어우동"
+    assert _naver_discovery_query("장녹수가 누구야") == "장녹수"
+    assert _naver_discovery_query("정조 어찰") == "정조 어찰"
 
 
-def test_editor_agent_treats_post_request_as_content_fill() -> None:
-    from app.services.editor_agent import _classify_action
+def test_external_search_fast_person_discovery_skips_slow_sillok(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import mcp_server
 
-    assert _classify_action("경혜공주의 생애를 묻고 그걸 포스트하게 만들어줘") == "fill_content"
-
-
-def test_editor_response_normalization_keeps_classified_action() -> None:
-    from app.services.editor_agent import _normalize_response
-
-    response = _normalize_response(
-        {
-            "action": "revise_content",
-            "agent_message": "경혜공주에 대한 답변입니다.",
-            "suggested_content": "LLM이 잘못 넣은 본문 초안",
-            "tags": [],
-            "category": None,
-            "questions": [],
-        },
-        {
-            "action": "answer",
-            "message": "경혜공주의 생애에 대해 알려줘",
-            "category": "인물 열전",
-            "external_resources": [],
-            "tool_logs": [],
-        },
-    )
-
-    assert response.action == "answer"
-    assert response.suggested_content is None
-
-
-def test_editor_evidence_claims_prioritize_primary_external_resources() -> None:
-    from app.schemas.ai import ExternalResource, RagCitation
-    from app.services.editor_agent import _local_evidence_claims
-
-    claims = _local_evidence_claims(
-        {
-            "citations": [
-                RagCitation(
-                    id="rag-1",
-                    title="정약용",
-                    period="조선 후기",
-                    summary="정약용에 대한 내부 RAG 요약입니다.",
-                    relevance=0.8,
-                    source_url="https://example.test/rag",
-                )
-            ],
-            "external_resources": [
-                ExternalResource(
-                    title="태종실록의 양녕대군 기사",
-                    provider="국사편찬위원회 조선왕조실록",
-                    url="https://sillok.history.go.kr/id/example",
-                    description="",
-                    verification_status="primary_verified",
-                    content_excerpt="양녕대군 이제는 태종의 아들이며 세자로 책봉되었다.",
-                )
-            ],
-        }
-    )
-
-    assert claims[0]["source"] == "https://sillok.history.go.kr/id/example"
-    assert claims[0]["status"] == "confirmed"
-    assert "양녕대군" in claims[0]["claim"]
-
-
-def test_editor_quality_revision_does_not_overcorrect_easy_overview_with_primary_source() -> None:
-    from app.schemas.ai import EditorAgentResponse, ExternalResource
-    from app.services.editor_agent import _revision_overcorrects_to_no_evidence
-
-    state = {
-        "action": "answer",
-        "message": "양녕대군은 어떤 사람이야?",
-        "external_resources": [
-            ExternalResource(
-                title="태종실록의 양녕대군 기사",
-                provider="국사편찬위원회 조선왕조실록",
-                url="https://sillok.history.go.kr/id/example",
-                description="",
-                verification_status="primary_verified",
-                content_excerpt="양녕대군 이제는 태종의 아들이며 세자로 책봉되었다.",
-            )
-        ],
-    }
-    original = EditorAgentResponse(
-        action="answer",
-        agent_message="양녕대군은 태종의 아들이자 세종의 형으로, 세자로 책봉되었다가 뒤에 폐세자가 된 인물입니다.",
-    )
-    revised = EditorAgentResponse(
-        action="answer",
-        agent_message="제시된 근거 자료에는 양녕대군에 대한 직접 정보가 없습니다. 따라서 답할 수 없습니다.",
-    )
-
-    assert _revision_overcorrects_to_no_evidence(state, original, revised)
-
-
-def test_editor_planned_external_keywords_include_answer_plan_queries() -> None:
-    from app.services.editor_agent import _planned_external_keywords
-
-    keywords = _planned_external_keywords(
-        {
-            "title": "",
-            "content": "",
-            "post_type": "질문",
-            "category": "전쟁과 외교",
-            "message": "임진왜란 의병 활동을 알려줘",
-            "answer_plan": {
-                "subject": "임진왜란 의병",
-                "required_questions": ["임진왜란 의병 활동에서 확인 가능한 핵심 사실은 무엇인가?"],
-                "search_queries": ["임진왜란 의병", "임진왜란 의병 사료", "임진왜란 의병 인물"],
-            },
-            "history": [],
-            "agent_steps": [],
-            "graph_mode": "local_fallback",
-        }
-    )
-
-    assert keywords[:3] == ["임진왜란 의병", "임진왜란 의병 사료", "임진왜란 의병 인물"]
-
-
-def test_editor_external_keyword_budget_keeps_high_signal_planner_queries() -> None:
-    from app.services.editor_agent import _planned_external_keywords
-
-    keywords = _planned_external_keywords(
-        {
-            "title": "",
-            "content": "",
-            "post_type": "질문",
-            "category": "인물 열전",
-            "message": "양녕대군이 고양이를 훔치려던 사건이 있다고 들었는데 인과관계를 자세히 서술해줘",
-            "answer_plan": {
-                "subject": "양녕대군",
-                "search_queries": [
-                    "양녕대군이 고양이를 훔치려던 사건이 있다고 들었는데 인과관계를 자세히 서술해줘",
-                    "양녕대군",
-                    "양녕대군 고양이",
-                    "양녕대군 훔치려던",
-                    "양녕대군 사건",
-                    "양녕대군 있다고",
-                    "양녕대군 고양이 훔치려던 사건",
-                    "양녕대군 고양이 일화",
-                    "양녕대군 貓 逸話",
-                    "讓寧大君 고양이 전설",
-                ],
-            },
-            "history": [],
-            "agent_steps": [],
-            "graph_mode": "local_fallback",
-        }
-    )
-
-    assert "양녕대군 고양이 일화" in keywords
-    assert "양녕대군 貓 逸話" in keywords
-    assert "양녕대군" not in keywords
-    assert "양녕대군 있다고" not in keywords
-    assert len(keywords) == 5
-
-
-def test_editor_external_keyword_budget_generalizes_across_topics() -> None:
-    from app.services.editor_agent import _planned_external_keywords
-
-    cases = [
-        (
-            "문종",
-            "문종의 첫번째 부인이 왜 폐출됐는지 알려줘",
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_naver",
+        lambda settings, query, categories, display: (
             [
-                "문종의 첫번째 부인이 왜 폐출됐는지 알려줘",
-                "문종",
-                "문종 첫번째",
-                "문종 부인",
-                "문종 폐출됐는지",
-                "문종 세자빈 폐출",
-                "문종 世子嬪 廢黜",
+                {
+                    "title": "어우동",
+                    "provider": "네이버 검색/encyc",
+                    "url": "https://terms.naver.com/entry.naver?docId=3578413",
+                    "description": "네이버 검색 API에서 조회한 자료 후보입니다.",
+                }
             ],
-            "문종 세자빈 폐출",
+            "ok",
         ),
-        (
-            "훈민정음",
-            "세종 때 훈민정음 반대 논리를 설명해줘",
-            [
-                "세종 때 훈민정음 반대 논리를 설명해줘",
-                "훈민정음",
-                "훈민정음 반대",
-                "세종 훈민정음",
-                "훈민정음 논리",
-                "훈민정음 최만리 상소",
-                "訓民正音 反對 上疏",
-            ],
-            "훈민정음 최만리 상소",
-        ),
-        (
-            "임진왜란 의병",
-            "임진왜란에서 활약한 의병 3명 알려줘",
-            [
-                "임진왜란에서 활약한 의병 3명 알려줘",
-                "임진왜란 의병",
-                "임진왜란 의병 대표",
-                "임진왜란 의병 대표 인물",
-                "壬辰倭亂 義兵",
-            ],
-            "임진왜란 의병 대표 인물",
-        ),
-    ]
+    )
+    monkeypatch.setattr(mcp_server, "_search_sillok", lambda keyword: pytest.fail("fast person discovery should skip sillok"))
 
-    for subject, message, search_queries, expected in cases:
-        keywords = _planned_external_keywords(
+    response = client.post("/api/ai/external/search", json={"keyword": "어우동이 누구야"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["tool_log"]["status"] == "ok"
+    assert payload["resources"][0]["title"] == "어우동"
+
+
+def test_external_resource_ranking_prefers_query_relevant_titles() -> None:
+    from app.services.ai_runtime import _rank_external_resources
+
+    ranked = _rank_external_resources(
+        [
             {
-                "title": "",
-                "content": "",
-                "post_type": "질문",
-                "category": "역사",
-                "message": message,
-                "answer_plan": {"subject": subject, "search_queries": search_queries},
-                "history": [],
-                "agent_steps": [],
-                "graph_mode": "local_fallback",
-            }
+                "title": "선조어서사 송언신 밀찰첩 및 송언신 초상",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=1",
+                "description": "선조 관련 밀찰 자료입니다.",
+            },
+            {
+                "title": "외가에 보낸 정조어찰의 개황과 정종대왕어필간첩의 특징",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=2",
+                "description": "정조 어찰 자료입니다.",
+            },
+        ],
+        "정조 어찰 자료 찾아줘",
+    )
+
+    assert ranked[0].title.startswith("외가에 보낸 정조어찰")
+
+
+def test_editor_agent_does_not_mix_history_into_rag_query_or_weak_evidence(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import editor_agent
+    from app.schemas.ai import ExternalSearchResponse, RagCitation, RagSearchResponse, ToolLog
+
+    captured_queries: list[str] = []
+
+    def fake_search_rag(db, settings, query: str, top_k: int):
+        captured_queries.append(query)
+        return RagSearchResponse(
+            answer_summary="직접 관련 없는 약한 근거입니다.",
+            citations=[
+                RagCitation(
+                    id="weak-1",
+                    title="중종실록: 연산의 죄상에 대한 사신의 논찬",
+                    period="조선",
+                    summary="장녹수와 연산군 관련 내용입니다.",
+                    source_url="",
+                    relevance=0.42,
+                )
+            ],
+            weak_evidence=False,
+            searched_corpora=["legacy"],
         )
 
-        assert expected in keywords
-        assert all("알려줘" not in keyword and "설명해줘" not in keyword for keyword in keywords[1:])
+    monkeypatch.setattr(editor_agent, "search_rag", fake_search_rag)
+    monkeypatch.setattr(
+        editor_agent,
+        "search_external",
+        lambda db, settings, keyword: ExternalSearchResponse(
+            resources=[],
+            tool_log=ToolLog(
+                tool="history.external_evidence_bundle",
+                input=keyword,
+                status="no_results",
+                elapsed_ms=0,
+            ),
+        ),
+    )
+
+    register_and_login(client)
+    response = client.post(
+        "/api/ai/editor-agent/run",
+        json={
+            "title": "",
+            "content": "",
+            "post_type": "토론",
+            "category": "왕과 권력",
+            "message": "정미수가 누구야",
+            "history": [
+                {"role": "user", "content": "조선시대 인물 장녹수가 누구야"},
+                {"role": "assistant", "content": "이 서비스는 역사 주제로 보기 어려워 처리하지 않았습니다."},
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "장녹수" not in captured_queries[0]
+    assert "최근 대화" not in captured_queries[0]
+    assert payload["weak_evidence"] is True
+    assert payload["evidence_summary"] is None
+    assert "직접 연결되는 내부 RAG 근거가 충분하지 않습니다" in payload["agent_message"]
 
 
 def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -698,8 +454,8 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     assert assist_response.status_code == 200
     assist_payload = assist_response.json()
     assert "세조" in assist_payload["tags"]
-    assert assist_payload["agent_steps"][0]["name"] == "writing_assist.deprecated"
-    assert [step["name"] for step in assist_payload["agent_steps"][1:4]] == ["intent", "rag.search", "external.search"]
+    assert assist_payload["agent_steps"][0]["name"] == "draft.analyze"
+    assert assist_payload["agent_steps"][-1]["name"] in {"draft.generate", "recommendation.generate"}
     assert assist_payload["suggested_content"]
 
     rag_response = client.post("/api/ai/rag/search", json={"query": post["title"], "top_k": 2})
@@ -724,6 +480,25 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     chat_payload = chat_response.json()
     assert chat_payload["steps"][0]["name"] == "langgraph.chat"
     assert chat_payload["final_answer"]
+
+    jang_noksu_chat_response = client.post(
+        "/api/ai/agent/chat",
+        json={"message": "장녹수가 누구야", "page_context": {"path": "/"}},
+    )
+    assert jang_noksu_chat_response.status_code == 200
+    jang_noksu_chat_payload = jang_noksu_chat_response.json()
+    assert jang_noksu_chat_payload["steps"][0]["name"] == "langgraph.chat"
+    assert all(step["name"] != "safety.off_topic" for step in jang_noksu_chat_payload["steps"])
+    assert jang_noksu_chat_payload["final_answer"]
+
+    unknown_person_chat_response = client.post(
+        "/api/ai/agent/chat",
+        json={"message": "어우동이 누구야", "page_context": {"path": "/"}},
+    )
+    assert unknown_person_chat_response.status_code == 200
+    unknown_person_chat_payload = unknown_person_chat_response.json()
+    assert unknown_person_chat_payload["steps"][0]["name"] == "langgraph.chat"
+    assert all(step["name"] != "safety.off_topic" for step in unknown_person_chat_payload["steps"])
 
     post_search_chat_response = client.post(
         "/api/ai/agent/chat",
@@ -797,37 +572,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     assert editor_answer_payload["agent_message"]
     assert editor_answer_payload["suggested_content"] is None
     assert editor_answer_payload["external_resources"]
-    assert editor_answer_payload["tool_logs"][0]["tool"] == "history.search"
-
-    editor_stream_response = client.post(
-        "/api/ai/editor-agent/stream",
-        json={
-            "title": post["title"],
-            "content": post["content"],
-            "post_type": "질문",
-            "category": "왕과 권력",
-            "message": "이 사건은 왜 논쟁적이야?",
-            "history": [
-                {"role": "user", "content": "세조와 단종 이야기를 게시글로 쓰는 중이야."},
-                {"role": "assistant", "content": "왕위 계승과 명분 문제를 함께 보면 좋습니다."},
-            ],
-        },
-    )
-    assert editor_stream_response.status_code == 200
-    stream_events = [
-        json.loads(line)
-        for line in editor_stream_response.text.splitlines()
-        if line.strip()
-    ]
-    assert stream_events[0]["type"] == "progress"
-    assert [event["step"] for event in stream_events if event["type"] == "progress"][:3] == [
-        "safety",
-        "intent",
-        "plan",
-    ]
-    assert stream_events[-1]["type"] == "done"
-    assert stream_events[-1]["response"]["action"] == "answer"
-    assert stream_events[-1]["response"]["agent_message"]
+    assert editor_answer_payload["tool_logs"][0]["tool"] == "history.external_evidence_bundle"
 
     yangnyeong_response = client.post(
         "/api/ai/editor-agent/run",
@@ -842,7 +587,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     assert yangnyeong_response.status_code == 200
     yangnyeong_payload = yangnyeong_response.json()
     assert yangnyeong_payload["action"] == "answer"
-    assert yangnyeong_payload["agent_message"]
+    assert "태종" in yangnyeong_payload["agent_message"]
     assert yangnyeong_payload["external_resources"]
     assert any(step["name"] == "external.search" for step in yangnyeong_payload["agent_steps"])
 
@@ -1002,7 +747,7 @@ def test_off_topic_posts_and_ai_requests_are_blocked(client: TestClient) -> None
     assert historical_sensitive_payload["agent_steps"][0]["name"] != "safety.off_topic"
 
 
-def test_external_search_uses_history_provider_registry(
+def test_external_search_returns_only_verified_sillok_articles(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1017,16 +762,12 @@ def test_external_search_uses_history_provider_registry(
                 "provider": "국사편찬위원회 조선왕조실록",
                 "url": "https://sillok.history.go.kr/search/searchResultList.do?keyword=%ED%9A%A8%EB%A0%B9",
                 "description": "직접 검색 링크",
-                "source_type": "primary_source",
-                "result_type": "search_link",
             },
             {
                 "title": "효령대군 기사",
                 "provider": "국사편찬위원회 조선왕조실록",
                 "url": "https://sillok.history.go.kr/id/kda_10101001_001",
                 "description": "조선왕조실록 검색 결과에서 조회한 기사입니다.",
-                "source_type": "primary_source",
-                "result_type": "verified",
             },
         ],
     )
@@ -1035,12 +776,11 @@ def test_external_search_uses_history_provider_registry(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["tool_log"]["tool"] == "history.search"
+    assert payload["tool_log"]["tool"] == "history.external_evidence_bundle"
     assert payload["tool_log"]["status"] == "ok"
-    assert "https://sillok.history.go.kr/id/kda_10101001_001" in [
-        resource["url"] for resource in payload["resources"]
+    assert [resource["url"] for resource in payload["resources"]] == [
+        "https://sillok.history.go.kr/id/kda_10101001_001"
     ]
-    assert payload["resources"][0]["verification_status"] == "primary_verified"
 
     monkeypatch.setattr(mcp_server, "_search_sillok", lambda keyword: [])
 
@@ -1048,519 +788,85 @@ def test_external_search_uses_history_provider_registry(
 
     assert no_result_response.status_code == 200
     no_result_payload = no_result_response.json()
-    assert no_result_payload["resources"]
-    assert no_result_payload["tool_log"]["status"] in {"link_ready", "ok"}
+    assert no_result_payload["resources"] == []
+    assert no_result_payload["tool_log"]["status"] == "no_results"
 
 
-def test_history_provider_deep_retrieval_parses_result_and_detail(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_external_search_uses_naver_discovery_before_sillok(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from app.services import mcp_server
 
-    def fake_read_url(url: str, timeout: int = 10) -> str | None:
-        if "museum.go.kr/site/main/relic/search/list" in url:
-            return '<a href="/site/main/relic/search/view?relicId=1">정조 어찰첩</a>'
-        if "relicId=1" in url:
-            return """
-            <html><body>
-              <h1>정조 어찰첩</h1>
-              <p>정조가 신하에게 보낸 편지 자료로, 왕의 문체와 정치적 감정을 살필 수 있다.</p>
-            </body></html>
-            """
-        return None
+    calls: list[tuple[str, str]] = []
 
-    monkeypatch.setattr(mcp_server, "_read_url", fake_read_url)
-
-    resources = mcp_server.search_history_providers("정조 어찰", ["museum"])
-
-    assert resources[0]["title"] == "정조 어찰첩"
-    assert resources[0]["result_type"] == "verified"
-    assert resources[0]["source_type"] == "museum_object"
-    assert resources[0]["verification_status"] == "secondary_only"
-    assert "정조가 신하에게 보낸 편지" in resources[0]["content_excerpt"]
-    assert float(resources[0]["confidence"]) > 0.7
-
-
-def test_sillok_provider_parses_result_box_with_article_excerpt(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.services import mcp_server
-
-    html = """
-    <div class="result-box">
-      <a href="javascript:goView('kca_11711024_002', 1);" class="subject">
-        1. 태종실록 34권, 태종 17년 11월 24일 을해 2번째기사 / 세자가 금빛 고양이를 구하려 하다
-      </a>
-      <p class="text">
-        세자(世子)가 금빛 고양이를 신효창(申孝昌)의 집에 구하니, 신효창이 빈객에게 고하였다.
-      </p>
-    </div>
-    """
-
-    monkeypatch.setattr(mcp_server, "_read_sillok_article_excerpt", lambda article_id: "")
-
-    resources = mcp_server._parse_sillok_search_results(html)
-
-    assert resources[0]["url"] == "https://sillok.history.go.kr/id/kca_11711024_002"
-    assert resources[0]["verification_status"] == "primary_verified"
-    assert "금빛 고양이" in resources[0]["content_excerpt"]
-    assert "신효창" in resources[0]["content_excerpt"]
-
-
-def test_sillok_provider_fills_missing_excerpt_from_article_detail(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.services import mcp_server
-
-    def fake_read_url(url: str, timeout: int = 4) -> str | None:
-        if "/id/kca_11711024_002" in url:
-            return """
-            <html><body>
-              <h1>세자가 금빛 고양이를 구하려 하다</h1>
-              <div>세자(世子)가 금빛 고양이를 신효창(申孝昌)의 집에 구하니,
-              신효창이 따르지 않고 빈객 탁신에게 고하였다.</div>
-            </body></html>
-            """
-        return None
-
-    html = """
-    <a href="javascript:searchView('kca_11711024_002');">
-      태종실록 34권 / 세자가 금빛 고양이를 구하려 하다
-    </a>
-    """
-
-    monkeypatch.setattr(mcp_server, "_read_url", fake_read_url)
-
-    resources = mcp_server._parse_sillok_search_results(html)
-
-    assert resources[0]["url"] == "https://sillok.history.go.kr/id/kca_11711024_002"
-    assert "신효창" in resources[0]["content_excerpt"]
-    assert resources[0]["can_quote"] == "true"
-
-
-def test_editor_agent_marks_secondary_only_sources_as_needing_primary_verification() -> None:
-    from app.schemas.ai import ExternalResource
-    from app.services.editor_agent import _append_verification_note
-
-    message = _append_verification_note(
-        "2차 자료 기준으로 전하는 이야기입니다.",
-        {
-            "external_resources": [
-                ExternalResource(
-                    title="양녕대군 고양이 사건",
-                    provider="웹 검색",
-                    url="https://example.com/story",
-                    description="웹에서 확인한 이야기",
-                    source_type="web_reference",
-                    result_type="verified",
-                    verification_status="secondary_only",
-                    confidence=0.62,
-                    can_quote=False,
-                )
-            ]
-        },
-    )
-
-    assert "2차 자료에서 전하는 이야기" in message
-    assert "원전 기준으로 해당 내용을 더 자세히 찾아볼 수 있습니다" in message
-
-
-def test_editor_agent_quality_gate_revises_failed_judge_response(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.core.config import Settings
-    from app.schemas.ai import EditorAgentResponse
-    from app.services import editor_agent
-
-    calls: list[str] = []
-
-    def fake_generate_text(settings: Settings, prompt: str, model: str | None = None) -> str:
-        calls.append(prompt)
-        if "품질을 검사하는 LLM Judge" in prompt:
-            return json.dumps(
+    def fake_search_naver(settings: Settings, query: str, categories: list[str], display: int):
+        calls.append(("naver", query))
+        return (
+            [
                 {
-                    "pass": False,
-                    "score": 0.45,
-                    "issues": ["대표 인물 질문인데 답변을 과도하게 회피함"],
-                    "revision_instruction": "대표적으로 알려진 인물을 제한 표현과 함께 답하라.",
-                },
-                ensure_ascii=False,
-            )
-        return json.dumps(
-            {
-                "action": "answer",
-                "agent_message": "대표적으로 자주 언급되는 인물은 곽재우, 조헌, 고경명입니다.",
-                "suggested_title": None,
-                "suggested_content": None,
-                "tags": ["임진왜란", "의병"],
-                "category": "전쟁과 외교",
-                "questions": [],
-            },
-            ensure_ascii=False,
-        )
-
-    monkeypatch.setattr(editor_agent, "_generate_text", fake_generate_text)
-
-    response, steps = editor_agent._quality_gate_response(
-        {
-            "message": "임진왜란에서 활약한 의병 3명 알려줘",
-            "action": "answer",
-            "weak_evidence": True,
-            "citations": [],
-            "external_resources": [],
-            "tool_logs": [],
-            "title": "",
-            "content": "",
-            "category": "전쟁과 외교",
-            "post_type": "질문",
-        },
-        EditorAgentResponse(
-            action="answer",
-            agent_message="제공된 근거가 부족해 특정 인물을 답할 수 없습니다.",
-            category="전쟁과 외교",
-        ),
-        Settings(openai_api_key="test-key"),
-    )
-
-    assert "곽재우" in response.agent_message
-    assert [step.name for step in steps] == ["quality.review", "quality.revise"]
-    assert "미통과" in steps[0].output
-    assert len(calls) == 2
-
-
-def test_editor_agent_uses_primary_sillok_evidence_for_specific_story(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.core.config import Settings
-    from app.schemas.ai import ExternalResource, ExternalSearchResponse, RagSearchResponse, ToolLog
-    from app.services import editor_agent
-
-    def fake_generate_text(settings: Settings, prompt: str, model: str | None = None) -> str:
-        if "정보 구조를 계획하는 planner" in prompt:
-            return json.dumps(
-                {
-                    "subject": "양녕대군 고양이 일화",
-                    "required_questions": [
-                        "이 일화의 실록 근거는 무엇인가?",
-                        "고양이는 누구의 집에 있었고 누가 말렸는가?",
-                    ],
-                    "search_queries": [
-                        "양녕대군 고양이 일화",
-                        "세자가 금빛 고양이를 구하려 하다",
-                        "讓寧大君 猫 逸話",
-                    ],
-                    "answer_shape": "실록 근거와 전승 해석을 나누어 답한다.",
-                },
-                ensure_ascii=False,
-            )
-        if "claim만 추출" in prompt:
-            return json.dumps(
-                {
-                    "claims": [
-                        {
-                            "claim": "태종실록은 세자가 신효창의 집에 있던 금빛 고양이를 구하려 했고, 신효창이 빈객 탁신에게 고했다고 전한다.",
-                            "source": "https://sillok.history.go.kr/id/kca_11711024_002",
-                            "status": "confirmed",
-                        }
-                    ]
-                },
-                ensure_ascii=False,
-            )
-        if "coverage를 검사한다" in prompt:
-            return json.dumps(
-                {"covered": ["실록 근거", "사건 흐름"], "missing": [], "revision_hints": []},
-                ensure_ascii=False,
-            )
-        if "품질을 검사하는 LLM Judge" in prompt:
-            return json.dumps({"pass": True, "score": 0.9, "issues": [], "revision_instruction": ""}, ensure_ascii=False)
-        return json.dumps(
-            {
-                "action": "answer",
-                "agent_message": (
-                    "실록 근거로는 태종실록 34권 태종 17년 11월 24일 기사에 해당 일화가 보입니다. "
-                    "기사의 흐름은 세자가 신효창의 집에 있던 금빛 고양이를 구하려 했고, "
-                    "신효창이 따르지 않고 빈객 탁신에게 알렸다는 것입니다."
-                ),
-                "suggested_title": None,
-                "suggested_content": None,
-                "tags": ["양녕대군", "태종실록"],
-                "category": "인물 열전",
-                "questions": [],
-            },
-            ensure_ascii=False,
-        )
-
-    def fake_search_external(db, keyword: str, settings: Settings | None = None) -> ExternalSearchResponse:
-        return ExternalSearchResponse(
-            resources=[
-                ExternalResource(
-                    title="태종실록 34권, 태종 17년 11월 24일 / 세자가 금빛 고양이를 구하려 하다",
-                    provider="국사편찬위원회 조선왕조실록",
-                    url="https://sillok.history.go.kr/id/kca_11711024_002",
-                    description="조선왕조실록 검색 결과에서 조회한 기사입니다.",
-                    source_type="primary_source",
-                    result_type="verified",
-                    verification_status="primary_verified",
-                    content_excerpt="세자(世子)가 금빛 고양이를 신효창(申孝昌)의 집에 구하니, 신효창이 빈객 탁신에게 고하였다.",
-                    confidence=0.78,
-                    can_quote=True,
-                )
+                    "title": "어우동",
+                    "provider": "네이버 검색/encyc",
+                    "url": "https://encykorea.aks.ac.kr/Article/E0036000",
+                    "description": "조선 성종 때 인물로 성종실록에 관련 기록이 보입니다.",
+                }
             ],
-            tool_log=ToolLog(tool="history.search", input=keyword, status="ok", elapsed_ms=1),
+            "ok",
         )
 
-    monkeypatch.setattr(editor_agent, "_generate_text", fake_generate_text)
-    monkeypatch.setattr(editor_agent, "search_external", fake_search_external)
-    monkeypatch.setattr(
-        editor_agent,
-        "search_rag",
-        lambda db, settings, query, top_k: RagSearchResponse(answer_summary="내부 RAG에는 직접 근거가 부족합니다.", citations=[], weak_evidence=True),
-    )
-
-    response = editor_agent.run_editor_agent(
-        db=None,
-        settings=Settings(openai_api_key="test-key"),
-        title="",
-        content="",
-        post_type="질문",
-        category="인물 열전",
-        message="양녕대군이 고양이를 훔치려던 사건의 인과관계를 자세히 알려줘",
-    )
-
-    assert response.action == "answer"
-    assert "신효창" in response.agent_message
-    assert "금빛 고양이" in response.agent_message
-    assert "탁신" in response.agent_message
-    assert response.external_resources[0].verification_status == "primary_verified"
-
-
-def test_rag_search_finds_yangnyeong_cat_sillok_seed(client: TestClient) -> None:
-    response = client.post(
-        "/api/ai/rag/search",
-        json={"query": "양녕대군 고양이 사건", "top_k": 3},
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    urls = [citation["source_url"] for citation in payload["citations"]]
-    assert "https://sillok.history.go.kr/id/kca_11711024_002" in urls
-    target = next(
-        citation
-        for citation in payload["citations"]
-        if citation["source_url"] == "https://sillok.history.go.kr/id/kca_11711024_002"
-    )
-    assert "금빛 고양이" in target["summary"]
-    assert "신효창" in target["summary"]
-
-
-def test_editor_agent_does_not_synthesize_specific_event_terms() -> None:
-    from app.services.editor_agent import _external_keyword
-
-    keyword = _external_keyword(
-        {
-            "title": "",
-            "content": "",
-            "message": "양녕대군이 고양이를 훔치려던 사건이 있다고 들었는데 인과관계를 자세히 서술해줘",
-        }
-    )
-
-    assert keyword == "양녕대군"
-
-
-def test_history_search_does_not_synthesize_case_specific_followup_queries(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.services import mcp_server
-
-    seen_queries: list[str] = []
-
-    def fake_search(provider_name: str):
-        def search(keyword: str) -> list[dict[str, str]]:
-            seen_queries.append(keyword)
-            if provider_name == "encykorea" and keyword == "양녕대군 고양이":
-                return [
-                    {
-                        "title": "양녕대군 고양이 일화",
-                        "provider": "한국민족문화대백과사전",
-                        "url": "https://encykorea.aks.ac.kr/Article/example",
-                        "description": "양녕대군과 신효창의 고양이 일화를 언급합니다.",
-                        "source_type": "encyclopedia",
-                        "result_type": "verified",
-                        "verification_status": "secondary_only",
-                        "content_excerpt": "양녕대군이 신효창의 집에 있던 고양이에 관심을 보였다는 설명이 있다.",
-                        "confidence": "0.82",
-                        "can_quote": "true",
-                    }
-                ]
-            if provider_name == "web" and keyword == "신효창 고양이":
-                return [
-                    {
-                        "title": "양녕대군 고양이 사건",
-                        "provider": "웹 검색",
-                        "url": "https://example.com/yangnyeong-cat",
-                        "description": "2차 자료에서 신효창의 고양이 일화로 전하는 이야기입니다.",
-                        "source_type": "web_reference",
-                        "result_type": "verified",
-                        "verification_status": "secondary_only",
-                        "content_excerpt": "양녕대군이 신효창의 집에 있던 고양이에 관심을 보였다는 일화.",
-                        "confidence": "0.72",
-                        "can_quote": "false",
-                    }
-                ]
-            if provider_name == "sillok" and keyword == "신효창 고양이":
-                return [
-                    {
-                        "title": "세자가 신효창의 고양이를 보고 탐내다",
-                        "provider": "국사편찬위원회 조선왕조실록",
-                        "url": "https://sillok.history.go.kr/id/kca_10101001_001",
-                        "description": "조선왕조실록 검색 결과에서 조회한 기사입니다.",
-                        "source_type": "primary_source",
-                        "result_type": "verified",
-                        "verification_status": "primary_verified",
-                        "content_excerpt": "세자가 신효창의 집 고양이를 보았다는 기록.",
-                        "confidence": "0.88",
-                        "can_quote": "true",
-                    }
-                ]
-            return []
-
-        return search
-
-    monkeypatch.setattr(mcp_server, "_history_search_provider", fake_search)
-
-    resources = mcp_server.search_history_providers("양녕대군 고양이", ["sillok", "encykorea", "web"])
-
-    assert "신효창 고양이" not in seen_queries
-    assert resources[0]["verification_status"] == "secondary_only"
-
-
-def test_editor_agent_holds_specific_story_draft_without_primary_source() -> None:
-    from app.schemas.ai import ExternalResource
-    from app.services.editor_agent import _normalize_response
-
-    response = _normalize_response(
-        {
-            "action": "fill_content",
-            "agent_message": "본문 초안을 생성했습니다.",
-            "suggested_content": "확인되지 않은 양녕대군 고양이 일화를 긴 본문으로 씁니다.",
-            "tags": ["양녕대군"],
-            "questions": [],
-        },
-        {
-            "action": "fill_content",
-            "title": "",
-            "content": "",
-            "message": "양녕대군이 고양이를 훔치려던 사건의 인과관계를 자세히 서술해서 게시글 본문 채워줘",
-            "external_resources": [
-                ExternalResource(
-                    title="양녕대군 고양이 사건",
-                    provider="웹 검색",
-                    url="https://example.com/yangnyeong-cat",
-                    description="웹에서 전하는 이야기",
-                    source_type="web_reference",
-                    result_type="verified",
-                    verification_status="secondary_only",
-                )
-            ],
-        },
-    )
-
-    assert response.suggested_content is None
-    assert "원전 검증이 부족" in response.agent_message
-
-
-def test_external_search_uses_llm_query_planner_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.core.config import Settings
-    from app.services import ai_runtime
-    from app.services import mcp_server
-
-    seen_queries: list[str] = []
-
-    monkeypatch.setattr(
-        ai_runtime,
-        "_generate_text",
-        lambda settings, prompt: '{"queries":["원문 후보","확장 후보 A","확장 후보 B","확장 후보 C"]}',
-    )
-
-    def fake_search_history_providers(keyword: str, providers: list[str] | None = None) -> list[dict[str, str]]:
-        seen_queries.append(keyword)
-        if keyword == "확장 후보 B":
+    def fake_search_sillok(keyword: str):
+        calls.append(("sillok", keyword))
+        if "성종" in keyword or "어우동" in keyword:
             return [
                 {
-                    "title": "확장 후보 B 관련 원자료",
+                    "title": "성종실록 어우동 기사",
                     "provider": "국사편찬위원회 조선왕조실록",
-                    "url": "https://sillok.history.go.kr/id/example",
-                    "description": "LLM planner가 만든 후보로 찾은 원자료입니다.",
-                    "source_type": "primary_source",
-                    "result_type": "verified",
-                    "verification_status": "primary_verified",
-                    "content_excerpt": "확장 후보 B와 직접 연결되는 내용입니다.",
-                    "confidence": "0.9",
-                    "can_quote": "true",
-                    "relevance_score": "2.0",
+                    "url": "https://sillok.history.go.kr/id/kia_10101001_001",
+                    "description": "조선왕조실록 검색 결과에서 조회한 기사입니다.",
                 }
             ]
         return []
 
-    monkeypatch.setattr(mcp_server, "search_history_providers", fake_search_history_providers)
-    monkeypatch.setattr(ai_runtime, "_save_tool_log", lambda db, tool_log, result_summary: None)
-
-    response = ai_runtime.search_external(
-        db=None,
-        keyword="초기 검색어",
-        settings=Settings(openai_api_key="test-key"),
+    monkeypatch.setattr(mcp_server, "_search_naver", fake_search_naver)
+    monkeypatch.setattr(mcp_server, "_search_sillok", fake_search_sillok)
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_web",
+        lambda settings, query, allowed_domains, display: pytest.fail("web search provider should stay disabled"),
     )
 
-    assert "확장 후보 B" in seen_queries
-    assert response.resources[0].verification_status == "primary_verified"
-    assert response.resources[0].url == "https://sillok.history.go.kr/id/example"
+    response = client.post("/api/ai/external/search", json={"keyword": "사용자 질문: 어우동이 누구야"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert calls[0][0] == "naver"
+    assert all(call[0] != "sillok" for call in calls)
+    assert payload["tool_log"]["tool"] == "history.external_evidence_bundle"
+    assert payload["tool_log"]["input"] == "어우동이 누구야"
+    assert payload["resources"][0]["title"] == "어우동"
 
 
-def test_external_query_candidates_do_not_add_biography_probe_terms() -> None:
-    from app.services.ai_runtime import _local_external_query_candidates
-    from app.services.ai_runtime import _query_keywords
+def test_external_search_does_not_call_web_provider_when_naver_and_sillok_miss(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import mcp_server
 
-    assert _query_keywords("경혜공주의 생애") == ["경혜공주", "생애"]
-    assert "의병" in _query_keywords("임진왜란 의병 활동")
+    monkeypatch.setattr(mcp_server, "_search_naver", lambda settings, query, categories, display: ([], "no_results"))
+    monkeypatch.setattr(mcp_server, "_search_sillok", lambda keyword: [])
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_web",
+        lambda settings, query, allowed_domains, display: pytest.fail("web search provider should stay disabled"),
+    )
 
-    candidates = _local_external_query_candidates("경혜공주의 생애")
+    response = client.post("/api/ai/external/search", json={"keyword": "어우동"})
 
-    assert "경혜공주" in candidates
-    assert "경혜공주 묘지문" not in candidates
-    assert "경혜공주 하가" not in candidates
-    assert "경혜공주 부의" not in candidates
-    assert "경혜공주 아들" not in candidates
-    assert "경혜공주 남편" not in candidates
-    assert "경혜공주 사망" not in candidates
-
-
-def test_external_query_candidates_expand_representative_list_without_particles() -> None:
-    from app.services.ai_runtime import _local_external_query_candidates
-    from app.services.ai_runtime import _query_keywords
-
-    query = "임진왜란에서 활약한 의병 3명 알려줘"
-    candidates = _local_external_query_candidates(query)
-
-    assert _query_keywords(query) == ["임진왜란", "의병"]
-    assert "임진왜란 의병" in candidates
-    assert "임진왜란 의병 대표 인물" in candidates
-    assert all("임진왜란에서" not in candidate for candidate in candidates)
-    assert all("3명" not in candidate for candidate in candidates)
-
-
-def test_external_clue_queries_expand_followup_terms_from_search_results() -> None:
-    from app.services.ai_runtime import _external_clue_queries
-
-    resources = [
-        {
-            "title": "원자료 A",
-            "description": "",
-            "content_excerpt": (
-                "대상 인물은 김정수(金正守)와 관련되어 있으며 "
-                "본문에는 추가 인물 단서가 함께 제시됩니다."
-            ),
-        },
-        {
-            "title": "원자료 B",
-            "description": "",
-            "content_excerpt": (
-                "또 다른 대목에는 박민재(朴敏宰)가 함께 언급됩니다."
-            ),
-        },
-    ]
-
-    queries = _external_clue_queries("대상인물의 생애", resources)
-
-    assert "대상인물 김정수" in queries
-    assert "대상인물 박민재" in queries
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["resources"] == []
+    assert payload["tool_log"]["tool"] == "history.external_evidence_bundle"
+    assert payload["tool_log"]["status"] == "no_results"
 
 
 def test_admin_discussion_topic_controls_require_admin(client: TestClient) -> None:
@@ -1593,47 +899,6 @@ def test_admin_discussion_topic_controls_require_admin(client: TestClient) -> No
     refresh_response = client.post("/api/admin/discussion-topics/refresh", json={})
     assert refresh_response.status_code == 200
     assert len(refresh_response.json()) >= 3
-
-
-def test_discussion_topic_dedupe_keeps_one_card_per_repeated_subject() -> None:
-    from app.services.discussion_topics import _dedupe_topics
-
-    topics = _dedupe_topics(
-        [
-            {
-                "title": "광해군 재평가를 어떻게 봐야 할까",
-                "summary": "광해군 중립 외교 재평가 이야기입니다.",
-                "question": "현실 외교와 명분 중 무엇을 볼까요?",
-                "draft_title": "광해군 재평가 토론",
-                "tags": ["광해군", "재평가", "외교"],
-                "basis_post_id": 1,
-                "score": 30.0,
-            },
-            {
-                "title": "광해군 중립외교는 정말 실리였을까",
-                "summary": "광해군 외교 평가를 다시 묻습니다.",
-                "question": "후대 평가는 과한가요?",
-                "draft_title": "광해군 중립외교 토론",
-                "tags": ["광해군", "중립외교"],
-                "basis_post_id": 2,
-                "score": 20.0,
-            },
-            {
-                "title": "세종의 문자 정책은 어떻게 봐야 할까",
-                "summary": "훈민정음 창제와 정치적 의미를 봅니다.",
-                "question": "애민과 통치 중 무엇이 중요할까요?",
-                "draft_title": "세종 문자 정책 토론",
-                "tags": ["세종", "훈민정음"],
-                "basis_post_id": 3,
-                "score": 10.0,
-            },
-        ]
-    )
-
-    assert [topic["title"] for topic in topics] == [
-        "광해군 재평가를 어떻게 봐야 할까",
-        "세종의 문자 정책은 어떻게 봐야 할까",
-    ]
 
 
 def test_post_image_upload_requires_auth_and_saves_file(
@@ -1683,13 +948,8 @@ def test_mcp_json_rpc_initialize_list_and_call(client: TestClient, monkeypatch: 
         json={"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
     )
     assert tools_response.status_code == 200
-    tools = tools_response.json()["result"]["tools"]
-    tool_names = [tool["name"] for tool in tools]
-    assert "history.search" in tool_names
-    assert "history.search_sillok" in tool_names
-    sillok_tool = next(tool for tool in tools if tool["name"] == "history.search_sillok")
-    assert sillok_tool["deprecated"] is True
-    assert "history.search" in sillok_tool["description"]
+    tool_names = [tool["name"] for tool in tools_response.json()["result"]["tools"]]
+    assert tool_names[:3] == ["history.search_sillok", "history.naver_search", "history.web_search"]
 
     from app.services import mcp_server
 
@@ -1727,25 +987,6 @@ def test_mcp_json_rpc_initialize_list_and_call(client: TestClient, monkeypatch: 
     assert call_payload["result"]["structuredContent"]["resources"][0]["title"] == "세종 결과"
     assert call_payload["result"]["structuredContent"]["tool_log"]["tool"] == "history.search_sillok"
 
-    registry_call_response = client.post(
-        "/api/mcp",
-        json={
-            "jsonrpc": "2.0",
-            "id": 30,
-            "method": "tools/call",
-            "params": {
-                "name": "history.search",
-                "arguments": {"keyword": "세종", "providers": ["sillok", "museum"]},
-            },
-        },
-    )
-    assert registry_call_response.status_code == 200
-    registry_payload = registry_call_response.json()
-    registry_resources = registry_payload["result"]["structuredContent"]["resources"]
-    assert registry_payload["result"]["structuredContent"]["tool_log"]["tool"] == "history.search"
-    assert any(resource["provider"] == "국사편찬위원회 조선왕조실록" for resource in registry_resources)
-    assert any(resource["provider"] == "국립중앙박물관" for resource in registry_resources)
-
     image_response = client.post(
         "/api/mcp",
         json={
@@ -1771,6 +1012,101 @@ def test_mcp_json_rpc_initialize_list_and_call(client: TestClient, monkeypatch: 
     assert image_payload["result"]["structuredContent"]["image_url"] is None
     assert image_payload["result"]["structuredContent"]["visual_brief"]
     assert image_payload["result"]["structuredContent"]["tool_log"]["tool"] == "image.generate_thumbnail"
+
+
+def test_mcp_naver_and_web_search_tools(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.services import mcp_server
+
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_naver",
+        lambda settings, query, categories, display: (
+            [
+                {
+                    "title": "어우동 한국민족문화대백과",
+                    "provider": "네이버 검색/encyc",
+                    "url": "https://encykorea.aks.ac.kr/Article/E0036000",
+                    "description": "네이버 검색 API에서 조회한 자료 후보입니다.",
+                }
+            ],
+            "ok",
+        ),
+    )
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_web",
+        lambda settings, query, allowed_domains, display: (
+            [
+                {
+                    "title": "어우동 자료",
+                    "provider": "Brave Search",
+                    "url": "https://db.history.go.kr/item/example",
+                    "description": "범용 웹 검색 API에서 조회한 자료 후보입니다.",
+                }
+            ],
+            "ok",
+        ),
+    )
+
+    naver_response = client.post(
+        "/api/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+                "name": "history.naver_search",
+                "arguments": {"query": "어우동 조선 인물", "categories": ["encyc"], "display": 3},
+            },
+        },
+    )
+    assert naver_response.status_code == 200
+    naver_payload = naver_response.json()["result"]["structuredContent"]
+    assert naver_payload["tool_log"]["tool"] == "history.naver_search"
+    assert naver_payload["resources"][0]["provider"] == "네이버 검색/encyc"
+
+    web_response = client.post(
+        "/api/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "tools/call",
+            "params": {
+                "name": "history.web_search",
+                "arguments": {"query": "어우동 조선 인물", "allowed_domains": ["db.history.go.kr"]},
+            },
+        },
+    )
+    assert web_response.status_code == 200
+    web_payload = web_response.json()["result"]["structuredContent"]
+    assert web_payload["tool_log"]["tool"] == "history.web_search"
+    assert web_payload["resources"][0]["url"].startswith("https://db.history.go.kr")
+
+
+def test_mcp_search_tools_report_not_configured_without_keys(client: TestClient) -> None:
+    naver_response = client.post(
+        "/api/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {"name": "history.naver_search", "arguments": {"query": "어우동"}},
+        },
+    )
+    assert naver_response.status_code == 200
+    assert naver_response.json()["result"]["structuredContent"]["tool_log"]["status"] == "not_configured"
+
+    web_response = client.post(
+        "/api/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 8,
+            "method": "tools/call",
+            "params": {"name": "history.web_search", "arguments": {"query": "어우동"}},
+        },
+    )
+    assert web_response.status_code == 200
+    assert web_response.json()["result"]["structuredContent"]["tool_log"]["status"] == "not_configured"
 
 
 def test_admin_thumbnail_preview_requires_admin(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:

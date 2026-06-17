@@ -75,7 +75,6 @@ OPENAI_LLM_MODEL=gpt-5.4-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_IMAGE_MODEL=gpt-image-1
 OPENAI_THUMBNAIL_SIZE=1536x1024
-THUMBNAIL_CACHE_TTL_SECONDS=2592000
 ADMIN_EMAIL=admin@example.com
 ADMIN_NICKNAME=관리자
 NATIONAL_LIBRARY_API_KEY=
@@ -254,22 +253,13 @@ MCP 서버:
 - Endpoint: `POST /api/mcp`
 - Protocol: JSON-RPC 2.0
 - Supported methods: `initialize`, `tools/list`, `tools/call`
-- Tool: `history.search`
 - Tool: `history.search_sillok`
 - Tool: `image.generate_thumbnail`
-- External history providers:
-  - `sillok`: 국사편찬위원회 조선왕조실록 검색 페이지를 HTTP로 호출하고 실제 기사 링크를 파싱합니다.
-  - `encykorea`: 수집된 한국민족문화대백과사전 정제 seed에서 관련 항목 링크를 찾습니다.
-  - `museum`: 국립중앙박물관 소장품 검색 페이지 링크를 제공합니다.
-  - `kostma`: 한국학자료센터 고문서 검색 페이지 링크를 제공합니다.
-  - `nlk`: 국립중앙도서관 통합검색 페이지 링크를 제공합니다.
-  - `web`: 웹/학술 확인용 검색 링크를 제공합니다.
-- `history.search`는 `auto` provider 라우팅을 지원합니다. 어찰/편지/고문서 요청은 한국학자료센터·국립중앙도서관·박물관을 우선하고, 실록/사료 요청은 조선왕조실록을 우선합니다.
+- External service: 국사편찬위원회 조선왕조실록 검색 페이지를 HTTP로 호출하고 결과 기사 링크를 파싱합니다.
 - External image service: `OPENAI_API_KEY`가 있으면 OpenAI Images API로 게시글 썸네일을 생성합니다. 키가 없거나 호출 실패 시 `thumbnail_url=null`로 남기고 placeholder 이미지는 만들지 않습니다.
 - API key strategy: key는 `.env`에만 저장하고 Docker Compose environment로 주입합니다. 응답/log에는 key를 기록하지 않습니다. 이미지 생성은 비용이 발생할 수 있습니다.
 - 관리자 계정으로 로그인하면 `/admin/thumbnail`에서 게시글 저장 없이 제목/본문/카테고리/태그 기반 썸네일 생성을 테스트할 수 있습니다.
 - 글 작성 화면의 `AI 썸네일 만들기`는 저장 전 후보 3개를 생성합니다. 제목이나 본문이 너무 짧으면 생성하지 않고 보강 안내를 반환합니다.
-- AI 썸네일 후보는 같은 제목/본문/카테고리/태그/모델/크기/프롬프트 버전 조합이면 Redis 캐시에서 재사용합니다. 캐시 hit이면 이미지 API를 다시 호출하지 않아 추가 이미지 생성 비용이 들지 않습니다.
 
 MCP 호출 예시:
 

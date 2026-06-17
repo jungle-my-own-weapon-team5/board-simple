@@ -117,12 +117,6 @@ export default function AiChatWidget() {
     setChatSize((current) => normalizeChatSize(current, viewport));
   }, [viewport]);
 
-  useEffect(() => {
-    const openChat = () => setIsOpen(true);
-    window.addEventListener("history-board:open-ai-chat", openChat);
-    return () => window.removeEventListener("history-board:open-ai-chat", openChat);
-  }, []);
-
   const beginResize = (event: PointerEvent<HTMLButtonElement>, edge: ResizeEdge) => {
     event.preventDefault();
     resizeStateRef.current = {
@@ -232,7 +226,7 @@ export default function AiChatWidget() {
       {isOpen ? (
         <section
           aria-label="AI 챗봇"
-          className="relative flex max-h-[calc(100vh-7rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-sm border border-border bg-card shadow-[0_22px_60px_-34px_rgba(28,27,27,0.65)]"
+          className="relative flex max-h-[calc(100vh-7rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-md border border-border bg-card shadow-xl"
           style={{
             width: `${normalizedSize.width}px`,
             height: `${normalizedSize.height}px`,
@@ -265,11 +259,11 @@ export default function AiChatWidget() {
           >
             <Maximize2 className="size-3" />
           </button>
-          <header className="flex items-center justify-between border-b border-border bg-background/70 px-4 py-3">
+          <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex min-w-0 items-center gap-2">
               <Bot className="size-5 shrink-0" />
               <div className="min-w-0">
-                <h2 className="font-serif-display truncate text-base font-bold">AI 챗봇</h2>
+                <h2 className="truncate text-sm font-extrabold">AI 챗봇</h2>
                 <p className="truncate text-xs text-muted-foreground">RAG 근거와 외부 자료 흐름으로 답변합니다.</p>
               </div>
             </div>
@@ -295,10 +289,10 @@ export default function AiChatWidget() {
               <div className="flex h-full flex-col items-start justify-center gap-3 text-sm">
                 <p className="font-semibold">로그인 후 AI 챗봇을 사용할 수 있습니다.</p>
                 <p className="text-muted-foreground">대화형 AI 호출은 사용자 세션이 확인될 때만 실행합니다.</p>
-                <Button asChild size="sm" className="rounded-sm">
+                <Button asChild size="sm">
                   <Link href="/login">
                     <LogIn />
-                    <span>로그인</span>
+                    <span>Login</span>
                   </Link>
                 </Button>
               </div>
@@ -313,7 +307,7 @@ export default function AiChatWidget() {
                   <article
                     key={message.id}
                     className={cn(
-                      "max-w-[88%] rounded-sm border px-3 py-2 text-sm leading-6",
+                      "max-w-[88%] rounded-md border px-3 py-2 text-sm leading-6",
                       message.role === "user"
                         ? "ml-auto border-primary bg-primary text-primary-foreground"
                         : "mr-auto border-border bg-background",
@@ -342,7 +336,7 @@ export default function AiChatWidget() {
                   </article>
                 ))}
                 {isSubmitting ? (
-                  <div className="mr-auto flex items-center gap-2 rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
+                  <div className="mr-auto flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground">
                     <Loader2 className="size-4 animate-spin" />
                     <span>응답 생성 중</span>
                   </div>
@@ -352,10 +346,10 @@ export default function AiChatWidget() {
             )}
           </div>
 
-          <form className="border-t border-border bg-background/70 p-3" onSubmit={handleSubmit}>
+          <form className="border-t border-border p-3" onSubmit={handleSubmit}>
             <div className="flex items-end gap-2">
               <Textarea
-                className="max-h-28 min-h-10 resize-none rounded-sm leading-6"
+                className="max-h-28 min-h-10 resize-none"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
@@ -368,11 +362,11 @@ export default function AiChatWidget() {
                 disabled={!user || isSubmitting}
               />
               {isSubmitting ? (
-                <Button type="button" size="icon" className="rounded-sm" onClick={handleStop} aria-label="응답 생성 중지" title="응답 생성 중지">
+                <Button type="button" size="icon" onClick={handleStop} aria-label="응답 생성 중지" title="응답 생성 중지">
                   <span className="block size-3 rounded-[2px] bg-current" aria-hidden="true" />
                 </Button>
               ) : (
-                <Button type="submit" size="icon" className="rounded-sm" disabled={!user || !input.trim()} aria-label="메시지 보내기">
+                <Button type="submit" size="icon" disabled={!user || !input.trim()} aria-label="메시지 보내기">
                   <Send />
                 </Button>
               )}
@@ -384,7 +378,7 @@ export default function AiChatWidget() {
       <Button
         type="button"
         size="icon"
-        className="h-12 w-12 rounded-full shadow-[0_16px_36px_-20px_rgba(28,27,27,0.7)]"
+        className="h-12 w-12 rounded-full shadow-lg"
         onClick={() => setIsOpen((current) => !current)}
         aria-label={isOpen ? "챗봇 닫기" : "챗봇 열기"}
       >

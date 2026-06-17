@@ -21,7 +21,6 @@ from app.schemas.post import (
     PostUpdate,
 )
 from app.services.ai_runtime import make_post_search_summary
-from app.services.cache import delete_cache_prefix, get_json_cache, make_cache_key, set_json_cache
 from app.services.mcp_server import generate_thumbnail_candidates_for_post, generate_thumbnail_for_post
 from app.services.safety import post_safety_message_for
 from app.services.tags import get_or_create_tags, normalize_tag_names
@@ -52,10 +51,6 @@ def get_post_or_404(db: Session, post_id: int) -> Post:
     return post
 
 
-def can_manage_post(post: Post, user: User, settings: Settings) -> bool:
-    return post.author_id == user.id or user.email == settings.admin_email
-
-
 @router.get("", response_model=PostPage)
 def list_posts(
     page: int = Query(default=1, ge=1),
@@ -65,23 +60,7 @@ def list_posts(
     category: str | None = Query(default=None),
     sort: str = Query(default="latest", pattern="^(latest|comments|ai)$"),
     db: Session = Depends(get_db),
-    settings: Settings = Depends(get_settings),
 ) -> PostPage:
-    cache_key = make_cache_key(
-        "post_list:v1",
-        {
-            "page": page,
-            "size": size,
-            "q": q or "",
-            "post_type": post_type or "",
-            "category": category or "",
-            "sort": sort,
-        },
-    )
-    cached = get_json_cache(settings, cache_key)
-    if cached is not None:
-        return PostPage.model_validate(cached)
-
     filters = []
     if q:
         filters.append(Post.title.ilike(f"%{q}%"))
@@ -107,14 +86,12 @@ def list_posts(
         statement = statement.order_by(Post.created_at.desc())
 
     posts = db.scalars(statement.offset((page - 1) * size).limit(size)).all()
-    response = PostPage(
+    return PostPage(
         items=[PostListItem.model_validate(post) for post in posts],
         total=total,
         page=page,
         size=size,
     )
-    set_json_cache(settings, cache_key, response.model_dump(mode="json"), settings.post_list_cache_ttl_seconds)
-    return response
 
 
 @router.post("", response_model=PostRead, status_code=status.HTTP_201_CREATED)
@@ -149,7 +126,6 @@ def create_post(
     post.tags = get_or_create_tags(db, tag_names)
     db.add(post)
     db.commit()
-    _invalidate_post_list_cache(settings)
     db.refresh(post)
     return get_post_or_404(db, post.id)
 
@@ -220,8 +196,8 @@ def generate_post_thumbnail(
     current_user: User = Depends(get_current_user),
 ) -> Post:
     post = get_post_or_404(db, post_id)
-    if not can_manage_post(post, current_user, settings):
-        raise HTTPException(status_code=403, detail="Only the author or admin can generate a thumbnail")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can generate a thumbnail")
 
     result = generate_thumbnail_for_post(
         db,
@@ -233,7 +209,6 @@ def generate_post_thumbnail(
     )
     post.thumbnail_url = result["structuredContent"]["image_url"]
     db.commit()
-    _invalidate_post_list_cache(settings)
     return get_post_or_404(db, post.id)
 
 
@@ -245,8 +220,8 @@ def generate_post_thumbnail_candidates(
     current_user: User = Depends(get_current_user),
 ) -> PostThumbnailCandidatesResponse:
     post = get_post_or_404(db, post_id)
-    if not can_manage_post(post, current_user, settings):
-        raise HTTPException(status_code=403, detail="Only the author or admin can generate thumbnail candidates")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can generate thumbnail candidates")
 
     candidates = generate_thumbnail_candidates_for_post(
         db,
@@ -265,16 +240,14 @@ def select_post_thumbnail(
     post_id: int,
     payload: PostThumbnailSelectRequest,
     db: Session = Depends(get_db),
-    settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_user),
 ) -> Post:
     post = get_post_or_404(db, post_id)
-    if not can_manage_post(post, current_user, settings):
-        raise HTTPException(status_code=403, detail="Only the author or admin can select a thumbnail")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can select a thumbnail")
 
     post.thumbnail_url = payload.image_url
     db.commit()
-    _invalidate_post_list_cache(get_settings())
     return get_post_or_404(db, post.id)
 
 
@@ -287,8 +260,8 @@ def update_post(
     current_user: User = Depends(get_current_user),
 ) -> Post:
     post = get_post_or_404(db, post_id)
-    if not can_manage_post(post, current_user, settings):
-        raise HTTPException(status_code=403, detail="Only the author or admin can update this post")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can update this post")
 
     tag_names = normalize_tag_names(payload.tags)
     safety_message = post_safety_message_for(payload.title, payload.content, tag_names)
@@ -311,7 +284,6 @@ def update_post(
     post.thumbnail_url = payload.thumbnail_url
     post.tags = get_or_create_tags(db, tag_names)
     db.commit()
-    _invalidate_post_list_cache(settings)
     return get_post_or_404(db, post.id)
 
 
@@ -319,17 +291,11 @@ def update_post(
 def delete_post(
     post_id: int,
     db: Session = Depends(get_db),
-    settings: Settings = Depends(get_settings),
     current_user: User = Depends(get_current_user),
 ) -> None:
     post = get_post_or_404(db, post_id)
-    if not can_manage_post(post, current_user, settings):
-        raise HTTPException(status_code=403, detail="Only the author or admin can delete this post")
+    if post.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the author can delete this post")
 
     db.delete(post)
     db.commit()
-    _invalidate_post_list_cache(get_settings())
-
-
-def _invalidate_post_list_cache(settings: Settings) -> None:
-    delete_cache_prefix(settings, "post_list:v1")

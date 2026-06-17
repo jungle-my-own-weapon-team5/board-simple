@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import * as postApi from "../api/posts";
 import PostForm from "../components/PostForm";
@@ -38,7 +37,7 @@ export default function PostEditorPage() {
   }, [pathname, router, user]);
 
   if (!user) {
-    return <p className="text-muted-foreground">작성 권한을 확인하는 중입니다.</p>;
+    return <p className="text-muted-foreground">Redirecting...</p>;
   }
 
   if (error) {
@@ -46,7 +45,7 @@ export default function PostEditorPage() {
   }
 
   if (isEditing && !post) {
-    return <p className="text-muted-foreground">글을 불러오는 중입니다.</p>;
+    return <p className="text-muted-foreground">Loading...</p>;
   }
 
   const handleSubmit = async (payload: postApi.PostPayload) => {
@@ -57,14 +56,10 @@ export default function PostEditorPage() {
   };
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-24">
-      <header className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-        <Link href="/" className="transition-colors hover:text-primary">게시판</Link>
-        <span>/</span>
-        <span>사료 강독</span>
-        <span>/</span>
-        <span className="text-primary">{isEditing ? "글 다듬기" : "집필실"}</span>
-      </header>
+    <section className="flex flex-col gap-5">
+      <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">
+        {isEditing ? "Edit Post" : "Write Post"}
+      </h1>
       <PostForm
         initialTitle={post?.title ?? searchParams.get("draftTitle") ?? ""}
         initialContent={post?.content ?? searchParams.get("draftContent") ?? ""}
@@ -72,7 +67,7 @@ export default function PostEditorPage() {
         initialCategory={post?.category ?? searchParams.get("draftCategory") ?? "왕과 권력"}
         initialTags={post?.tags.map((tag) => tag.name) ?? draftTags}
         initialThumbnailUrl={post?.thumbnail_url ?? null}
-        submitLabel={isEditing ? "글 수정하기" : "글 발행하기"}
+        submitLabel={isEditing ? "Update post" : "Create post"}
         onSubmit={handleSubmit}
       />
     </section>

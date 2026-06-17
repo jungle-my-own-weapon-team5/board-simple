@@ -19,54 +19,6 @@ from app.services.tags import normalize_tag_names
 
 TOPIC_COUNT = 3
 RECENT_DAYS = 14
-GENERIC_TOPIC_KEYWORDS = {
-    "조선",
-    "역사",
-    "토론",
-    "오늘",
-    "떡밥",
-    "질문",
-    "발견",
-    "사료",
-    "해석",
-    "요청",
-    "가벼운",
-    "생활사",
-    "문화",
-    "정치",
-    "외교",
-    "전쟁",
-    "인물",
-    "열전",
-    "사건",
-    "사고",
-    "재평가",
-    "평가",
-    "왕실",
-    "왕권",
-    "권력",
-    "다르게",
-    "보면",
-    "어떤",
-    "쟁점이",
-    "될까",
-    "당시의",
-    "명분과",
-    "결과",
-    "중요하게",
-    "봐야",
-    "할까요",
-    "주제를",
-    "평가할",
-    "가장",
-    "먼저",
-    "확인해야",
-    "근거는",
-    "무엇일까요",
-    "대해",
-    "다시",
-    "토론해봅시다",
-}
 
 
 def get_public_discussion_topics(
@@ -156,7 +108,6 @@ def update_discussion_topic(
 
 
 def _ensure_daily_topics(db: Session, settings: Settings, topic_date: date) -> None:
-    _remove_duplicate_daily_topics(db, topic_date)
     visible_count = len(
         db.scalars(
             select(DiscussionTopicRecord.id)
@@ -170,58 +121,17 @@ def _ensure_daily_topics(db: Session, settings: Settings, topic_date: date) -> N
     existing_titles = set(
         db.scalars(select(DiscussionTopicRecord.title).where(DiscussionTopicRecord.topic_date == topic_date)).all()
     )
-    existing_topic_keys: set[str] = set()
-    for record in db.scalars(select(DiscussionTopicRecord).where(DiscussionTopicRecord.topic_date == topic_date)).all():
-        topic = _topic_dict_from_record(record)
-        if _should_dedupe_topic_keys(topic):
-            existing_topic_keys.update(_topic_dedupe_keys(topic))
-
     topics = _generate_topics(db, settings, topic_date)
     added = 0
     for topic in topics:
         if topic["title"] in existing_titles:
             continue
-        topic_keys = _topic_dedupe_keys(topic)
-        should_dedupe_keys = _should_dedupe_topic_keys(topic)
-        if should_dedupe_keys and topic_keys & existing_topic_keys:
-            continue
         db.add(_record_from_topic(topic_date, topic))
         existing_titles.add(topic["title"])
-        if should_dedupe_keys:
-            existing_topic_keys.update(topic_keys)
         added += 1
         if visible_count + added >= TOPIC_COUNT:
             break
     if added:
-        db.commit()
-
-
-def _remove_duplicate_daily_topics(db: Session, topic_date: date) -> None:
-    records = db.scalars(
-        select(DiscussionTopicRecord)
-        .where(DiscussionTopicRecord.topic_date == topic_date)
-        .where(DiscussionTopicRecord.is_hidden.is_(False))
-        .order_by(
-            DiscussionTopicRecord.is_pinned.desc(),
-            DiscussionTopicRecord.score.desc(),
-            DiscussionTopicRecord.updated_at.desc(),
-            DiscussionTopicRecord.id.asc(),
-        )
-    ).all()
-
-    seen_keys: set[str] = set()
-    changed = False
-    for record in records:
-        topic = _topic_dict_from_record(record)
-        if not _should_dedupe_topic_keys(topic):
-            continue
-        keys = _topic_dedupe_keys(topic)
-        if keys & seen_keys and not record.is_pinned:
-            db.delete(record)
-            changed = True
-            continue
-        seen_keys.update(keys)
-    if changed:
         db.commit()
 
 
@@ -237,21 +147,14 @@ def _generate_topics(db: Session, settings: Settings, topic_date: date) -> list[
         if llm_topics:
             generated = llm_topics
     if not generated:
-        generated = [_local_topic_from_candidate(item, "local") for item in enriched]
-    generated = _dedupe_topics(generated)
+        generated = [_local_topic_from_candidate(item, "local") for item in enriched[:TOPIC_COUNT]]
     if len(generated) < TOPIC_COUNT:
         seen_titles = {item["title"] for item in generated}
-        seen_keys = set().union(*(_topic_dedupe_keys(item) for item in generated)) if generated else set()
         for fallback in _fallback_demo_topics(db, settings, topic_date):
             if fallback["title"] in seen_titles:
                 continue
-            fallback_keys = _topic_dedupe_keys(fallback)
-            if _should_dedupe_topic_keys(fallback) and fallback_keys & seen_keys:
-                continue
             generated.append(fallback)
             seen_titles.add(fallback["title"])
-            if _should_dedupe_topic_keys(fallback):
-                seen_keys.update(fallback_keys)
             if len(generated) >= TOPIC_COUNT:
                 break
     return generated[:TOPIC_COUNT]
@@ -480,64 +383,6 @@ def _serialize_topic(record: DiscussionTopicRecord) -> DiscussionTopic:
         is_pinned=record.is_pinned,
         is_hidden=record.is_hidden,
     )
-
-
-def _dedupe_topics(topics: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    deduped = []
-    seen_titles: set[str] = set()
-    seen_keys: set[str] = set()
-    for topic in sorted(topics, key=lambda item: float(item.get("score") or 0.0), reverse=True):
-        title = str(topic.get("title") or "").strip()
-        keys = _topic_dedupe_keys(topic)
-        if title in seen_titles or keys & seen_keys:
-            continue
-        deduped.append(topic)
-        seen_titles.add(title)
-        seen_keys.update(keys)
-        if len(deduped) >= TOPIC_COUNT:
-            break
-    return deduped
-
-
-def _topic_dedupe_keys(topic: dict[str, Any]) -> set[str]:
-    keys: set[str] = set()
-    basis_post_id = _optional_int(topic.get("basis_post_id"))
-    if basis_post_id is not None:
-        keys.add(f"post:{basis_post_id}")
-
-    for tag in topic.get("tags") or []:
-        normalized = _normalize_topic_keyword(str(tag))
-        if _is_distinct_topic_keyword(normalized):
-            keys.add(f"kw:{normalized}")
-    return keys
-
-
-def _topic_dict_from_record(record: DiscussionTopicRecord) -> dict[str, Any]:
-    return {
-        "title": record.title,
-        "summary": record.summary,
-        "question": record.question,
-        "draft_title": record.draft_title,
-        "tags": _json_list(record.tags_json),
-        "basis_post_id": record.basis_post_id,
-        "generation_source": record.generation_source,
-    }
-
-
-def _normalize_topic_keyword(value: str) -> str:
-    return re.sub(r"[^0-9a-z가-힣]", "", value.strip().lower())
-
-
-def _should_dedupe_topic_keys(topic: dict[str, Any]) -> bool:
-    return topic.get("generation_source") != "fallback"
-
-
-def _is_distinct_topic_keyword(value: str) -> bool:
-    if len(value) < 2 or value in GENERIC_TOPIC_KEYWORDS:
-        return False
-    if value.endswith(("인가", "일까", "될까", "보자", "토론해봅시다")):
-        return False
-    return True
 
 
 def _valid_citations(raw_citations: Any) -> list[dict[str, Any]]:

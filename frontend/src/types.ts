@@ -87,6 +87,18 @@ export type DiscussionTopic = {
   is_hidden: boolean;
 };
 
+export type WritingAssist = {
+  improved_titles: string[];
+  suggested_content?: string | null;
+  tags: string[];
+  category: string;
+  questions: string[];
+  keywords: string[];
+  agent_steps?: { name: string; output: string }[];
+  evidence_summary?: string | null;
+  weak_evidence?: boolean;
+};
+
 export type EditorAgentResponse = {
   action: "answer" | "fill_content" | "revise_content" | string;
   agent_message: string;
@@ -116,7 +128,7 @@ export type RagCitation = {
   source_url: string;
 };
 
-export type RagCorpusMode = "auto" | "encykorea" | "legacy" | "sinpyeon_hanguksa" | "sillok-v2" | "all";
+export type RagCorpusMode = "auto" | "encykorea" | "legacy" | "sinpyeon_hanguksa" | "all";
 
 export type RagSearchResponse = {
   answer_summary: string;
@@ -151,11 +163,6 @@ export type ExternalSearchResponse = {
     provider: string;
     url: string;
     description: string;
-    source_type?: string;
-    result_type?: string;
-    content_excerpt?: string | null;
-    confidence?: number;
-    can_quote?: boolean;
   }[];
   tool_log: {
     tool: string;

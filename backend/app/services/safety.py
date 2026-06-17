@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from app.schemas.ai import AgentRunResponse, AgentStep, EditorAgentResponse
+from app.services.topic_guard import assess_history_topic, is_history_topic
 
 SafetyCategory = Literal[
     "none",
@@ -62,86 +63,6 @@ REFUSAL_MESSAGES: dict[SafetyCategory, str] = {
     "none": "",
 }
 
-HISTORY_TOPIC_TERMS = [
-    "역사",
-    "조선",
-    "고려",
-    "신라",
-    "백제",
-    "고구려",
-    "발해",
-    "대한제국",
-    "일제강점기",
-    "왕",
-    "왕실",
-    "임금",
-    "왕권",
-    "세자",
-    "대군",
-    "공주",
-    "옹주",
-    "태조",
-    "정종",
-    "태종",
-    "세종",
-    "문종",
-    "단종",
-    "세조",
-    "예종",
-    "성종",
-    "연산군",
-    "중종",
-    "인종",
-    "명종",
-    "선조",
-    "광해군",
-    "인조",
-    "효종",
-    "현종",
-    "숙종",
-    "경종",
-    "영조",
-    "정조",
-    "순조",
-    "헌종",
-    "철종",
-    "고종",
-    "순종",
-    "양녕",
-    "효령",
-    "충녕",
-    "계유정난",
-    "임진왜란",
-    "병자호란",
-    "훈민정음",
-    "집현전",
-    "붕당",
-    "사림",
-    "실록",
-    "사료",
-    "원문",
-    "국역",
-    "왕조",
-    "궁궐",
-    "관료",
-    "문신",
-    "무신",
-    "유교",
-    "불교",
-    "성리학",
-    "과거제",
-    "대동법",
-    "경국대전",
-    "생활사",
-    "문화사",
-    "민속",
-    "복식",
-    "형벌",
-    "전쟁",
-    "열녀",
-    "노비",
-]
-
 SELF_HARM_TERMS = ["자살", "극단적선택", "죽고싶", "살기싫", "목숨을끊", "생을마감", "suicide", "killmyself"]
 SELF_HARM_IMMINENT_TERMS = ["내가", "나", "저", "지금", "오늘", "방법", "어떻게", "하고싶", "할래", "죽고싶"]
 VIOLENCE_TERMS = ["죽이는법", "살해", "테러", "폭탄", "총기제작", "칼로찌", "해치는법", "무기만드는법"]
@@ -171,10 +92,6 @@ def normalize_safety_text(text: str) -> str:
 
 def contains_any(normalized_text: str, terms: list[str]) -> bool:
     return any(term.lower().replace(" ", "") in normalized_text for term in terms)
-
-
-def is_history_topic(text: str) -> bool:
-    return contains_any(normalize_safety_text(text), HISTORY_TOPIC_TERMS)
 
 
 def has_educational_history_context(text: str) -> bool:
@@ -228,7 +145,17 @@ def moderate_input(text: str, surface: SafetySurface = "chat", require_history_t
             step_name=f"safety.{category}",
             log_output=f"유해·민감 정보 카테고리 `{category}`를 감지해 처리를 중단했습니다.",
         )
-    if require_history_topic and not is_history_topic(text):
+    if require_history_topic:
+        topic_decision = assess_history_topic(text, strict=surface in {"post", "thumbnail"})
+        if topic_decision.status == "allow":
+            return SafetyDecision(allowed=True, category="none", action="allow")
+        if topic_decision.status == "unknown":
+            return SafetyDecision(
+                allowed=True,
+                category="none",
+                action="allow_with_caution",
+                log_output="역사성은 아직 확정되지 않았지만 인물·사건·자료형 질문으로 판단해 RAG/외부 검색으로 확인합니다.",
+            )
         message = POST_OFF_TOPIC_MESSAGE if surface == "post" else OFF_TOPIC_RESPONSE
         return SafetyDecision(
             allowed=False,
@@ -236,7 +163,7 @@ def moderate_input(text: str, surface: SafetySurface = "chat", require_history_t
             action="off_topic",
             message=message,
             step_name="safety.off_topic",
-            log_output="게시판 주제와 직접 관련된 역사 신호가 부족해 RAG, 외부 검색, LLM 생성을 건너뛰었습니다.",
+            log_output=f"게시판 주제와 직접 관련된 역사 신호가 부족해 처리를 중단했습니다. reason={topic_decision.reason}",
         )
     return SafetyDecision(allowed=True, category="none", action="allow")
 
