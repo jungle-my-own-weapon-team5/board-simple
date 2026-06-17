@@ -33,6 +33,8 @@ def test_planner_parses_issue_queries() -> None:
             '{"issues":[{"issue_key":"corpse_concealment",'
             '"title":"corpse concealment",'
             '"description":"concealing a body after death",'
+            '"domain":"criminal",'
+            '"facts_slice":"A buried the body after the death.",'
             '"internal_rag_query":"corpse abandonment concealment criminal act",'
             '"official_source_query":"Criminal Act",'
             '"official_source_candidates":[{"document_type":"statute",'
@@ -51,10 +53,14 @@ def test_planner_parses_issue_queries() -> None:
 
     assert len(plan.issues) == 1
     assert plan.issues[0].issue_key == "corpse_concealment"
+    assert plan.issues[0].domain == "criminal"
+    assert plan.issues[0].facts_slice == "A buried the body after the death."
     assert plan.issues[0].internal_rag_query == (
         "corpse abandonment concealment criminal act"
     )
     assert [candidate.query for candidate in plan.candidates] == ["Criminal Act"]
+    assert '"domain"' in ai_client.requests[0].prompt
+    assert '"facts_slice"' in ai_client.requests[0].prompt
 
 
 def test_planner_parses_expected_article_refs() -> None:
@@ -99,6 +105,11 @@ def test_planner_augments_required_criminal_issue_hints_without_article_refs() -
     )
 
     assert all(not issue.expected_article_refs for issue in plan.issues)
+    criminal_issues = [
+        issue for issue in plan.issues if issue.issue_key.startswith("criminal_")
+    ]
+    assert criminal_issues
+    assert all(issue.domain == "criminal" for issue in criminal_issues)
     assert all("제" not in issue.internal_rag_query for issue in plan.issues)
     assert {candidate.title for candidate in plan.candidates} >= {"형법", "형사소송법"}
     assert "required_issue_hint" in {candidate.reason for candidate in plan.candidates}

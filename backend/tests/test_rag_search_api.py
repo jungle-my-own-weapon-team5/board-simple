@@ -301,6 +301,95 @@ def test_rag_search_endpoint_applies_top_k_per_planned_issue(
         assert verify_result["valid"] is True
 
 
+def test_rag_search_endpoint_merges_duplicate_chunk_issue_track_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rag_client_context.client, email="issue-track-merge@example.com")
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        shared_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Shared statute",
+            heading="Article Shared",
+            content="shared legal issue content",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        shared_chunk_id = shared_embedding.chunk_id
+        db.commit()
+
+    class StaticEmbeddingClient:
+        def embed_texts(self, request):
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": [1.0, 0.0, 0.0],
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": 3,
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="criminal_track",
+                    title="Criminal issue",
+                    description=None,
+                    internal_rag_query="criminal issue query",
+                    domain="criminal",
+                    facts_slice="A possible criminal fact cluster.",
+                ),
+                PlannedLegalIssue(
+                    issue_key="civil_track",
+                    title="Civil issue",
+                    description=None,
+                    internal_rag_query="civil issue query",
+                    domain="civil",
+                    facts_slice="A possible civil fact cluster.",
+                ),
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr("app.api.rag.AIClient", lambda settings: StaticEmbeddingClient())
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "one matter can contain criminal and civil issues",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["chunk_id"] for item in body["items"]] == [shared_chunk_id]
+    metadata = body["items"][0]["metadata"]
+    assert metadata["domain_tags"] == ["criminal", "civil"]
+    assert metadata["used_by_tracks"] == ["criminal_track", "civil_track"]
+    assert [
+        query["issue_key"] for query in metadata["planned_issue_queries"]
+    ] == ["criminal_track", "civil_track"]
+    assert [
+        query["facts_slice"] for query in metadata["planned_issue_queries"]
+    ] == [
+        "A possible criminal fact cluster.",
+        "A possible civil fact cluster.",
+    ]
+
+
 def test_rag_search_endpoint_reranks_after_relevance_filter(
     monkeypatch: pytest.MonkeyPatch,
     rag_client_context: ApiTestContext,

@@ -53,6 +53,8 @@ class PlannedLegalIssue:
     title: str
     description: str | None
     internal_rag_query: str
+    domain: str | None = None
+    facts_slice: str | None = None
     official_source_query: str | None = None
     candidates: list[LegalSourceCandidate] = field(default_factory=list)
     expected_article_refs: list[ExpectedArticleRef] = field(default_factory=list)
@@ -157,6 +159,8 @@ def _build_planner_prompt(
                 "issue_key": "lease_deposit_return",
                 "title": "lease deposit return",
                 "description": "deposit return dispute",
+                "domain": "lease",
+                "facts_slice": "The lease ended but the landlord refuses to return the deposit.",
                 "internal_rag_query": "lease deposit return statute",
                 "official_source_query": "Residential Lease Protection Act",
                 "expected_article_refs": [
@@ -182,7 +186,11 @@ def _build_planner_prompt(
         "You plan Korean legal issues and official source searches for RAG.\n"
         "Return only a JSON object. Do not include markdown.\n"
         "The plan is not a legal conclusion and must not be cited directly.\n"
+        "One user matter can contain multiple legal domains such as criminal, "
+        "civil, labor, administrative, lease, consumer, and family.\n"
+        "Split materially different domains or fact clusters into separate issues.\n"
         "Each issue must have one internal_rag_query. top_k is applied per issue.\n"
+        "Each issue should include domain and facts_slice when identifiable.\n"
         "Each official_source_candidates item must target an official statute search.\n"
         "For each issue, include expected_article_refs when specific statutes/articles "
         "must be checked before drafting.\n"
@@ -263,6 +271,8 @@ def _issues_from_payload(
                 title=issue.title,
                 description=issue.description,
                 internal_rag_query=issue.internal_rag_query,
+                domain=issue.domain,
+                facts_slice=issue.facts_slice,
                 official_source_query=issue.official_source_query,
                 candidates=issue.candidates,
                 expected_article_refs=issue.expected_article_refs,
@@ -330,6 +340,12 @@ def _issue_from_payload(
         title=title or internal_rag_query,
         description=_string_value(value.get("description")),
         internal_rag_query=internal_rag_query,
+        domain=_domain_from_payload(value),
+        facts_slice=(
+            _string_value(value.get("facts_slice"))
+            or _string_value(value.get("fact_slice"))
+            or _string_value(value.get("relevant_facts"))
+        ),
         official_source_query=official_source_query,
         candidates=candidates,
         expected_article_refs=expected_article_refs,
@@ -499,6 +515,8 @@ def _fallback_plan(
                 title=issue.title,
                 description=issue.description,
                 internal_rag_query=f"{fallback_query} {issue.internal_rag_query}".strip(),
+                domain=issue.domain,
+                facts_slice=issue.facts_slice,
                 official_source_query=issue.official_source_query,
                 candidates=issue.candidates,
                 expected_article_refs=issue.expected_article_refs,
@@ -687,6 +705,7 @@ def _required_issue(
         title=title,
         description="사실관계상 누락되면 안 되는 핵심 쟁점 검색 힌트입니다.",
         internal_rag_query=_strip_article_numbers(query),
+        domain="criminal",
         official_source_query=candidates[0].query if candidates else None,
         candidates=candidates,
         expected_article_refs=[],
@@ -715,6 +734,8 @@ def _dedupe_issues(issues: list[PlannedLegalIssue]) -> list[PlannedLegalIssue]:
                 title=issue.title,
                 description=issue.description,
                 internal_rag_query=issue.internal_rag_query,
+                domain=issue.domain,
+                facts_slice=issue.facts_slice,
                 official_source_query=issue.official_source_query,
                 candidates=issue.candidates,
                 expected_article_refs=article_refs,
@@ -749,6 +770,24 @@ def _extract_json_object(text: str) -> str:
     if start == -1 or end == -1 or end < start:
         raise ValueError("JSON object was not found")
     return stripped[start : end + 1]
+
+
+def _domain_from_payload(value: dict[str, object]) -> str | None:
+    domain = (
+        _string_value(value.get("domain"))
+        or _string_value(value.get("legal_domain"))
+        or _string_value(value.get("category"))
+    )
+    if domain:
+        return domain
+    raw_domains = value.get("domains") or value.get("legal_domains")
+    if not isinstance(raw_domains, list):
+        return None
+    for raw_domain in raw_domains:
+        domain = _string_value(raw_domain)
+        if domain:
+            return domain
+    return None
 
 
 def _string_value(value: Any) -> str | None:

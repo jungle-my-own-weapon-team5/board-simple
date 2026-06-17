@@ -1083,6 +1083,10 @@ def _expected_article_refs_payload(
             payload = _expected_article_ref_payload(ref)
             payload["issue_key"] = issue.issue_key
             payload["issue_title"] = issue.title
+            if issue.domain:
+                payload["domain"] = issue.domain
+            if issue.facts_slice:
+                payload["facts_slice"] = issue.facts_slice
             refs.append(payload)
     return refs
 
@@ -1232,9 +1236,25 @@ def _tag_item_with_issue(
         "issue_title": issue.title,
         "issue_query": issue.internal_rag_query,
     }
+    if issue.domain:
+        issue_payload["domain"] = issue.domain
+    if issue.facts_slice:
+        issue_payload["facts_slice"] = issue.facts_slice
     metadata["planned_issue_key"] = issue.issue_key
     metadata["planned_issue_title"] = issue.title
     metadata["planned_issue_query"] = issue.internal_rag_query
+    if issue.domain:
+        metadata["planned_issue_domain"] = issue.domain
+        metadata["domain_tags"] = _merge_metadata_string_values(
+            metadata.get("domain_tags"),
+            issue.domain,
+        )
+    if issue.facts_slice:
+        metadata["planned_issue_facts_slice"] = issue.facts_slice
+    metadata["used_by_tracks"] = _merge_metadata_string_values(
+        metadata.get("used_by_tracks"),
+        issue.issue_key,
+    )
     metadata["planned_issue_queries"] = [issue_payload]
     return replace(item, metadata_json=metadata)
 
@@ -1259,11 +1279,39 @@ def _merge_duplicate_item(
         planned_queries.append(query)
         seen_issue_keys.add(query.get("issue_key"))
     metadata["planned_issue_queries"] = planned_queries
+    metadata["domain_tags"] = _merge_metadata_string_values(
+        metadata.get("domain_tags"),
+        new_item.metadata_json.get("domain_tags"),
+    )
+    metadata["used_by_tracks"] = _merge_metadata_string_values(
+        metadata.get("used_by_tracks"),
+        new_item.metadata_json.get("used_by_tracks"),
+    )
     return replace(
         existing_item,
         score=max(existing_item.score, new_item.score),
         metadata_json=metadata,
     )
+
+
+def _merge_metadata_string_values(*values: object) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        raw_items: list[object]
+        if isinstance(value, list):
+            raw_items = value
+        else:
+            raw_items = [value]
+        for raw_item in raw_items:
+            if not isinstance(raw_item, str):
+                continue
+            item = raw_item.strip()
+            if not item or item in seen:
+                continue
+            seen.add(item)
+            merged.append(item)
+    return merged
 
 
 def _prioritize_expected_article_items(
