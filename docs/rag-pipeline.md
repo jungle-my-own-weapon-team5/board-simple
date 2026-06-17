@@ -275,10 +275,12 @@ MVP 방식:
 - `score_threshold`가 요청에 명시된 경우에만 threshold 미만 결과를 hard filter로 제외합니다. 요청값이 없으면 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않습니다.
 - `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 최종 응답에서는 중복을 병합하고, 어떤 쟁점 query에서 검색되었는지 metadata로 보존합니다.
-- issue/source planner는 `expected_article_refs`로 반드시 확인해야 할 법령명과 조문번호를 지정할 수 있습니다. 사망 결과, 사체 은닉, 자수처럼 사실관계상 핵심 조문이 명확한 경우 backend는 최소 필수 조문 후보를 후처리로 보강합니다.
-- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하되, 단순 삭제보다 쟁점별 필수 근거 coverage 확인을 우선합니다. 필수 쟁점 근거가 부족하면 보강 query를 생성합니다.
-- review가 비활성화되어도 `expected_article_refs`가 현재 결과에 없으면 법령명과 조문번호를 포함한 보강 query를 생성합니다.
-- 보강 query는 `top_k=2`로 한 번만 추가 검색합니다. 무한 반복을 막기 위해 review와 보강 검색은 단일 pass로 제한합니다.
+- issue/source planner는 `expected_article_refs`를 제안할 수 있지만, 이는 검색 계획 힌트이며 권위 있는 근거가 아닙니다. 사망 결과, 사체 은닉, 자수처럼 사실관계상 핵심 쟁점이 명확한 경우 backend는 조문번호를 확정하지 않고 쟁점별 검색 힌트와 공식 법령 후보만 보강합니다.
+- LLM evidence review가 활성화된 경우 backend는 조문번호를 확정하지 않는 범위에서 issue query의 핵심 키워드와 chunk heading을 대조해 reviewer에게 보여 줄 후보 폭을 넓힙니다. 이 후보는 최종 근거가 아니며 reviewer keep/discard 판단을 통과해야 합니다.
+- LLM evidence review가 활성화된 경우 검색 후보를 검토해 관련 없는 chunk를 제외하고, 쟁점별 필수 근거 coverage를 확인합니다. 필수 쟁점 근거가 부족하면 보강 query 또는 `missing_article_refs`를 생성합니다.
+- `missing_article_refs`는 reviewer가 사실관계와 후보 근거를 비교해 직접 필요하다고 판단한 조문에만 사용합니다. backend는 이 reviewer 요청에 한해 조문번호 기반 exact lookup을 수행할 수 있습니다.
+- review가 비활성화된 mock/test 환경에서는 planner의 `expected_article_refs`를 fallback hint로만 사용합니다.
+- 보강 query는 `top_k=2`로 한 번만 추가 검색하고, 이후 final review가 최종 후보만 남깁니다. 무한 반복을 막기 위해 보강 검색은 단일 pass로 제한합니다.
 - 최종 도출된 chunk만 대표 `rag_run_id`의 `rag_retrievals`에 다시 기록합니다. 따라서 `verify_citations`는 화면이나 Agent 응답에 쓰인 최종 chunk만 유효한 citation으로 인식합니다.
 
 후속 방식:

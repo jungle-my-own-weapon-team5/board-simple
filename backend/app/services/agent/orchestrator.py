@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
@@ -13,7 +13,12 @@ from app.models.rag_run import AgentStep, RagRun
 from app.repositories import agent_steps as agent_step_repository
 from app.repositories import rag_runs as rag_run_repository
 from app.services.agent.citations import build_chunk_citations
-from app.services.agent.prompts import build_draft_prompt
+from app.services.agent.prompts import (
+    build_draft_prompt,
+    build_draft_revision_prompt,
+    find_unsupported_article_mentions,
+    redact_unsupported_article_mentions,
+)
 from app.services.agent.state import (
     AgentAction,
     AgentActionType,
@@ -928,7 +933,7 @@ class OrchestratorAgent:
             evidence_items=evidence_items,
             citations=citations,
         )
-        return self.ai_client.generate_text(
+        draft_result = self.ai_client.generate_text(
             AITextRequest(
                 prompt=prompt,
                 model=self.settings.ai_agent_model,
@@ -936,6 +941,42 @@ class OrchestratorAgent:
                 timeout_seconds=self.settings.ai_request_timeout_seconds,
                 metadata={"purpose": "agent_draft"},
             )
+        )
+        unsupported_mentions = find_unsupported_article_mentions(
+            text=draft_result.text,
+            citations=citations,
+        )
+        if not unsupported_mentions:
+            return draft_result
+
+        revision_prompt = build_draft_revision_prompt(
+            request=request,
+            evidence_items=evidence_items,
+            citations=citations,
+            previous_text=draft_result.text,
+            unsupported_mentions=unsupported_mentions,
+        )
+        revised_result = self.ai_client.generate_text(
+            AITextRequest(
+                prompt=revision_prompt,
+                model=self.settings.ai_agent_model,
+                temperature=_optional_temperature(request.options.get("temperature")),
+                timeout_seconds=self.settings.ai_request_timeout_seconds,
+                metadata={"purpose": "agent_draft_revision"},
+            )
+        )
+        remaining_unsupported_mentions = find_unsupported_article_mentions(
+            text=revised_result.text,
+            citations=citations,
+        )
+        if not remaining_unsupported_mentions:
+            return revised_result
+        return replace(
+            revised_result,
+            text=redact_unsupported_article_mentions(
+                text=revised_result.text,
+                citations=citations,
+            ),
         )
 
     def _fail_existing_run(

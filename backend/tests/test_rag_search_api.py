@@ -491,14 +491,14 @@ def test_rag_search_endpoint_keeps_low_score_results_without_threshold(
 
 def test_rag_search_endpoint_supplements_missing_expected_article_refs(
     monkeypatch: pytest.MonkeyPatch,
-    rag_client_context: ApiTestContext,
+    llm_review_rag_client_context: ApiTestContext,
 ) -> None:
     user = register_and_login(
-        rag_client_context.client,
+        llm_review_rag_client_context.client,
         email="expected-article-supplement@example.com",
     )
     initial_query = "corpse concealment general issue"
-    with rag_client_context.session_factory() as db:
+    with llm_review_rag_client_context.session_factory() as db:
         profile = _create_profile(db, dimensions=3)
         _create_chunk_embedding(
             db,
@@ -520,6 +520,9 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
         db.commit()
 
     class ExpectedArticleEmbeddingClient:
+        def __init__(self) -> None:
+            self.review_calls = 0
+
         def embed_texts(self, request):
             return [
                 type(
@@ -534,6 +537,35 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
                     },
                 )()
             ]
+
+        def generate_text(self, request):
+            self.review_calls += 1
+            if self.review_calls == 1:
+                text = (
+                    '{"keep_chunk_ids": [], "supplemental_queries": [], '
+                    '"missing_article_refs": [{"law_title": "형법", '
+                    '"article_no": "제161조", '
+                    '"article_title": "사체등의 유기", '
+                    '"reason": "시체 매장 행위 검토"}]}'
+                )
+            else:
+                text = (
+                    '{"keep_chunk_ids": ['
+                    f"{expected_chunk_id}"
+                    '], "supplemental_queries": [], "missing_article_refs": []}'
+                )
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": text,
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
 
     def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
         return LegalSourcePlan(
@@ -564,7 +596,7 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
         lambda settings: ExpectedArticleEmbeddingClient(),
     )
 
-    response = rag_client_context.client.post(
+    response = llm_review_rag_client_context.client.post(
         "/api/rag/search",
         json={
             "query": "A buried a body.",
@@ -581,10 +613,10 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
     expected_item = next(
         item for item in body["items"] if item["chunk_id"] == expected_chunk_id
     )
-    assert expected_item["metadata"]["planned_issue_key"] == "exact_article_1"
+    assert expected_item["metadata"]["planned_issue_key"] == "review_exact_article_1"
     assert expected_item["metadata"]["retrieval_type"] == "exact_article"
 
-    with rag_client_context.session_factory() as db:
+    with llm_review_rag_client_context.session_factory() as db:
         retrievals = (
             db.query(RagRetrieval)
             .filter(RagRetrieval.rag_run_id == body["run_id"])
@@ -610,13 +642,13 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
 
 def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
     monkeypatch: pytest.MonkeyPatch,
-    rag_client_context: ApiTestContext,
+    llm_review_rag_client_context: ApiTestContext,
 ) -> None:
     register_and_login(
-        rag_client_context.client,
+        llm_review_rag_client_context.client,
         email="untrusted-article-ref@example.com",
     )
-    with rag_client_context.session_factory() as db:
+    with llm_review_rag_client_context.session_factory() as db:
         profile = _create_profile(db, dimensions=3)
         vector_embedding = _create_chunk_embedding(
             db,
@@ -654,6 +686,24 @@ def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
                 )()
             ]
 
+        def generate_text(self, request):
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": (
+                        '{"keep_chunk_ids": ['
+                        f"{vector_chunk_id}"
+                        '], "supplemental_queries": [], "missing_article_refs": []}'
+                    ),
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
+
     def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
         return LegalSourcePlan(
             issues=[
@@ -683,7 +733,7 @@ def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
         lambda settings: StaticEmbeddingClient(),
     )
 
-    response = rag_client_context.client.post(
+    response = llm_review_rag_client_context.client.post(
         "/api/rag/search",
         json={
             "query": "A accidentally killed B.",
@@ -706,13 +756,13 @@ def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
 
 def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
     monkeypatch: pytest.MonkeyPatch,
-    rag_client_context: ApiTestContext,
+    llm_review_rag_client_context: ApiTestContext,
 ) -> None:
     register_and_login(
-        rag_client_context.client,
+        llm_review_rag_client_context.client,
         email="offender-hiding-filter@example.com",
     )
-    with rag_client_context.session_factory() as db:
+    with llm_review_rag_client_context.session_factory() as db:
         profile = _create_profile(db, dimensions=3)
         offender_hiding_embedding = _create_chunk_embedding(
             db,
@@ -735,6 +785,9 @@ def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
         db.commit()
 
     class StaticEmbeddingClient:
+        def __init__(self) -> None:
+            self.review_calls = 0
+
         def embed_texts(self, request):
             return [
                 type(
@@ -749,6 +802,34 @@ def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
                     },
                 )()
             ]
+
+        def generate_text(self, request):
+            self.review_calls += 1
+            if self.review_calls == 1:
+                text = (
+                    '{"keep_chunk_ids": [], "supplemental_queries": [], '
+                    '"missing_article_refs": [{"law_title": "형법", '
+                    '"article_no": "제52조", "article_title": "자수, 자복", '
+                    '"reason": "자수 효과 확인"}]}'
+                )
+            else:
+                text = (
+                    '{"keep_chunk_ids": ['
+                    f"{surrender_chunk_id}"
+                    '], "supplemental_queries": [], "missing_article_refs": []}'
+                )
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": text,
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
 
     def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
         return LegalSourcePlan(
@@ -779,7 +860,7 @@ def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
         lambda settings: StaticEmbeddingClient(),
     )
 
-    response = rag_client_context.client.post(
+    response = llm_review_rag_client_context.client.post(
         "/api/rag/search",
         json={
             "query": "A reported himself to the police after burying a body.",

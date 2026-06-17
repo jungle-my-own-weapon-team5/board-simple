@@ -82,7 +82,7 @@ def test_planner_parses_expected_article_refs() -> None:
     assert plan.issues[0].expected_article_refs[0].article_no == "제52조"
 
 
-def test_planner_augments_required_criminal_article_refs() -> None:
+def test_planner_augments_required_criminal_issue_hints_without_article_refs() -> None:
     ai_client = _PlanningAIClient(
         text='{"issues":[],"candidates":[]}'
     )
@@ -98,17 +98,10 @@ def test_planner_augments_required_criminal_article_refs() -> None:
         search_mode="issue_spotting",
     )
 
-    expected_refs = {
-        (ref.law_title, ref.article_no)
-        for issue in plan.issues
-        for ref in issue.expected_article_refs
-    }
-    assert ("형법", "제267조") in expected_refs
-    assert ("형법", "제14조") in expected_refs
-    assert ("형법", "제161조") in expected_refs
-    assert ("형법", "제52조") in expected_refs
-    assert ("형사소송법", "제140조") in expected_refs
+    assert all(not issue.expected_article_refs for issue in plan.issues)
+    assert all("제" not in issue.internal_rag_query for issue in plan.issues)
     assert {candidate.title for candidate in plan.candidates} >= {"형법", "형사소송법"}
+    assert "required_issue_hint" in {candidate.reason for candidate in plan.candidates}
 
 
 def test_planner_ignores_unsupported_document_types() -> None:

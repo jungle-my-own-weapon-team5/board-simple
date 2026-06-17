@@ -4,6 +4,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
+import re
 from typing import Any
 
 import pytest
@@ -51,6 +52,9 @@ CHATBOT_TAIL_PHRASES = (
     "원하시면",
     "더 다듬어 드릴게요",
     "다시 정리해드릴게요",
+)
+ARTICLE_MENTION_PATTERN = re.compile(
+    r"(형법|형사소송법)\s*(?:/)?\s*제\s*(\d+)\s*조(?:의\s*\d+)?"
 )
 
 
@@ -272,7 +276,15 @@ def _evaluate_quality(
         "chatbot_tail_hits": [
             phrase for phrase in CHATBOT_TAIL_PHRASES if phrase in draft_text
         ],
-        "article_mismatch_hits": _article_mismatch_hits(issues_text, draft_text),
+        "article_mismatch_hits": _article_mismatch_hits(
+            [
+                *search_items,
+                *(issues_body.get("citations") or []),
+                *(draft_body.get("citations") or []),
+            ],
+            issues_text,
+            draft_text,
+        ),
         "irrelevant_article_hits": _irrelevant_article_hits(all_text),
         "issue_coverage": issue_coverage,
         "issue_coverage_passed": all(issue_coverage.values()),
@@ -341,12 +353,35 @@ def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
     return any(keyword in text for keyword in keywords)
 
 
-def _article_mismatch_hits(*texts: str) -> list[str]:
+def _article_mismatch_hits(
+    search_items: list[dict[str, Any]],
+    *texts: str,
+) -> list[str]:
+    allowed_refs = _allowed_article_refs(search_items)
     hits: list[str] = []
     for text in texts:
+        for match in ARTICLE_MENTION_PATTERN.finditer(text):
+            law_title = match.group(1)
+            article_no = f"제{match.group(2)}조"
+            if (law_title, article_no) not in allowed_refs:
+                hits.append(f"검색 citation에 없는 {law_title} {article_no} 언급")
         if "제51조" in text and "자수" in text:
             hits.append("자수 효과를 형법 제51조로 잘못 연결")
+        if "제153조" in text and "자수" in text:
+            hits.append("자수 일반효과를 형법 제153조로 잘못 연결")
     return hits
+
+
+def _allowed_article_refs(search_items: list[dict[str, Any]]) -> set[tuple[str, str]]:
+    refs: set[tuple[str, str]] = set()
+    for item in search_items:
+        law_title = str(item.get("title") or "").strip()
+        heading = str(item.get("heading") or "")
+        match = re.search(r"제\s*(\d+)\s*조(?:의\s*\d+)?", heading)
+        if not law_title or match is None:
+            continue
+        refs.add((law_title, f"제{match.group(1)}조"))
+    return refs
 
 
 def _irrelevant_article_hits(text: str) -> list[str]:

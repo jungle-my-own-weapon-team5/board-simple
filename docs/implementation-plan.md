@@ -251,10 +251,11 @@ backend/tests/test_rag_retrieval.py
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 쟁점별 검색 예산을 넓게 둡니다.
 - `score_threshold`는 사용자가 명시한 경우에만 hard filter로 적용합니다. 요청값이 없으면 `RAG_MIN_RELEVANCE_SCORE` 같은 서버 기본값으로 최종 결과를 자동 삭제하지 않습니다.
 - 내부 RAG 검색 전 issue/source planning을 먼저 수행하고, `top_k`는 전체 입력이 아니라 계획된 각 쟁점별 query에 적용합니다.
-- issue/source planning 결과에는 필요 시 `expected_article_refs`를 포함합니다. 사용자가 법률 용어를 쓰지 않아도 사망 결과, 사체 은닉, 자수처럼 사실관계상 명확한 필수 조문 후보는 backend가 보강합니다.
+- issue/source planning 결과에는 필요 시 `expected_article_refs`를 포함할 수 있지만, 이는 권위 있는 근거가 아니라 reviewer가 검토할 검색 힌트입니다. 사용자가 법률 용어를 쓰지 않아도 사망 결과, 사체 은닉, 자수처럼 사실관계상 명확한 핵심 쟁점은 backend가 조문번호 없는 검색 힌트와 공식 법령 후보로만 보강합니다.
+- reviewer가 활성화된 경로에서는 조문번호 직접 주입 대신 issue query의 핵심 키워드와 chunk heading을 대조해 후보를 보강하고, 해당 후보도 reviewer의 keep/discard 판단을 거친 뒤에만 최종 결과에 남깁니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries` metadata를 보존합니다.
-- LLM evidence review는 단순히 점수가 낮은 후보를 제거하는 단계가 아니라, 쟁점별 필수 근거 coverage를 점검하고 부족한 경우 보강 query를 생성하는 단계로 조정합니다.
-- LLM evidence review가 비활성화되어도 `expected_article_refs`가 최종 후보에 없으면 법령명과 조문번호를 포함한 보강 query를 1회 실행합니다.
+- LLM evidence review는 단순히 점수가 낮은 후보를 제거하는 단계가 아니라, 쟁점별 필수 근거 coverage를 점검하고 부족한 경우 보강 query 또는 `missing_article_refs`를 생성하는 단계로 조정합니다.
+- 조문번호 기반 exact lookup은 planner가 제안한 조문을 자동 승격하는 방식이 아니라, reviewer가 `missing_article_refs`로 직접 필요성을 판단한 경우에만 수행합니다. review가 비활성화된 mock/test 환경에서만 planner `expected_article_refs`를 fallback hint로 사용합니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
 
@@ -262,8 +263,8 @@ backend/tests/test_rag_retrieval.py
 
 - `backend/app/api/rag.py`의 최종 관련도 필터에서 `settings.rag_min_relevance_score` 기본 적용을 제거합니다.
 - `payload.score_threshold`가 명시된 경우에만 최종 score filter와 rank 재부여를 수행합니다.
-- `backend/app/services/rag/issue_retrieval.py`의 LLM evidence review prompt를 쟁점별 coverage 확인과 필수 근거 누락 보강 중심으로 수정합니다.
-- `backend/app/services/rag/legal_source_planner.py`에 `expected_article_refs` schema와 핵심 형사 사실관계 필수 조문 보강 규칙을 추가합니다.
+- `backend/app/services/rag/issue_retrieval.py`의 LLM evidence review prompt를 쟁점별 coverage 확인, 후보 제거, reviewer 기반 누락 조문 보강 중심으로 수정합니다.
+- `backend/app/services/rag/legal_source_planner.py`에 `expected_article_refs` schema와 핵심 형사 사실관계 검색 힌트 보강 규칙을 추가하되, backend가 조문번호를 직접 확정해 주입하지 않도록 합니다.
 - 최종 선택 chunk만 대표 run의 `rag_retrievals`에 남기는 현재 citation 검증 경계는 유지합니다.
 
 검증:
@@ -276,8 +277,8 @@ backend/tests/test_rag_retrieval.py
 - `score_threshold` 명시 시에만 threshold 미만 chunk가 제외되는지 테스트
 - `max_chunks_per_document` 적용 테스트
 - `focused_answer`와 `issue_spotting` 기본값 테스트
-- planner가 필수 조문 후보를 보강하는지 테스트
-- 필수 조문 후보가 검색 결과에 없을 때 보강 검색이 실행되는지 테스트
+- planner가 핵심 쟁점 검색 힌트를 보강하되 조문번호를 직접 주입하지 않는지 테스트
+- reviewer가 누락 조문을 판단한 경우에만 exact lookup 또는 보강 검색이 실행되는지 테스트
 
 ## 6단계: MCP 서버와 tool registry
 

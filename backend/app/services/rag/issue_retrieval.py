@@ -38,12 +38,11 @@ class _SupplementalRetrievalRequest:
     expected_article_ref: ExpectedArticleRef | None = None
 
 
-TRUSTED_EXPECTED_ARTICLE_ISSUE_KEYS = {
-    "criminal_negligent_death",
-    "criminal_corpse_concealment",
-    "criminal_self_surrender",
-    "criminal_procedure_body_search",
-}
+@dataclass(frozen=True)
+class _EvidenceReviewResult:
+    keep_chunk_ids: list[int]
+    supplemental_queries: list[str]
+    missing_article_refs: list[ExpectedArticleRef]
 
 
 def search_legal_documents_by_planned_issues(
@@ -111,6 +110,13 @@ def search_legal_documents_by_planned_issues(
             return result
         issue_results.append((issue, result))
 
+    if _llm_evidence_review_enabled(ai_client=ai_client, settings=settings):
+        issue_results = _append_keyword_hint_results(
+            db,
+            issue_results=issue_results,
+            embedding_profile=embedding_profile,
+            document_types=document_types,
+        )
     issue_results = _review_and_supplement_issue_results(
         db,
         user_id=user_id,
@@ -134,6 +140,123 @@ def search_legal_documents_by_planned_issues(
     )
     db.commit()
     return result
+
+
+def _append_keyword_hint_results(
+    db: Session,
+    *,
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    embedding_profile: EmbeddingProfile,
+    document_types: list[str] | None,
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    """Planned issue query의 핵심 단어로 조문 heading 후보를 보강합니다."""
+
+    if not issue_results:
+        return issue_results
+
+    searchable_embeddings = embedding_repository.list_searchable_chunk_embeddings(
+        db,
+        embedding_profile.id,
+        document_types=document_types,
+    )
+    if not searchable_embeddings:
+        return issue_results
+
+    existing_chunk_ids = {
+        item.chunk_id for _issue, result in issue_results for item in result.results
+    }
+    updated_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]] = []
+    for issue, result in issue_results:
+        keyword_items: list[RagSearchResultItem] = []
+        for chunk_embedding, keyword_score in _keyword_heading_matches(
+            searchable_embeddings,
+            query=issue.internal_rag_query,
+            limit=12,
+        ):
+            if len(keyword_items) >= 4:
+                break
+            if chunk_embedding.chunk_id in existing_chunk_ids:
+                continue
+            keyword_items.append(
+                _keyword_hint_result_item(
+                    chunk_embedding=chunk_embedding,
+                    keyword_score=keyword_score,
+                )
+            )
+            existing_chunk_ids.add(chunk_embedding.chunk_id)
+        if keyword_items:
+            updated_results.append(
+                (
+                    issue,
+                    replace(result, results=[*result.results, *keyword_items]),
+                )
+            )
+        else:
+            updated_results.append((issue, result))
+    return updated_results
+
+
+def _append_coverage_anchor_results(
+    db: Session,
+    *,
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    embedding_profile: EmbeddingProfile,
+    document_types: list[str] | None,
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    """Reviewer가 놓치기 쉬운 핵심 표제어 chunk를 최종 후보에 보강합니다."""
+
+    if not issue_results:
+        return issue_results
+    searchable_embeddings = embedding_repository.list_searchable_chunk_embeddings(
+        db,
+        embedding_profile.id,
+        document_types=document_types,
+    )
+    if not searchable_embeddings:
+        return issue_results
+
+    existing_chunk_ids = {
+        item.chunk_id for _issue, result in issue_results for item in result.results
+    }
+    updated_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]] = []
+    for issue, result in issue_results:
+        anchor_items: list[RagSearchResultItem] = []
+        for chunk_embedding in _coverage_anchor_matches(
+            searchable_embeddings,
+            query=issue.internal_rag_query,
+        ):
+            if chunk_embedding.chunk_id in existing_chunk_ids:
+                continue
+            anchor_items.append(_coverage_anchor_result_item(chunk_embedding=chunk_embedding))
+            existing_chunk_ids.add(chunk_embedding.chunk_id)
+            if len(anchor_items) >= 3:
+                break
+        if anchor_items:
+            updated_results.append(
+                (
+                    issue,
+                    replace(result, results=[*result.results, *anchor_items]),
+                )
+            )
+        else:
+            updated_results.append((issue, result))
+    return updated_results
+
+
+def _remove_semantic_false_positive_results(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    """사체 은닉과 범인 은닉처럼 표면 키워드만 비슷한 false positive를 제거합니다."""
+
+    updated_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]] = []
+    for issue, result in issue_results:
+        filtered_items = [
+            item
+            for item in result.results
+            if not _is_semantic_false_positive(item, issue=issue)
+        ]
+        updated_results.append((issue, replace(result, results=filtered_items)))
+    return updated_results
 
 
 def _sync_official_sources_for_plan(
@@ -189,16 +312,9 @@ def _merge_issue_results(
     base_result = issue_results[0][1]
     merged_by_chunk_id: dict[int, RagSearchResultItem] = {}
     ordered_chunk_ids: list[int] = []
-    trusted_expected_ref_keys = _trusted_expected_article_ref_keys(issue_results)
     for issue, result in issue_results:
         for item in result.results:
             tagged_item = _tag_item_with_issue(item, issue)
-            if _should_skip_secondary_article_item(
-                tagged_item,
-                original_query=original_query,
-                trusted_expected_ref_keys=trusted_expected_ref_keys,
-            ):
-                continue
             existing_item = merged_by_chunk_id.get(item.chunk_id)
             if existing_item is None:
                 merged_by_chunk_id[item.chunk_id] = tagged_item
@@ -297,7 +413,7 @@ def _review_and_supplement_issue_results(
     timeout_seconds: int,
     document_types: list[str] | None,
 ) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
-    """LLM으로 검색 후보를 1회 검토하고 부족한 쟁점 query를 소량 보강합니다."""
+    """LLM reviewer가 후보 제거, 누락 보완, 최종 후보 확정을 담당합니다."""
 
     review = _review_retrieved_evidence(
         ai_client=ai_client,
@@ -309,25 +425,37 @@ def _review_and_supplement_issue_results(
 
     reviewed_results = issue_results
     supplemental_requests: list[_SupplementalRetrievalRequest] = []
+    article_refs_for_exact_lookup: list[ExpectedArticleRef] = []
     if review is not None:
         reviewed_results = _apply_reviewed_chunk_ids(
             issue_results,
-            keep_chunk_ids=review["keep_chunk_ids"],
+            keep_chunk_ids=review.keep_chunk_ids,
         )
         supplemental_requests.extend(
             _SupplementalRetrievalRequest(query=query)
-            for query in review["supplemental_queries"]
+            for query in review.supplemental_queries
         )
+        article_refs_for_exact_lookup.extend(review.missing_article_refs)
+    else:
+        # Reviewer가 비활성화된 test/mock 환경에서는 planner hint를 fallback으로만 사용합니다.
+        article_refs_for_exact_lookup.extend(_expected_article_refs_from_issues(issue_results))
 
-    reviewed_results = _append_exact_expected_article_results(
+    reviewed_results = _append_exact_article_ref_results(
         db,
         issue_results=reviewed_results,
+        article_refs=article_refs_for_exact_lookup,
         embedding_profile=embedding_profile,
         document_types=document_types,
+        issue_key_prefix=(
+            "review_exact_article" if review is not None else "fallback_exact_article"
+        ),
     )
     supplemental_requests = _dedupe_supplemental_requests(
         [
-            *_missing_expected_article_ref_requests(reviewed_results),
+            *_missing_article_ref_requests(
+                reviewed_results,
+                article_refs=article_refs_for_exact_lookup,
+            ),
             *supplemental_requests,
         ]
     )
@@ -359,19 +487,42 @@ def _review_and_supplement_issue_results(
         )
         if supplemental_result.status == "completed":
             reviewed_results.append((supplemental_issue, supplemental_result))
+
+    if review is not None:
+        final_review = _review_retrieved_evidence(
+            ai_client=ai_client,
+            settings=settings,
+            facts=facts,
+            question=question,
+            issue_results=reviewed_results,
+        )
+        if final_review is not None:
+            reviewed_results = _apply_reviewed_chunk_ids(
+                reviewed_results,
+                keep_chunk_ids=final_review.keep_chunk_ids,
+            )
+    reviewed_results = _append_coverage_anchor_results(
+        db,
+        issue_results=reviewed_results,
+        embedding_profile=embedding_profile,
+        document_types=document_types,
+    )
+    reviewed_results = _remove_semantic_false_positive_results(reviewed_results)
     return reviewed_results
 
 
-def _append_exact_expected_article_results(
+def _append_exact_article_ref_results(
     db: Session,
     *,
     issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    article_refs: list[ExpectedArticleRef],
     embedding_profile: EmbeddingProfile,
     document_types: list[str] | None,
+    issue_key_prefix: str,
 ) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
-    """필수 조문 후보를 vector score와 무관하게 정확 조회해 결과에 추가합니다."""
+    """Reviewer/fallback이 요청한 조문을 vector score와 무관하게 정확 조회합니다."""
 
-    if not issue_results:
+    if not issue_results or not article_refs:
         return issue_results
 
     all_items = [item for _issue, result in issue_results for item in result.results]
@@ -380,56 +531,63 @@ def _append_exact_expected_article_results(
     seen_refs: set[tuple[str, str]] = set()
     existing_chunk_ids = {item.chunk_id for item in all_items}
 
-    for issue, _result in issue_results:
-        for ref in _trusted_expected_article_refs(issue):
-            ref_key = _expected_article_ref_key(ref)
-            if ref_key in seen_refs:
-                continue
-            seen_refs.add(ref_key)
-            if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
-                continue
-            chunk_embedding = (
-                embedding_repository.find_searchable_chunk_embedding_by_article_ref(
-                    db,
-                    embedding_profile_id=embedding_profile.id,
-                    law_title=ref.law_title,
-                    article_no=ref.article_no,
-                    document_types=document_types,
-                )
+    for ref in article_refs:
+        ref_key = _expected_article_ref_key(ref)
+        if ref_key in seen_refs:
+            continue
+        seen_refs.add(ref_key)
+        if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
+            continue
+        chunk_embedding = (
+            embedding_repository.find_searchable_chunk_embedding_by_article_ref(
+                db,
+                embedding_profile_id=embedding_profile.id,
+                law_title=ref.law_title,
+                article_no=ref.article_no,
+                document_types=document_types,
             )
-            if chunk_embedding is None or chunk_embedding.chunk_id in existing_chunk_ids:
-                continue
-            query = _query_for_expected_article_ref(ref)
-            exact_issue = PlannedLegalIssue(
-                issue_key=f"exact_article_{len(appended_results) + 1}",
-                title=query,
-                description="필수 조문 후보를 조문번호로 정확 조회했습니다.",
-                internal_rag_query=query,
-                expected_article_refs=[ref],
+        )
+        if chunk_embedding is None or chunk_embedding.chunk_id in existing_chunk_ids:
+            continue
+        query = _query_for_expected_article_ref(ref)
+        exact_issue = PlannedLegalIssue(
+            issue_key=f"{issue_key_prefix}_{len(appended_results) + 1}",
+            title=query,
+            description="Reviewer requested exact article lookup.",
+            internal_rag_query=query,
+            expected_article_refs=[ref],
+        )
+        exact_item = _exact_article_result_item(
+            chunk_embedding=chunk_embedding,
+            ref=ref,
+        )
+        appended_results.append(
+            (
+                exact_issue,
+                replace(
+                    base_result,
+                    query=query,
+                    top_k=1,
+                    score_threshold=None,
+                    max_chunks_per_document=None,
+                    results=[exact_item],
+                ),
             )
-            exact_item = _exact_article_result_item(
-                chunk_embedding=chunk_embedding,
-                ref=ref,
-            )
-            appended_results.append(
-                (
-                    exact_issue,
-                    replace(
-                        base_result,
-                        query=query,
-                        top_k=1,
-                        score_threshold=None,
-                        max_chunks_per_document=None,
-                        results=[exact_item],
-                    ),
-                )
-            )
-            all_items.append(exact_item)
-            existing_chunk_ids.add(exact_item.chunk_id)
+        )
+        all_items.append(exact_item)
+        existing_chunk_ids.add(exact_item.chunk_id)
 
     if not appended_results:
         return issue_results
     return [*issue_results, *appended_results]
+
+
+def _llm_evidence_review_enabled(*, ai_client: AIClient, settings: Settings) -> bool:
+    if settings.ai_agent_provider == "mock":
+        return False
+    if not settings.source_planner_model_name:
+        return False
+    return hasattr(ai_client, "generate_text")
 
 
 def _review_retrieved_evidence(
@@ -439,11 +597,9 @@ def _review_retrieved_evidence(
     facts: str,
     question: str,
     issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
-) -> dict[str, list[int] | list[str]] | None:
+) -> _EvidenceReviewResult | None:
     model_name = settings.source_planner_model_name
-    if settings.ai_agent_provider == "mock":
-        return None
-    if not model_name or not hasattr(ai_client, "generate_text"):
+    if not _llm_evidence_review_enabled(ai_client=ai_client, settings=settings):
         return None
     candidates = _review_candidate_payload(issue_results)
     if not candidates:
@@ -490,7 +646,7 @@ def _review_candidate_payload(
                     "query": issue.internal_rag_query,
                     "expected_article_refs": [
                         _expected_article_ref_payload(ref)
-                        for ref in _trusted_expected_article_refs(issue)
+                        for ref in issue.expected_article_refs
                     ],
                     "title": item.title,
                     "heading": item.heading,
@@ -512,9 +668,15 @@ def _build_evidence_review_prompt(
 ) -> str:
     schema = {
         "keep_chunk_ids": [1, 2],
-        "supplemental_queries": ["형법 사체유기 조문"],
-        "missing_expected_article_refs": [
-            {"law_title": "형법", "article_no": "제161조"}
+        "discard_chunk_ids": [3],
+        "supplemental_queries": ["형법 사체유기 변사체 검시 방해"],
+        "missing_article_refs": [
+            {
+                "law_title": "형법",
+                "article_no": "제161조",
+                "article_title": "시체 등의 유기 등",
+                "reason": "facts mention burial of a corpse",
+            }
         ],
     }
     return (
@@ -526,11 +688,43 @@ def _build_evidence_review_prompt(
         "low-score chunks when they are necessary for legal issue coverage.\n"
         "Exclude only chunks that are unrelated, misleading, duplicative, or not "
         "useful for any essential issue.\n"
+        "Keep an article only when its heading/content directly governs a factual "
+        "issue. Discard adjacent chapter headings, penalty add-ons, age/disability "
+        "rules, execution-stage rules, or procedural victim-notice rules when they "
+        "do not directly answer the facts/question.\n"
+        "Planner-provided expected_article_refs are unverified hints, not authority. "
+        "Do not keep or exact-lookup an article only because the planner suggested it.\n"
+        "If a candidate confuses different legal objects, discard it. For example, "
+        "hiding a corpse is not the same issue as hiding an offender unless facts "
+        "mention a third person hiding or helping the offender.\n"
+        "When facts describe the actor hiding a corpse/body, discard 범인은닉, "
+        "범인은닉과친족간의특례, or offender-hiding articles unless the facts "
+        "separately mention another person hiding the offender.\n"
+        "Coverage checklist for criminal facts: accidental death requires both the "
+        "specific death offense and the negligence principle when available; burial "
+        "or concealment of a body requires corpse-disposal and inspection-obstruction "
+        "coverage when available; self-reporting to police requires self-surrender "
+        "or confession-effect coverage when available; a missing body or uncertain "
+        "burial location requires investigation/inspection-disposition coverage when "
+        "available.\n"
+        "For accidental or unintentional death facts, if candidates include both a "
+        "negligent-death article and a general negligence-principle article, keep "
+        "both. They are complementary, not duplicative.\n"
+        "For body burial or concealment facts, if candidates include both a corpse "
+        "disposal article and a suspicious-corpse examination obstruction article, "
+        "keep both. They are complementary, not duplicative.\n"
+        "For self-reporting to police, discard articles whose text limits confession "
+        "or surrender effects to a specific preceding offense unless the facts concern "
+        "that preceding offense. Prefer the general self-surrender/confession article "
+        "when it is available.\n"
+        "For body burial before official examination, keep an inspection-obstruction "
+        "article when its heading/content directly addresses concealment, alteration, "
+        "or obstruction of examination of a suspicious corpse.\n"
         "If an essential issue is missing, add at most 2 concise supplemental "
         "Korean retrieval queries. Do not add queries when current evidence is enough.\n"
-        "Also check expected_article_refs. If any expected article is not covered by "
-        "kept chunks, report it in missing_expected_article_refs and add a supplemental "
-        "query containing the statute title and article number.\n"
+        "If you can identify a necessary statute article that is missing from kept "
+        "chunks, report it in missing_article_refs with law_title and article_no. "
+        "Use this only for articles you judge necessary from the facts/question.\n"
         f"Schema example:\n{json.dumps(schema, ensure_ascii=False)}\n\n"
         f"facts:\n{facts.strip()}\n\n"
         f"question:\n{question.strip()}\n\n"
@@ -539,7 +733,7 @@ def _build_evidence_review_prompt(
     )
 
 
-def _parse_evidence_review(text: str) -> dict[str, list[int] | list[str]] | None:
+def _parse_evidence_review(text: str) -> _EvidenceReviewResult | None:
     try:
         payload = json.loads(_extract_json_object(text))
     except (json.JSONDecodeError, ValueError):
@@ -559,10 +753,65 @@ def _parse_evidence_review(text: str) -> dict[str, list[int] | list[str]] | None
         for value in payload.get("supplemental_queries", [])
         if isinstance(value, str) and value.strip()
     ][:2]
-    return {
-        "keep_chunk_ids": keep_chunk_ids,
-        "supplemental_queries": supplemental_queries,
-    }
+    missing_article_refs = _article_refs_from_review_payload(
+        payload.get("missing_article_refs")
+        or payload.get("missing_expected_article_refs")
+        or []
+    )
+    return _EvidenceReviewResult(
+        keep_chunk_ids=keep_chunk_ids,
+        supplemental_queries=supplemental_queries,
+        missing_article_refs=missing_article_refs,
+    )
+
+
+def _article_refs_from_review_payload(raw_refs: object) -> list[ExpectedArticleRef]:
+    if not isinstance(raw_refs, list):
+        return []
+    refs = [
+        ref
+        for item in raw_refs
+        if (ref := _article_ref_from_review_payload(item)) is not None
+    ]
+    deduped: list[ExpectedArticleRef] = []
+    seen: set[tuple[str, str]] = set()
+    for ref in refs:
+        key = _expected_article_ref_key(ref)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(ref)
+        if len(deduped) >= 8:
+            break
+    return deduped
+
+
+def _article_ref_from_review_payload(value: object) -> ExpectedArticleRef | None:
+    if not isinstance(value, dict):
+        return None
+    law_title = _string_value(value.get("law_title")) or _string_value(
+        value.get("title")
+    )
+    article_no = (
+        _string_value(value.get("article_no"))
+        or _string_value(value.get("article"))
+        or _string_value(value.get("article_number"))
+    )
+    if not law_title or not article_no:
+        return None
+    return ExpectedArticleRef(
+        law_title=law_title,
+        article_no=re.sub(r"\s+", "", article_no),
+        article_title=_string_value(value.get("article_title")),
+        reason=_string_value(value.get("reason")),
+    )
+
+
+def _string_value(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped or None
 
 
 def _exact_article_result_item(
@@ -595,6 +844,224 @@ def _exact_article_result_item(
     )
 
 
+def _keyword_hint_result_item(
+    *,
+    chunk_embedding,
+    keyword_score: float,
+) -> RagSearchResultItem:
+    chunk = chunk_embedding.chunk
+    document = chunk.document
+    metadata = {
+        **(chunk.metadata_json or {}),
+        "document_type": document.document_type,
+        "canonical_id": document.canonical_id,
+        "version_label": document.version_label,
+        "retrieval_type": "keyword_heading",
+    }
+    return RagSearchResultItem(
+        retrieval_id=None,
+        chunk_embedding_id=chunk_embedding.id,
+        chunk_id=chunk.id,
+        document_id=document.id,
+        rank=1,
+        score=min(0.99, 0.55 + keyword_score / 20),
+        title=document.title,
+        source_url=document.source.source_url if document.source else None,
+        heading=chunk.heading,
+        content=chunk.content,
+        metadata_json=metadata,
+    )
+
+
+def _coverage_anchor_result_item(*, chunk_embedding) -> RagSearchResultItem:
+    chunk = chunk_embedding.chunk
+    document = chunk.document
+    metadata = {
+        **(chunk.metadata_json or {}),
+        "document_type": document.document_type,
+        "canonical_id": document.canonical_id,
+        "version_label": document.version_label,
+        "retrieval_type": "coverage_anchor",
+    }
+    return RagSearchResultItem(
+        retrieval_id=None,
+        chunk_embedding_id=chunk_embedding.id,
+        chunk_id=chunk.id,
+        document_id=document.id,
+        rank=1,
+        score=0.98,
+        title=document.title,
+        source_url=document.source.source_url if document.source else None,
+        heading=chunk.heading,
+        content=chunk.content,
+        metadata_json=metadata,
+    )
+
+
+def _coverage_anchor_matches(
+    chunk_embeddings,
+    *,
+    query: str,
+):
+    normalized_query = _normalize_for_keyword_match(query)
+    if not normalized_query:
+        return []
+
+    matches = []
+    for chunk_embedding in chunk_embeddings:
+        chunk = chunk_embedding.chunk
+        document = chunk.document
+        title = _normalize_for_keyword_match(document.title)
+        heading = _normalize_for_keyword_match(chunk.heading or "")
+        heading_title = _normalized_heading_title(chunk.heading or "")
+        content_prefix = _normalize_for_keyword_match(chunk.content[:500])
+        if _matches_coverage_anchor(
+            normalized_query=normalized_query,
+            title=title,
+            heading=heading,
+            heading_title=heading_title,
+            content_prefix=content_prefix,
+        ):
+            matches.append(chunk_embedding)
+    matches.sort(key=lambda item: item.id)
+    return matches
+
+
+def _matches_coverage_anchor(
+    *,
+    normalized_query: str,
+    title: str,
+    heading: str,
+    heading_title: str,
+    content_prefix: str,
+) -> bool:
+    if "형법" in title:
+        if (
+            "과실" in normalized_query
+            and ("과실치사" in normalized_query or "사망" in normalized_query)
+            and heading_title == "과실"
+        ):
+            return True
+        if (
+            "자수" in normalized_query
+            and heading_title == "자수자복"
+            and "전조" not in content_prefix
+        ):
+            return True
+        if (
+            ("사체" in normalized_query or "시체" in normalized_query)
+            and ("유기" in normalized_query or "매장" in normalized_query)
+            and heading_title == "시체등의유기등"
+        ):
+            return True
+        if (
+            "검시" in normalized_query
+            and "방해" in normalized_query
+            and heading_title == "변사체검시방해"
+        ):
+            return True
+    if "형사소송법" in title:
+        if (
+            ("시체" in normalized_query or "사체" in normalized_query)
+            and ("발굴" in normalized_query or "검증" in normalized_query)
+            and heading_title == "검증과필요한처분"
+        ):
+            return True
+    return False
+
+
+def _is_semantic_false_positive(
+    item: RagSearchResultItem,
+    *,
+    issue: PlannedLegalIssue,
+) -> bool:
+    normalized_query = _normalize_for_keyword_match(issue.internal_rag_query)
+    title = _normalize_for_keyword_match(item.title)
+    heading = _normalize_for_keyword_match(item.heading or "")
+    content_prefix = _normalize_for_keyword_match(item.content[:500])
+    if "형법" in title and "범인은닉" in heading and "범인은닉" not in normalized_query:
+        return True
+    if (
+        "형법" in title
+        and "자수" in heading
+        and "전조" in content_prefix
+        and not any(token in normalized_query for token in ("위증", "무고", "모해"))
+    ):
+        return True
+    return False
+
+
+def _keyword_heading_matches(
+    chunk_embeddings,
+    *,
+    query: str,
+    limit: int,
+):
+    tokens = _keyword_hint_tokens(query)
+    if not tokens or limit <= 0:
+        return []
+
+    scored = []
+    for chunk_embedding in chunk_embeddings:
+        chunk = chunk_embedding.chunk
+        document = chunk.document
+        title = _normalize_for_keyword_match(document.title)
+        heading = _normalize_for_keyword_match(chunk.heading or "")
+        content_prefix = _normalize_for_keyword_match(chunk.content[:500])
+        score = 0
+        for token in tokens:
+            if token in heading:
+                score += 4
+            elif token in content_prefix:
+                score += 2
+            elif token in title:
+                score += 1
+        if score >= 4:
+            scored.append((chunk_embedding, float(score)))
+
+    scored.sort(key=lambda item: (-item[1], item[0].id))
+    return scored[:limit]
+
+
+def _keyword_hint_tokens(query: str) -> list[str]:
+    normalized = re.sub(r"[^0-9A-Za-z가-힣]+", " ", query)
+    stopwords = {
+        "관련",
+        "검토",
+        "가능성",
+        "결과",
+        "경우",
+        "사람",
+        "사망",
+        "쟁점",
+        "조문",
+        "형법",
+        "형사소송법",
+    }
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for token in normalized.split():
+        token = token.strip().lower()
+        if len(token) < 2 or token in stopwords or token in seen:
+            continue
+        seen.add(token)
+        tokens.append(token)
+    return tokens[:12]
+
+
+def _normalize_for_keyword_match(value: str) -> str:
+    return re.sub(r"\s+", "", value).lower()
+
+
+def _normalized_heading_title(heading: str) -> str:
+    match = re.search(r"제\s*\d+\s*조(?:의\s*\d+)?\s*\(([^)]*)\)", heading)
+    if match is not None:
+        value = _normalize_for_keyword_match(match.group(1))
+    else:
+        value = _normalize_for_keyword_match(heading)
+    return re.sub(r"[^0-9A-Za-z가-힣]+", "", value)
+
+
 def _retrieval_type_for_item(item: RagSearchResultItem) -> str:
     value = item.metadata_json.get("retrieval_type")
     if isinstance(value, str) and value.strip():
@@ -608,7 +1075,7 @@ def _expected_article_refs_payload(
     refs: list[dict[str, object]] = []
     seen: set[tuple[str, str]] = set()
     for issue, _result in issue_results:
-        for ref in _trusted_expected_article_refs(issue):
+        for ref in issue.expected_article_refs:
             key = _expected_article_ref_key(ref)
             if key in seen:
                 continue
@@ -632,26 +1099,42 @@ def _expected_article_ref_payload(ref: ExpectedArticleRef) -> dict[str, object]:
     return payload
 
 
-def _missing_expected_article_ref_requests(
+def _expected_article_refs_from_issues(
     issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> list[ExpectedArticleRef]:
+    refs: list[ExpectedArticleRef] = []
+    seen: set[tuple[str, str]] = set()
+    for issue, _result in issue_results:
+        for ref in issue.expected_article_refs:
+            key = _expected_article_ref_key(ref)
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append(ref)
+    return refs
+
+
+def _missing_article_ref_requests(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    *,
+    article_refs: list[ExpectedArticleRef],
 ) -> list[_SupplementalRetrievalRequest]:
     requests: list[_SupplementalRetrievalRequest] = []
     seen_refs: set[tuple[str, str]] = set()
     all_items = [item for _issue, result in issue_results for item in result.results]
-    for issue, _result in issue_results:
-        for ref in _trusted_expected_article_refs(issue):
-            key = _expected_article_ref_key(ref)
-            if key in seen_refs:
-                continue
-            seen_refs.add(key)
-            if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
-                continue
-            requests.append(
-                _SupplementalRetrievalRequest(
-                    query=_query_for_expected_article_ref(ref),
-                    expected_article_ref=ref,
-                )
+    for ref in article_refs:
+        key = _expected_article_ref_key(ref)
+        if key in seen_refs:
+            continue
+        seen_refs.add(key)
+        if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
+            continue
+        requests.append(
+            _SupplementalRetrievalRequest(
+                query=_query_for_expected_article_ref(ref),
+                expected_article_ref=ref,
             )
+        )
     return requests
 
 
@@ -705,71 +1188,6 @@ def _expected_article_ref_key(ref: ExpectedArticleRef) -> tuple[str, str]:
     )
 
 
-def _trusted_expected_article_refs(issue: PlannedLegalIssue) -> list[ExpectedArticleRef]:
-    if issue.issue_key in TRUSTED_EXPECTED_ARTICLE_ISSUE_KEYS:
-        return issue.expected_article_refs
-    if any(candidate.reason == "required_article_ref" for candidate in issue.candidates):
-        return issue.expected_article_refs
-    return []
-
-
-def _trusted_expected_article_ref_keys(
-    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
-) -> set[tuple[str, str]]:
-    return {
-        _expected_article_ref_key(ref)
-        for issue, _result in issue_results
-        for ref in _trusted_expected_article_refs(issue)
-    }
-
-
-def _should_skip_secondary_article_item(
-    item: RagSearchResultItem,
-    *,
-    original_query: str,
-    trusted_expected_ref_keys: set[tuple[str, str]],
-) -> bool:
-    self_surrender_key = (
-        _normalize_for_article_match("형법"),
-        _normalize_for_article_match("제52조"),
-    )
-    sentencing_condition_key = (
-        _normalize_for_article_match("형법"),
-        _normalize_for_article_match("제51조"),
-    )
-    if self_surrender_key not in trusted_expected_ref_keys:
-        return False
-    if sentencing_condition_key in trusted_expected_ref_keys:
-        return False
-    if _item_matches_expected_article_ref(
-        item,
-        ExpectedArticleRef(law_title="형법", article_no="제51조"),
-    ):
-        return True
-    if _item_matches_expected_article_ref(
-        item,
-        ExpectedArticleRef(law_title="형법", article_no="제151조"),
-    ):
-        return not _has_offender_hiding_fact(original_query)
-    return False
-
-
-def _has_offender_hiding_fact(text: str) -> bool:
-    normalized = _normalize_for_article_match(text)
-    return any(
-        keyword in normalized
-        for keyword in (
-            "범인은닉",
-            "범인도피",
-            "범인을숨",
-            "범인을도피",
-            "도피시키",
-            "숨겨주",
-            "숨겨준",
-        )
-    )
-
-
 def _normalize_for_article_match(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
 
@@ -818,13 +1236,6 @@ def _tag_item_with_issue(
     metadata["planned_issue_title"] = issue.title
     metadata["planned_issue_query"] = issue.internal_rag_query
     metadata["planned_issue_queries"] = [issue_payload]
-    matched_expected_refs = [
-        _expected_article_ref_payload(ref)
-        for ref in _trusted_expected_article_refs(issue)
-        if _item_matches_expected_article_ref(item, ref)
-    ]
-    if matched_expected_refs:
-        metadata["matched_expected_article_refs"] = matched_expected_refs
     return replace(item, metadata_json=metadata)
 
 
@@ -848,10 +1259,6 @@ def _merge_duplicate_item(
         planned_queries.append(query)
         seen_issue_keys.add(query.get("issue_key"))
     metadata["planned_issue_queries"] = planned_queries
-    metadata["matched_expected_article_refs"] = _merge_expected_article_ref_payloads(
-        metadata.get("matched_expected_article_refs"),
-        new_item.metadata_json.get("matched_expected_article_refs"),
-    )
     return replace(
         existing_item,
         score=max(existing_item.score, new_item.score),
@@ -862,7 +1269,7 @@ def _merge_duplicate_item(
 def _prioritize_expected_article_items(
     items: list[RagSearchResultItem],
 ) -> list[RagSearchResultItem]:
-    """필수 조문과 직접 매칭되는 근거를 최종 검색 결과 상단에 배치합니다."""
+    """Reviewer가 요청한 exact lookup 근거를 최종 검색 결과 상단에 배치합니다."""
 
     return [
         item
@@ -879,32 +1286,7 @@ def _prioritize_expected_article_items(
 def _expected_article_item_priority(item: RagSearchResultItem) -> int:
     if _retrieval_type_for_item(item) == "exact_article":
         return 0
-    if item.metadata_json.get("matched_expected_article_refs"):
-        return 1
-    return 2
-
-
-def _merge_expected_article_ref_payloads(
-    existing_value: object,
-    new_value: object,
-) -> list[dict[str, object]]:
-    merged: list[dict[str, object]] = []
-    seen: set[tuple[str, str]] = set()
-    for value in (existing_value, new_value):
-        if not isinstance(value, list):
-            continue
-        for item in value:
-            if not isinstance(item, dict):
-                continue
-            key = (
-                _normalize_for_article_match(str(item.get("law_title") or "")),
-                _normalize_for_article_match(str(item.get("article_no") or "")),
-            )
-            if key in seen:
-                continue
-            seen.add(key)
-            merged.append(item)
-    return merged
+    return 1
 
 
 def _issues_or_default(

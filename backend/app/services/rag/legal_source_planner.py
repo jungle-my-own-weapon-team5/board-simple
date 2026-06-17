@@ -37,7 +37,7 @@ class LegalSourceCandidate:
 
 @dataclass(frozen=True)
 class ExpectedArticleRef:
-    """쟁점 검색에서 반드시 확인해야 하는 조문 후보입니다."""
+    """Planner/reviewer article hint; not citation evidence by itself."""
 
     law_title: str
     article_no: str
@@ -89,7 +89,7 @@ def plan_legal_source_candidates(
 
     model_name = settings.source_planner_model_name
     if not model_name or not hasattr(ai_client, "generate_text"):
-        return _augment_plan_with_required_article_refs(
+        return _augment_plan_with_required_issue_hints(
             _fallback_plan(facts, question, limit=candidate_limit),
             facts=facts,
             question=question,
@@ -113,7 +113,7 @@ def plan_legal_source_candidates(
             )
         )
     except ProviderError:
-        return _augment_plan_with_required_article_refs(
+        return _augment_plan_with_required_issue_hints(
             _fallback_plan(facts, question, limit=candidate_limit),
             facts=facts,
             question=question,
@@ -122,7 +122,7 @@ def plan_legal_source_candidates(
     plan = _parse_plan(result.text, limit=candidate_limit)
     if not plan.candidates and not plan.issues:
         fallback = _fallback_plan(facts, question, limit=candidate_limit)
-        return _augment_plan_with_required_article_refs(
+        return _augment_plan_with_required_issue_hints(
             LegalSourcePlan(
                 candidates=fallback.candidates,
                 issues=fallback.issues,
@@ -132,7 +132,7 @@ def plan_legal_source_candidates(
             question=question,
             limit=candidate_limit,
         )
-    return _augment_plan_with_required_article_refs(
+    return _augment_plan_with_required_issue_hints(
         LegalSourcePlan(
             candidates=plan.candidates,
             issues=plan.issues,
@@ -520,7 +520,7 @@ def _fallback_plan(
     )
 
 
-def _augment_plan_with_required_article_refs(
+def _augment_plan_with_required_issue_hints(
     plan: LegalSourcePlan,
     *,
     facts: str,
@@ -676,7 +676,7 @@ def _required_issue(
                 document_type="statute",
                 title=ref.law_title,
                 query=ref.law_title,
-                reason="required_article_ref",
+                reason="required_issue_hint",
             )
             for ref in refs
         ],
@@ -685,11 +685,11 @@ def _required_issue(
     return PlannedLegalIssue(
         issue_key=issue_key,
         title=title,
-        description="사실관계상 누락되면 안 되는 필수 조문 후보입니다.",
-        internal_rag_query=query,
+        description="사실관계상 누락되면 안 되는 핵심 쟁점 검색 힌트입니다.",
+        internal_rag_query=_strip_article_numbers(query),
         official_source_query=candidates[0].query if candidates else None,
         candidates=candidates,
-        expected_article_refs=_dedupe_article_refs(refs),
+        expected_article_refs=[],
     )
 
 
@@ -764,6 +764,11 @@ def _normalize_title(value: str) -> str:
 
 def _normalize_article_no(value: str) -> str:
     return re.sub(r"\s+", "", value)
+
+
+def _strip_article_numbers(value: str) -> str:
+    stripped = re.sub(r"제\s*\d+\s*조(?:의\s*\d+)?", "", value)
+    return re.sub(r"\s+", " ", stripped).strip()
 
 
 def _make_issue_key(value: str, *, index: int) -> str:
