@@ -65,8 +65,8 @@ export default function DisputeAssistantPage() {
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
   const [searchMode, setSearchMode] = useState<RagSearchMode>("issue_spotting");
   const [documentType, setDocumentType] = useState<LegalDocumentType | "">("");
-  const [topK, setTopK] = useState("8");
-  const [maxChunksPerDocument, setMaxChunksPerDocument] = useState("5");
+  const [topK, setTopK] = useState("");
+  const [maxChunksPerDocument, setMaxChunksPerDocument] = useState("");
   const [scoreThreshold, setScoreThreshold] = useState("");
   const [searchResult, setSearchResult] = useState<RagSearchResponse | null>(null);
   const [issuesResult, setIssuesResult] = useState<DisputeIssuesResponse | null>(null);
@@ -343,13 +343,21 @@ export default function DisputeAssistantPage() {
                 ))}
               </select>
             </label>
-            <NumberField label="Top K" value={topK} onChange={setTopK} min={1} max={100} />
+            <NumberField
+              label="Top K"
+              value={topK}
+              onChange={setTopK}
+              min={1}
+              max={100}
+              placeholder="모드 기본값"
+            />
             <NumberField
               label="문서당 청크"
               value={maxChunksPerDocument}
               onChange={setMaxChunksPerDocument}
               min={1}
               max={100}
+              placeholder="제한 없음"
             />
             <label className="grid gap-2 text-sm font-semibold">
               Score Threshold
@@ -411,13 +419,15 @@ function NumberField({
   value,
   onChange,
   min,
-  max
+  max,
+  placeholder
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   min: number;
   max: number;
+  placeholder?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold">
@@ -428,6 +438,7 @@ function NumberField({
         onChange={(event) => onChange(event.target.value)}
         min={min}
         max={max}
+        placeholder={placeholder}
       />
     </label>
   );

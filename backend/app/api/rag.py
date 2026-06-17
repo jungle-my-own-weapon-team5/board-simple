@@ -69,7 +69,7 @@ def search_rag_documents(
     )
     if result.status == "failed":
         _raise_search_failure(result.error_code, result.error_message)
-    result = _with_relevant_results_only(result, settings=settings, payload=payload)
+    result = _with_relevant_results_only(result, payload=payload)
     return RagSearchRead.from_service_result(result)
 
 
@@ -120,14 +120,12 @@ def _document_types_from_filters(payload: RagSearchCreate) -> list[str] | None:
 def _with_relevant_results_only(
     result,
     *,
-    settings: Settings,
     payload: RagSearchCreate,
 ):
-    threshold = (
-        payload.score_threshold
-        if payload.score_threshold is not None
-        else settings.rag_min_relevance_score
-    )
+    if payload.score_threshold is None:
+        return result
+
+    threshold = payload.score_threshold
     relevant_results = [item for item in result.results if item.score >= threshold]
     return replace(
         result,

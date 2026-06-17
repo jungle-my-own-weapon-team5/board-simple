@@ -380,6 +380,7 @@ def test_rag_search_endpoint_reranks_after_relevance_filter(
         json={
             "query": "combined query",
             "top_k": 1,
+            "score_threshold": 0.4,
             "filters": {"document_type": "statute"},
         },
         headers=origin_headers(),
@@ -389,6 +390,102 @@ def test_rag_search_endpoint_reranks_after_relevance_filter(
     body = response.json()
     assert [item["chunk_id"] for item in body["items"]] == [high_chunk_id]
     assert [item["rank"] for item in body["items"]] == [1]
+
+
+def test_rag_search_endpoint_keeps_low_score_results_without_threshold(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(rag_client_context.client, email="issue-no-threshold@example.com")
+    first_issue_query = "low score issue"
+    second_issue_query = "high score issue"
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        low_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="Low score statute",
+            heading="Article Low",
+            content="low score but issue coverage content",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        high_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="High score statute",
+            heading="Article High",
+            content="high score content",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        low_chunk_id = low_embedding.chunk_id
+        high_chunk_id = high_embedding.chunk_id
+        db.commit()
+
+    class IssueEmbeddingClient:
+        def embed_texts(self, request):
+            text = request.texts[0]
+            vector = [1.0, 0.0, 0.0]
+            if text == first_issue_query:
+                vector = [0.0, 0.0, 1.0]
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": vector,
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": len(vector),
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="low",
+                    title="Low",
+                    description=None,
+                    internal_rag_query=first_issue_query,
+                ),
+                PlannedLegalIssue(
+                    issue_key="high",
+                    title="High",
+                    description=None,
+                    internal_rag_query=second_issue_query,
+                ),
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.AIClient",
+        lambda settings: IssueEmbeddingClient(),
+    )
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "combined query",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["chunk_id"] for item in body["items"]] == [
+        low_chunk_id,
+        high_chunk_id,
+    ]
+    assert [item["rank"] for item in body["items"]] == [1, 2]
+    assert body["score_threshold"] is None
 
 
 def test_rag_search_endpoint_indexes_only_llm_reviewed_chunks(
@@ -668,6 +765,7 @@ def test_rag_search_endpoint_syncs_when_existing_results_are_low_relevance(
         json={
             "query": user_query,
             "top_k": 5,
+            "score_threshold": 0.4,
             "filters": {"document_type": "statute"},
         },
         headers=origin_headers(),
