@@ -1,0 +1,315 @@
+{
+  "schema_version": "sillok-seed-artifact-report-v1",
+  "generated_at": "2026-06-17T21:01:01.629816+00:00",
+  "seed_version": "sillok-v2-live-to-100",
+  "manifest_record_count": 102,
+  "processed": 23,
+  "written": 0,
+  "skipped": 0,
+  "missing": 0,
+  "failed": 23,
+  "fetch_live": true,
+  "live_fetches": 0,
+  "output_dir": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102",
+  "statuses": [
+    {
+      "selected_rank": 80,
+      "sillok_id": "krb_10101001_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101001_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0080-krb_10101001_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0080-krb_10101001_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0080-krb_10101001_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 81,
+      "sillok_id": "krb_10101003_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101003_004",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0081-krb_10101003_004.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0081-krb_10101003_004.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0081-krb_10101003_004.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 82,
+      "sillok_id": "krb_10101007_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101007_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0082-krb_10101007_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0082-krb_10101007_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0082-krb_10101007_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 83,
+      "sillok_id": "krb_10101010_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101010_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0083-krb_10101010_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0083-krb_10101010_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0083-krb_10101010_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 84,
+      "sillok_id": "krb_10101015_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101015_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0084-krb_10101015_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0084-krb_10101015_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0084-krb_10101015_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 85,
+      "sillok_id": "krb_10101016_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101016_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0085-krb_10101016_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0085-krb_10101016_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0085-krb_10101016_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 86,
+      "sillok_id": "krb_10101019_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101019_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0086-krb_10101019_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0086-krb_10101019_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0086-krb_10101019_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 87,
+      "sillok_id": "krb_10101022_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101022_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0087-krb_10101022_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0087-krb_10101022_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0087-krb_10101022_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 88,
+      "sillok_id": "krb_10101025_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101025_004",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0088-krb_10101025_004.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0088-krb_10101025_004.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0088-krb_10101025_004.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 89,
+      "sillok_id": "krb_10101027_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101027_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0089-krb_10101027_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0089-krb_10101027_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0089-krb_10101027_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 90,
+      "sillok_id": "krb_10101029_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101029_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0090-krb_10101029_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0090-krb_10101029_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0090-krb_10101029_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 91,
+      "sillok_id": "krb_10102004_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102004_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0091-krb_10102004_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0091-krb_10102004_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0091-krb_10102004_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 92,
+      "sillok_id": "krb_10102008_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102008_003",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0092-krb_10102008_003.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0092-krb_10102008_003.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0092-krb_10102008_003.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 93,
+      "sillok_id": "krb_10102015_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102015_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0093-krb_10102015_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0093-krb_10102015_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0093-krb_10102015_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 94,
+      "sillok_id": "krb_10102018_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102018_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0094-krb_10102018_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0094-krb_10102018_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0094-krb_10102018_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 95,
+      "sillok_id": "krb_10102021_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102021_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0095-krb_10102021_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0095-krb_10102021_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0095-krb_10102021_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 96,
+      "sillok_id": "krb_10102024_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102024_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0096-krb_10102024_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0096-krb_10102024_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0096-krb_10102024_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 97,
+      "sillok_id": "krb_10102027_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102027_004",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0097-krb_10102027_004.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0097-krb_10102027_004.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0097-krb_10102027_004.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 98,
+      "sillok_id": "krb_10102030_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102030_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0098-krb_10102030_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0098-krb_10102030_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0098-krb_10102030_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 99,
+      "sillok_id": "krb_10103004_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103004_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0099-krb_10103004_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0099-krb_10103004_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0099-krb_10103004_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 100,
+      "sillok_id": "krb_10103006_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103006_002",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0100-krb_10103006_002.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0100-krb_10103006_002.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0100-krb_10103006_002.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 101,
+      "sillok_id": "krb_10103012_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103012_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0101-krb_10103012_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0101-krb_10103012_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0101-krb_10103012_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    },
+    {
+      "selected_rank": 102,
+      "sillok_id": "krb_10103016_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103016_001",
+      "status": "failed",
+      "content_hash": null,
+      "artifact_paths": {
+        "md": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\documents\\현종개수실록\\0102-krb_10103016_001.md",
+        "metadata_json": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\metadata_json\\현종개수실록\\0102-krb_10103016_001.json",
+        "embedding_text": "rag_seed\\sillok-v2-live-hyeonjonggaesu-102\\embedding_text\\현종개수실록\\0102-krb_10103016_001.txt"
+      },
+      "error": "OSError: [Errno 22] Invalid argument"
+    }
+  ]
+}

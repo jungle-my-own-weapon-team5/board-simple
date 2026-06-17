@@ -1,0 +1,11 @@
+{
+  "status": "insufficient_eligible",
+  "period": "현종개수실록",
+  "db_current_before": 49,
+  "target": 95,
+  "need": 46,
+  "eligible": 0,
+  "selected": 0,
+  "rejected": 0,
+  "rejected_sample": []
+}

@@ -1,0 +1,2379 @@
+{
+  "schema_version": "sillok-live-candidate-manifest-v1",
+  "seed_version": "sillok-v2-live-to-100",
+  "generated_at": "2026-06-17T20:12:28.390528+00:00",
+  "source": "sillok_list_pages",
+  "live_fetch": true,
+  "detail_fetch": false,
+  "target_per_period": 100,
+  "candidate_multiplier": 2,
+  "record_count": 102,
+  "quality": {
+    "duplicates": {
+      "sillok_ids": [],
+      "source_urls": []
+    },
+    "period_counts": {
+      "현종개수실록": 102
+    }
+  },
+  "periods": {
+    "현종개수실록": {
+      "status": "fetched_refs",
+      "record_code": "krb",
+      "remaining_after_legacy": 51,
+      "refs_total": 500,
+      "wanted_candidates": 102,
+      "selected_candidates": 102,
+      "excluded_existing": 49
+    }
+  },
+  "records": [
+    {
+      "selected_rank": 1,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10005010_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10005010_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이후원·유심·정일·정태화·정유성 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10005010_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10005010_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10005010_002"
+      }
+    },
+    {
+      "selected_rank": 2,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10005017_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10005017_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 영돈녕 이경석이 빈소에 복명하는 것에 대해 차자를 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10005017_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10005017_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10005017_002"
+      }
+    },
+    {
+      "selected_rank": 3,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10005019_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10005019_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 정언 이익이 조한영의 자명소와 관련하여 피혐하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10005019_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10005019_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10005019_001"
+      }
+    },
+    {
+      "selected_rank": 4,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10005024_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10005024_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 산릉 도감에서 이최만, 박세욱을 대동해서 다시 간심할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10005024_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10005024_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10005024_002"
+      }
+    },
+    {
+      "selected_rank": 5,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006001_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006001_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 두 원상에게 정원에 머물 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006001_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006001_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006001_002"
+      }
+    },
+    {
+      "selected_rank": 6,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006002_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006002_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 역관 홍희남이 대마도로부터 돌아와 그곳의 혼란한 상황을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006002_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006002_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006002_004"
+      }
+    },
+    {
+      "selected_rank": 7,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006003_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006003_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 유후성, 조징규의 죄를 조율하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006003_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006003_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006003_002"
+      }
+    },
+    {
+      "selected_rank": 8,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006004_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006004_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 장마가 오래되어 기청제를 지내다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006004_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006004_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006004_001"
+      }
+    },
+    {
+      "selected_rank": 9,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006005_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006005_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 정유성·권대운·채충원 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006005_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006005_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006005_001"
+      }
+    },
+    {
+      "selected_rank": 10,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006005_005",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006005_005",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 집의 이유태가 노모를 이유로 사직할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006005_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006005_005",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006005_005"
+      }
+    },
+    {
+      "selected_rank": 11,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006007_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006007_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이조 판서 송시열이 재차 상소하여 사직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006007_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006007_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006007_003"
+      }
+    },
+    {
+      "selected_rank": 12,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006008_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006008_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 송시열이 상소하여 사직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006008_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006008_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006008_003"
+      }
+    },
+    {
+      "selected_rank": 13,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006010_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006010_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 의관 신가귀를 처형하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006010_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006010_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006010_001"
+      }
+    },
+    {
+      "selected_rank": 14,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006011_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006011_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 예조가 최복을 입는 일에 대해 대신에게 의논할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006011_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006011_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006011_002"
+      }
+    },
+    {
+      "selected_rank": 15,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006011_006",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006011_006",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 원상 정태화·심지원에게 파출할 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006011_006",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006011_006",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006011_006"
+      }
+    },
+    {
+      "selected_rank": 16,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006012_005",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006012_005",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 우의정 정유성이 송시열의 체직에 대한 차자를 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006012_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006012_005",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006012_005"
+      }
+    },
+    {
+      "selected_rank": 17,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006013_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006013_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 약방이 상이 양지당에 그대로 머물기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006013_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006013_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006013_002"
+      }
+    },
+    {
+      "selected_rank": 18,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006015_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006015_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 예조 판서 윤강이 간심한 산의 도형을 그려 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006015_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006015_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006015_003"
+      }
+    },
+    {
+      "selected_rank": 19,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006016_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006016_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 집의 이유태가 소를 올려 사직하기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006016_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006016_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006016_004"
+      }
+    },
+    {
+      "selected_rank": 20,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006019_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006019_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 총호사 심지원 등이 재차 수원의 산을 간심하고 돌아와 복명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006019_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006019_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006019_001"
+      }
+    },
+    {
+      "selected_rank": 21,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006020_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006020_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 총호사 심지원 등이 재혈(裁穴)하기 위해 수원으로 가다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006020_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006020_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006020_003"
+      }
+    },
+    {
+      "selected_rank": 22,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006021_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006021_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대사헌 송준길이 차자를 올려 체직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006021_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006021_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006021_004"
+      }
+    },
+    {
+      "selected_rank": 23,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006022_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006022_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대사간 이정기 등이 산릉과 국휼 때의 비용에 대한 차자를 올리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006022_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006022_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006022_004"
+      }
+    },
+    {
+      "selected_rank": 24,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006024_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006024_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 연양 부원군 이시백이 차자를 올려 산릉을 다시 정할 것을 극론하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006024_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006024_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006024_003"
+      }
+    },
+    {
+      "selected_rank": 25,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006024_008",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006024_008",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대사헌 송준길이 차자를 올려 사직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006024_008",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006024_008",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006024_008"
+      }
+    },
+    {
+      "selected_rank": 26,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006026_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006026_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 대행 대왕의 행적을 적어 정원에 내리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006026_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006026_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006026_003"
+      }
+    },
+    {
+      "selected_rank": 27,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006028_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006028_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대사헌 송준길의 차자를 받아들여 산릉의 역사를 정지할 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006028_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006028_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006028_001"
+      }
+    },
+    {
+      "selected_rank": 28,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10006030_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10006030_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 좌참찬 송시열을 인견하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10006030_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10006030_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10006030_001"
+      }
+    },
+    {
+      "selected_rank": 29,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007002_005",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007002_005",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 교리 민유중이 조한영의 상소를 이유로 사직할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007002_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007002_005",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007002_005"
+      }
+    },
+    {
+      "selected_rank": 30,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007002_009",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007002_009",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 연양 부원군 이시백이 산을 살피는 일에 생원 심종적 등을 천거하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007002_009",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007002_009",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007002_009"
+      }
+    },
+    {
+      "selected_rank": 31,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007003_005",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007003_005",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 장령 김익렴과 지평 이합 등이 인피하고 물러나 물론을 기다리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007003_005",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007003_005",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007003_005"
+      }
+    },
+    {
+      "selected_rank": 32,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007005_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007005_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 총호사에게 윤선도가 간심에 참여하도록 하라고 하교하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007005_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007005_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007005_002"
+      }
+    },
+    {
+      "selected_rank": 33,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007008_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007008_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 총호사 심지원 등이 다시 산릉의 일을 의논하여 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007008_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007008_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007008_001"
+      }
+    },
+    {
+      "selected_rank": 34,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007009_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007009_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 총호사 심지원이 수원 산에서 혈을 잡으라는 명을 받들기 어렵다고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007009_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007009_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007009_002"
+      }
+    },
+    {
+      "selected_rank": 35,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007011_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007011_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 정계주·이무·성이성·윤휴·목래선 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007011_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007011_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007011_002"
+      }
+    },
+    {
+      "selected_rank": 36,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007014_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007014_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이만영·윤비경·정륜·조귀석 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007014_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007014_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007014_001"
+      }
+    },
+    {
+      "selected_rank": 37,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007016_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007016_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 판중추부사 민형남의 졸기",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007016_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007016_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007016_003"
+      }
+    },
+    {
+      "selected_rank": 38,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007019_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007019_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 지평 윤비경·이무, 장령 정계주 등이 벼슬을 사양하고 물러나기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007019_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007019_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007019_001"
+      }
+    },
+    {
+      "selected_rank": 39,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007024_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007024_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 예조가 발인할 때 배종하는 일을 대신과 의논할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007024_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007024_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007024_001"
+      }
+    },
+    {
+      "selected_rank": 40,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10007029_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10007029_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 지평 심유가 조부의 억울함을 상소하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10007029_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10007029_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10007029_002"
+      }
+    },
+    {
+      "selected_rank": 41,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008003_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008003_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 장령 민여로가 강전과 조여수의 삭탈 관직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008003_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008003_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008003_002"
+      }
+    },
+    {
+      "selected_rank": 42,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008005_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008005_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 좌의정 심지원이 안악과 신천 고을 문제와 관련하여 파면을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008005_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008005_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008005_003"
+      }
+    },
+    {
+      "selected_rank": 43,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008006_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008006_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 뇌물 수수 여부와 관련하여 이후광과 민련을 유배시킬 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008006_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008006_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008006_004"
+      }
+    },
+    {
+      "selected_rank": 44,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008009_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008009_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대사간 윤집 등이 윤선도를 나문하라는 논계를 정지하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008009_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008009_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008009_002"
+      }
+    },
+    {
+      "selected_rank": 45,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008014_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008014_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 교리 이익이 상소하여 사직하고 권제를 따르라고 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008014_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008014_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008014_001"
+      }
+    },
+    {
+      "selected_rank": 46,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10008025_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10008025_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 지평 윤휴가 신병을 알리고 소명에 나아오지 않다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10008025_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10008025_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10008025_001"
+      }
+    },
+    {
+      "selected_rank": 47,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10009001_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10009001_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 우박이 내리다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10009001_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10009001_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10009001_001"
+      }
+    },
+    {
+      "selected_rank": 48,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10009004_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10009004_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 영의정 정태화가 유후성을 머물러 있도록 할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10009004_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10009004_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10009004_001"
+      }
+    },
+    {
+      "selected_rank": 49,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10009010_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10009010_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 영의정 정태화, 이조 판서 송준길을 인견하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10009010_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10009010_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10009010_001"
+      }
+    },
+    {
+      "selected_rank": 50,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10009019_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10009019_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 박증휘·임한백·안후열 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10009019_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10009019_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10009019_001"
+      }
+    },
+    {
+      "selected_rank": 51,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10009025_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10009025_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 임의백을 형조 참의로, 홍위를 승지로 삼다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10009025_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10009025_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10009025_001"
+      }
+    },
+    {
+      "selected_rank": 52,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010004_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010004_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 심지원에게 금정을 설치할 때의 일을 보고받다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010004_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010004_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010004_001"
+      }
+    },
+    {
+      "selected_rank": 53,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010007_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010007_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 시호에 대한 수찰(手札)을 송시열에게 보내다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010007_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010007_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010007_001"
+      }
+    },
+    {
+      "selected_rank": 54,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010011_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010011_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 우승지 이정영에게 전옥서를 적간할 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010011_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010011_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010011_001"
+      }
+    },
+    {
+      "selected_rank": 55,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010014_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010014_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 헌부가 인평위의 시장(柴場)을 혁파할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010014_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010014_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010014_002"
+      }
+    },
+    {
+      "selected_rank": 56,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010017_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010017_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 인평위의 시장(柴場)을 조사하게 하였는데 윤비경이 인피하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010017_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010017_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010017_001"
+      }
+    },
+    {
+      "selected_rank": 57,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010021_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010021_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대신 및 원임 대신, 양사가 산릉에 종행하는 일을 정지하기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010021_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010021_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010021_002"
+      }
+    },
+    {
+      "selected_rank": 58,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010025_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010025_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 헌부가 국장 때 각읍에 배정한 종신들의 취반군을 취소할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010025_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010025_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010025_001"
+      }
+    },
+    {
+      "selected_rank": 59,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10010028_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10010028_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 대행 대왕의 재궁을 발인하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10010028_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10010028_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10010028_001"
+      }
+    },
+    {
+      "selected_rank": 60,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011001_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011001_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 정원에 발인할 때 외방에서 올라온 조관을 아뢸 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011001_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011001_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011001_002"
+      }
+    },
+    {
+      "selected_rank": 61,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011003_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011003_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 채유후·정지호·권상구가 청나라로 가다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011003_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011003_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011003_001"
+      }
+    },
+    {
+      "selected_rank": 62,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011006_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011006_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 오우제를 친행하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011006_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011006_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011006_001"
+      }
+    },
+    {
+      "selected_rank": 63,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011008_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011008_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 육우제를 섭행하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011008_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011008_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011008_001"
+      }
+    },
+    {
+      "selected_rank": 64,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011010_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011010_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 부제학 유계 등이 송준길의 휴가를 허락하지 말 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011010_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011010_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011010_001"
+      }
+    },
+    {
+      "selected_rank": 65,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011011_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011011_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 장평 허목·윤비경, 지평 이무가 인피하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011011_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011011_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011011_004"
+      }
+    },
+    {
+      "selected_rank": 66,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011017_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011017_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 청나라 사신을 접견하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011017_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011017_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011017_002"
+      }
+    },
+    {
+      "selected_rank": 67,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011021_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011021_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 우의정 정유성이 정사(呈辭)하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011021_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011021_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011021_001"
+      }
+    },
+    {
+      "selected_rank": 68,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011023_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011023_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 산릉 도감이 고용한 역군의 가(價)를 각도 연군에게 징수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011023_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011023_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011023_003"
+      }
+    },
+    {
+      "selected_rank": 69,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10011027_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10011027_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이은상·이지온·이민적·목내선 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10011027_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10011027_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10011027_001"
+      }
+    },
+    {
+      "selected_rank": 70,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012002_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012002_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 김수흥·이무·성후설 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012002_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012002_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012002_001"
+      }
+    },
+    {
+      "selected_rank": 71,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012004_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012004_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 집의 이후 등이 송시열이 떠나는 것을 만류하기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012004_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012004_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012004_002"
+      }
+    },
+    {
+      "selected_rank": 72,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012006_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012006_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 여차에 나아가 대신 및 비국의 당상을 인견하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012006_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012006_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012006_001"
+      }
+    },
+    {
+      "selected_rank": 73,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012010_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012010_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 좌참찬 송시열이 소장을 진달하여 돌아가기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012010_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012010_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012010_001"
+      }
+    },
+    {
+      "selected_rank": 74,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012014_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012014_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 송시열이 상소하고, 직명을 교체해 주고 자급을 환수해 줄 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012014_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012014_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012014_001"
+      }
+    },
+    {
+      "selected_rank": 75,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012017_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012017_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 주서 권두추가 시열에게 상소에 대한 비답을 전유하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012017_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012017_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012017_002"
+      }
+    },
+    {
+      "selected_rank": 76,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012019_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012019_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 성이성·이연년·민응형·윤강·이경휘 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012019_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012019_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012019_001"
+      }
+    },
+    {
+      "selected_rank": 77,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012024_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012024_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 탄일에도 봉진하지 말 것을 명하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012024_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012024_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012024_002"
+      }
+    },
+    {
+      "selected_rank": 78,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012026_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012026_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 경상도 금산군에 지진이 일어나다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012026_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012026_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012026_001"
+      }
+    },
+    {
+      "selected_rank": 79,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10012028_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10012028_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 익평위 홍득기가 사대부들 간의 전하는 말을 듣고 소장을 진달하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10012028_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10012028_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10012028_001"
+      }
+    },
+    {
+      "selected_rank": 80,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101001_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101001_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 지평 민광소·여성제를 체직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101001_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101001_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101001_002"
+      }
+    },
+    {
+      "selected_rank": 81,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101003_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101003_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 나이 80세 이상의 노인들에게 먹을 것과 입을 것을 하사하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101003_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101003_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101003_004"
+      }
+    },
+    {
+      "selected_rank": 82,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101007_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101007_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 좌참찬 송시열이 상소하여 사직하면서 공안에 대해 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101007_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101007_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101007_001"
+      }
+    },
+    {
+      "selected_rank": 83,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101010_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101010_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 재해를 입은 부여와 석성 고을의 부세를 감해 주다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101010_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101010_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101010_002"
+      }
+    },
+    {
+      "selected_rank": 84,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101015_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101015_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 영동 지방의 재해 입은 고을에 전삼세와 노비 공포를 차등 있게 감해 주다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101015_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101015_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101015_001"
+      }
+    },
+    {
+      "selected_rank": 85,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101016_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101016_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 연성군 이시방의 졸기",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101016_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101016_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101016_002"
+      }
+    },
+    {
+      "selected_rank": 86,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101019_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101019_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이판 송준길의 체직을 허락하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101019_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101019_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101019_002"
+      }
+    },
+    {
+      "selected_rank": 87,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101022_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101022_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 김수항 등이 유정을 몰아낼 계책을 세운 자들을 조사할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101022_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101022_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101022_002"
+      }
+    },
+    {
+      "selected_rank": 88,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101025_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101025_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 낮에 흥정당에 나아가 《중용》을 강하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101025_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101025_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101025_004"
+      }
+    },
+    {
+      "selected_rank": 89,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101027_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101027_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 상이 사정 이상을 인견하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101027_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101027_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101027_002"
+      }
+    },
+    {
+      "selected_rank": 90,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10101029_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10101029_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 집의 조귀석이 상소하여 사직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10101029_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10101029_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10101029_002"
+      }
+    },
+    {
+      "selected_rank": 91,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102004_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102004_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 원임 우의정 완남 부원군 이후원의 졸기",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102004_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102004_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102004_001"
+      }
+    },
+    {
+      "selected_rank": 92,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102008_003",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102008_003",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 비변사가 삼척에서 국릉을 찾는 일을 추수 뒤로 미루기를 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102008_003",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102008_003",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102008_003"
+      }
+    },
+    {
+      "selected_rank": 93,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102015_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102015_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 전한 이수인이 외방에서 소장을 진달하여 사직하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102015_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102015_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102015_001"
+      }
+    },
+    {
+      "selected_rank": 94,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102018_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102018_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 홍중보 등이 과거 시험장에서 난동을 부린 자들을 엄하게 처리하라고 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102018_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102018_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102018_002"
+      }
+    },
+    {
+      "selected_rank": 95,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102021_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102021_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 공조 참의 심광수가 상소하여 경연에 입시하는 것을 사양하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102021_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102021_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102021_002"
+      }
+    },
+    {
+      "selected_rank": 96,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102024_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102024_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 정원이 기민을 간구하지 못한 수령을 중하게 추고할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102024_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102024_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102024_002"
+      }
+    },
+    {
+      "selected_rank": 97,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102027_004",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102027_004",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 도승지 조형이 사관을 새로 천거하도록 할 것을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102027_004",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102027_004",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102027_004"
+      }
+    },
+    {
+      "selected_rank": 98,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10102030_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10102030_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 영의정 정태화가 사관을 천거하라고 한 것과 관련하여 파직을 청하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10102030_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10102030_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10102030_001"
+      }
+    },
+    {
+      "selected_rank": 99,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10103004_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103004_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 이경석이 초시 합격자들이 거쳐 오는 길에 식량을 지급토록 할 것을 아뢰다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10103004_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10103004_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10103004_002"
+      }
+    },
+    {
+      "selected_rank": 100,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10103006_002",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103006_002",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 송시열·송준길·유계·홍처량 등에게 관직을 제수하다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10103006_002",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10103006_002",
+        "source_url": "https://sillok.history.go.kr/id/krb_10103006_002"
+      }
+    },
+    {
+      "selected_rank": 101,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10103012_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103012_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 조전소의 아들 조시대가 효종 대왕이 쓴 시를 바치다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10103012_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10103012_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10103012_001"
+      }
+    },
+    {
+      "selected_rank": 102,
+      "seed_version": "sillok-v2-live-to-100",
+      "status": "candidate",
+      "sillok_id": "krb_10103016_001",
+      "source_url": "https://sillok.history.go.kr/id/krb_10103016_001",
+      "period": "현종개수실록",
+      "title": "현종개수실록: 밤에 월식이 있었다",
+      "primary_bucket": "time_distribution",
+      "score": 0,
+      "score_parts": {},
+      "selection_reasons": [
+        "live_candidate",
+        "time_distribution"
+      ],
+      "evaluation_matches": [],
+      "sort_key": "krb_10103016_001",
+      "content_hash": null,
+      "dedupe_keys": {
+        "sillok_id": "krb_10103016_001",
+        "source_url": "https://sillok.history.go.kr/id/krb_10103016_001"
+      }
+    }
+  ]
+}
