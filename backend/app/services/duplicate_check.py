@@ -6,6 +6,7 @@ from urllib.parse import urlsplit, urlunsplit
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings, get_settings
 from app.models.post import Post
 from app.services.rag import get_rag_service
 
@@ -21,6 +22,9 @@ class DuplicateMatchResult:
 
 
 class DuplicateCheckService:
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or get_settings()
+
     def check(
         self,
         db: Session,
@@ -97,6 +101,14 @@ class DuplicateCheckService:
         post_ids: list[int] = []
         by_id: dict[int, tuple[str, float | None]] = {}
         for document, score in results:
+            if score is None:
+                continue
+            try:
+                rag_score = float(score)
+            except (TypeError, ValueError):
+                continue
+            if rag_score > self.settings.rag_duplicate_score_threshold:
+                continue
             metadata = getattr(document, "metadata", {})
             if not isinstance(metadata, dict) or "post_id" not in metadata:
                 continue
@@ -109,7 +121,7 @@ class DuplicateCheckService:
             post_ids.append(post_id)
             by_id[post_id] = (
                 str(metadata.get("title") or "").strip(),
-                float(score) if score is not None else None,
+                rag_score,
             )
 
         if not post_ids:

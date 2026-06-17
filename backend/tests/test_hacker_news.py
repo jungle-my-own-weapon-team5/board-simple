@@ -446,11 +446,16 @@ def test_duplicate_check_service_url_title_rag_and_rag_failure_without_network(
     Base.metadata.create_all(bind=engine)
 
     class FakeDocument:
-        metadata = {"post_id": 3, "title": "Vector duplicate"}
+        def __init__(self, post_id: int, title: str) -> None:
+            self.metadata = {"post_id": post_id, "title": title}
 
     class FakeVectorStore:
         def similarity_search_with_score(self, query: str, k: int) -> list:
-            return [(FakeDocument(), 0.2)]
+            return [
+                (FakeDocument(3, "Vector duplicate"), 0.2),
+                (FakeDocument(4, "Loose vector"), 0.8),
+                (FakeDocument(5, "Unknown score vector"), None),
+            ]
 
     class FakeRagService:
         def __init__(self, fail: bool = False) -> None:
@@ -475,6 +480,8 @@ def test_duplicate_check_service_url_title_rag_and_rag_failure_without_network(
                 ),
                 Post(title="FastAPI release notes", content="body", author_id=1),
                 Post(title="Vector duplicate", content="body", author_id=1),
+                Post(title="Loose vector", content="body", author_id=1),
+                Post(title="Unknown score vector", content="body", author_id=1),
             ]
         )
         db.commit()
@@ -492,6 +499,16 @@ def test_duplicate_check_service_url_title_rag_and_rag_failure_without_network(
         )
         assert [match.reason for match in matches] == ["same_url", "similar_title", "rag"]
         assert [match.post_id for match in matches] == [1, 2, 3]
+
+        strict_matches = DuplicateCheckService(
+            Settings(rag_duplicate_score_threshold=0.1)
+        ).check(
+            db,
+            title="FastAPI release note",
+            url="https://example.com/article",
+            content="FastAPI content",
+        )
+        assert [match.reason for match in strict_matches] == ["same_url", "similar_title"]
 
         monkeypatch.setattr(
             duplicate_check_module,
