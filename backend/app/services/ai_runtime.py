@@ -59,6 +59,44 @@ PRIMARY_SOURCE_RECONSTRUCTION_TERMS = [
     "어떻게",
     "왜",
 ]
+CATEGORY_GROUP_RULES = [
+    ("royal_family", ["왕실-", "국왕", "종친", "비빈", "궁중", "행행", "사급", "종사", "의식"]),
+    ("appointment", ["인사-", "임면", "관리", "선발", "관직"]),
+    ("judicial", ["사법-", "탄핵", "행형", "법제", "재판", "송사"]),
+    ("social_status", ["사회-", "신분", "노비", "가족", "향촌"]),
+    ("economy", ["재정-", "상공", "전세", "공물", "호구", "농업", "토지"]),
+    ("diplomacy", ["외교-", "명(", "왜(", "야인", "여진", "청("]),
+    ("military", ["군사-", "군정", "관방", "병법", "훈련"]),
+    ("astronomy_weather", ["과학-천기", "천기", "재이", "역법"]),
+    ("thought_religion", ["사상-", "불교", "유학", "토속신앙"]),
+    ("historiography", ["역사-", "고사", "전사", "편사"]),
+    ("publication", ["출판-", "서책", "문서"]),
+]
+CATEGORY_QUERY_HINTS = [
+    (
+        "royal_family",
+        ["왕", "임금", "왕실", "공주", "대군", "군", "후궁", "궁녀", "세자", "왕비", "총애", "하가", "혼인", "생애", "인물", "관계", "일화"],
+    ),
+    ("appointment", ["관직", "임명", "승진", "제수", "파직", "인사", "벼슬", "등용"]),
+    ("judicial", ["탄핵", "처벌", "죄", "주살", "폐출", "송사", "재판", "옥사", "사건"]),
+    ("social_status", ["노비", "가비", "여종", "신분", "백성", "생활", "가노", "비"]),
+    ("economy", ["토지", "전세", "공물", "상업", "시장", "집", "노비문권", "재산"]),
+    ("diplomacy", ["외교", "명나라", "왜", "일본", "여진", "사신", "조공"]),
+    ("military", ["전쟁", "군사", "전투", "의병", "왜란", "호란", "군대"]),
+    ("astronomy_weather", ["천문", "날씨", "가뭄", "비", "일식", "월식", "재이"]),
+    ("thought_religion", ["불교", "유교", "성리학", "신앙", "제사", "사상"]),
+    ("historiography", ["편찬", "기록", "사관", "실록", "역사서"]),
+    ("publication", ["책", "문서", "서책", "출판", "원문", "국역"]),
+]
+CATEGORY_AVOID_GROUPS = {
+    "royal_family": {"astronomy_weather", "diplomacy", "military"},
+    "appointment": {"astronomy_weather"},
+    "judicial": {"astronomy_weather", "diplomacy"},
+    "social_status": {"astronomy_weather", "diplomacy"},
+    "economy": {"astronomy_weather"},
+    "diplomacy": {"astronomy_weather"},
+    "military": {"astronomy_weather"},
+}
 
 KNOWN_RAG_TERMS = [
     "계유정난",
@@ -1073,16 +1111,22 @@ def _search_chunks_by_keyword(
 
     scored = []
     for chunk in chunks:
-        haystack = chunk.content + " " + documents[chunk.document_id].title
+        document = documents[chunk.document_id]
+        haystack = chunk.content + " " + document.title
         score = sum(1 for keyword in keywords if keyword in haystack)
         if score >= required_matches:
-            scored.append((score, chunk))
-    scored.sort(key=lambda item: item[0], reverse=True)
+            metadata_score = _metadata_relevance_boost(query, document)
+            scored.append((score + metadata_score, score, metadata_score, chunk))
+    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
 
     return _dedupe_citations(
         [
-            _citation_from_chunk(documents[chunk.document_id], chunk, 0.5 + min(score, 5) * 0.1)
-            for score, chunk in scored
+            _citation_from_chunk(
+                documents[chunk.document_id],
+                chunk,
+                max(0.0, min(1.0, 0.5 + min(raw_score, 5) * 0.1 + metadata_score)),
+            )
+            for _rank_score, raw_score, metadata_score, chunk in scored
         ],
         top_k,
     )
@@ -1129,10 +1173,11 @@ def _documents_by_corpus(db: Session, corpus: str | None) -> dict[int, RagDocume
 
 
 def _metadata_relevance_boost(query: str, document: RagDocument) -> float:
+    boost = 0.0
     normalized_query = re.sub(r"\s+", "", query)
     normalized_title = re.sub(r"\s+", "", document.title)
     if normalized_title and normalized_title in normalized_query:
-        return 0.18
+        boost += 0.18
 
     metadata = {}
     if document.metadata_json:
@@ -1142,8 +1187,44 @@ def _metadata_relevance_boost(query: str, document: RagDocument) -> float:
             metadata = {}
     keywords = str(metadata.get("keywords", ""))
     if keywords and any(keyword.strip() and keyword.strip() in query for keyword in keywords.split(",")):
-        return 0.08
-    return 0.0
+        boost += 0.08
+    boost += _category_relevance_adjustment(query, metadata)
+    return round(boost, 3)
+
+
+def _category_relevance_adjustment(query: str, metadata: dict[str, object]) -> float:
+    document_groups = _metadata_category_groups(metadata)
+    if not document_groups:
+        return 0.0
+    preferred_groups = _query_category_groups(query)
+    if not preferred_groups:
+        return 0.0
+
+    matched = document_groups & preferred_groups
+    avoid_groups = set().union(*(CATEGORY_AVOID_GROUPS.get(group, set()) for group in preferred_groups))
+    avoided = document_groups & avoid_groups
+    adjustment = min(0.12, 0.06 * len(matched))
+    if avoided and not matched:
+        adjustment -= min(0.06, 0.03 * len(avoided))
+    return adjustment
+
+
+def _metadata_category_groups(metadata: dict[str, object]) -> set[str]:
+    raw_categories = str(metadata.get("categories") or metadata.get("category") or "")
+    groups: set[str] = set()
+    for group, markers in CATEGORY_GROUP_RULES:
+        if any(marker in raw_categories for marker in markers):
+            groups.add(group)
+    return groups
+
+
+def _query_category_groups(query: str) -> set[str]:
+    compact = query.replace(" ", "")
+    groups: set[str] = set()
+    for group, hints in CATEGORY_QUERY_HINTS:
+        if any(hint in query or hint in compact for hint in hints):
+            groups.add(group)
+    return groups
 
 
 def _citation_from_chunk(document: RagDocument, chunk: RagChunk, relevance: float) -> RagCitation:

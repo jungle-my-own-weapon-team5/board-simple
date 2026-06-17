@@ -1,12 +1,14 @@
 from app.models.ai import RagDocument
 from app.services.ai_runtime import (
     _chunk_seed_content,
+    _metadata_category_groups,
     _is_unique_seed_source_url,
     _load_seed_documents,
     _metadata_relevance_boost,
     _normalize_for_rag_content,
     _parse_seed_markdown,
     _public_corpus_name,
+    _query_category_groups,
     _rag_corpus_priority,
 )
 
@@ -118,3 +120,26 @@ def test_metadata_relevance_boost_uses_document_title() -> None:
 
     assert _metadata_relevance_boost("세종은 어떤 왕인가", document) == 0.18
     assert _metadata_relevance_boost("문종은 어떤 왕인가", document) == 0.0
+
+
+def test_metadata_relevance_boost_uses_sillok_category_groups() -> None:
+    royal_document = RagDocument(
+        title="연산군과 장녹수",
+        period="연산군일기",
+        source_url="https://sillok.history.go.kr/id/example",
+        metadata_json='{"categories":"왕실-비빈(妃嬪) / 인사-임면(任免)"}',
+    )
+    weather_document = RagDocument(
+        title="천둥과 비",
+        period="연산군일기",
+        source_url="https://sillok.history.go.kr/id/weather",
+        metadata_json='{"categories":"과학-천기(天氣)"}',
+    )
+
+    assert _metadata_category_groups({"categories": "왕실-비빈(妃嬪) / 인사-임면(任免)"}) == {
+        "royal_family",
+        "appointment",
+    }
+    assert "royal_family" in _query_category_groups("장녹수와 연산군의 관계를 보여주는 일화")
+    assert _metadata_relevance_boost("장녹수와 연산군의 관계를 보여주는 일화", royal_document) > 0
+    assert _metadata_relevance_boost("장녹수와 연산군의 관계를 보여주는 일화", weather_document) < 0

@@ -37,6 +37,11 @@ vite.config.js
 vite.config.d.ts
 backend/app/static/generated/*
 !backend/app/static/generated/.gitkeep
+rag_db_backup_*.jsonl.gz
+sillok_candidate_scores*.json
+sillok_pilot_5_cycles_report*.json
+sillok_seed_*_manifest_*.json
+sillok_seed_*_quality_summary.json
 
 # OS/editor
 .DS_Store
