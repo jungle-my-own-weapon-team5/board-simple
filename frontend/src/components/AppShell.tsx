@@ -1,12 +1,13 @@
 "use client";
 
-import { LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { Bot, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import AgentPanel from "@/components/AgentPanel";
 import FloatingChat from "@/components/FloatingChat";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -17,6 +18,7 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const { bootstrap, isLoading, user, logout } = useAuthStore();
+  const [isAgentOpen, setIsAgentOpen] = useState(false);
 
   useEffect(() => {
     void bootstrap();
@@ -24,6 +26,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   const handleLogout = async () => {
     await logout();
+    setIsAgentOpen(false);
     router.push("/");
   };
 
@@ -39,6 +42,15 @@ export default function AppShell({ children }: AppShellProps) {
             Board Simple
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant={isAgentOpen ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setIsAgentOpen((current) => !current)}
+            >
+              <Bot />
+              <span>AI Agent</span>
+            </Button>
             {user ? (
               <>
                 <Badge variant="secondary" className="min-h-9 px-3">
@@ -77,6 +89,11 @@ export default function AppShell({ children }: AppShellProps) {
       <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
+      <AgentPanel
+        isAuthenticated={Boolean(user)}
+        isOpen={isAgentOpen}
+        onClose={() => setIsAgentOpen(false)}
+      />
       {user ? <FloatingChat /> : null}
     </div>
   );

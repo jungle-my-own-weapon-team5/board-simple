@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, comments, posts, rag, tags
+from app.api import agent, auth, comments, posts, rag, tags
 from app.core.config import get_settings
 from app.mcp.server import create_board_mcp
 
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(posts.router, prefix="/api")
     app.include_router(comments.router, prefix="/api")
     app.include_router(rag.router, prefix="/api")
+    app.include_router(agent.router, prefix="/api")
     app.include_router(tags.router, prefix="/api")
     app.mount("/mcp", mcp_app)
 
