@@ -568,7 +568,8 @@ backend/tests/test_ai_provider_selection.py
 목표:
 
 - 단일 Orchestrator가 안정적으로 동작한 뒤 Supervisor Agent와 전문 Agent 구조로 확장합니다.
-- Agent 간 작업 순서, handoff, retry, 중단 조건을 명시적으로 관리합니다.
+- 사용자의 사건에서 필요한 법률 도메인을 먼저 선별하고, 선택된 도메인별 전문 Agent가 독립 보고서를 제출한 뒤, 종합 전문 Agent가 최종 보고를 작성합니다.
+- Agent 간 작업 순서, 병렬 실행 가능성, handoff, retry, 중단 조건을 명시적으로 관리합니다.
 
 예상 추가 파일:
 
@@ -576,28 +577,32 @@ backend/tests/test_ai_provider_selection.py
 backend/app/services/agent/contracts.py
 backend/app/services/agent/supervisor.py
 backend/app/services/agent/agents/__init__.py
-backend/app/services/agent/agents/issue_spotting.py
-backend/app/services/agent/agents/retrieval.py
-backend/app/services/agent/agents/legal_source.py
-backend/app/services/agent/agents/drafting.py
-backend/app/services/agent/agents/citation_verifier.py
+backend/app/services/agent/agents/domain_planner.py
+backend/app/services/agent/agents/domain_specialists.py
+backend/app/services/agent/agents/evidence_verifier.py
+backend/app/services/agent/agents/synthesis.py
 backend/app/services/agent/agents/safety_review.py
 backend/tests/test_multi_agent_supervisor.py
 ```
 
 구현 기준:
 
-- `SupervisorAgent`가 전문 Agent 호출 순서, handoff, retry, 중단 조건을 결정합니다.
+- 목표 workflow는 `SupervisorAgent -> Issue/Domain Planner -> 선택된 도메인 전문 Agent들 -> EvidenceVerifierAgent -> SynthesisAgent -> SafetyReviewAgent`입니다.
+- `SupervisorAgent`가 전문 Agent 호출 순서, 병렬 실행 가능성, handoff, retry, 중단 조건을 결정합니다.
 - 공통 계약은 `AgentTask`, `AgentResult`, `AgentContext`, `AgentHandoff`로 시작합니다.
 - 전문 Agent는 서로를 직접 호출하지 않고 handoff 요청을 Supervisor에게 반환합니다.
 - 전문 Agent는 provider SDK, DB, filesystem을 직접 호출하지 않고 service, MCP tool, provider adapter 경계를 사용합니다.
-- `IssueSpottingAgent`는 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query를 생성합니다.
-- `RetrievalAgent`는 내부 RAG 검색과 재검색 전략을 선택합니다.
-- `LegalSourceAgent`는 공용 공식 corpus의 on-demand 보강 필요성과 범위를 판단합니다.
-- `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`를 단계적으로 추가합니다.
+- `IssueDomainPlannerAgent`는 후보 쟁점, 필요한 법률 도메인, 도메인별 facts slice, 내부 RAG query, 외부 공식 source query를 생성합니다.
+- 도메인 전문 Agent는 `CriminalLawAgent`, `CivilLawAgent`, `LaborLawAgent`, `AdministrativeLawAgent`, `LeaseLawAgent`로 시작합니다.
+- 선택되지 않은 도메인 전문 Agent는 실행하지 않습니다.
+- 도메인 전문 Agent는 최종 답변을 직접 작성하지 않고 `domain_report`를 제출합니다.
+- `domain_report`에는 도메인, facts slice, 쟁점 목록, 사용한 evidence/chunk, 누락 사실, 신뢰도, 한계를 포함합니다.
+- `EvidenceVerifierAgent`는 도메인별 보고서의 evidence/citation을 전역 evidence index 기준으로 검증하고 관련 없는 근거를 제거합니다.
+- `SynthesisAgent`는 검증된 도메인별 보고서를 통합해 중복 쟁점, 선결문제, 영역 간 영향 관계, 사용자 질문 기준 우선순위, 최종 쟁점 정리와 답변 초안을 작성합니다.
 - citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
 - `max_agent_handoffs`, `max_iterations`, `max_tool_calls`, timeout으로 루프를 제한합니다.
 - 각 Agent 실행과 handoff는 `agent_steps`에 저장합니다. 필요한 경우 후속 migration으로 `agent_name`, `parent_step_id`, `handoff_from_step_id`, `handoff_reason`, `confidence`, `requires_human_review`를 추가합니다.
+- 1차 구현은 도메인 전문 Agent를 순차 실행해도 됩니다. 다만 `AgentTask`와 `AgentResult`는 병렬 실행으로 바꾸기 쉽게 도메인별 독립 입력/출력 구조를 유지해야 합니다.
 
 LangGraph 도입 기준:
 
@@ -608,9 +613,12 @@ LangGraph 도입 기준:
 검증:
 
 - Supervisor가 올바른 전문 Agent 순서를 선택하는지 테스트
+- Issue/Domain Planner가 필요한 도메인만 선별하는지 테스트
+- 선택된 도메인별 전문 Agent가 `domain_report`를 생성하는지 테스트
+- SynthesisAgent가 도메인별 보고를 통합한 최종 답변 prompt를 생성하는지 테스트
 - Agent handoff metadata 저장 테스트
 - `max_agent_handoffs` 초과 중단 테스트
-- citation verifier와 safety review가 누락되지 않는지 테스트
+- EvidenceVerifierAgent와 SafetyReviewAgent가 누락되지 않는지 테스트
 - 잘못된 Agent 직접 호출 또는 tool 우회 방지 테스트
 
 ## 14단계: 품질과 보안 강화

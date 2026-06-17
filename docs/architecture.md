@@ -577,22 +577,29 @@ MVP 이후 멀티에이전트 확장:
 
 ```text
 SupervisorAgent
-  -> IssueSpottingAgent
-  -> RetrievalAgent
-  -> LegalSourceAgent
-  -> DraftingAgent
-  -> CitationVerifierAgent
+  -> Issue/Domain Planner
+     -> 필요한 법률 도메인 선별
+     -> 도메인별 facts_slice/task 생성
+  -> Domain Specialist Agents
+     -> CriminalLawAgent
+     -> CivilLawAgent
+     -> LaborLawAgent
+     -> AdministrativeLawAgent
+     -> LeaseLawAgent
+  -> EvidenceVerifierAgent
+  -> SynthesisAgent
   -> SafetyReviewAgent
 ```
 
-- `SupervisorAgent` 또는 `MultiAgentOrchestrator`가 전문 Agent 호출 순서, 재시도, handoff, 중단 조건을 결정합니다.
+- `SupervisorAgent` 또는 `MultiAgentOrchestrator`가 전문 Agent 호출 순서, 재시도, handoff, 병렬 실행 가능성, 중단 조건을 결정합니다.
 - 전문 Agent는 직접 route, repository, provider SDK를 호출하지 않고 정해진 service, MCP tool, provider adapter 경계를 통해 동작합니다.
-- `IssueSpottingAgent`는 사실관계에서 법률 쟁점 후보, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query와 외부 공식 source query를 뽑습니다.
-- `RetrievalAgent`는 내부 RAG 검색 전략과 `search_mode`를 선택합니다.
-- `LegalSourceAgent`는 국가법령정보 Open API 같은 외부 공식 source 조회와 공용 corpus on-demand 보강 필요성을 판단합니다.
-- `DraftingAgent`는 근거 기반 초안을 작성합니다.
-- `CitationVerifierAgent`는 초안의 법률 주장과 citation이 검색 결과 또는 외부 source에 근거하는지 검증합니다.
+- `Issue/Domain Planner`는 사실관계에서 필요한 법률 도메인, 도메인별 facts slice, 후보 쟁점, 내부 RAG query, 외부 공식 source query를 생성합니다.
+- 도메인 전문 Agent는 선택된 도메인만 실행합니다. 예를 들어 임대차 보증금 사건에서는 `LeaseLawAgent`, `CivilLawAgent`만 실행하고 형사, 노동, 행정 Agent는 실행하지 않습니다.
+- 도메인 전문 Agent는 최종 답변을 직접 쓰지 않고 `domain_report`를 제출합니다. 보고서에는 도메인, facts slice, 쟁점 목록, 사용한 evidence/citation, 누락 사실, 신뢰도, 한계를 포함합니다.
+- `EvidenceVerifierAgent`는 도메인별 보고서가 사용한 evidence와 citation을 전역 evidence index 기준으로 검증하고, 관련 없는 근거 또는 검증 실패 근거를 제거합니다.
+- `SynthesisAgent`는 도메인별 보고를 통합해 중복 쟁점, 선결문제, 영역 간 영향 관계, 사용자 질문 기준 우선순위를 정리하고 최종 쟁점 정리와 답변 초안을 작성합니다.
 - `SafetyReviewAgent`는 과도한 단정, 법률 자문 표현, 개인정보, secret 노출을 검토합니다.
+- 사용자 UI와 API 응답은 필요하면 도메인별 보고와 종합 보고를 함께 제공할 수 있습니다. 변호사 사용자는 도메인별 근거를 병렬 검토하고, 일반 사용자는 종합 보고 중심으로 볼 수 있습니다.
 
 LangGraph는 MVP 필수 의존성으로 두지 않습니다. 단일 Orchestrator Agent는 명시적 Python reasoning loop/state machine으로 구현합니다. 멀티에이전트 확장도 처음에는 같은 계약으로 직접 구현할 수 있으며, handoff, branching, retry, human-in-the-loop, 장기 실행 workflow가 복잡해지면 해당 상태 모델을 LangGraph graph로 옮깁니다. LangGraph를 도입해도 RAG 문서 모델, MCP tool 계약, provider adapter 계약은 유지합니다.
 

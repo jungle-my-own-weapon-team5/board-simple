@@ -316,11 +316,17 @@ Agent는 다음 조건에서 중단합니다.
 
 ```text
 SupervisorAgent
-  -> IssueSpottingAgent
-  -> RetrievalAgent
-  -> LegalSourceAgent
-  -> DraftingAgent
-  -> CitationVerifierAgent
+  -> Issue/Domain Planner
+     -> 필요한 법률 도메인 선별
+     -> 도메인별 facts_slice와 task 생성
+  -> Domain Specialist Agents
+     -> CriminalLawAgent
+     -> CivilLawAgent
+     -> LaborLawAgent
+     -> AdministrativeLawAgent
+     -> LeaseLawAgent
+  -> EvidenceVerifierAgent
+  -> SynthesisAgent
   -> SafetyReviewAgent
 ```
 
@@ -328,12 +334,15 @@ Agent 역할:
 
 | Agent | 책임 |
 | --- | --- |
-| `SupervisorAgent` | 전체 계획, Agent 호출 순서, handoff, retry, 중단 조건 결정 |
-| `IssueSpottingAgent` | 사실관계에서 후보 쟁점, 법률 영역, 후보 법령명, 내부 RAG query, 외부 공식 source query, 누락 사실 추출 |
-| `RetrievalAgent` | 내부 RAG 검색, `focused_answer`/`issue_spotting` 선택, 검색 결과 정리 |
-| `LegalSourceAgent` | 국가법령정보 Open API 등 외부 공식 source 조회와 공용 corpus on-demand 보강 필요성 판단 및 결과 정리 |
-| `DraftingAgent` | 검색된 evidence 기반 쟁점 정리 또는 답변 초안 작성 |
-| `CitationVerifierAgent` | citation이 retrieved chunk 또는 외부 source metadata에 근거하는지 검증 |
+| `SupervisorAgent` | 전체 계획, 도메인 Agent 실행 순서 또는 병렬 실행 계획, handoff, retry, 중단 조건 결정 |
+| `IssueDomainPlannerAgent` | 사실관계에서 필요한 법률 도메인, 도메인별 facts slice, 후보 쟁점, 내부 RAG query, 외부 공식 source query, 누락 사실 추출 |
+| `CriminalLawAgent` | 형사 도메인 facts slice에 대한 구성요건, 책임, 증거/입증, 절차 쟁점 보고 |
+| `CivilLawAgent` | 민사 도메인 facts slice에 대한 계약, 불법행위, 손해배상, 보전/집행 쟁점 보고 |
+| `LaborLawAgent` | 노동 도메인 facts slice에 대한 근로관계, 임금, 해고, 산업재해 등 쟁점 보고 |
+| `AdministrativeLawAgent` | 행정 도메인 facts slice에 대한 처분, 인허가, 제재, 불복절차 쟁점 보고 |
+| `LeaseLawAgent` | 임대차 도메인 facts slice에 대한 보증금, 대항력, 갱신, 명도 등 쟁점 보고 |
+| `EvidenceVerifierAgent` | 도메인별 보고서가 사용한 citation/evidence를 전역 evidence index 기준으로 검증하고 관련 없는 근거 제거 |
+| `SynthesisAgent` | 도메인별 보고서를 통합해 중복 쟁점, 선결문제, 영역 간 영향 관계, 우선순위, 최종 쟁점 정리와 답변 초안 작성 |
 | `SafetyReviewAgent` | 법률 자문 단정, 개인정보, secret, prompt injection 영향 검토 |
 
 공통 계약:
@@ -360,6 +369,10 @@ AgentContext
   prompt_version
   tool_budget
   evidence_set
+  domain_tasks
+  domain_reports
+  verified_evidence
+  synthesis_report
 
 AgentHandoff
   from_agent
@@ -371,9 +384,14 @@ AgentHandoff
 멀티에이전트 규칙:
 
 - `SupervisorAgent`만 다음 Agent 호출 순서를 결정합니다.
+- `IssueDomainPlannerAgent`가 선택하지 않은 도메인 Agent는 실행하지 않습니다.
+- 도메인 Agent는 논리적으로 병렬 실행할 수 있어야 합니다. 초기 구현은 순차 실행으로 시작할 수 있지만, 각 도메인 task는 독립 입력과 독립 output을 갖습니다.
 - 전문 Agent는 서로를 직접 호출하지 않습니다. 필요한 다음 작업은 `AgentHandoff`로 Supervisor에게 반환합니다.
 - 전문 Agent는 provider SDK, database, filesystem을 직접 호출하지 않습니다.
 - 내부 검색과 외부 source 조회는 기존 MCP tool 또는 service 경계를 사용합니다.
+- 도메인 Agent는 최종 사용자 답변을 직접 작성하지 않고 `domain_report`를 반환합니다.
+- 최종 사용자 응답은 `SynthesisAgent`가 도메인별 보고서와 검증된 evidence를 바탕으로 작성합니다.
+- API/UI는 도메인별 보고와 종합 보고를 함께 제공할 수 있습니다.
 - citation 검증과 safety review는 최종 응답 전에 반드시 실행합니다.
 - 각 Agent 실행과 handoff는 `agent_steps`에 audit metadata로 저장합니다. MVP 스키마에서는 기본 실행 metadata를 우선 저장하고, handoff reason/confidence/human review 같은 상세 필드는 후속 migration에서 확장할 수 있습니다.
 - `max_iterations`, `max_tool_calls`, `max_agent_handoffs`, timeout으로 루프를 제한합니다.

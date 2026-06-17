@@ -134,6 +134,18 @@ track은 서로 독립적으로 retrieval될 수 있으며, 구현이 허용하�
 
 답변 생성 전에는 cross-domain synthesis 단계를 둡니다. 이 단계는 track별 결론을 단순 연결하지 않고, 중복 쟁점 병합, 선결문제 확인, 영역 간 영향 관계 정리, 사용자 질문 기준 우선순위 재정렬을 수행합니다.
 
+멀티에이전트 확장에서는 issue track이 도메인 전문 Agent의 작업 단위가 됩니다. `Issue/Domain Planner`는 필요한 도메인만 선별하고 각 도메인에 `facts_slice`, `issue_queries`, `official_source_candidates`, `constraints`를 전달합니다. 선택되지 않은 도메인의 Agent는 실행하지 않습니다.
+
+```text
+SupervisorAgent
+  -> Issue/Domain Planner
+  -> CriminalLawAgent | CivilLawAgent | LaborLawAgent | AdministrativeLawAgent | LeaseLawAgent
+  -> EvidenceVerifierAgent
+  -> SynthesisAgent
+```
+
+각 도메인 전문 Agent는 최종 답변을 직접 작성하지 않고 `domain_report`를 제출합니다. `domain_report`는 도메인명, facts slice, 쟁점 목록, 사용한 evidence ID 또는 chunk ID, 누락 사실, 도메인별 한계, 신뢰도를 포함합니다. `EvidenceVerifierAgent`는 도메인별 보고서가 사용한 근거를 전역 evidence index 기준으로 검증하고, `SynthesisAgent`는 검증된 도메인별 보고서를 통합해 종합 보고와 답변 초안을 작성합니다.
+
 planning 규칙:
 
 - `candidate_statutes`와 `external_source_queries`는 검색 계획이며, 그 자체가 citation 가능한 근거가 아닙니다.
@@ -494,7 +506,7 @@ MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP
 
 초기 evidence 부족 판단은 단순하게 시작합니다. 쟁점별 내부 RAG 검색 결과 chunk가 없거나 citation 후보가 없으면 해당 쟁점의 근거 부족으로 보고 공식 source 보강을 시도할 수 있습니다. 이후 평가 품질을 높일 때는 쟁점별 coverage, source type 다양성, 최신 법령 여부, 공식 source 여부, top-k 결과가 하나의 문서 또는 조문에 과도하게 몰리는지까지 함께 평가합니다.
 
-후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `IssueSpottingAgent`, `RetrievalAgent`, `LegalSourceAgent`, `DraftingAgent`, `CitationVerifierAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
+후속 멀티에이전트 확장에서는 `SupervisorAgent`가 `Issue/Domain Planner`, 선택된 도메인 전문 Agent, `EvidenceVerifierAgent`, `SynthesisAgent`, `SafetyReviewAgent`의 호출 순서와 handoff를 결정합니다. 도메인 전문 Agent는 병렬 실행 가능한 독립 작업 단위로 설계하되, 초기 구현은 순차 실행으로 시작할 수 있습니다. 이 구조가 handoff, branching, retry, human-in-the-loop으로 복잡해지면 LangGraph로 이전할 수 있습니다.
 
 제한:
 
