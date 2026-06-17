@@ -7,7 +7,6 @@ from app.schemas.ai import (
     RagCitation,
     RagSearchResponse,
     ToolLog,
-    WritingAssistResponse,
 )
 
 SEED_CITATIONS = [
@@ -65,33 +64,6 @@ def get_discussion_topics() -> list[DiscussionTopic]:
             tags=["세종", "훈민정음", "문화"],
         ),
     ]
-
-
-def make_writing_assist(title: str, content: str, post_type: str) -> WritingAssistResponse:
-    text = f"{title} {content}".lower()
-    tags = []
-    for keyword in ["세조", "단종", "계유정난", "세종", "훈민정음", "문종", "붕당"]:
-        if keyword.lower() in text:
-            tags.append(keyword)
-    if not tags:
-        tags = ["조선", "토론", post_type]
-
-    category = "왕과 권력" if any(tag in tags for tag in ["세조", "단종", "문종"]) else "생활사와 문화"
-    base_title = title.strip() or "이 역사 이야기, 어떻게 봐야 할까?"
-    return WritingAssistResponse(
-        improved_titles=[
-            f"{base_title}, 다르게 보면 어떤 이야기가 될까?",
-            f"{base_title}: 사실과 해석 사이에서",
-        ],
-        tags=tags[:5],
-        category=category,
-        questions=[
-            "이 사건에서 명분과 결과 중 무엇을 더 중요하게 봐야 할까요?",
-            "당시 사람들의 입장에서는 어떤 선택지가 현실적이었을까요?",
-            "오늘날 기준으로 평가할 때 조심해야 할 부분은 무엇일까요?",
-        ],
-        keywords=tags[:5],
-    )
 
 
 def search_rag(query: str, top_k: int) -> RagSearchResponse:
