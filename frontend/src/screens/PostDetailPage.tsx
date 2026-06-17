@@ -13,6 +13,64 @@ import { Button } from "../components/ui/button";
 import { useAuthStore } from "../stores/authStore";
 import type { Post, RelatedPost } from "../types";
 
+const RELATED_POSTS_CACHE_TTL_MS = 30 * 60 * 1000;
+
+type RelatedPostsCachePayload = {
+  expiresAt: number;
+  postUpdatedAt: string;
+  items: RelatedPost[];
+};
+
+function relatedPostsCacheKey(postId: number) {
+  return `related-posts:${postId}`;
+}
+
+function removeRelatedPostsCache(postId: number) {
+  try {
+    window.sessionStorage.removeItem(relatedPostsCacheKey(postId));
+  } catch {
+    // sessionStorage may be unavailable in private mode or restricted browsers.
+  }
+}
+
+function readRelatedPostsCache(postId: number, postUpdatedAt: string) {
+  try {
+    const raw = window.sessionStorage.getItem(relatedPostsCacheKey(postId));
+    if (!raw) {
+      return null;
+    }
+
+    const payload = JSON.parse(raw) as Partial<RelatedPostsCachePayload>;
+    if (
+      typeof payload.expiresAt !== "number" ||
+      payload.expiresAt <= Date.now() ||
+      payload.postUpdatedAt !== postUpdatedAt ||
+      !Array.isArray(payload.items)
+    ) {
+      removeRelatedPostsCache(postId);
+      return null;
+    }
+
+    return payload.items;
+  } catch {
+    removeRelatedPostsCache(postId);
+    return null;
+  }
+}
+
+function writeRelatedPostsCache(postId: number, postUpdatedAt: string, items: RelatedPost[]) {
+  try {
+    const payload: RelatedPostsCachePayload = {
+      expiresAt: Date.now() + RELATED_POSTS_CACHE_TTL_MS,
+      postUpdatedAt,
+      items
+    };
+    window.sessionStorage.setItem(relatedPostsCacheKey(postId), JSON.stringify(payload));
+  } catch {
+    // Cache writes are best-effort; related posts should still render normally.
+  }
+}
+
 export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams<{ postId: string }>();
@@ -24,6 +82,7 @@ export default function PostDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const numericPostId = Number(postId);
+  const postUpdatedAt = post?.updated_at;
   const isAuthor = user && post && user.id === post.author.id;
 
   useEffect(() => {
@@ -38,17 +97,44 @@ export default function PostDetailPage() {
   }, [numericPostId]);
 
   useEffect(() => {
-    if (!Number.isFinite(numericPostId)) {
+    if (!Number.isFinite(numericPostId) || !postUpdatedAt) {
       return;
     }
     setRelatedPosts([]);
+
+    const cachedRelatedPosts = readRelatedPostsCache(numericPostId, postUpdatedAt);
+    if (cachedRelatedPosts) {
+      setRelatedPosts(cachedRelatedPosts);
+      setIsRelatedLoading(false);
+      return;
+    }
+
+    let isActive = true;
     setIsRelatedLoading(true);
     postApi
       .getRelatedPosts(numericPostId)
-      .then(setRelatedPosts)
-      .catch(() => setRelatedPosts([]))
-      .finally(() => setIsRelatedLoading(false));
-  }, [numericPostId]);
+      .then((items) => {
+        if (!isActive) {
+          return;
+        }
+        setRelatedPosts(items);
+        writeRelatedPostsCache(numericPostId, postUpdatedAt, items);
+      })
+      .catch(() => {
+        if (isActive) {
+          setRelatedPosts([]);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsRelatedLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [numericPostId, postUpdatedAt]);
 
   const handleDelete = async () => {
     if (!post) {
