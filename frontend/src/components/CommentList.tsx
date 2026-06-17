@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import * as commentApi from "../api/comments";
 import { useAuthStore } from "../stores/authStore";
 import type { Comment } from "../types";
@@ -20,6 +21,7 @@ export default function CommentList({ postId }: CommentListProps) {
   const [total, setTotal] = useState(0);
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
 
   const loadComments = async (offset = 0) => {
     const page = await commentApi.listComments(postId, {
@@ -46,6 +48,20 @@ export default function CommentList({ postId }: CommentListProps) {
       await loadComments(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "댓글을 저장하지 못했습니다.");
+    }
+  };
+
+  const handleDelete = async (commentId: number) => {
+    setError(null);
+    setDeletingCommentId(commentId);
+    try {
+      await commentApi.deleteComment(commentId);
+      setItems((current) => current.filter((comment) => comment.id !== commentId));
+      setTotal((current) => Math.max(0, current - 1));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "댓글을 삭제하지 못했습니다.");
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -77,11 +93,25 @@ export default function CommentList({ postId }: CommentListProps) {
         {items.map((comment) => (
           <Card key={comment.id}>
             <CardContent className="p-4">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                <strong>{comment.author.nickname}</strong>
-                <span className="text-muted-foreground">
-                  {new Date(comment.created_at).toLocaleString()}
-                </span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                  <strong>{comment.author.nickname}</strong>
+                  <span className="text-muted-foreground">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {user?.id === comment.author.id ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="댓글 삭제"
+                    disabled={deletingCommentId === comment.id}
+                    onClick={() => handleDelete(comment.id)}
+                  >
+                    <Trash2 />
+                  </Button>
+                ) : null}
               </div>
               <p className="mt-2 break-words">{comment.content}</p>
             </CardContent>
