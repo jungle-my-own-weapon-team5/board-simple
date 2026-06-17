@@ -251,6 +251,24 @@ def test_editor_external_keyword_prioritizes_historical_source_terms() -> None:
     assert keyword == "정조 어찰"
 
 
+def test_editor_external_keyword_strips_quoted_name_endings() -> None:
+    from app.services.editor_agent import _evidence_entities, _external_keyword
+
+    state = {
+        "title": "",
+        "content": "",
+        "post_type": "토론",
+        "category": "인물 열전",
+        "message": "정미수라는 이름은 동명이인이 있을 수 있어?",
+        "history": [],
+        "agent_steps": [],
+        "graph_mode": "local_fallback",
+    }
+
+    assert _external_keyword(state) == "정미수"
+    assert _evidence_entities(state)[0] == "정미수"
+
+
 def test_naver_discovery_query_uses_entity_extraction_without_hardcoded_context() -> None:
     from app.services.ai_runtime import _naver_discovery_query
 

@@ -359,7 +359,11 @@ def _focused_external_keyword(text: str) -> str | None:
 
 
 def _strip_korean_particle(word: str) -> str:
-    return re.sub(r"(은|는|이|가|을|를|의|에|와|과)$", "", word)
+    return re.sub(
+        r"(이라는|라는|이라고|라고|이란|란|이며|라며|은|는|이|가|을|를|의|에|와|과)$",
+        "",
+        word,
+    )
 
 
 def _build_rag_query(state: EditorAgentState) -> str:
