@@ -66,6 +66,7 @@ def search_rag_documents(
         prompt_version=settings.rag_prompt_version,
         timeout_seconds=settings.ai_request_timeout_seconds,
         document_types=_document_types_from_filters(payload),
+        sync_official_sources=_should_sync_official_sources(settings),
     )
     if result.status == "failed":
         _raise_search_failure(result.error_code, result.error_message)
@@ -80,6 +81,12 @@ def _ensure_ai_rag_enabled(settings: Settings) -> None:
         status_code=status.HTTP_404_NOT_FOUND,
         detail="AI/RAG API is disabled",
     )
+
+
+def _should_sync_official_sources(settings: Settings) -> bool:
+    """OC가 명시된 직접 RAG 검색에서는 공식 법령 자동 색인을 수행합니다."""
+
+    return bool(settings.law_open_api_oc.strip())
 
 
 def _select_embedding_profile(

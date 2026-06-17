@@ -21,7 +21,11 @@ def test_planner_parses_llm_json_candidates() -> None:
         search_mode="focused_answer",
     )
 
-    assert [candidate.title for candidate in plan.candidates] == ["주택임대차보호법"]
+    assert plan.candidates[0].title == "주택임대차보호법"
+    assert {candidate.title for candidate in plan.candidates} >= {
+        "주택임대차보호법",
+        "민법",
+    }
     assert plan.candidates[0].query == "주택임대차보호법"
     assert ai_client.requests[0].model == "planner-test-model"
     assert ai_client.requests[0].metadata == {"purpose": "legal_source_planner"}
@@ -140,6 +144,54 @@ def test_planner_prioritizes_required_criminal_candidates_before_llm_noise() -> 
         "형법",
         "형사소송법",
     ]
+
+
+def test_planner_augments_investment_case_with_multi_domain_issue_hints() -> None:
+    ai_client = _PlanningAIClient(text='{"issues":[],"candidates":[]}')
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts=(
+            "A는 B에게 좋은 투자처가 있다고 말하고 연 수익률 50%를 보장한다고 이야기한 뒤 "
+            "1억원을 받았습니다. A는 일부를 C에게 투자했고 D가 이를 편취하고 달아났으며, "
+            "A는 나머지 금액을 다른 사업에 투자해 수익을 냈습니다. "
+            "A는 7500만원만 돌려주고 500만원을 보수로 갖겠다고 했습니다."
+        ),
+        question="검토해야 할 쟁점과 답변 초안 방향을 알려주세요.",
+        search_mode="issue_spotting",
+    )
+
+    issue_keys = {issue.issue_key for issue in plan.issues}
+    assert issue_keys >= {
+        "civil_contract_breach_investment",
+        "civil_mandate_accounting_investment",
+        "criminal_fraud_investment",
+        "financial_regulation_guaranteed_return",
+    }
+    assert {issue.domain for issue in plan.issues} >= {
+        "civil",
+        "criminal",
+        "financial_regulation",
+    }
+    assert [candidate.title for candidate in plan.candidates] == [
+        "민법",
+        "형법",
+        "유사수신행위의 규제에 관한 법률",
+        "자본시장과 금융투자업에 관한 법률",
+        "이자제한법",
+    ]
+    assert any(
+        ref.law_title == "형법" and ref.article_no == "제347조"
+        for issue in plan.issues
+        for ref in issue.expected_article_refs
+    )
+    assert any(
+        ref.law_title == "민법" and ref.article_no == "제390조"
+        for issue in plan.issues
+        for ref in issue.expected_article_refs
+    )
+    assert all("제347조" not in issue.internal_rag_query for issue in plan.issues)
 
 
 def test_planner_ignores_unsupported_document_types() -> None:

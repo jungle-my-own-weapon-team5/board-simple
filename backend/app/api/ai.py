@@ -50,7 +50,7 @@ PROVIDER_ERROR_CODES = {
 }
 AI_RATE_LIMIT_WINDOW_SECONDS = 60
 _AI_RATE_LIMIT_LOCK = Lock()
-_AI_RATE_LIMIT_BUCKETS: dict[tuple[int, int], deque[float]] = {}
+_AI_RATE_LIMIT_BUCKETS: dict[tuple[int, int, str], deque[float]] = {}
 
 
 def get_orchestrator_agent(
@@ -189,7 +189,7 @@ def _ensure_ai_rag_enabled(settings: Settings) -> None:
 def _enforce_ai_rate_limit(settings: Settings, current_user: User) -> None:
     now = monotonic()
     cutoff = now - AI_RATE_LIMIT_WINDOW_SECONDS
-    key = (id(settings), current_user.id)
+    key = (id(settings), current_user.id, current_user.email)
     with _AI_RATE_LIMIT_LOCK:
         bucket = _AI_RATE_LIMIT_BUCKETS.setdefault(key, deque())
         while bucket and bucket[0] <= cutoff:

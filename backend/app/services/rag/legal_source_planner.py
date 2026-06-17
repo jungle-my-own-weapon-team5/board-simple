@@ -18,10 +18,19 @@ KNOWN_STATUTE_TITLES = (
     "민법",
     "형법",
     "근로기준법",
+    "산업재해보상보험법",
     "개인정보 보호법",
+    "행정절차법",
+    "행정소송법",
+    "국가배상법",
     "민사소송법",
     "민사집행법",
     "형사소송법",
+    "유사수신행위의 규제에 관한 법률",
+    "자본시장과 금융투자업에 관한 법률",
+    "이자제한법",
+    "전자상거래 등에서의 소비자보호에 관한 법률",
+    "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
 )
 
 
@@ -545,13 +554,17 @@ def _augment_plan_with_required_issue_hints(
     question: str,
     limit: int,
 ) -> LegalSourcePlan:
-    required_issues = _criminal_required_issues(facts=facts, question=question)
+    required_issues = [
+        *_criminal_required_issues(facts=facts, question=question),
+        *_investment_required_issues(facts=facts, question=question),
+        *_mixed_domain_required_issues(facts=facts, question=question),
+    ]
     if not required_issues:
         return plan
 
     # 사실관계에서 명백히 드러난 핵심 도메인 힌트는 외부 API 동기화 우선순위를
     # 가져야 합니다. LLM이 일반 사용자 표현을 잘못 해석해 엉뚱한 법령을 앞세워도
-    # 형법/형사소송법 같은 필수 후보가 먼저 검색되도록 합니다.
+    # 필수 후보가 먼저 검색되도록 하되, 조문번호는 reviewer 검토 힌트로만 씁니다.
     merged_issues = _dedupe_issues([*required_issues, *plan.issues])
     merged_candidates = _dedupe_candidates(
         [
@@ -684,12 +697,270 @@ def _criminal_required_issues(
     return issues
 
 
+def _investment_required_issues(
+    *,
+    facts: str,
+    question: str,
+) -> list[PlannedLegalIssue]:
+    text = f"{facts}\n{question}"
+    normalized_text = _normalize_title(text)
+    issues: list[PlannedLegalIssue] = []
+
+    has_investment_fact = any(
+        keyword in normalized_text
+        for keyword in ("투자", "수익률", "수익", "원금", "보장", "투자처")
+    )
+    has_money_delivery = any(
+        keyword in normalized_text
+        for keyword in ("받", "지급", "돌려", "반환", "상환", "정산", "보수")
+    )
+    has_high_yield_or_guarantee = any(
+        keyword in normalized_text
+        for keyword in ("50%", "50퍼센트", "고수익", "수익률", "보장")
+    )
+    has_fraud_signal = any(
+        keyword in normalized_text for keyword in ("편취", "달아", "기망", "속", "사기")
+    )
+
+    if has_investment_fact and has_money_delivery:
+        issues.append(
+            _required_issue(
+                issue_key="civil_contract_breach_investment",
+                title="투자 약정과 채무불이행",
+                query=(
+                    "민법 채무불이행 손해배상 계약 해석 임의규정 "
+                    "신의성실 투자금 반환 정산"
+                ),
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제390조",
+                        article_title="채무불이행과 손해배상",
+                        reason="투자 약정 위반 또는 반환의무 불이행 여부 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제393조",
+                        article_title="손해배상의 범위",
+                        reason="계약 위반 시 통상손해와 특별손해 범위 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제105조",
+                        article_title="임의규정",
+                        reason="당사자 약정이 민법 임의규정보다 우선되는지 확인",
+                    ),
+                ],
+                domain="civil",
+            )
+        )
+        issues.append(
+            _required_issue(
+                issue_key="civil_mandate_accounting_investment",
+                title="투자 운용 위임과 정산",
+                query=(
+                    "민법 위임 수임인 선관주의 보고의무 취득물 인도 "
+                    "보수청구 투자 운용 정산"
+                ),
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제681조",
+                        article_title="수임인의 선관의무",
+                        reason="A가 투자 운용을 맡은 경우 주의의무 위반 여부 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제683조",
+                        article_title="수임인의 보고의무",
+                        reason="운용 경과와 손익 정산 설명의무 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제684조",
+                        article_title="수임인의 취득물 등의 인도ㆍ이전의무",
+                        reason="투자 운용으로 취득한 금전의 귀속과 인도의무 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제686조",
+                        article_title="수임인의 보수청구권",
+                        reason="A가 500만원을 보수로 공제할 수 있는지 확인",
+                    ),
+                ],
+                domain="civil",
+            )
+        )
+
+    if has_investment_fact and (has_high_yield_or_guarantee or has_fraud_signal):
+        issues.append(
+            _required_issue(
+                issue_key="criminal_fraud_investment",
+                title="투자금 편취와 사기 가능성",
+                query="형법 사기 기망 투자금 편취 수익률 보장 투자처 설명",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제347조",
+                        article_title="사기",
+                        reason="수익률 보장 설명이 기망에 해당하는지 확인",
+                    )
+                ],
+                domain="criminal",
+            )
+        )
+
+    if has_investment_fact and has_high_yield_or_guarantee:
+        issues.append(
+            _required_issue(
+                issue_key="financial_regulation_guaranteed_return",
+                title="수익 보장 투자 모집의 금융규제",
+                query=(
+                    "유사수신행위 규제 원금 초과 수익 보장 자본시장법 "
+                    "손실보전 이익보장 이자제한 투자 권유"
+                ),
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="유사수신행위의 규제에 관한 법률",
+                        article_no="제3조",
+                        article_title="유사수신행위의 금지",
+                        reason="원금 또는 수익 보장 방식의 자금 조달 금지 여부 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="자본시장과 금융투자업에 관한 법률",
+                        article_no="제55조",
+                        article_title="손실보전 등의 금지",
+                        reason="투자 권유 과정에서 이익 보장 약정이 제한되는지 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="이자제한법",
+                        article_no="제2조",
+                        article_title="이자의 최고한도",
+                        reason="거래가 금전대차로 평가될 경우 고율 수익 약정 제한 확인",
+                    ),
+                ],
+                domain="financial_regulation",
+            )
+        )
+
+    return issues
+
+
+def _mixed_domain_required_issues(
+    *,
+    facts: str,
+    question: str,
+) -> list[PlannedLegalIssue]:
+    text = f"{facts}\n{question}"
+    normalized_text = _normalize_title(text)
+    issues: list[PlannedLegalIssue] = []
+
+    if any(keyword in normalized_text for keyword in ("임대차", "보증금", "월세")):
+        issues.append(
+            _required_issue(
+                issue_key="lease_contract_return",
+                title="임대차 보증금 및 계약상 정산",
+                query="주택임대차보호법 민법 임대차 보증금 반환 수리비 공제",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="주택임대차보호법",
+                        article_no="제3조의2",
+                        article_title="보증금의 회수",
+                        reason="임대차 종료 후 보증금 회수 쟁점 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="민법",
+                        article_no="제623조",
+                        article_title="임대인의 의무",
+                        reason="임대 목적물 유지ㆍ수선 관련 기본 의무 확인",
+                    ),
+                ],
+                domain="lease",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("임금", "해고", "산재", "근로")):
+        issues.append(
+            _source_only_issue(
+                issue_key="labor_wage_dismissal_accident",
+                title="노동관계 임금ㆍ해고ㆍ산재",
+                query="근로기준법 산업재해보상보험법 임금체불 부당해고 산재",
+                law_titles=["근로기준법", "산업재해보상보험법"],
+                domain="labor",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("영업정지", "처분", "행정")):
+        issues.append(
+            _required_issue(
+                issue_key="administrative_disposition_remedy",
+                title="행정처분과 불복",
+                query="행정절차법 행정소송법 영업정지 처분 불복 집행정지",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="행정절차법",
+                        article_no="제21조",
+                        article_title="처분의 사전 통지",
+                        reason="불이익 처분 전 사전 통지 여부 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="행정소송법",
+                        article_no="제23조",
+                        article_title="집행정지",
+                        reason="영업정지 처분의 효력정지 가능성 확인",
+                    ),
+                ],
+                domain="administrative",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("개인정보", "신상", "공개")):
+        issues.append(
+            _source_only_issue(
+                issue_key="privacy_disclosure",
+                title="개인정보 공개와 손해",
+                query="개인정보 보호법 국가배상법 개인정보 공개 손해배상",
+                law_titles=["개인정보 보호법", "국가배상법"],
+                domain="privacy",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("중고", "환불", "전자상거래")):
+        issues.append(
+            _source_only_issue(
+                issue_key="consumer_refund_fraud",
+                title="소비자 거래와 환불",
+                query="민법 전자상거래 소비자보호법 환불 하자 사기",
+                law_titles=["민법", "전자상거래 등에서의 소비자보호에 관한 법률"],
+                domain="consumer",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("명예훼손", "게시글", "댓글")):
+        issues.append(
+            _source_only_issue(
+                issue_key="online_defamation",
+                title="온라인 명예훼손",
+                query="형법 정보통신망법 명예훼손 게시글 댓글",
+                law_titles=["형법", "정보통신망 이용촉진 및 정보보호 등에 관한 법률"],
+                domain="criminal",
+            )
+        )
+    if any(keyword in normalized_text for keyword in ("상속", "유류분", "상속재산")):
+        issues.append(
+            _source_only_issue(
+                issue_key="inheritance_property_dispute",
+                title="상속재산과 권리관계",
+                query="민법 상속재산 유류분 임대차 대여금",
+                law_titles=["민법"],
+                domain="family_civil",
+            )
+        )
+    return issues
+
+
 def _required_issue(
     *,
     issue_key: str,
     title: str,
     query: str,
     refs: list[ExpectedArticleRef],
+    domain: str = "criminal",
 ) -> PlannedLegalIssue:
     candidates = _dedupe_candidates(
         [
@@ -708,10 +979,42 @@ def _required_issue(
         title=title,
         description="사실관계상 누락되면 안 되는 핵심 쟁점 검색 힌트입니다.",
         internal_rag_query=_strip_article_numbers(query),
-        domain="criminal",
+        domain=domain,
         official_source_query=candidates[0].query if candidates else None,
         candidates=candidates,
         expected_article_refs=refs,
+    )
+
+
+def _source_only_issue(
+    *,
+    issue_key: str,
+    title: str,
+    query: str,
+    law_titles: list[str],
+    domain: str,
+) -> PlannedLegalIssue:
+    candidates = _dedupe_candidates(
+        [
+            LegalSourceCandidate(
+                document_type="statute",
+                title=law_title,
+                query=law_title,
+                reason="domain_source_hint",
+            )
+            for law_title in law_titles
+        ],
+        limit=len(law_titles),
+    )
+    return PlannedLegalIssue(
+        issue_key=issue_key,
+        title=title,
+        description="복수 법률영역 사건에서 누락되면 안 되는 공식 법령 후보입니다.",
+        internal_rag_query=query,
+        domain=domain,
+        official_source_query=candidates[0].query if candidates else None,
+        candidates=candidates,
+        expected_article_refs=[],
     )
 
 

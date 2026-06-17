@@ -141,7 +141,7 @@ def test_rag_search_endpoint_returns_ranked_chunks_and_persists_audit(
         assert rag_run.run_type == "search"
         assert rag_run.status == "completed"
         assert rag_run.embedding_profile_id == profile_id
-        assert retrieval_count == 1
+        assert retrieval_count == len(body["items"])
 
 
 def test_rag_search_endpoint_supports_embedding_profile_and_document_filters(
@@ -740,6 +740,176 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
         assert verify_result["valid"] is True
 
 
+def test_rag_search_endpoint_supplements_investment_multi_domain_coverage(
+    monkeypatch: pytest.MonkeyPatch,
+    llm_review_rag_client_context: ApiTestContext,
+) -> None:
+    user = register_and_login(
+        llm_review_rag_client_context.client,
+        email="investment-coverage@example.com",
+    )
+    with llm_review_rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        contract_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="민법",
+            heading="제390조(채무불이행과 손해배상)",
+            content="채무자가 채무의 내용에 좇은 이행을 하지 아니한 때에는 손해배상을 청구할 수 있다.",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        mandate_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="민법",
+            heading="제681조(수임인의 선관의무)",
+            content="수임인은 위임의 본지에 따라 선량한 관리자의 주의로써 위임사무를 처리하여야 한다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        fraud_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제347조(사기)",
+            content="사람을 기망하여 재물의 교부를 받거나 재산상의 이익을 취득한 자는 처벌한다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        similar_receiving_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="유사수신행위의 규제에 관한 법률",
+            heading="제3조(유사수신행위의 금지)",
+            content="누구든지 유사수신행위를 하여서는 아니 된다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        capital_market_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="자본시장과 금융투자업에 관한 법률",
+            heading="제55조(손실보전 등의 금지)",
+            content="금융투자업자는 투자자에게 손실보전 또는 이익보장을 약속하여서는 아니 된다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        contract_chunk_id = contract_embedding.chunk_id
+        mandate_chunk_id = mandate_embedding.chunk_id
+        fraud_chunk_id = fraud_embedding.chunk_id
+        similar_receiving_chunk_id = similar_receiving_embedding.chunk_id
+        capital_market_chunk_id = capital_market_embedding.chunk_id
+        expected_chunk_ids = {
+            contract_chunk_id,
+            mandate_chunk_id,
+            fraud_chunk_id,
+            similar_receiving_chunk_id,
+            capital_market_chunk_id,
+        }
+        db.commit()
+
+    class InvestmentReviewAIClient:
+        def __init__(self) -> None:
+            self.review_calls = 0
+
+        def embed_texts(self, request):
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": [1.0, 0.0, 0.0],
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": 3,
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+        def generate_text(self, request):
+            self.review_calls += 1
+            if self.review_calls == 1:
+                text = (
+                    '{"keep_chunk_ids": ['
+                    f"{contract_chunk_id}"
+                    '], "supplemental_queries": [], "missing_article_refs": ['
+                    '{"law_title":"민법","article_no":"제681조","article_title":"수임인의 선관의무"},'
+                    '{"law_title":"형법","article_no":"제347조","article_title":"사기"},'
+                    '{"law_title":"유사수신행위의 규제에 관한 법률","article_no":"제3조",'
+                    '"article_title":"유사수신행위의 금지"},'
+                    '{"law_title":"자본시장과 금융투자업에 관한 법률","article_no":"제55조",'
+                    '"article_title":"손실보전 등의 금지"}]}'
+                )
+            else:
+                text = (
+                    '{"keep_chunk_ids": ['
+                    + ",".join(str(chunk_id) for chunk_id in sorted(expected_chunk_ids))
+                    + '], "supplemental_queries": [], "missing_article_refs": []}'
+                )
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": text,
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="investment_contract",
+                    title="투자 약정과 손해배상",
+                    description=None,
+                    internal_rag_query="민법 채무불이행 손해배상 투자금 반환",
+                    domain="civil",
+                )
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.AIClient",
+        lambda settings: InvestmentReviewAIClient(),
+    )
+
+    response = llm_review_rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "A promised 50% annual returns, took investment money, and returned only part of it.",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    chunk_ids = {item["chunk_id"] for item in body["items"]}
+    assert expected_chunk_ids <= chunk_ids
+    assert any(
+        item["metadata"].get("retrieval_type") == "exact_article"
+        for item in body["items"]
+    )
+
+    with llm_review_rag_client_context.session_factory() as db:
+        verify_result = verify_citations_tool(
+            {
+                "run_id": body["run_id"],
+                "citations": [
+                    {"chunk_id": chunk_id} for chunk_id in sorted(expected_chunk_ids)
+                ],
+            },
+            McpToolCallContext(db=db, user_id=user["id"]),
+        )
+        assert verify_result["valid"] is True
+
+
 def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
     monkeypatch: pytest.MonkeyPatch,
     llm_review_rag_client_context: ApiTestContext,
@@ -975,6 +1145,106 @@ def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
     chunk_ids = [item["chunk_id"] for item in body["items"]]
     assert surrender_chunk_id in chunk_ids
     assert offender_hiding_chunk_id not in chunk_ids
+
+
+def test_rag_search_endpoint_filters_self_surrender_without_surrender_fact(
+    monkeypatch: pytest.MonkeyPatch,
+    llm_review_rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(
+        llm_review_rag_client_context.client,
+        email="self-surrender-filter@example.com",
+    )
+    with llm_review_rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        fraud_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제347조(사기)",
+            content="사람을 기망하여 재물을 교부받은 경우 사기죄가 문제된다.",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        surrender_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제52조(자수, 자복)",
+            content="죄를 지은 후 수사기관에 자수한 경우 형을 감경할 수 있다.",
+            embedding=[0.9, 0.0, 0.0],
+        )
+        fraud_chunk_id = fraud_embedding.chunk_id
+        surrender_chunk_id = surrender_embedding.chunk_id
+        db.commit()
+
+    class ReviewAIClient:
+        def embed_texts(self, request):
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": [1.0, 0.0, 0.0],
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": 3,
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+        def generate_text(self, request):
+            return type(
+                "AITextResult",
+                (),
+                {
+                    "text": (
+                        '{"keep_chunk_ids": ['
+                        f"{fraud_chunk_id},{surrender_chunk_id}"
+                        '], "supplemental_queries": [], "missing_article_refs": []}'
+                    ),
+                    "agent_provider": "mock",
+                    "agent_model_name": request.model,
+                    "finish_reason": "stop",
+                    "usage": None,
+                    "raw_response_id": "review-response",
+                },
+            )()
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="investment_fraud",
+                    title="투자금 편취",
+                    description=None,
+                    internal_rag_query="투자금 편취 사기 수익률 보장",
+                    domain="criminal",
+                )
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr("app.api.rag.AIClient", lambda settings: ReviewAIClient())
+
+    response = llm_review_rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "A promised investment returns and took money.",
+            "top_k": 2,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    chunk_ids = [item["chunk_id"] for item in body["items"]]
+    assert fraud_chunk_id in chunk_ids
+    assert surrender_chunk_id not in chunk_ids
 
 
 def test_rag_search_endpoint_indexes_only_llm_reviewed_chunks(

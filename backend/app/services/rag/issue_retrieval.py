@@ -340,6 +340,10 @@ def _merge_issue_results(
         for index, chunk_id in enumerate(ordered_chunk_ids)
     ]
     merged_items = _prioritize_expected_article_items(merged_items)
+    merged_items = _remove_global_false_positive_items(
+        original_query,
+        merged_items,
+    )
     merged_items = [
         replace(item, rank=index + 1)
         for index, item in enumerate(merged_items)
@@ -667,7 +671,7 @@ def _review_candidate_payload(
                     "content": item.content[:1000],
                 }
             )
-            if len(candidates) >= 30:
+            if len(candidates) >= 45:
                 return candidates
     return candidates
 
@@ -682,13 +686,16 @@ def _build_evidence_review_prompt(
     schema = {
         "keep_chunk_ids": [1, 2],
         "discard_chunk_ids": [3],
-        "supplemental_queries": ["형법 사체유기 변사체 검시 방해"],
+        "supplemental_queries": [
+            "민법 채무불이행 손해배상 투자금 반환",
+            "형법 사기 투자금 편취 수익률 보장",
+        ],
         "missing_article_refs": [
             {
                 "law_title": "형법",
-                "article_no": "제161조",
-                "article_title": "시체 등의 유기 등",
-                "reason": "facts mention burial of a corpse",
+                "article_no": "제347조",
+                "article_title": "사기",
+                "reason": "facts mention investment money and possible deception",
             }
         ],
     }
@@ -733,7 +740,30 @@ def _build_evidence_review_prompt(
         "For body burial before official examination, keep an inspection-obstruction "
         "article when its heading/content directly addresses concealment, alteration, "
         "or obstruction of examination of a suspicious corpse.\n"
-        "If an essential issue is missing, add at most 2 concise supplemental "
+        "Coverage checklist for investment or guaranteed-return facts: keep evidence "
+        "for civil contract breach and damages when a party alleges non-performance "
+        "or underpayment; keep mandate/accounting provisions when one person managed "
+        "another person's investment money, took fees, or must report/transfer gains; "
+        "keep fraud provisions when facts mention deception, guaranteed returns, "
+        "missing money, or misappropriation; keep financial-regulation provisions "
+        "when facts mention principal or high-yield return guarantees, investment "
+        "solicitation, profit guarantees, or collecting money from investors.\n"
+        "For investment facts, do not reduce the dispute to unjust enrichment only. "
+        "Unjust enrichment is secondary when contract breach, mandate/accounting, "
+        "fraud, or financial regulation directly governs the facts.\n"
+        "For guaranteed annual return facts, consider whether the transaction could "
+        "be a loan, investment mandate, securities/investment solicitation, or "
+        "similar receiving of funds. Keep evidence for each plausible legal frame "
+        "that is directly supported by the facts.\n"
+        "Coverage checklist for lease deposit and repair facts: keep residential "
+        "lease deposit recovery evidence when a tenant seeks return of deposit; "
+        "keep Civil Act lease maintenance or lessor-duty evidence when repair costs, "
+        "defects, leaks, or deductions are disputed; keep criminal threat evidence "
+        "only when facts mention threats, intimidation, or coercive messages.\n"
+        "For mixed-domain facts, preserve at least one directly relevant evidence "
+        "item for each materially different domain unless the candidate is plainly "
+        "unrelated.\n"
+        "If an essential issue is missing, add at most 4 concise supplemental "
         "Korean retrieval queries. Do not add queries when current evidence is enough.\n"
         "If you can identify a necessary statute article that is missing from kept "
         "chunks, report it in missing_article_refs with law_title and article_no. "
@@ -765,7 +795,7 @@ def _parse_evidence_review(text: str) -> _EvidenceReviewResult | None:
         value.strip()
         for value in payload.get("supplemental_queries", [])
         if isinstance(value, str) and value.strip()
-    ][:2]
+    ][:4]
     missing_article_refs = _article_refs_from_review_payload(
         payload.get("missing_article_refs")
         or payload.get("missing_expected_article_refs")
@@ -794,7 +824,7 @@ def _article_refs_from_review_payload(raw_refs: object) -> list[ExpectedArticleR
             continue
         seen.add(key)
         deduped.append(ref)
-        if len(deduped) >= 8:
+        if len(deduped) >= 12:
             break
     return deduped
 
@@ -980,6 +1010,90 @@ def _matches_coverage_anchor(
             and heading_title == "검증과필요한처분"
         ):
             return True
+    if "행정소송법" in title:
+        if (
+            any(token in normalized_query for token in ("행정", "처분", "영업정지", "불복", "집행정지"))
+            and heading_title in {"집행정지", "취소소송과재결취소소송"}
+        ):
+            return True
+    if "행정절차법" in title:
+        if (
+            any(token in normalized_query for token in ("행정", "처분", "영업정지", "사전통지"))
+            and heading_title in {"처분의사전통지", "의견청취", "처분의이유제시", "고지"}
+        ):
+            return True
+    if "주택임대차보호법" in title:
+        if (
+            any(token in normalized_query for token in ("임대차", "보증금", "임차"))
+            and heading_title in {"보증금의회수", "대항력등"}
+        ):
+            return True
+    if "민법" in title:
+        if (
+            any(token in normalized_query for token in ("임대차", "수리", "수선", "누수"))
+            and heading_title in {"임대인의의무", "임차인의상환청구권"}
+        ):
+            return True
+        if (
+            any(token in normalized_query for token in ("채무불이행", "계약", "위반"))
+            and heading_title == "채무불이행과손해배상"
+        ):
+            return True
+        if (
+            "손해배상" in normalized_query
+            and heading_title == "손해배상의범위"
+        ):
+            return True
+        if (
+            any(token in normalized_query for token in ("계약", "약정", "의사"))
+            and heading_title == "임의규정"
+        ):
+            return True
+        if (
+            any(token in normalized_query for token in ("신의", "성실", "정산"))
+            and heading_title == "신의성실"
+        ):
+            return True
+        if (
+            any(token in normalized_query for token in ("위임", "수임", "운용"))
+            and heading_title
+            in {
+                "수임인의선관의무",
+                "수임인의보고의무",
+                "수임인의취득물등의인도이전의무",
+                "수임인의보수청구권",
+            }
+        ):
+            return True
+        if (
+            "부당이득" in normalized_query
+            and heading_title in {"부당이득의내용", "수익자의반환범위"}
+        ):
+            return True
+    if "형법" in title:
+        if (
+            any(token in normalized_query for token in ("사기", "기망", "편취"))
+            and heading_title == "사기"
+        ):
+            return True
+    if "유사수신" in title:
+        if (
+            any(token in normalized_query for token in ("유사수신", "원금", "수익", "보장"))
+            and heading_title in {"유사수신행위의금지", "정의"}
+        ):
+            return True
+    if "자본시장" in title:
+        if (
+            any(token in normalized_query for token in ("손실보전", "이익보장", "수익", "보장"))
+            and ("손실보전" in heading_title or "이익보장" in heading_title)
+        ):
+            return True
+    if "이자제한법" in title:
+        if (
+            any(token in normalized_query for token in ("이자", "고율", "수익률", "금전대차"))
+            and heading_title == "이자의최고한도"
+        ):
+            return True
     return False
 
 
@@ -999,6 +1113,88 @@ def _is_semantic_false_positive(
         and "자수" in heading
         and "전조" in content_prefix
         and not any(token in normalized_query for token in ("위증", "무고", "모해"))
+    ):
+        return True
+    if (
+        "형법" in title
+        and "자수" in heading
+        and not any(token in normalized_query for token in ("자수", "자복", "경찰", "신고"))
+    ):
+        return True
+    if any(token in title for token in ("유사수신", "자본시장", "이자제한법")) and not any(
+        token in normalized_query
+        for token in (
+            "투자",
+            "수익",
+            "보장",
+            "원금",
+            "금융",
+            "자본",
+            "유사수신",
+            "이자",
+            "금전대차",
+            "investment",
+            "invest",
+            "return",
+            "returns",
+            "guarantee",
+            "guaranteed",
+            "money",
+            "annual",
+        )
+    ):
+        return True
+    return False
+
+
+def _remove_global_false_positive_items(
+    original_query: str,
+    items: list[RagSearchResultItem],
+) -> list[RagSearchResultItem]:
+    normalized_query = _normalize_for_keyword_match(original_query)
+    return [
+        item
+        for item in items
+        if not _is_global_false_positive(item, normalized_query=normalized_query)
+    ]
+
+
+def _is_global_false_positive(
+    item: RagSearchResultItem,
+    *,
+    normalized_query: str,
+) -> bool:
+    title = _normalize_for_keyword_match(item.title)
+    if any(token in title for token in ("유사수신", "자본시장", "이자제한법")) and not any(
+        token in normalized_query
+        for token in (
+            "투자",
+            "수익",
+            "보장",
+            "원금",
+            "금융",
+            "자본",
+            "유사수신",
+            "이자",
+            "금전대차",
+            "investment",
+            "invest",
+            "return",
+            "returns",
+            "guarantee",
+            "guaranteed",
+            "money",
+            "annual",
+        )
+    ):
+        return True
+    if "식품위생법" in title and not any(
+        token in normalized_query for token in ("식품", "위생", "음식점", "영업정지")
+    ):
+        return True
+    if any(token in title for token in ("행정절차법", "행정소송법")) and not any(
+        token in normalized_query
+        for token in ("행정", "처분", "영업정지", "불복", "집행정지", "취소소송")
     ):
         return True
     return False
@@ -1050,6 +1246,8 @@ def _keyword_hint_tokens(query: str) -> list[str]:
         "조문",
         "형법",
         "형사소송법",
+        "민법",
+        "법률",
     }
     tokens: list[str] = []
     seen: set[str] = set()

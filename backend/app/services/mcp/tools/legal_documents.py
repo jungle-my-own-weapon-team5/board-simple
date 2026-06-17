@@ -83,7 +83,7 @@ def search_legal_documents_tool(
             prompt_version=settings.rag_prompt_version,
             timeout_seconds=settings.ai_request_timeout_seconds,
             document_types=document_types,
-            sync_official_sources=False,
+            sync_official_sources=_should_sync_official_sources(settings),
         )
     except ValueError as exc:
         raise McpInvalidParamsError(str(exc)) from exc
@@ -125,6 +125,14 @@ def _require_settings(context: McpToolCallContext) -> Settings:
     if context.settings is None:
         raise McpToolConfigError("MCP settings are required")
     return context.settings
+
+
+def _should_sync_official_sources(settings: Settings) -> bool:
+    """실제 Agent 경로에서는 공식 corpus를 보강하고 mock 테스트는 fixture를 보존합니다."""
+
+    return settings.ai_agent_provider != "mock" and bool(
+        settings.law_open_api_oc.strip()
+    )
 
 
 def _required_non_blank_string(arguments: JsonObject, key: str) -> str:
