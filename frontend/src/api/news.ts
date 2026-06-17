@@ -1,5 +1,7 @@
 import { apiRequest } from "./client";
 import type {
+  DuplicateJudgementRequestItem,
+  DuplicateJudgementResponse,
   HackerNewsImportResponse,
   HackerNewsPreviewItem,
   HackerNewsPreviewResponse,
@@ -17,6 +19,13 @@ export function previewHackerNews(params: {
   return apiRequest<HackerNewsPreviewResponse>("/api/news/hacker-news/preview", {
     method: "POST",
     json: params,
+  });
+}
+
+export function judgeNewsDuplicates(items: DuplicateJudgementRequestItem[]) {
+  return apiRequest<DuplicateJudgementResponse>("/api/news/duplicates/judge", {
+    method: "POST",
+    json: { items },
   });
 }
 

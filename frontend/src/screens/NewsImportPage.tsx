@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, Newspaper, Search } from "lucide-react";
+import { Check, ExternalLink, Newspaper, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -11,6 +11,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { useAuthStore } from "../stores/authStore";
 import type {
+  DuplicateJudgementResult,
   DuplicateMatch,
   HackerNewsImportResponse,
   HackerNewsPreviewItem,
@@ -43,8 +44,11 @@ export default function NewsImportPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [judgementError, setJudgementError] = useState<string | null>(null);
+  const [judgements, setJudgements] = useState<Record<string, Record<number, DuplicateJudgementResult>>>({});
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isJudging, setIsJudging] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -69,6 +73,11 @@ export default function NewsImportPage() {
     [selectableItems, selectedIds],
   );
 
+  const selectedDuplicateItems = useMemo(
+    () => selectedItems.filter((item) => item.duplicate_matches.length > 0),
+    [selectedItems],
+  );
+
   if (!user) {
     return <p className="text-muted-foreground">Redirecting...</p>;
   }
@@ -86,7 +95,9 @@ export default function NewsImportPage() {
 
     setIsPreviewing(true);
     setError(null);
+    setJudgementError(null);
     setResult(null);
+    setJudgements({});
     setSelectedIds(new Set());
     try {
       if (mode === "url") {
@@ -104,6 +115,38 @@ export default function NewsImportPage() {
       setError(err instanceof Error ? err.message : "뉴스 후보를 불러오지 못했습니다.");
     } finally {
       setIsPreviewing(false);
+    }
+  };
+
+  const handleJudgeDuplicates = async () => {
+    if (!selectedDuplicateItems.length) {
+      return;
+    }
+    setIsJudging(true);
+    setJudgementError(null);
+    try {
+      const data = await newsApi.judgeNewsDuplicates(
+        selectedDuplicateItems.map((item) => ({
+          client_id: itemKey(item),
+          title: item.title,
+          url: item.url,
+          summary: item.summary,
+          key_points: item.key_points,
+          duplicate_matches: item.duplicate_matches,
+        })),
+      );
+      const next: Record<string, Record<number, DuplicateJudgementResult>> = {};
+      for (const item of data.items) {
+        next[item.client_id] = {};
+        for (const result of item.results) {
+          next[item.client_id][result.post_id] = result;
+        }
+      }
+      setJudgements(next);
+    } catch (err) {
+      setJudgementError(err instanceof Error ? err.message : "중복 판정을 완료하지 못했습니다.");
+    } finally {
+      setIsJudging(false);
     }
   };
 
@@ -241,16 +284,30 @@ export default function NewsImportPage() {
       </form>
 
       {error ? <p className="font-semibold text-destructive">{error}</p> : null}
+      {judgementError ? <p className="font-semibold text-destructive">{judgementError}</p> : null}
 
       {items.length ? (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             선택 가능 {selectableItems.length}개 · 선택 {selectedItems.length}개
           </p>
-          <Button type="button" onClick={handleImport} disabled={isImporting || !selectedItems.length}>
-            <Check />
-            <span>{isImporting ? "게시 중" : "선택 항목 게시"}</span>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {selectedDuplicateItems.length ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleJudgeDuplicates}
+                disabled={isJudging}
+              >
+                <ShieldCheck />
+                <span>{isJudging ? "판정 중" : "중복 판정"}</span>
+              </Button>
+            ) : null}
+            <Button type="button" onClick={handleImport} disabled={isImporting || !selectedItems.length}>
+              <Check />
+              <span>{isImporting ? "게시 중" : "선택 항목 게시"}</span>
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -311,7 +368,10 @@ export default function NewsImportPage() {
                 ) : null}
 
                 {item.duplicate_matches.length ? (
-                  <DuplicateMatches matches={item.duplicate_matches} />
+                  <DuplicateMatches
+                    matches={item.duplicate_matches}
+                    judgements={judgements[itemKey(item)] ?? {}}
+                  />
                 ) : null}
 
                 <div className="flex flex-wrap gap-3 text-sm">
@@ -365,19 +425,39 @@ export default function NewsImportPage() {
   );
 }
 
-function DuplicateMatches({ matches }: { matches: DuplicateMatch[] }) {
+function DuplicateMatches({
+  matches,
+  judgements,
+}: {
+  matches: DuplicateMatch[];
+  judgements: Record<number, DuplicateJudgementResult>;
+}) {
   return (
     <section className="border-t border-border pt-3">
       <h3 className="text-sm font-bold">중복 의심</h3>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-        {matches.map((match) => (
-          <li key={`${match.reason}-${match.post_id}`}>
-            <Link href={`/posts/${match.post_id}`} className="font-semibold hover:text-primary">
-              {match.title}
-            </Link>
-            <span> · {duplicateReasonLabel(match.reason)}</span>
-          </li>
-        ))}
+        {matches.map((match) => {
+          const judgement = judgements[match.post_id];
+          return (
+            <li key={`${match.reason}-${match.post_id}`} className="[overflow-wrap:anywhere]">
+              <span className="inline-flex flex-wrap items-center gap-2">
+                <Link href={`/posts/${match.post_id}`} className="font-semibold hover:text-primary">
+                  {match.title}
+                </Link>
+                <span>· {duplicateReasonLabel(match.reason)}</span>
+                {judgement ? (
+                  <Badge
+                    variant={judgement.verdict === "not_duplicate" ? "secondary" : "outline"}
+                    className={judgement.verdict === "duplicate" ? "text-destructive" : undefined}
+                  >
+                    {judgementLabel(judgement.verdict)}
+                  </Badge>
+                ) : null}
+              </span>
+              {judgement ? <p className="mt-1 leading-6">{judgement.reason}</p> : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -403,4 +483,14 @@ function duplicateReasonLabel(reason: DuplicateMatch["reason"]) {
     return "비슷한 제목";
   }
   return "RAG 유사";
+}
+
+function judgementLabel(verdict: DuplicateJudgementResult["verdict"]) {
+  if (verdict === "duplicate") {
+    return "중복";
+  }
+  if (verdict === "not_duplicate") {
+    return "중복 아님";
+  }
+  return "확인 필요";
 }

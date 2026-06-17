@@ -78,6 +78,34 @@ export type DuplicateMatch = {
   score: number | null;
 };
 
+export type DuplicateJudgementVerdict = "duplicate" | "not_duplicate" | "uncertain";
+
+export type DuplicateJudgementRequestItem = {
+  client_id: string;
+  title: string;
+  url?: string | null;
+  summary?: string | null;
+  key_points: string[];
+  duplicate_matches: DuplicateMatch[];
+};
+
+export type DuplicateJudgementResult = {
+  post_id: number;
+  title: string;
+  verdict: DuplicateJudgementVerdict;
+  confidence: number | null;
+  reason: string;
+};
+
+export type DuplicateJudgementResponseItem = {
+  client_id: string;
+  results: DuplicateJudgementResult[];
+};
+
+export type DuplicateJudgementResponse = {
+  items: DuplicateJudgementResponseItem[];
+};
+
 export type HackerNewsPreviewItem = {
   hn_id: number;
   title: string;

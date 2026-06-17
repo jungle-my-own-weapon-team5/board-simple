@@ -15,11 +15,13 @@ from app.models.post import Post
 from app.mcp import board as board_mcp
 from app.services import duplicate_check as duplicate_check_module
 from app.services.duplicate_check import DuplicateCheckService
+from app.services.duplicate_judgement import DuplicateJudgementService
 from app.services.hacker_news import (
     HackerNewsCandidate,
     HackerNewsService,
     HackerNewsSummary,
 )
+from app.services.news_curation import WebArticleCandidate
 from app.services.news_curation import NewsCurationService
 from test_auth_posts_comments import register_and_login
 
@@ -432,6 +434,188 @@ def test_web_article_preview_returns_failed_item_without_openai(client: TestClie
     item = response.json()["item"]
     assert item["summary_status"] == "failed"
     assert item["error"] == "OPENAI_API_KEY is required"
+
+
+def test_news_duplicate_judgement_requires_login(client: TestClient) -> None:
+    response = client.post(
+        "/api/news/duplicates/judge",
+        json={"items": [{"client_id": "hn-1", "title": "Title", "duplicate_matches": []}]},
+    )
+    assert response.status_code == 401
+
+
+def test_news_duplicate_judgement_validates_schema(client: TestClient) -> None:
+    register_and_login(client)
+    response = client.post(
+        "/api/news/duplicates/judge",
+        json={"items": [{"client_id": " ", "title": " ", "duplicate_matches": []}]},
+    )
+    assert response.status_code == 422
+
+
+def test_news_duplicate_judgement_fallback_and_dedupe(client: TestClient) -> None:
+    register_and_login(client)
+    exact_response = client.post(
+        "/api/news/hacker-news/import",
+        json={
+            "items": [
+                {
+                    "hn_id": 900,
+                    "title": "Exact article",
+                    "url": "https://example.com/exact",
+                    "hn_url": "https://news.ycombinator.com/item?id=900",
+                    "summary": "기존 요약",
+                    "key_points": ["기존 핵심"],
+                }
+            ]
+        },
+    )
+    assert exact_response.status_code == 200
+    exact_id = exact_response.json()["created"][0]["post_id"]
+    similar_response = client.post(
+        "/api/posts",
+        json={"title": "Similar article", "content": "비슷한 제목의 기존 게시글"},
+    )
+    assert similar_response.status_code == 201
+    similar_id = similar_response.json()["id"]
+    rag_response = client.post(
+        "/api/posts",
+        json={"title": "Vector article", "content": "벡터 검색으로 찾은 기존 게시글"},
+    )
+    assert rag_response.status_code == 201
+    rag_id = rag_response.json()["id"]
+
+    response = client.post(
+        "/api/news/duplicates/judge",
+        json={
+            "items": [
+                {
+                    "client_id": "hn-900",
+                    "title": "Candidate article",
+                    "url": "https://example.com/exact",
+                    "summary": "후보 요약",
+                    "key_points": ["후보 핵심"],
+                    "duplicate_matches": [
+                        {"post_id": exact_id, "title": "Exact article", "reason": "same_url"},
+                        {"post_id": exact_id, "title": "Exact article", "reason": "rag"},
+                        {
+                            "post_id": similar_id,
+                            "title": "Similar article",
+                            "reason": "similar_title",
+                            "score": 0.9,
+                        },
+                        {"post_id": rag_id, "title": "Vector article", "reason": "rag"},
+                        {"post_id": 9999, "title": "Missing", "reason": "rag"},
+                    ],
+                },
+                {"client_id": "empty", "title": "No matches", "duplicate_matches": []},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"][1] == {"client_id": "empty", "results": []}
+    results = payload["items"][0]["results"]
+    assert [result["post_id"] for result in results] == [exact_id, similar_id, rag_id]
+    assert [result["verdict"] for result in results] == [
+        "duplicate",
+        "uncertain",
+        "uncertain",
+    ]
+    assert results[0]["confidence"] == 1.0
+    assert results[1]["confidence"] is None
+
+
+def test_news_duplicate_judgement_uses_llm_result(client: TestClient) -> None:
+    class FakeResponse:
+        def __init__(self, post_id: int) -> None:
+            self.content = (
+                '[{"post_id": %s, "verdict": "not_duplicate", '
+                '"confidence": 0.8, "reason": "다른 초점입니다."}]'
+            ) % post_id
+
+    class FakeLlm:
+        def __init__(self, post_id: int) -> None:
+            self.post_id = post_id
+
+        def invoke(self, messages: list[tuple[str, str]]) -> FakeResponse:
+            assert "Candidate article" in messages[1][1]
+            return FakeResponse(self.post_id)
+
+    register_and_login(client)
+    create_response = client.post(
+        "/api/posts",
+        json={"title": "Existing article", "content": "기존 게시글 본문"},
+    )
+    assert create_response.status_code == 201
+    post_id = create_response.json()["id"]
+    service = DuplicateJudgementService(Settings(openai_api_key="test-key"))
+    service._llm = FakeLlm(post_id)
+    app.dependency_overrides[news_api.get_duplicate_judgement_service_dependency] = lambda: service
+
+    response = client.post(
+        "/api/news/duplicates/judge",
+        json={
+            "items": [
+                {
+                    "client_id": "hn-901",
+                    "title": "Candidate article",
+                    "duplicate_matches": [
+                        {"post_id": post_id, "title": "Existing article", "reason": "rag"}
+                    ],
+                }
+            ]
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()["items"][0]["results"][0]
+    assert result["verdict"] == "not_duplicate"
+    assert result["confidence"] == 0.8
+    assert result["reason"] == "다른 초점입니다."
+
+
+def test_news_duplicate_judgement_llm_failure_falls_back(client: TestClient) -> None:
+    class FakeResponse:
+        content = "not json"
+
+    class FakeLlm:
+        def invoke(self, messages: list[tuple[str, str]]) -> FakeResponse:
+            return FakeResponse()
+
+    register_and_login(client)
+    create_response = client.post(
+        "/api/posts",
+        json={"title": "Existing article", "content": "기존 게시글 본문"},
+    )
+    assert create_response.status_code == 201
+    post_id = create_response.json()["id"]
+    service = DuplicateJudgementService(Settings(openai_api_key="test-key"))
+    service._llm = FakeLlm()
+    app.dependency_overrides[news_api.get_duplicate_judgement_service_dependency] = lambda: service
+
+    response = client.post(
+        "/api/news/duplicates/judge",
+        json={
+            "items": [
+                {
+                    "client_id": "hn-902",
+                    "title": "Candidate article",
+                    "duplicate_matches": [
+                        {
+                            "post_id": post_id,
+                            "title": "Existing article",
+                            "reason": "similar_title",
+                            "score": 0.9,
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()["items"][0]["results"][0]
+    assert result["verdict"] == "uncertain"
+    assert result["confidence"] is None
 
 
 def test_duplicate_check_service_url_title_rag_and_rag_failure_without_network(

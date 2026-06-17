@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 NewsSource = Literal["top", "best", "new", "search"]
 SummaryStatus = Literal["success", "failed"]
 DuplicateReason = Literal["same_url", "similar_title", "rag"]
+DuplicateJudgementVerdict = Literal["duplicate", "not_duplicate", "uncertain"]
 
 
 class DuplicateMatch(BaseModel):
@@ -14,6 +15,56 @@ class DuplicateMatch(BaseModel):
     title: str
     reason: DuplicateReason
     score: float | None = None
+
+
+class NewsDuplicateJudgementItem(BaseModel):
+    client_id: str = Field(min_length=1, max_length=100)
+    title: str = Field(min_length=1, max_length=500)
+    url: str | None = Field(default=None, max_length=2048)
+    summary: str | None = None
+    key_points: list[str] = Field(default_factory=list)
+    duplicate_matches: list[DuplicateMatch] = Field(default_factory=list)
+
+    @field_validator("client_id", "title")
+    @classmethod
+    def strip_required_text(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("field must not be blank")
+        return stripped
+
+    @field_validator("url", "summary")
+    @classmethod
+    def strip_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+    @field_validator("key_points")
+    @classmethod
+    def strip_key_points(cls, value: list[str]) -> list[str]:
+        return [point.strip() for point in value if point.strip()]
+
+
+class NewsDuplicateJudgementRequest(BaseModel):
+    items: list[NewsDuplicateJudgementItem] = Field(min_length=1, max_length=20)
+
+
+class NewsDuplicateJudgementResult(BaseModel):
+    post_id: int
+    title: str
+    verdict: DuplicateJudgementVerdict
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    reason: str
+
+
+class NewsDuplicateJudgementResponseItem(BaseModel):
+    client_id: str
+    results: list[NewsDuplicateJudgementResult]
+
+
+class NewsDuplicateJudgementResponse(BaseModel):
+    items: list[NewsDuplicateJudgementResponseItem]
 
 
 class HackerNewsPreviewRequest(BaseModel):

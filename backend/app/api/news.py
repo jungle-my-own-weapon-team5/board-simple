@@ -17,6 +17,8 @@ from app.schemas.news import (
     HackerNewsPreviewRequest,
     HackerNewsPreviewResponse,
     HackerNewsSkippedItem,
+    NewsDuplicateJudgementRequest,
+    NewsDuplicateJudgementResponse,
     WebArticleCreatedPost,
     WebArticleImportRequest,
     WebArticleImportResponse,
@@ -25,6 +27,10 @@ from app.schemas.news import (
     WebArticleSkippedItem,
 )
 from app.services.duplicate_check import DuplicateCheckService, get_duplicate_check_service
+from app.services.duplicate_judgement import (
+    DuplicateJudgementService,
+    get_duplicate_judgement_service,
+)
 from app.services.hacker_news import (
     HackerNewsService,
     build_hacker_news_post_content,
@@ -53,6 +59,10 @@ def get_duplicate_check_service_dependency() -> DuplicateCheckService:
 
 def get_news_curation_service_dependency() -> NewsCurationService:
     return get_news_curation_service()
+
+
+def get_duplicate_judgement_service_dependency() -> DuplicateJudgementService:
+    return get_duplicate_judgement_service()
 
 
 @router.post("/hacker-news/preview", response_model=HackerNewsPreviewResponse)
@@ -111,6 +121,17 @@ def preview_web_article(
             "duplicate_matches": _duplicate_matches(item.duplicate_matches),
         }
     )
+
+
+@router.post("/duplicates/judge", response_model=NewsDuplicateJudgementResponse)
+def judge_news_duplicates(
+    payload: NewsDuplicateJudgementRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    service: DuplicateJudgementService = Depends(get_duplicate_judgement_service_dependency),
+) -> NewsDuplicateJudgementResponse:
+    _ = current_user
+    return NewsDuplicateJudgementResponse(items=service.judge(db, payload.items))
 
 
 @router.post("/hacker-news/import", response_model=HackerNewsImportResponse)
