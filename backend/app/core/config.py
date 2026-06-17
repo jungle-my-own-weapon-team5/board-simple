@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     rag_enabled: bool = False
     rag_collection_name: str = "tech_news_posts"
     rag_top_k: int = 5
+    rag_duplicate_score_threshold: float = 0.5
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),

@@ -33,6 +33,7 @@ services:
       RAG_ENABLED: "${RAG_ENABLED:-false}"
       RAG_COLLECTION_NAME: "${RAG_COLLECTION_NAME:-tech_news_posts}"
       RAG_TOP_K: "${RAG_TOP_K:-5}"
+      RAG_DUPLICATE_SCORE_THRESHOLD: "${RAG_DUPLICATE_SCORE_THRESHOLD:-0.5}"
     depends_on:
       db:
         condition: service_healthy
@@ -54,6 +55,7 @@ services:
       RAG_ENABLED: "${RAG_ENABLED:-false}"
       RAG_COLLECTION_NAME: "${RAG_COLLECTION_NAME:-tech_news_posts}"
       RAG_TOP_K: "${RAG_TOP_K:-5}"
+      RAG_DUPLICATE_SCORE_THRESHOLD: "${RAG_DUPLICATE_SCORE_THRESHOLD:-0.5}"
     ports:
       - "8000:8000"
     depends_on:

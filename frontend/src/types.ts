@@ -71,6 +71,41 @@ export type RagAskResponse = {
 
 export type HackerNewsSource = "top" | "best" | "new" | "search";
 
+export type DuplicateMatch = {
+  post_id: number;
+  title: string;
+  reason: "same_url" | "similar_title" | "rag";
+  score: number | null;
+};
+
+export type DuplicateJudgementVerdict = "duplicate" | "not_duplicate" | "uncertain";
+
+export type DuplicateJudgementRequestItem = {
+  client_id: string;
+  title: string;
+  url?: string | null;
+  summary?: string | null;
+  key_points: string[];
+  duplicate_matches: DuplicateMatch[];
+};
+
+export type DuplicateJudgementResult = {
+  post_id: number;
+  title: string;
+  verdict: DuplicateJudgementVerdict;
+  confidence: number | null;
+  reason: string;
+};
+
+export type DuplicateJudgementResponseItem = {
+  client_id: string;
+  results: DuplicateJudgementResult[];
+};
+
+export type DuplicateJudgementResponse = {
+  items: DuplicateJudgementResponseItem[];
+};
+
 export type HackerNewsPreviewItem = {
   hn_id: number;
   title: string;
@@ -83,6 +118,7 @@ export type HackerNewsPreviewItem = {
   summary_status: "success" | "failed";
   summary: string | null;
   key_points: string[];
+  duplicate_matches: DuplicateMatch[];
   is_imported: boolean;
   error: string | null;
 };
@@ -94,4 +130,25 @@ export type HackerNewsPreviewResponse = {
 export type HackerNewsImportResponse = {
   created: { post_id: number; hn_id: number; title: string }[];
   skipped: { hn_id: number; reason: string }[];
+};
+
+export type WebArticlePreviewItem = {
+  source_type: "web_article";
+  source_id: string;
+  title: string;
+  url: string;
+  summary_status: "success" | "failed";
+  summary: string | null;
+  key_points: string[];
+  duplicate_matches: DuplicateMatch[];
+  error: string | null;
+};
+
+export type WebArticlePreviewResponse = {
+  item: WebArticlePreviewItem;
+};
+
+export type WebArticleImportResponse = {
+  created: { post_id: number; source_id: string; title: string }[];
+  skipped: { source_id: string; reason: string }[];
 };

@@ -5,25 +5,41 @@
 - Preserve the stack: FastAPI, SQLAlchemy, Alembic, PostgreSQL pgvector, Next.js App Router, TypeScript, Tailwind.
 - Prefer existing project patterns before adding abstractions.
 - Use `rg`/`rg --files` for search and `apply_patch` for manual edits.
-- Never read or print real `.env` secrets; document with `.env.example`.
+- Never read or print real `.env` secrets; document env shape with `.env.example`.
 - Keep `OPENAI_API_KEY` in environment only; never hardcode it.
 - `RAG_ENABLED=false` must remain the default.
-- Existing board CRUD must work when RAG, HN import, or OpenAI config is unavailable.
+- Existing board CRUD must work when RAG, HN import, web import, or OpenAI config is unavailable.
+- News curation must keep approval-before-publish; do not auto-publish.
+- Duplicate judgement results are advisory unless explicitly requested otherwise.
+- Do not auto-block or auto-select news items based on duplicate judgement.
+- Board MCP tools must be read/preview/check only unless explicitly requested.
+- Board MCP duplicate judgement must not create, import, update, delete, index, or publish posts.
+- MCP preview tools may add `duplicate_judgements`, but must preserve existing response fields.
+- MCP `duplicate_judgements[].reason` is the agent-facing one-line duplicate assessment.
+- MCP stdio servers must not write logs to stdout.
+- Reuse HTTP API schemas/services for MCP duplicate judgement; do not fork duplicate logic.
 - Related posts must use existing vector DB/RAG data, not a new table.
 - Show related posts only on post detail unless explicitly requested.
 - Related post API output should expose title links only: `post_id`, `title`, optional `score`.
 - Exclude the current post and deduplicate multiple chunks from the same post.
 - Return an empty related list if RAG/vector search fails.
-- Do not add migrations for related posts unless storage requirements change.
+- RAG duplicate scores are vector distances: smaller means more similar.
+- RAG duplicate suspicion must apply `RAG_DUPLICATE_SCORE_THRESHOLD`; default is `0.5`.
+- Exclude RAG duplicate candidates when score is `None` or greater than the threshold.
+- Do not add migrations for related posts, duplicate judgement, MCP judgement, or RAG threshold unless storage changes.
 - HN import failures must not break existing post create/update/delete.
+- Web article import failures must not break existing post create/update/delete.
 - Do not store full translated articles; store Korean summary, key points, and source links.
-- Use current `posts` table for imported HN articles with nullable source metadata.
+- Use current `posts` table for imported HN/web articles with nullable source metadata.
+- Duplicate checks should prefer source URL/id, title similarity, and existing RAG/vector data.
+- RAG/vector duplicate search failure must degrade to URL/title checks, not fail preview.
+- Duplicate judgement must degrade to conservative fallback when LLM/OpenAI fails.
 - Keep Alembic migrations reversible.
 - SQLite tests must not require pgvector, OpenAI, or external network calls.
-- Mock HN APIs, article fetch, Readability, embeddings, vector store, and LLM behavior in tests.
+- Mock HN APIs, article fetch, Readability, embeddings, vector store, MCP tools, and LLM behavior in tests.
 - Add tests for public API behavior whenever backend endpoints change.
-- Run backend verification with `cd backend && pytest`.
-- Run frontend verification with `cd frontend && npm run build`.
+- Run backend verification with `cd backend && ./.venv/bin/python -m pytest` when `.venv` exists.
+- Run frontend verification with `cd frontend && npm run build` when frontend changes.
 - Do not introduce background workers unless explicitly requested.
 - Do not add streaming, chat history, reranking, scheduling, or admin UI in the MVP.
 - Keep frontend UI utilitarian and consistent with current shadcn/Tailwind style.
