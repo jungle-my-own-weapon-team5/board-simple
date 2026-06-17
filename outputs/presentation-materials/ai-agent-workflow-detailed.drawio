@@ -1,0 +1,157 @@
+<mxfile host="app.diagrams.net" modified="2026-06-17T00:00:00.000Z" agent="Codex" version="24.7.8" type="device">
+  <diagram id="ai-agent-editor-workflow" name="Editor Agent Workflow">
+    <mxGraphModel dx="1642" dy="942" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1600" height="1000" as="geometry"/>
+        </mxCell>
+        <mxCell id="title" value="게시글 에디터 Agent 워크플로우" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=34;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="70" y="44" width="620" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="사용자 요청 → Safety → LangGraph 노드 → RAG/MCP 근거 수집 → 품질 검토 → 에디터 UI 반영" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontColor=#5B6472;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="72" y="94" width="900" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend1" value="LangGraph Agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=13;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="54" width="160" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend2" value="RAG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=13;fontStyle=1;fontColor=#0E6F68;fontFamily=Malgun Gothic;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1296" y="54" width="78" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend3" value="MCP / 외부자료" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7E7D2;strokeColor=#C7872A;fontSize=13;fontStyle=1;fontColor=#8A5A14;fontFamily=Malgun Gothic;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1390" y="54" width="134" height="36" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ui_group" value="Frontend: 게시글 작성 화면" style="swimlane;html=1;rounded=1;startSize=36;fillColor=#EFE7D8;strokeColor=#D8CDBA;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="60" y="160" width="300" height="660" as="geometry"/>
+        </mxCell>
+        <mxCell id="api_group" value="Backend API / Stream" style="swimlane;html=1;rounded=1;startSize=36;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="410" y="160" width="250" height="660" as="geometry"/>
+        </mxCell>
+        <mxCell id="agent_group" value="Editor Agent Core" style="swimlane;html=1;rounded=1;startSize=36;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="710" y="160" width="430" height="660" as="geometry"/>
+        </mxCell>
+        <mxCell id="tools_group" value="Tools / Evidence Layer" style="swimlane;html=1;rounded=1;startSize=36;fillColor=#F8F4EA;strokeColor=#D8CDBA;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="160" width="350" height="660" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="user" value="사용자&lt;br&gt;질문 / 본문 생성 요청" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="230" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="postform" value="PostForm&lt;br&gt;Markdown 에디터 + Agent 패널" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="350" width="220" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="progress_ui" value="진행 상태 표시&lt;br&gt;safety → intent → plan → retrieve → external → evidence → respond" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=13;fontColor=#5B6472;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="610" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="stream_api" value="POST /api/ai/editor-agent/stream&lt;br&gt;NDJSON progress event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="440" y="345" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="run_api" value="fallback&lt;br&gt;POST /editor-agent/run" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=#D8CDBA;fontSize=13;fontColor=#5B6472;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="450" y="470" width="170" height="58" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="safety" value="Safety Layer&lt;br&gt;주제 이탈 / 위험 요청 차단" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7D9D2;strokeColor=#B33A2E;fontSize=15;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="750" y="220" width="170" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="intent" value="Intent Node&lt;br&gt;answer / fill / revise 분류" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="940" y="220" width="170" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="plan" value="Plan Node&lt;br&gt;답변 계획·검색 키워드 구성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="750" y="340" width="170" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="retrieve" value="Retrieve Node&lt;br&gt;RAG 근거 검색" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="940" y="340" width="170" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="decision" value="내부 근거 충분?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF8E9;strokeColor=#C7872A;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="810" y="470" width="140" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="external" value="External Search Node&lt;br&gt;MCP 외부 사료 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7E7D2;strokeColor=#C7872A;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="980" y="480" width="150" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="evidence" value="Evidence Node&lt;br&gt;근거 claim + coverage 검사" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="750" y="630" width="170" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="respond" value="Respond Node&lt;br&gt;agent_message / suggested_content 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="940" y="630" width="170" height="82" as="geometry"/>
+        </mxCell>
+        <mxCell id="quality" value="Quality Gate&lt;br&gt;필요 시 LLM Judge → revise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFE7D8;strokeColor=#D8CDBA;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="835" y="750" width="190" height="72" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ragdb" value="RAG Store&lt;br&gt;rag_documents / rag_chunks&lt;br&gt;PostgreSQL + pgvector" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1">
+          <mxGeometry x="1235" y="245" width="250" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="seed" value="Seed Sources&lt;br&gt;실록 · 한국민족문화대백과&lt;br&gt;신편 한국사 Markdown" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0E6F68;fontSize=14;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1235" y="390" width="250" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="mcp" value="MCP Server&lt;br&gt;/api/mcp · JSON-RPC 2.0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7E7D2;strokeColor=#C7872A;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1235" y="530" width="250" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="external_sources" value="External History Providers&lt;br&gt;공식 사료/외부 자료 후보" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C7872A;fontSize=14;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1235" y="645" width="250" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="output" value="EditorAgentResponse&lt;br&gt;메시지 · 추천 제목/본문 · citations · external_resources · agent_steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=14;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=14;" vertex="1" parent="1">
+          <mxGeometry x="430" y="640" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B33A2E;" edge="1" parent="1" source="user" target="postform">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="streamEditorAgent()" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B33A2E;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="postform" target="stream_api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B33A2E;" edge="1" parent="1" source="stream_api" target="safety">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#18212F;" edge="1" parent="1" source="safety" target="intent">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#18212F;" edge="1" parent="1" source="intent" target="plan">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#18212F;" edge="1" parent="1" source="plan" target="retrieve">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="search_rag()" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#0E6F68;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="retrieve" target="ragdb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="citations / weak_evidence" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#0E6F68;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="ragdb" target="decision">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="약함" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#C7872A;fontSize=12;fontStyle=1;fontFamily=Malgun Gothic;" edge="1" parent="1" source="decision" target="external">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="충분" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#0E6F68;fontSize=12;fontStyle=1;fontFamily=Malgun Gothic;" edge="1" parent="1" source="decision" target="evidence">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" value="search_external()" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#C7872A;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="external" target="mcp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" value="provider search" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#C7872A;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="mcp" target="external_sources">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" value="external_resources" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#C7872A;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="external_sources" target="evidence">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#18212F;" edge="1" parent="1" source="evidence" target="respond">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e15" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#18212F;" edge="1" parent="1" source="respond" target="quality">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" value="final response" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B33A2E;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="quality" target="output">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e17" value="done event" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B33A2E;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="output" target="progress_ui">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e18" value="seed import / embedding" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#0E6F68;fontSize=12;fontFamily=Malgun Gothic;dashed=1;" edge="1" parent="1" source="seed" target="ragdb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

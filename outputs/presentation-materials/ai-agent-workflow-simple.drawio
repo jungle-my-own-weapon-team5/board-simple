@@ -1,0 +1,110 @@
+<mxfile host="app.diagrams.net" modified="2026-06-17T00:00:00.000Z" agent="Codex" version="24.7.8" type="device">
+  <diagram id="simple-overview" name="1. 한눈에 보는 흐름">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="1280" height="720" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1" value="에디터 옆 AI Agent는 무엇을 하나?" style="text;html=1;strokeColor=none;fillColor=none;fontSize=34;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;align=left;" vertex="1" parent="1">
+          <mxGeometry x="70" y="54" width="720" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1" value="사용자가 글을 쓰다가 질문하면, Agent가 안전성 확인 → 근거 검색 → 답변/본문 제안까지 처리합니다." style="text;html=1;strokeColor=none;fillColor=none;fontSize=17;fontColor=#5B6472;fontFamily=Malgun Gothic;align=left;" vertex="1" parent="1">
+          <mxGeometry x="72" y="106" width="980" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="a" value="사용자&lt;br&gt;질문 입력" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1">
+          <mxGeometry x="90" y="282" width="170" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="b" value="AI Agent&lt;br&gt;판단 + 검색 + 작성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E9;strokeColor=#C7872A;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1">
+          <mxGeometry x="382" y="270" width="220" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="c" value="RAG&lt;br&gt;내부 역사 자료 검색" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=20;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1">
+          <mxGeometry x="730" y="210" width="220" height="92" as="geometry"/>
+        </mxCell>
+        <mxCell id="d" value="MCP&lt;br&gt;외부 자료/도구 호출" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7E7D2;strokeColor=#C7872A;fontSize=20;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1">
+          <mxGeometry x="730" y="370" width="220" height="92" as="geometry"/>
+        </mxCell>
+        <mxCell id="e" value="에디터에&lt;br&gt;답변/본문 제안 표시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=21;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1">
+          <mxGeometry x="1050" y="282" width="170" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge1" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge2" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#0E6F68;" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge3" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#C7872A;" edge="1" parent="1" source="b" target="d"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge4" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="c" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="edge5" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="note1" value="발표 멘트: “Agent가 중심이고, RAG와 MCP는 Agent가 필요할 때 꺼내 쓰는 도구입니다.”" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="210" y="560" width="860" height="64" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="simple-request" name="2. 요청이 Agent로 들어가는 과정">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="0" width="1280" height="720" as="geometry"/></mxCell>
+        <mxCell id="t2" value="1단계: 에디터에서 Agent 호출" style="text;html=1;strokeColor=none;fillColor=none;fontSize=34;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1"><mxGeometry x="70" y="54" width="720" height="50" as="geometry"/></mxCell>
+        <mxCell id="n21" value="글 제목 / 본문 / 카테고리 / 사용자 질문" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="90" y="250" width="230" height="110" as="geometry"/></mxCell>
+        <mxCell id="n22" value="PostForm&lt;br&gt;Agent 패널" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="410" y="250" width="190" height="110" as="geometry"/></mxCell>
+        <mxCell id="n23" value="streamEditorAgent()&lt;br&gt;진행률 이벤트 수신" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E9;strokeColor=#C7872A;fontSize=20;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="690" y="250" width="220" height="110" as="geometry"/></mxCell>
+        <mxCell id="n24" value="Backend&lt;br&gt;/api/ai/editor-agent/stream" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0E6F68;fontSize=20;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="1000" y="250" width="220" height="110" as="geometry"/></mxCell>
+        <mxCell id="e21" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n21" target="n22"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e22" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n22" target="n23"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e23" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n23" target="n24"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="note2" value="시연 포인트: 사용자는 그냥 에디터 옆 채팅창에 물어본다. 복잡한 RAG/MCP는 UI 밖에서 처리된다." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=12;" vertex="1" parent="1"><mxGeometry x="180" y="500" width="920" height="68" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="simple-agent" name="3. Agent 내부 판단 과정">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="0" width="1280" height="720" as="geometry"/></mxCell>
+        <mxCell id="t3" value="2단계: Agent가 요청을 처리하는 순서" style="text;html=1;strokeColor=none;fillColor=none;fontSize=34;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1"><mxGeometry x="70" y="54" width="720" height="50" as="geometry"/></mxCell>
+        <mxCell id="n31" value="Safety&lt;br&gt;위험/주제이탈 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7D9D2;strokeColor=#B33A2E;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="80" y="250" width="160" height="92" as="geometry"/></mxCell>
+        <mxCell id="n32" value="Intent&lt;br&gt;질문/본문생성/수정 분류" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="300" y="250" width="180" height="92" as="geometry"/></mxCell>
+        <mxCell id="n33" value="Plan&lt;br&gt;답변 계획 수립" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="540" y="250" width="160" height="92" as="geometry"/></mxCell>
+        <mxCell id="n34" value="Retrieve&lt;br&gt;RAG 근거 검색" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="760" y="250" width="160" height="92" as="geometry"/></mxCell>
+        <mxCell id="n35" value="Evidence&lt;br&gt;근거 정리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="980" y="250" width="160" height="92" as="geometry"/></mxCell>
+        <mxCell id="n36" value="근거가 약하면&lt;br&gt;MCP 외부 검색 추가" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7E7D2;strokeColor=#C7872A;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="760" y="440" width="230" height="90" as="geometry"/></mxCell>
+        <mxCell id="n37" value="Respond&lt;br&gt;답변/본문 제안 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=19;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="1030" y="440" width="190" height="90" as="geometry"/></mxCell>
+        <mxCell id="e31" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n31" target="n32"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e32" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n32" target="n33"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e33" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n33" target="n34"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e34" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n34" target="n35"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e35" value="weak evidence" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#C7872A;fontSize=12;fontFamily=Malgun Gothic;" edge="1" parent="1" source="n34" target="n36"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e36" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#C7872A;" edge="1" parent="1" source="n36" target="n35"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e37" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n35" target="n37"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="note3" value="발표 멘트: “Agent는 곧바로 LLM에게 던지지 않고, 먼저 안전성을 보고, 근거를 찾고, 부족하면 외부 도구까지 사용합니다.”" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=12;" vertex="1" parent="1"><mxGeometry x="150" y="590" width="980" height="64" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="simple-output" name="4. 결과가 화면에 돌아오는 과정">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8F4EA;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="0" width="1280" height="720" as="geometry"/></mxCell>
+        <mxCell id="t4" value="3단계: 결과는 에디터에서 바로 쓸 수 있게 돌아온다" style="text;html=1;strokeColor=none;fillColor=none;fontSize=34;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;" vertex="1" parent="1"><mxGeometry x="70" y="54" width="960" height="50" as="geometry"/></mxCell>
+        <mxCell id="n41" value="EditorAgentResponse" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=23;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="90" y="250" width="230" height="100" as="geometry"/></mxCell>
+        <mxCell id="n42" value="agent_message&lt;br&gt;사용자에게 보여줄 설명" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="420" y="180" width="230" height="90" as="geometry"/></mxCell>
+        <mxCell id="n43" value="suggested_content&lt;br&gt;본문에 붙일 초안" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="420" y="315" width="230" height="90" as="geometry"/></mxCell>
+        <mxCell id="n44" value="citations / resources&lt;br&gt;근거 자료 목록" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F2EF;strokeColor=#0E6F68;fontSize=18;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="420" y="450" width="230" height="90" as="geometry"/></mxCell>
+        <mxCell id="n45" value="Agent 패널&lt;br&gt;답변 표시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E9;strokeColor=#C7872A;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="790" y="225" width="200" height="100" as="geometry"/></mxCell>
+        <mxCell id="n46" value="Markdown 에디터&lt;br&gt;초안 적용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B33A2E;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="790" y="395" width="200" height="100" as="geometry"/></mxCell>
+        <mxCell id="n47" value="사용자&lt;br&gt;검토 후 수정/게시" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=22;fontStyle=1;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=16;" vertex="1" parent="1"><mxGeometry x="1080" y="310" width="150" height="100" as="geometry"/></mxCell>
+        <mxCell id="e41" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n41" target="n42"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e42" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n41" target="n43"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e43" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#0E6F68;" edge="1" parent="1" source="n41" target="n44"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e44" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#C7872A;" edge="1" parent="1" source="n42" target="n45"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e45" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#B33A2E;" edge="1" parent="1" source="n43" target="n46"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e46" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n45" target="n47"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e47" style="endArrow=block;html=1;strokeWidth=3;strokeColor=#18212F;" edge="1" parent="1" source="n46" target="n47"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="note4" value="마무리 멘트: “결과는 단순 채팅 답변이 아니라, 실제 게시글 작성 화면에서 바로 사용할 수 있는 형태로 돌아옵니다.”" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D8CDBA;fontSize=18;fontColor=#18212F;fontFamily=Malgun Gothic;arcSize=12;" vertex="1" parent="1"><mxGeometry x="150" y="590" width="980" height="64" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
