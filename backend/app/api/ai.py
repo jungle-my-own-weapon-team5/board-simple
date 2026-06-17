@@ -1,6 +1,11 @@
 from datetime import date
 
+import json
+from collections.abc import Iterator
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -27,7 +32,7 @@ from app.schemas.ai import (
     WritingAssistResponse,
 )
 from app.services.chat_agent import run_chat_agent
-from app.services.editor_agent import run_editor_agent
+from app.services.editor_agent import run_editor_agent, run_editor_agent_stream
 from app.services.ai_runtime import run_agent, run_rag_quality_agent, search_external, search_rag
 from app.services.discussion_topics import get_public_discussion_topics
 
@@ -104,6 +109,29 @@ def editor_agent_run(
         payload.message,
         payload.history,
     )
+
+
+@router.post("/editor-agent/stream")
+def editor_agent_stream(
+    payload: EditorAgentRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    def events() -> Iterator[str]:
+        for event in run_editor_agent_stream(
+            db,
+            settings,
+            payload.title,
+            payload.content,
+            payload.post_type,
+            payload.category,
+            payload.message,
+            payload.history,
+        ):
+            yield json.dumps(jsonable_encoder(event), ensure_ascii=False) + "\n"
+
+    return StreamingResponse(events(), media_type="application/x-ndjson")
 
 
 @router.post("/rag/search", response_model=RagSearchResponse)

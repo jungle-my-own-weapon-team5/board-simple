@@ -409,6 +409,95 @@ def test_editor_agent_treats_post_request_as_content_fill() -> None:
     assert _classify_action("경혜공주의 생애를 묻고 그걸 포스트하게 만들어줘") == "fill_content"
 
 
+def test_editor_response_normalization_keeps_classified_action() -> None:
+    from app.services.editor_agent import _normalize_response
+
+    response = _normalize_response(
+        {
+            "action": "revise_content",
+            "agent_message": "경혜공주에 대한 답변입니다.",
+            "suggested_content": "LLM이 잘못 넣은 본문 초안",
+            "tags": [],
+            "category": None,
+            "questions": [],
+        },
+        {
+            "action": "answer",
+            "message": "경혜공주의 생애에 대해 알려줘",
+            "category": "인물 열전",
+            "external_resources": [],
+            "tool_logs": [],
+        },
+    )
+
+    assert response.action == "answer"
+    assert response.suggested_content is None
+
+
+def test_editor_evidence_claims_prioritize_primary_external_resources() -> None:
+    from app.schemas.ai import ExternalResource, RagCitation
+    from app.services.editor_agent import _local_evidence_claims
+
+    claims = _local_evidence_claims(
+        {
+            "citations": [
+                RagCitation(
+                    id="rag-1",
+                    title="정약용",
+                    period="조선 후기",
+                    summary="정약용에 대한 내부 RAG 요약입니다.",
+                    relevance=0.8,
+                    source_url="https://example.test/rag",
+                )
+            ],
+            "external_resources": [
+                ExternalResource(
+                    title="태종실록의 양녕대군 기사",
+                    provider="국사편찬위원회 조선왕조실록",
+                    url="https://sillok.history.go.kr/id/example",
+                    description="",
+                    verification_status="primary_verified",
+                    content_excerpt="양녕대군 이제는 태종의 아들이며 세자로 책봉되었다.",
+                )
+            ],
+        }
+    )
+
+    assert claims[0]["source"] == "https://sillok.history.go.kr/id/example"
+    assert claims[0]["status"] == "confirmed"
+    assert "양녕대군" in claims[0]["claim"]
+
+
+def test_editor_quality_revision_does_not_overcorrect_easy_overview_with_primary_source() -> None:
+    from app.schemas.ai import EditorAgentResponse, ExternalResource
+    from app.services.editor_agent import _revision_overcorrects_to_no_evidence
+
+    state = {
+        "action": "answer",
+        "message": "양녕대군은 어떤 사람이야?",
+        "external_resources": [
+            ExternalResource(
+                title="태종실록의 양녕대군 기사",
+                provider="국사편찬위원회 조선왕조실록",
+                url="https://sillok.history.go.kr/id/example",
+                description="",
+                verification_status="primary_verified",
+                content_excerpt="양녕대군 이제는 태종의 아들이며 세자로 책봉되었다.",
+            )
+        ],
+    }
+    original = EditorAgentResponse(
+        action="answer",
+        agent_message="양녕대군은 태종의 아들이자 세종의 형으로, 세자로 책봉되었다가 뒤에 폐세자가 된 인물입니다.",
+    )
+    revised = EditorAgentResponse(
+        action="answer",
+        agent_message="제시된 근거 자료에는 양녕대군에 대한 직접 정보가 없습니다. 따라서 답할 수 없습니다.",
+    )
+
+    assert _revision_overcorrects_to_no_evidence(state, original, revised)
+
+
 def test_editor_planned_external_keywords_include_answer_plan_queries() -> None:
     from app.services.editor_agent import _planned_external_keywords
 
@@ -709,6 +798,36 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     assert editor_answer_payload["suggested_content"] is None
     assert editor_answer_payload["external_resources"]
     assert editor_answer_payload["tool_logs"][0]["tool"] == "history.search"
+
+    editor_stream_response = client.post(
+        "/api/ai/editor-agent/stream",
+        json={
+            "title": post["title"],
+            "content": post["content"],
+            "post_type": "질문",
+            "category": "왕과 권력",
+            "message": "이 사건은 왜 논쟁적이야?",
+            "history": [
+                {"role": "user", "content": "세조와 단종 이야기를 게시글로 쓰는 중이야."},
+                {"role": "assistant", "content": "왕위 계승과 명분 문제를 함께 보면 좋습니다."},
+            ],
+        },
+    )
+    assert editor_stream_response.status_code == 200
+    stream_events = [
+        json.loads(line)
+        for line in editor_stream_response.text.splitlines()
+        if line.strip()
+    ]
+    assert stream_events[0]["type"] == "progress"
+    assert [event["step"] for event in stream_events if event["type"] == "progress"][:3] == [
+        "safety",
+        "intent",
+        "plan",
+    ]
+    assert stream_events[-1]["type"] == "done"
+    assert stream_events[-1]["response"]["action"] == "answer"
+    assert stream_events[-1]["response"]["agent_message"]
 
     yangnyeong_response = client.post(
         "/api/ai/editor-agent/run",

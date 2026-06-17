@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, TypedDict
+from collections.abc import Iterator
+from typing import Any, Literal, TypedDict
 
 from sqlalchemy.orm import Session
 
@@ -47,6 +48,15 @@ KING_NAMES = [
     "충녕대군",
 ]
 SOURCE_KEYWORDS = ["어찰", "편지", "서찰", "문서", "일기", "실록", "사료", "원문", "국역"]
+EDITOR_AGENT_PROGRESS_STEPS = [
+    {"step": "safety", "label": "요청 안전성 확인", "percent": 8},
+    {"step": "intent", "label": "요청 의도 분석", "percent": 18},
+    {"step": "plan", "label": "답변 계획 수립", "percent": 32},
+    {"step": "retrieve", "label": "RAG 근거 검색", "percent": 48},
+    {"step": "external_search", "label": "외부 자료 확인", "percent": 64},
+    {"step": "evidence", "label": "근거 정리", "percent": 78},
+    {"step": "respond", "label": "답변 구성", "percent": 92},
+]
 
 
 class EditorAgentState(TypedDict, total=False):
@@ -141,6 +151,63 @@ def run_editor_agent(
     return result["response"]
 
 
+def run_editor_agent_stream(
+    db: Session,
+    settings: Settings,
+    title: str,
+    content: str,
+    post_type: str,
+    category: str,
+    message: str,
+    history: list[EditorAgentHistoryMessage] | None = None,
+) -> Iterator[dict[str, Any]]:
+    yield _editor_agent_progress_event("safety")
+    safety_response = editor_response_from_safety(moderate_input(message, surface="editor", require_history_topic=False))
+    if safety_response is not None:
+        yield {"type": "done", "response": safety_response}
+        return
+
+    topic_check_text = "\n".join([message, title, content])
+    safety_response = editor_response_from_safety(moderate_input(topic_check_text, surface="editor"))
+    if safety_response is not None:
+        yield {"type": "done", "response": safety_response}
+        return
+
+    state: EditorAgentState = {
+        "title": title.strip(),
+        "content": content.strip(),
+        "post_type": post_type,
+        "category": category.strip(),
+        "message": message.strip(),
+        "history": [
+            {"role": item.role, "content": item.content.strip()}
+            for item in (history or [])[-8:]
+            if item.content.strip()
+        ],
+        "agent_steps": [],
+        "graph_mode": "stream",
+    }
+
+    yield _editor_agent_progress_event("intent")
+    state = {**state, **_intent_node(state)}
+    yield _editor_agent_progress_event("plan")
+    state = {**state, **_plan_node(state, settings)}
+    yield _editor_agent_progress_event("retrieve")
+    state = {**state, **_retrieve_node(state, db, settings)}
+    yield _editor_agent_progress_event("external_search")
+    state = {**state, **_external_search_node(state, db, settings)}
+    yield _editor_agent_progress_event("evidence")
+    state = {**state, **_evidence_node(state, settings)}
+    yield _editor_agent_progress_event("respond")
+    state = {**state, **_respond_node(state, settings)}
+    yield {"type": "done", "response": state["response"]}
+
+
+def _editor_agent_progress_event(step: str) -> dict[str, Any]:
+    progress = next(item for item in EDITOR_AGENT_PROGRESS_STEPS if item["step"] == step)
+    return {"type": "progress", **progress}
+
+
 def _intent_node(state: EditorAgentState) -> EditorAgentState:
     action = _classify_action(state["message"])
     rag_query = _build_rag_query(state)
@@ -224,9 +291,11 @@ def _external_search_node(state: EditorAgentState, db: Session, settings: Settin
                 continue
             seen_urls.add(resource.url)
             resources.append(resource)
+    has_primary = any(resource.verification_status == "primary_verified" for resource in resources)
     return {
         "external_resources": resources[:12],
         "tool_logs": tool_logs,
+        "weak_evidence": False if has_primary else state.get("weak_evidence", True),
         "agent_steps": [
             *state.get("agent_steps", []),
             AgentStep(
@@ -268,11 +337,12 @@ def _respond_node(state: EditorAgentState, settings: Settings) -> EditorAgentSta
     else:
         response = _make_local_response(state)
 
-    graph_output = (
-        "LangGraph 노드 흐름으로 응답을 생성했습니다."
-        if state.get("graph_mode") == "langgraph"
-        else "LangGraph 패키지가 없는 환경이라 같은 순서를 로컬 fallback으로 처리했습니다."
-    )
+    if state.get("graph_mode") == "langgraph":
+        graph_output = "LangGraph 노드 흐름으로 응답을 생성했습니다."
+    elif state.get("graph_mode") == "stream":
+        graph_output = "스트리밍 노드 흐름으로 응답을 생성했습니다."
+    else:
+        graph_output = "LangGraph 패키지가 없는 환경이라 같은 순서를 로컬 fallback으로 처리했습니다."
     response, quality_steps = _quality_gate_response(state, response, settings)
     return {
         "response": response.model_copy(
@@ -601,16 +671,26 @@ def _extract_evidence_claims(state: EditorAgentState, settings: Settings) -> lis
 
 def _local_evidence_claims(state: EditorAgentState) -> list[dict[str, str]]:
     claims: list[dict[str, str]] = []
-    for citation in state.get("citations", [])[:3]:
-        summary = re.sub(r"\s+", " ", citation.summary).strip()
-        if summary:
-            claims.append({"claim": summary[:280], "source": citation.source_url or citation.title, "status": "confirmed"})
-    for resource in state.get("external_resources", [])[:8]:
+    primary_resources = [
+        resource
+        for resource in state.get("external_resources", [])
+        if resource.verification_status == "primary_verified"
+    ]
+    other_resources = [
+        resource
+        for resource in state.get("external_resources", [])
+        if resource.verification_status != "primary_verified"
+    ]
+    for resource in [*primary_resources[:8], *other_resources[:4]]:
         excerpt = re.sub(r"\s+", " ", resource.content_excerpt or resource.description or "").strip()
         source = resource.url or resource.title
         if excerpt:
             status = "confirmed" if resource.verification_status == "primary_verified" else "uncertain"
             claims.append({"claim": excerpt[:280], "source": source, "status": status})
+    for citation in state.get("citations", [])[:3]:
+        summary = re.sub(r"\s+", " ", citation.summary).strip()
+        if summary:
+            claims.append({"claim": summary[:280], "source": citation.source_url or citation.title, "status": "confirmed"})
     return claims[:12]
 
 
@@ -665,6 +745,8 @@ def _make_llm_response(state: EditorAgentState, settings: Settings) -> EditorAge
         "너는 역사 커뮤니티 에디터 안에서 동작하는 범용 Agent다. "
         "사용자가 역사 질문을 하면 답변하고, 본문 작성/수정 요청이면 게시글 본문을 작성한다. "
         "사실 기반으로 쓰되, 내부 RAG가 약하면 검증된 외부 검색 결과와 일반 역사 지식을 함께 활용하고 근거 한계를 밝혀라. "
+        "external_resources에 primary_verified 원전 자료가 있으면, 질문과 직접 맞지 않는 내부 RAG보다 그 외부 원전 자료와 증거 claim을 우선하라. "
+        "쉬운 인물 개괄 질문은 내부 RAG가 빗나갔다는 이유만으로 답변을 보류하지 말고, 확인 가능한 기본 사실을 먼저 설명하라. "
         "외부 자료의 verification_status가 secondary_only뿐이면 웹/백과/블로그 등 2차 자료에서 전하는 이야기로만 표시하고 사실로 단정하지 마라. "
         "이 경우 원하면 실록 등 원전 기준으로 더 찾아볼 수 있고 시간이 더 소요될 수 있다고 안내해라. "
         "외부 자료 배열이 비어 있으면 참고 링크, 외부 링크, 원문 링크를 만들거나 추측하지 마라. "
@@ -697,12 +779,12 @@ def _make_llm_response(state: EditorAgentState, settings: Settings) -> EditorAge
 
 
 def _normalize_response(payload: dict, state: EditorAgentState) -> EditorAgentResponse:
-    action = str(payload.get("action") or state["action"])
-    if action not in {"answer", "fill_content", "revise_content"}:
-        action = state["action"]
+    action = state["action"]
     agent_message = str(payload.get("agent_message") or _default_agent_message(state))
     agent_message = _append_verification_note(agent_message, state)
     suggested_content = _optional_text(payload.get("suggested_content"))
+    if action == "answer":
+        suggested_content = None
     if action in {"fill_content", "revise_content"} and _should_hold_content_for_primary_verification(state):
         suggested_content = None
         agent_message = _hold_for_primary_verification_message(state)
@@ -792,6 +874,7 @@ def _review_response_quality(
         "외부 자료 URL을 꾸며내지 않았는가, 게시글 작성 요청이면 바로 쓸 수 있는 초안을 제공했는가. "
         "대표 인물/개괄 설명은 verified citation이 약해도 '대표적으로', '일반적으로' 같은 제한 표현을 쓰면 허용한다. "
         "특정 원문, 편지 일부, 누가 누구에게 무엇을 했는지 같은 세부 사실관계는 primary_verified 근거 없이는 보류해야 한다. "
+        "단, 쉬운 인물 개괄 질문은 내부 RAG가 빗나갔더라도 external_resources나 증거 claim에 primary_verified 자료가 있으면 '근거 없음'으로 후퇴시키지 마라. "
         "JSON 스키마: {\"pass\":true,\"score\":0.0,\"issues\":[\"\"],\"revision_instruction\":\"\"}\n"
         f"사용자 메시지: {state.get('message', '')}\n"
         f"action: {state.get('action', '')}\n"
@@ -823,6 +906,8 @@ def _revise_response_from_quality_review(
         "너는 역사 커뮤니티 에디터 Agent의 답변을 품질 검토 결과에 맞춰 한 번만 수정한다. "
         "제공된 RAG/외부 자료 범위를 넘는 URL이나 citation을 만들지 마라. "
         "증거 claim과 coverage 검사에 이미 확인된 사실이 있으면 최종 답변에서 누락하지 마라. "
+        "external_resources에 primary_verified 원전 자료가 있으면, 질문과 직접 맞지 않는 내부 RAG보다 그 외부 원전 자료와 증거 claim을 우선하라. "
+        "쉬운 인물 개괄 질문에서는 내부 RAG가 빗나갔다는 이유만으로 '자료가 없어 답할 수 없다'고 고치지 마라. "
         "대표 인물/개괄 설명은 제한 표현으로 답할 수 있지만, 원문 인용/세부 일화는 근거 없으면 보류하라. "
         "기존 응답의 JSON 스키마를 유지하고 JSON만 반환한다. "
         '{"action":"answer|fill_content|revise_content","agent_message":"","suggested_title":null,'
@@ -841,6 +926,8 @@ def _revise_response_from_quality_review(
     )
     payload = _extract_json(_generate_text(settings, prompt, model=settings.openai_judge_model))
     revised = _normalize_response(payload, state)
+    if _revision_overcorrects_to_no_evidence(state, response, revised):
+        revised = response
     return revised.model_copy(
         update={
             "external_resources": state.get("external_resources", []),
@@ -982,6 +1069,46 @@ def _has_primary_verified_resource(state: EditorAgentState) -> bool:
     return any(
         getattr(resource, "verification_status", "") == "primary_verified"
         for resource in state.get("external_resources", [])
+    )
+
+
+def _revision_overcorrects_to_no_evidence(
+    state: EditorAgentState,
+    original: EditorAgentResponse,
+    revised: EditorAgentResponse,
+) -> bool:
+    if not _has_primary_verified_resource(state):
+        return False
+    if not _is_easy_overview_question(state):
+        return False
+    revised_text = f"{revised.agent_message}\n{revised.suggested_content or ''}".replace(" ", "")
+    original_text = f"{original.agent_message}\n{original.suggested_content or ''}".strip()
+    if len(original_text) < 40:
+        return False
+    no_evidence_markers = [
+        "직접정보가없",
+        "직접연결되지않",
+        "자료만으로는",
+        "단정할수없",
+        "답할수없",
+        "근거자료에는",
+        "근거가없",
+        "확인할수없",
+    ]
+    return any(marker in revised_text for marker in no_evidence_markers)
+
+
+def _is_easy_overview_question(state: EditorAgentState) -> bool:
+    if state.get("action") != "answer":
+        return False
+    if _asks_for_specific_factual_reconstruction(state):
+        return False
+    compact = state.get("message", "").replace(" ", "")
+    if any(term in compact for term in ["원문", "인용", "정확히", "사실관계", "인과관계", "자세히"]):
+        return False
+    return any(
+        term in compact
+        for term in ["어떤사람", "어떤인물", "누구", "무엇", "소개", "개괄", "알려줘", "정리해줘"]
     )
 
 
