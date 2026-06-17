@@ -6,9 +6,9 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-board}"
       POSTGRES_DB: "${POSTGRES_DB:-board}"
     ports:
-      - "${POSTGRES_HOST_PORT:-5433}:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_pg17:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 5s
@@ -21,11 +21,12 @@ services:
     command: alembic upgrade head
     environment:
       APP_ENV: "${APP_ENV:-development}"
-      DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://board:board@db:5432/board}"
+      DATABASE_URL: "${DOCKER_DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-board}:${POSTGRES_PASSWORD:-board}@db:5432/${POSTGRES_DB:-board}}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me}"
       JWT_ALGORITHM: "${JWT_ALGORITHM:-HS256}"
       ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
-      FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:3000}"
+      FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:8080}"
+      FRONTEND_EXTRA_ORIGINS: "${FRONTEND_EXTRA_ORIGINS:-http://127.0.0.1:8080,http://localhost:3000,http://127.0.0.1:3000}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
       API_REQUEST_BODY_MAX_BYTES: "${API_REQUEST_BODY_MAX_BYTES:-262144}"
       AI_RAG_ENABLED: "${AI_RAG_ENABLED:-false}"
@@ -62,11 +63,12 @@ services:
       context: ./backend
     environment:
       APP_ENV: "${APP_ENV:-development}"
-      DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://board:board@db:5432/board}"
+      DATABASE_URL: "${DOCKER_DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-board}:${POSTGRES_PASSWORD:-board}@db:5432/${POSTGRES_DB:-board}}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me}"
       JWT_ALGORITHM: "${JWT_ALGORITHM:-HS256}"
       ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
-      FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:3000}"
+      FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:8080}"
+      FRONTEND_EXTRA_ORIGINS: "${FRONTEND_EXTRA_ORIGINS:-http://127.0.0.1:8080,http://localhost:3000,http://127.0.0.1:3000}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
       API_REQUEST_BODY_MAX_BYTES: "${API_REQUEST_BODY_MAX_BYTES:-262144}"
       AI_RAG_ENABLED: "${AI_RAG_ENABLED:-false}"
@@ -95,7 +97,7 @@ services:
       ANTHROPIC_BASE_URL: "${ANTHROPIC_BASE_URL:-}"
       LAW_OPEN_API_OC: "${LAW_OPEN_API_OC:-}"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -106,14 +108,27 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}"
+        NEXT_PUBLIC_API_BASE_URL: ""
     environment:
-      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}"
+      NEXT_PUBLIC_API_BASE_URL: ""
+      INTERNAL_API_BASE_URL: "http://backend:8000"
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       backend:
         condition: service_started
 
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+
 volumes:
-  postgres_data:
+  postgres_data_pg17:

@@ -1,9 +1,17 @@
 FROM node:22-alpine AS deps
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 WORKDIR /app
+COPY docker/certs/ /tmp/local-certs/
+RUN for cert in /tmp/local-certs/*.crt; do \
+        [ -f "$cert" ] || continue; \
+        cat "$cert" >> /etc/ssl/certs/ca-certificates.crt; \
+    done \
+    && npm config set cafile /etc/ssl/certs/ca-certificates.crt
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 FROM node:22-alpine AS builder
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
