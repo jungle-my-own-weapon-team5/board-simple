@@ -252,7 +252,9 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
             rows={2}
             className="min-h-12 resize-none"
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              const isComposing = event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229;
+
+              if (event.key === "Enter" && !event.shiftKey && !isComposing) {
                 event.preventDefault();
                 event.currentTarget.form?.requestSubmit();
               }
