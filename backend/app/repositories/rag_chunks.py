@@ -15,6 +15,7 @@ class RagChunkSearchRow:
     heading_path: str | None
     anchor: str | None
     content: str
+    cosine_distance: float
 
 
 def list_post_chunks(db: Session, post_id: int) -> list[PostRagChunk]:
@@ -93,11 +94,12 @@ def search_chunks_by_embedding(
                 posts.title,
                 chunks.heading_path,
                 chunks.anchor,
-                chunks.content
+                chunks.content,
+                chunks.embedding <=> CAST(:embedding AS vector) AS cosine_distance
             FROM post_rag_chunks AS chunks
             JOIN posts ON posts.id = chunks.post_id
             WHERE chunks.embedding_model = :embedding_model
-            ORDER BY chunks.embedding <=> CAST(:embedding AS vector)
+            ORDER BY cosine_distance
             LIMIT :limit
             """
         ),
@@ -115,6 +117,7 @@ def search_chunks_by_embedding(
             heading_path=row["heading_path"],
             anchor=row["anchor"],
             content=row["content"],
+            cosine_distance=float(row["cosine_distance"]),
         )
         for row in rows
     ]

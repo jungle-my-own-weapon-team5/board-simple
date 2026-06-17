@@ -13,6 +13,10 @@ from app.rag.chunking import PreparedRagChunk, prepare_post_chunks
 
 logger = logging.getLogger(__name__)
 
+RAG_SEARCH_CANDIDATE_MULTIPLIER = 3
+MAX_RAG_CHUNKS_PER_POST = 2
+RAG_MAX_COSINE_DISTANCE = 0.65
+
 
 class RagNotConfiguredError(Exception):
     """RAG 실행에 필요한 설정이 없을 때 API 계층으로 전달하는 예외입니다."""
@@ -176,6 +180,30 @@ def _format_embedding_for_sql(embedding: list[float]) -> str:
     return "[" + ",".join(str(float(value)) for value in embedding) + "]"
 
 
+def _limit_chunks_per_post(
+    chunks: list[RetrievedChunk],
+    *,
+    total_limit: int,
+) -> list[RetrievedChunk]:
+    """RAG 컨텍스트에 같은 게시글 청크가 과도하게 들어가지 않도록 제한합니다."""
+
+    post_counts: dict[int, int] = {}
+    limited_chunks: list[RetrievedChunk] = []
+
+    for chunk in chunks:
+        if len(limited_chunks) >= total_limit:
+            break
+
+        current_count = post_counts.get(chunk.post_id, 0)
+        if current_count >= MAX_RAG_CHUNKS_PER_POST:
+            continue
+
+        post_counts[chunk.post_id] = current_count + 1
+        limited_chunks.append(chunk)
+
+    return limited_chunks
+
+
 def search_chunks(db: Session, question: str) -> list[RetrievedChunk]:
     """사용자 질문과 의미적으로 가까운 게시글 청크를 pgvector로 검색합니다.
 
@@ -193,14 +221,15 @@ def search_chunks(db: Session, question: str) -> list[RetrievedChunk]:
     except OpenAIError as exc:
         raise RagGenerationError("Failed to embed RAG question") from exc
 
+    top_k = max(1, settings.rag_top_k)
     rows = rag_chunk_repository.search_chunks_by_embedding(
         db,
         embedding=_format_embedding_for_sql(query_embedding),
         embedding_model=settings.openai_embedding_model,
-        limit=max(1, settings.rag_top_k),
+        limit=top_k * RAG_SEARCH_CANDIDATE_MULTIPLIER,
     )
 
-    return [
+    chunks = [
         RetrievedChunk(
             post_id=row.post_id,
             title=row.title,
@@ -209,7 +238,9 @@ def search_chunks(db: Session, question: str) -> list[RetrievedChunk]:
             content=row.content,
         )
         for row in rows
+        if row.cosine_distance <= RAG_MAX_COSINE_DISTANCE
     ]
+    return _limit_chunks_per_post(chunks, total_limit=top_k)
 
 
 def _source_from_chunk(chunk: RetrievedChunk) -> RagSource:
