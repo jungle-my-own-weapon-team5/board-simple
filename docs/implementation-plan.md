@@ -365,14 +365,21 @@ backend/tests/test_mcp_legal_tools.py
 backend/app/services/agent/orchestrator.py
 backend/app/services/agent/state.py
 backend/app/services/agent/prompts.py
+backend/app/services/agent/request_guard.py
 backend/app/services/agent/citations.py
 backend/app/repositories/agent_steps.py
 backend/tests/test_agent_orchestrator.py
+backend/tests/test_agent_request_guard.py
 ```
 
 구현 기준:
 
-- 상태 흐름은 `initialize_run -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`를 따릅니다.
+- 상태 흐름은 `initialize_run -> request_intent_guard -> plan_issue_sources -> reasoning_loop -> draft -> verify -> optional_repair_once -> persist`를 따릅니다.
+- `request_intent_guard`는 `facts/question`을 먼저 검사해 `legal_review_intent`, `requested_output_type`, `normalized_question`, `risk_flags`, `blocked_reason`을 생성합니다.
+- `question`은 법률 검토 방향을 지정하는 데이터이며 Agent control instruction이 아닙니다. provider, model, tool 이름, citation 검증 생략, 외부 API 호출 여부를 사용자 입력으로 바꾸지 않습니다.
+- 법률 검토 목적이 아닌 `question`은 `unsupported`로 처리하고 retrieval, external sync, generation을 실행하지 않습니다.
+- `question`에 "이전 지시 무시", "system prompt 공개", "API key 출력", "citation 없이 단정", "검색 근거 무시" 같은 문구가 있으면 prompt injection risk flag를 남기고 해당 지시는 제거하거나 무시합니다.
+- 목적이 모호한 `question`은 `ambiguous`로 처리하고 추가 확인 질문 또는 제한된 법률 검토 범위로 진행합니다.
 - `reasoning_loop`는 `propose_action -> validate_action -> execute_tool_or_model_step -> observe -> decide_continue_or_stop` 반복으로 구성합니다.
 - `plan_issue_sources`는 후보 쟁점, 법률 영역, 후보 법령명, 쟁점별 내부 RAG query, 외부 공식 source query를 생성합니다.
 - 후보 법령명과 외부 source query는 검색 계획일 뿐이며, citation 가능한 근거는 retrieved chunk 또는 검증된 공식 source metadata로 제한합니다.
@@ -390,9 +397,13 @@ backend/tests/test_agent_orchestrator.py
 - OpenAI function/tool calling을 사용하더라도 모델 출력은 action 제안으로만 취급하고, 실제 실행은 서버 검증 뒤 수행합니다.
 - 모델 응답은 provider adapter를 통해 OpenAI API로 생성합니다.
 - 검색된 문서와 외부 API 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
+- prompt assembly는 raw `question`만 사용하지 않고 guard가 만든 `normalized_question`과 risk flag를 함께 사용합니다.
 
 검증:
 
+- 법률 검토 목적이 아닌 `question`이 unsupported request로 종료되는지 테스트
+- `question` 기반 prompt injection이 tool allowlist, citation 정책, secret redaction 정책을 우회하지 못하는지 테스트
+- 긴 `question`이 설정된 길이와 request body 제한 안에서만 처리되는지 테스트
 - LLM이 `search_internal` action을 선택하면 `search_legal_documents`가 실행되는지 테스트
 - 허용되지 않은 action 또는 tool name은 실행하지 않고 실패 처리하는지 테스트
 - 같은 action+arguments 반복 시 loop guard가 중단하는지 테스트
@@ -419,10 +430,11 @@ backend/tests/test_agent_orchestrator.py
 
 권장 커밋 단위:
 
-1. `feat(backend): Agent reasoning loop 계약 추가`
-2. `feat(backend): Agent action 검증 및 loop guard 구현`
-3. `feat(backend): Agent 공식 법령 source 보강 action 추가`
-4. `feat(backend): Agent citation repair 흐름 추가`
+1. `feat(backend): Agent request intent guard 추가`
+2. `feat(backend): Agent reasoning loop 계약 추가`
+3. `feat(backend): Agent action 검증 및 loop guard 구현`
+4. `feat(backend): Agent 공식 법령 source 보강 action 추가`
+5. `feat(backend): Agent citation repair 흐름 추가`
 
 ## 9단계: 답변 초안 생성 API
 
@@ -589,6 +601,8 @@ backend/tests/test_multi_agent_supervisor.py
 
 - 목표 workflow는 `SupervisorAgent -> Issue/Domain Planner -> 선택된 도메인 전문 Agent들 -> EvidenceVerifierAgent -> SynthesisAgent -> SafetyReviewAgent`입니다.
 - `SupervisorAgent`가 전문 Agent 호출 순서, 병렬 실행 가능성, handoff, retry, 중단 조건을 결정합니다.
+- `SupervisorAgent`는 도메인 계획 전에 request/intent guard 결과를 확인합니다. `unsupported` 요청이면 도메인 Agent와 MCP tool을 실행하지 않고 안전 안내 응답으로 종료합니다.
+- `question` 원문은 도메인 Agent에게 제어 명령으로 전달하지 않고, guard가 정규화한 `normalized_question`과 risk flag를 참고 정보로 전달합니다.
 - 공통 계약은 `AgentTask`, `AgentResult`, `AgentContext`, `AgentHandoff`로 시작합니다.
 - 전문 Agent는 서로를 직접 호출하지 않고 handoff 요청을 Supervisor에게 반환합니다.
 - 전문 Agent는 provider SDK, DB, filesystem을 직접 호출하지 않고 service, MCP tool, provider adapter 경계를 사용합니다.
@@ -613,6 +627,7 @@ LangGraph 도입 기준:
 검증:
 
 - Supervisor가 올바른 전문 Agent 순서를 선택하는지 테스트
+- Supervisor가 unsupported request에서 도메인 Agent와 MCP tool을 실행하지 않는지 테스트
 - Issue/Domain Planner가 필요한 도메인만 선별하는지 테스트
 - 선택된 도메인별 전문 Agent가 `domain_report`를 생성하는지 테스트
 - SynthesisAgent가 도메인별 보고를 통합한 최종 답변 prompt를 생성하는지 테스트
@@ -633,6 +648,8 @@ LangGraph 도입 기준:
 - request body size limit
 - PII redaction 또는 최소 저장 정책
 - prompt injection test case
+- `question` intent guard와 unsupported request handling
+- 사용자 입력을 prompt instruction이 아니라 data block으로 격리하는 prompt assembly
 - retrieval evaluation fixture
 - MCP allowlist와 JSON-RPC validation
 - Agent loop guard와 tool failure handling
@@ -645,6 +662,8 @@ LangGraph 도입 기준:
 
 - 보안 회귀 테스트
 - prompt injection fixture 테스트
+- `question` 필드 prompt injection fixture 테스트
+- 비법률 목적 요청이 안전하게 거절되거나 안내되는지 테스트
 - AI run audit record 확인
 - MCP tool call audit record 확인
 - Agent step audit record 확인

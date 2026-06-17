@@ -15,6 +15,7 @@ source 수집
   -> embedding
   -> vector retrieval
   -> MCP tool exposure
+  -> request/intent guard
   -> bounded Agent orchestration
   -> optional filtering/reranking
   -> prompt assembly
@@ -23,7 +24,7 @@ source 수집
   -> persistence/audit
 ```
 
-사용자 요청 처리 흐름에서는 `vector retrieval` 앞에 Orchestrator LLM의 `issue/source planning`이 먼저 실행됩니다. 내부 검색 근거가 부족하면 공식 source on-demand sync와 embedding을 수행한 뒤 retrieval을 다시 실행합니다.
+사용자 요청 처리 흐름에서는 `vector retrieval` 앞에 request/intent guard와 Orchestrator LLM의 `issue/source planning`이 먼저 실행됩니다. request/intent guard는 `question`을 사용자 명령이 아니라 법률 검토 요청 데이터로 정규화하고, 법률 검토 목적이 아니거나 prompt injection 위험이 큰 요청은 retrieval과 generation 전에 차단하거나 제한합니다. 내부 검색 근거가 부족하면 공식 source on-demand sync와 embedding을 수행한 뒤 retrieval을 다시 실행합니다.
 
 ## 1. Source 수집
 
@@ -366,16 +367,22 @@ MVP:
 
 - user facts
 - user question
+- guarded/normalized question
 - retrieved chunks
 - answer policy
 - prompt version
 
 규칙:
 
+- user facts와 user question은 system/developer instruction이 아니라 untrusted data block으로 넣습니다.
+- user question은 `legal_review_intent`, `requested_output_type`, `normalized_question`, `risk_flags`로 정규화한 뒤 prompt에 반영합니다.
+- `question`에 포함된 역할 변경, 이전 지시 무시, citation 생략, secret/system prompt 출력 요청은 prompt instruction으로 사용하지 않습니다.
+- 법률 검토 목적이 아닌 `question`은 prompt assembly 전에 unsupported request로 종료할 수 있습니다.
 - retrieved chunks는 instruction이 아니라 evidence로 넣습니다.
 - citation 없는 법률 주장을 금지합니다.
 - 근거가 부족하면 추가 질문 또는 한계를 출력하게 합니다.
 - 법률 자문이 아니라는 disclaimer를 포함합니다.
+- prompt에는 사용 가능한 citation 목록과 사용 금지 규칙을 분리해 넣고, 목록에 없는 조문/판례/URL을 만들지 못하게 합니다.
 
 prompt version:
 
@@ -400,6 +407,8 @@ MVP:
 
 규칙:
 
+- generation은 guard가 `supported` 또는 제한된 `ambiguous`로 판단한 요청에 대해서만 실행합니다.
+- 최종 응답은 `normalized_question`의 법률 검토 목적 범위 안에서 작성합니다.
 - provider raw response 전문은 저장하지 않습니다.
 - provider 실패 시 `rag_runs.status=failed`로 저장합니다.
 
@@ -477,6 +486,7 @@ Agent 상태 흐름:
 
 ```text
 initialize_run
+  -> request_intent_guard
   -> plan_issue_sources
   -> reasoning_loop
      -> propose_action
@@ -515,6 +525,7 @@ MVP에서는 이 흐름을 하나의 `OrchestratorAgent`가 수행합니다. MCP
 - 같은 action type과 arguments 조합이 반복되면 중단합니다.
 - citation repair는 최대 1회만 수행합니다.
 - allowlist에 없는 tool은 호출하지 않습니다.
+- 사용자 `question`은 tool/model/provider 선택 권한을 갖지 않습니다.
 - tool 결과는 prompt instruction이 아니라 evidence data로 취급합니다.
 - tool input/output에는 secret, raw JWT, API key를 포함하지 않습니다.
 

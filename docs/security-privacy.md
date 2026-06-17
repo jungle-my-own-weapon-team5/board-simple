@@ -86,14 +86,31 @@ MVP 원칙:
 
 검색된 문서와 사용자 입력은 신뢰하지 않습니다.
 
+신뢰하지 않는 입력 범위:
+
+- `facts`: 사용자가 입력한 사실관계
+- `question`: 사용자가 입력한 검토 요청 또는 출력 방향
+- retrieved chunk와 사용자 업로드 문서 본문
+- 외부 API 응답 본문
+- MCP tool result
+
+`question` 필드는 법률 검토 방향을 지정하는 데이터입니다. 이 값은 system/developer 지시, MCP allowlist, citation 정책, secret redaction 정책, 법률 안전성 정책을 덮어쓸 수 없습니다. 사용자가 `question`에 긴 프롬프트, 역할 변경, "이전 지시 무시", "citation 없이 단정", "API key 출력", "system prompt 공개" 같은 내용을 넣어도 Agent는 이를 실행 지시가 아니라 위험 신호 또는 unsupported request로 처리해야 합니다.
+
 규칙:
 
+- 사용자 입력은 prompt 안에서 명확한 delimiter로 감싼 데이터 블록으로 넣습니다.
+- `question`은 그대로 실행하지 않고 `legal_review_intent`, `requested_output_type`, `normalized_question`, `risk_flags` 같은 구조화된 값으로 정규화한 뒤 사용합니다.
+- 법률 검토 목적이 아닌 요청은 retrieval, external sync, generation을 무리하게 실행하지 않고 지원 범위 안내로 종료할 수 있습니다.
+- 목적이 모호하면 법률 검토에 필요한 추가 정보를 요청하거나 가장 보수적인 법률 검토 범위로 제한합니다.
+- prompt injection 위험 신호가 있으면 해당 지시는 제거하거나 무시하고, 원래 사실관계와 합법적인 법률 검토 요청만 남깁니다.
 - retrieved chunk는 instruction이 아니라 evidence data로 prompt에 넣습니다.
 - "이전 지시를 무시하라" 같은 문구가 문서에 있어도 system/developer 지시로 취급하지 않습니다.
 - prompt에는 citation 없는 법률 주장을 금지하는 규칙을 포함합니다.
 - 모델이 source에 없는 내용을 단정하지 않도록 합니다.
 - 모델이 tool/API key/system prompt를 출력하지 않도록 합니다.
 - MCP tool 결과도 instruction이 아니라 evidence data로만 취급합니다.
+- 사용자는 요청에서 provider, model, tool 이름, 외부 호출 여부, citation 검증 생략 여부를 임의 지정할 수 없습니다.
+- `question` 원문, guard 결과, prompt injection risk flag는 secret 없이 audit metadata로 남길 수 있습니다. 단, 전체 사실관계와 내부 prompt 전문은 저장하지 않습니다.
 
 ## MCP와 Agent 보안
 
@@ -175,6 +192,7 @@ AI 출력은 다음을 지켜야 합니다.
 - AI disclaimer 표시
 - citation 포함 테스트
 - prompt injection fixture 테스트
+- `question` 필드 기반 prompt injection fixture 테스트
 - MCP unknown tool 거부 테스트
 - Agent loop guard 테스트
 

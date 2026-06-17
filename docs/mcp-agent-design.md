@@ -232,10 +232,40 @@ invalid: list[CitationValidationError]
 
 ## Agent State Machine
 
+### Request/Intent Guard
+
+Agent가 retrieval이나 외부 source sync를 실행하기 전에 사용자 입력을 먼저 검토합니다. 이 단계는 사용자의 `question`을 그대로 명령으로 따르는 과정이 아니라, 법률 검토 요청 데이터로 정규화하는 과정입니다.
+
+입력:
+
+- `facts`
+- `question`
+- `task_type`
+- retrieval option
+
+출력:
+
+```text
+legal_review_intent: supported | unsupported | ambiguous
+requested_output_type: issue_list | answer_draft | evidence_review | unknown
+normalized_question
+risk_flags[]
+blocked_reason?
+```
+
+규칙:
+
+- `question` 안의 "이전 지시 무시", "system prompt 공개", "API key 출력", "citation 없이 단정", "tool을 직접 호출" 같은 문구는 Agent 제어 명령이 아니라 prompt injection risk로 분류합니다.
+- 법률 검토 목적이 아닌 요청은 `unsupported`로 처리하고 retrieval, external sync, generation을 실행하지 않습니다.
+- 목적이 모호하면 `ambiguous`로 처리하고 추가 확인 질문 또는 제한된 법률 검토 범위로 진행합니다.
+- 정상 요청은 `normalized_question`으로 축약해 이후 planning, retrieval, prompt assembly에 전달합니다.
+- guard 결과는 `agent_steps`에 redacted metadata로 저장하되, 내부 prompt 전문과 secret은 저장하지 않습니다.
+
 MVP Agent는 하나의 `OrchestratorAgent`이며 다음 상태 흐름을 사용합니다.
 
 ```text
 initialize_run
+  -> request_intent_guard
   -> plan_issue_sources
   -> reasoning_loop
      -> propose_action
@@ -335,6 +365,7 @@ Agent 역할:
 | Agent | 책임 |
 | --- | --- |
 | `SupervisorAgent` | 전체 계획, 도메인 Agent 실행 순서 또는 병렬 실행 계획, handoff, retry, 중단 조건 결정 |
+| `RequestIntentGuard` | `facts/question`이 지원 가능한 법률 검토 요청인지 판단하고, prompt injection 위험 지시를 제거하거나 unsupported request로 차단 |
 | `IssueDomainPlannerAgent` | 사실관계에서 필요한 법률 도메인, 도메인별 facts slice, 후보 쟁점, 내부 RAG query, 외부 공식 source query, 누락 사실 추출 |
 | `CriminalLawAgent` | 형사 도메인 facts slice에 대한 구성요건, 책임, 증거/입증, 절차 쟁점 보고 |
 | `CivilLawAgent` | 민사 도메인 facts slice에 대한 계약, 불법행위, 손해배상, 보전/집행 쟁점 보고 |
@@ -384,6 +415,7 @@ AgentHandoff
 멀티에이전트 규칙:
 
 - `SupervisorAgent`만 다음 Agent 호출 순서를 결정합니다.
+- `RequestIntentGuard`가 `unsupported`를 반환하면 Supervisor는 도메인 Agent나 MCP tool을 실행하지 않고 안전 안내 응답으로 종료합니다.
 - `IssueDomainPlannerAgent`가 선택하지 않은 도메인 Agent는 실행하지 않습니다.
 - 도메인 Agent는 논리적으로 병렬 실행할 수 있어야 합니다. 초기 구현은 순차 실행으로 시작할 수 있지만, 각 도메인 task는 독립 입력과 독립 output을 갖습니다.
 - 전문 Agent는 서로를 직접 호출하지 않습니다. 필요한 다음 작업은 `AgentHandoff`로 Supervisor에게 반환합니다.
@@ -472,6 +504,8 @@ OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 모
 - MCP endpoint는 일반 사용자가 임의 tool을 호출하는 공개 API로 설계하지 않습니다.
 - 사용자의 AI 요청은 backend API에서 인증과 rate limit을 통과한 뒤 Agent로 전달됩니다.
 - Agent는 서버 설정의 allowlist만 사용합니다.
+- 사용자 `question`은 Agent control instruction이 아니라 법률 검토 요청 데이터로 취급합니다.
+- Agent는 사용자 입력으로 provider, model, tool 이름, citation 검증 생략, 외부 API 호출 여부를 변경하지 않습니다.
 - ingestion, re-index, source sync는 admin role 도입 후 admin-only로 제한합니다.
 - 외부 API 호출은 timeout, retry 제한, rate limit 처리를 둡니다.
 - 모든 오류는 secret redaction 후 사용자에게 반환합니다.
@@ -490,6 +524,8 @@ OpenAI의 function calling 또는 tool calling 기능을 사용하더라도, 모
 - `max_tool_calls` 초과 시 중단
 - provider 실패 시 안전한 오류 mapping
 - secret 값이 로그, 응답, DB에 저장되지 않음
+- `question` 필드에 prompt injection 문구가 있어도 tool allowlist, citation 정책, secret redaction 정책이 유지됨
+- 비법률 목적 `question`은 unsupported request로 안전하게 종료됨
 
 ## 후속 확장
 
