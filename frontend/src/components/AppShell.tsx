@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
+import { usePostStore } from "@/stores/postStore";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const { bootstrap, isLoading, user, logout } = useAuthStore();
+  const resetSearch = usePostStore((state) => state.resetSearch);
 
   useEffect(() => {
     void bootstrap();
@@ -34,7 +36,7 @@ export default function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3 backdrop-blur sm:px-8">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <Link href="/" className="text-xl font-extrabold">
+          <Link href="/" className="text-xl font-extrabold" onClick={resetSearch}>
             tech news
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
