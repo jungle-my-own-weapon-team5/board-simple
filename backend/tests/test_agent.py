@@ -13,6 +13,7 @@ from app.main import create_app
 from app.mcp.schemas import McpPostDetail, McpPostListItem, McpPostPage, McpTag, McpUser
 from app.schemas.agent import AgentChatRequest
 from app.services import agent as agent_service
+from app.services.rag import RagAnswer, RagSource
 
 
 @pytest.fixture()
@@ -196,3 +197,40 @@ def test_agent_uses_search_tool(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert response.answer == "FastAPI MCP 글을 찾았습니다."
     assert response.sources[0].post_id == 3
+
+
+def test_agent_uses_rag_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        agent_service,
+        "_select_action",
+        lambda message: agent_service.AgentActionPlan(
+            action="rag_search",
+            args={"question": "FastAPI 내용 알려줘"},
+        ),
+    )
+
+    def fake_answer_question(db, question: str) -> RagAnswer:
+        assert question == "FastAPI 내용 알려줘"
+        return RagAnswer(
+            answer="FastAPI 관련 본문을 찾았습니다.",
+            sources=[
+                RagSource(
+                    post_id=5,
+                    title="FastAPI RAG",
+                    heading="Intro",
+                    anchor="intro",
+                    snippet="FastAPI와 RAG를 연결한 내용입니다.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(agent_service, "answer_question", fake_answer_question)
+
+    response = agent_service.chat_with_agent(
+        AgentChatRequest(message="FastAPI 내용 알려줘"),
+        SimpleNamespace(email="agent@example.com"),
+    )
+
+    assert response.answer == "FastAPI 관련 본문을 찾았습니다."
+    assert response.sources[0].post_id == 5
+    assert response.sources[0].heading == "Intro"

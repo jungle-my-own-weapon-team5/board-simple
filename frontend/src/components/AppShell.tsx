@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AgentPanel from "@/components/AgentPanel";
+import FloatingChat from "@/components/FloatingChat";
 import { useAuthStore } from "@/stores/authStore";
 
 type AppShellProps = {
@@ -93,6 +94,7 @@ export default function AppShell({ children }: AppShellProps) {
         isOpen={isAgentOpen}
         onClose={() => setIsAgentOpen(false)}
       />
+      {user ? <FloatingChat /> : null}
     </div>
   );
 }

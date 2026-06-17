@@ -13,6 +13,7 @@ from app.mcp.tools import (
     get_recent_posts,
     list_tags,
     search_posts,
+    session_scope,
 )
 from app.models.user import User
 from app.schemas.agent import (
@@ -22,8 +23,10 @@ from app.schemas.agent import (
     AgentPendingAction,
     AgentSource,
 )
+from app.services.rag import RagAnswer, RagGenerationError, RagNotConfiguredError, answer_question
 
 AgentActionName = Literal[
+    "rag_search",
     "search_posts",
     "get_recent_posts",
     "get_post",
@@ -69,11 +72,16 @@ def _select_action(message: str) -> AgentActionPlan:
     client = _get_openai_client(settings)
     instructions = (
         "You are an AI agent for a board app. Choose exactly one action and return only JSON. "
-        "Allowed actions: search_posts, get_recent_posts, get_post, get_comments, "
+        "Allowed actions: rag_search, search_posts, get_recent_posts, get_post, get_comments, "
         "get_post_with_comments, list_tags, prepare_create_post, answer_direct. "
+        "Use rag_search for semantic questions about post contents. "
+        "The server MCP tools are search_posts, get_recent_posts, get_post, get_comments, "
+        "get_post_with_comments, list_tags, and prepare_create_post. "
+        "Use search_posts only for title keyword search. "
         "Use prepare_create_post only when the user wants to write a new post. "
         "Do not execute destructive actions. JSON shape: "
         '{"action":"search_posts","args":{"q":"keyword","page":1,"size":10},"answer":null}. '
+        'For rag_search, use {"action":"rag_search","args":{"question":"question"},"answer":null}. '
         "For prepare_create_post, args must contain title and content. "
         "For answer_direct, put the answer in answer."
     )
@@ -159,6 +167,24 @@ def _sources_from_result(action: str, result: Any) -> list[AgentSource]:
     return []
 
 
+def _answer_with_rag(question: str) -> RagAnswer:
+    with session_scope() as db:
+        return answer_question(db, question)
+
+
+def _sources_from_rag_answer(result: RagAnswer) -> list[AgentSource]:
+    return [
+        AgentSource(
+            post_id=source.post_id,
+            title=source.title,
+            heading=source.heading,
+            anchor=source.anchor,
+            snippet=source.snippet,
+        )
+        for source in result.sources
+    ]
+
+
 def _execute_action(plan: AgentActionPlan) -> Any:
     args = plan.args
     if plan.action == "search_posts":
@@ -218,6 +244,21 @@ def chat_with_agent(payload: AgentChatRequest, current_user: User) -> AgentChatR
 
     if plan.action == "answer_direct":
         return AgentChatResponse(answer=plan.answer or "게시판에서 수행할 작업을 조금 더 구체적으로 알려주세요.")
+
+    if plan.action == "rag_search":
+        question = str(plan.args.get("question") or plan.args.get("q") or payload.message).strip()
+        if not question:
+            raise ValueError("question must not be empty")
+        try:
+            rag_result = _answer_with_rag(question)
+        except RagNotConfiguredError as exc:
+            raise AgentNotConfiguredError("RAG is not configured") from exc
+        except RagGenerationError as exc:
+            raise AgentGenerationError("Failed to generate a RAG answer") from exc
+        return AgentChatResponse(
+            answer=rag_result.answer,
+            sources=_sources_from_rag_answer(rag_result),
+        )
 
     result = _execute_action(plan)
     dumped_result = _dump_model(result)
