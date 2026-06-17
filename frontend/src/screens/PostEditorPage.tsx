@@ -60,6 +60,7 @@ export default function PostEditorPage() {
         {isEditing ? "Edit Post" : "Write Post"}
       </h1>
       <PostForm
+        postId={isEditing ? numericPostId : undefined}
         initialTitle={post?.title}
         initialContent={post?.content}
         initialTags={post?.tags.map((tag) => tag.name)}

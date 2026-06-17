@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, LogIn, LogOut, PenLine, UserPlus } from "lucide-react";
+import { LogIn, LogOut, PanelRightClose, PanelRightOpen, PenLine, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AgentPanel from "@/components/AgentPanel";
-import FloatingChat from "@/components/FloatingChat";
 import { useAuthStore } from "@/stores/authStore";
 
 type AppShellProps = {
@@ -42,15 +41,6 @@ export default function AppShell({ children }: AppShellProps) {
             Board Simple
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant={isAgentOpen ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setIsAgentOpen((current) => !current)}
-            >
-              <Bot />
-              <span>AI Agent</span>
-            </Button>
             {user ? (
               <>
                 <Badge variant="secondary" className="min-h-9 px-3">
@@ -83,18 +73,35 @@ export default function AppShell({ children }: AppShellProps) {
                 </Button>
               </>
             )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={
+                isAgentOpen
+                  ? "ml-2 h-9 w-9 rounded-md border border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+                  : "ml-2 h-9 w-9 rounded-md border border-border bg-muted text-foreground shadow-sm hover:bg-accent"
+              }
+              title="Toggle right sidebar"
+              aria-label="Toggle right sidebar"
+              aria-pressed={isAgentOpen}
+              onClick={() => setIsAgentOpen((current) => !current)}
+            >
+              {isAgentOpen ? <PanelRightClose /> : <PanelRightOpen />}
+            </Button>
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        {children}
-      </main>
-      <AgentPanel
-        isAuthenticated={Boolean(user)}
-        isOpen={isAgentOpen}
-        onClose={() => setIsAgentOpen(false)}
-      />
-      {user ? <FloatingChat /> : null}
+      <div className="flex min-h-[calc(100vh-61px)]">
+        <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-5xl">{children}</div>
+        </main>
+        <AgentPanel
+          isAuthenticated={Boolean(user)}
+          isOpen={isAgentOpen}
+          onClose={() => setIsAgentOpen(false)}
+        />
+      </div>
     </div>
   );
 }

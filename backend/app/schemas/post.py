@@ -61,3 +61,37 @@ class PostPage(BaseModel):
     total: int
     page: int
     size: int
+
+
+class PostDuplicateCheckRequest(BaseModel):
+    title: str = Field(default="", max_length=200)
+    content: str = ""
+    tags: list[str] = Field(default_factory=list)
+    exclude_post_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, value: list[str]) -> list[str]:
+        tags = normalize_tag_names(value)
+        invalid_tags = [tag for tag in tags if not tag_name_re.fullmatch(tag)]
+        if invalid_tags:
+            raise ValueError("Tags may only contain letters, numbers, Korean characters, and underscores.")
+        return tags
+
+
+class PostDuplicateCandidate(PostListItem):
+    reasons: list[str] = Field(default_factory=list)
+    snippet: str
+
+
+class PostDuplicateCheckResponse(BaseModel):
+    items: list[PostDuplicateCandidate]
+
+
+class PostThumbnailRequest(PostBase):
+    pass
+
+
+class PostThumbnailResponse(BaseModel):
+    image_markdown: str
+    image_data_url: str

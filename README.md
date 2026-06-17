@@ -16,8 +16,10 @@ Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
 - 게시글 CRUD, Markdown 작성/미리보기/표시
 - 댓글 작성과 `View more` 방식 페이지네이션
 - 별도 입력 필드 기반 게시글 태그 관리
-- 게시글 제목 검색과 페이지네이션
-- 게시글 RAG 청크 인덱싱과 로그인 사용자용 AI 검색 챗봇
+- 게시글 제목/본문/태그 검색과 페이지네이션
+- 작성/수정 화면의 중복 의심 게시글 검사
+- OpenAI 이미지 생성 기반 Markdown 썸네일 삽입
+- 게시글 RAG 청크 인덱싱과 오른쪽 패널형 AI Agent
 
 ## Stack
 
@@ -163,7 +165,9 @@ docker compose down -v
 - `POST /api/auth/login`: 로그인, HttpOnly JWT 쿠키 설정
 - `POST /api/auth/logout`: 로그아웃, 쿠키 삭제
 - `GET /api/auth/me`: 현재 사용자 조회
-- `GET /api/posts?page=&size=&q=`: 게시글 목록, 제목 검색
+- `GET /api/posts?page=&size=&q=&content_q=&tag=`: 게시글 목록, 제목/본문/태그 검색
+- `POST /api/posts/duplicate-check`: 작성/수정 중인 게시글의 중복 의심 후보 조회
+- `POST /api/posts/generate-thumbnail`: 게시글 내용 기반 Markdown 썸네일 생성
 - `POST /api/posts`: 게시글 생성
 - `GET /api/posts/{post_id}`: 게시글 상세
 - `PUT /api/posts/{post_id}`: 게시글 수정
@@ -183,6 +187,7 @@ RAG 챗봇은 OpenAI API와 PostgreSQL pgvector를 사용합니다.
 OPENAI_API_KEY=
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 OPENAI_CHAT_MODEL=gpt-5.5
+OPENAI_IMAGE_MODEL=gpt-image-2
 RAG_TOP_K=5
 ```
 

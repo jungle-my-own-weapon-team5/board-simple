@@ -1,5 +1,4 @@
 from collections.abc import Generator
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -9,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.main import create_app
 from app.rag.service import RagAnswer, RagSource
+from app.schemas.post import PostThumbnailResponse
 
 
 @pytest.fixture()
@@ -99,6 +99,93 @@ def test_post_crud_search_tags_and_permissions(client: TestClient) -> None:
     )
     assert update_response.status_code == 200
     assert update_response.json()["tags"][0]["name"] == "django"
+
+
+def test_post_filters_duplicate_check_and_thumbnail(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    register_and_login(client)
+    fastapi_response = client.post(
+        "/api/posts",
+        json={
+            "title": "FastAPI vector search",
+            "content": "This post explains pgvector duplicate search.",
+            "tags": ["FastAPI", "RAG"],
+        },
+    )
+    assert fastapi_response.status_code == 201
+    fastapi_post = fastapi_response.json()
+
+    django_response = client.post(
+        "/api/posts",
+        json={
+            "title": "Django admin notes",
+            "content": "Admin customization checklist.",
+            "tags": ["Django"],
+        },
+    )
+    assert django_response.status_code == 201
+
+    title_search = client.get("/api/posts", params={"q": "vector"})
+    assert title_search.status_code == 200
+    assert title_search.json()["total"] == 1
+    assert title_search.json()["items"][0]["id"] == fastapi_post["id"]
+
+    content_search = client.get("/api/posts", params={"content_q": "checklist"})
+    assert content_search.status_code == 200
+    assert content_search.json()["total"] == 1
+    assert content_search.json()["items"][0]["title"] == "Django admin notes"
+
+    tag_search = client.get("/api/posts", params={"tag": "fastapi"})
+    assert tag_search.status_code == 200
+    assert tag_search.json()["total"] == 1
+    assert tag_search.json()["items"][0]["id"] == fastapi_post["id"]
+
+    duplicate_response = client.post(
+        "/api/posts/duplicate-check",
+        json={
+            "title": "FastAPI vector duplicate guide",
+            "content": "pgvector duplicate search tips",
+            "tags": ["fastapi"],
+        },
+    )
+    assert duplicate_response.status_code == 200
+    duplicate_items = duplicate_response.json()["items"]
+    assert duplicate_items[0]["id"] == fastapi_post["id"]
+    assert duplicate_items[0]["reasons"]
+
+    excluded_duplicate_response = client.post(
+        "/api/posts/duplicate-check",
+        json={
+            "title": "FastAPI vector duplicate guide",
+            "content": "pgvector duplicate search tips",
+            "tags": ["fastapi"],
+            "exclude_post_id": fastapi_post["id"],
+        },
+    )
+    assert excluded_duplicate_response.status_code == 200
+    assert all(item["id"] != fastapi_post["id"] for item in excluded_duplicate_response.json()["items"])
+
+    def fake_generate_thumbnail(payload):
+        assert payload.title == "FastAPI vector search"
+        assert payload.tags == ["fastapi"]
+        return PostThumbnailResponse(
+            image_markdown="![thumbnail](data:image/png;base64,ZmFrZQ==)",
+            image_data_url="data:image/png;base64,ZmFrZQ==",
+        )
+
+    monkeypatch.setattr("app.api.posts.post_service.generate_thumbnail_markdown", fake_generate_thumbnail)
+    thumbnail_response = client.post(
+        "/api/posts/generate-thumbnail",
+        json={
+            "title": "FastAPI vector search",
+            "content": "This post explains pgvector duplicate search.",
+            "tags": ["FastAPI"],
+        },
+    )
+    assert thumbnail_response.status_code == 200
+    assert thumbnail_response.json()["image_markdown"].startswith("![thumbnail](data:image/png;base64,")
 
 
 def test_comment_pagination(client: TestClient) -> None:

@@ -35,6 +35,10 @@ const markdownSanitizeSchema: SanitizeSchema = {
       ["className", /^language-/, "math-inline", "math-display"],
     ],
   },
+  protocols: {
+    ...defaultSchema.protocols,
+    src: [...(defaultSchema.protocols?.src ?? []), "data"],
+  },
 };
 
 function escapeHtml(value: string) {

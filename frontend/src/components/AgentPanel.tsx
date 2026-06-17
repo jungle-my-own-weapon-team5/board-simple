@@ -2,18 +2,22 @@
 
 import { Check, Loader2, Send, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FormEvent, useRef, useState } from "react";
 
 import { sendAgentMessage } from "@/api/agent";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { AgentPendingAction, AgentSource } from "@/types";
+import { useEditorAgentStore } from "@/stores/editorAgentStore";
+import type { AgentChatContext, AgentPendingAction, AgentSource, AgentWorkflowStep } from "@/types";
 
 type ChatMessage = {
   id: number;
   role: "user" | "assistant";
   content: string;
   sources?: AgentSource[];
+  steps?: AgentWorkflowStep[];
   pendingAction?: AgentPendingAction;
   createdPost?: {
     post_id: number;
@@ -31,7 +35,53 @@ function sourceHref(source: AgentSource) {
   return source.anchor ? `/posts/${source.post_id}#${source.anchor}` : `/posts/${source.post_id}`;
 }
 
+function confirmLabel(action: AgentPendingAction, canApplyDraft: boolean) {
+  if (action.type === "apply_post_draft") {
+    return "Apply draft";
+  }
+  return canApplyDraft ? "Apply to form" : "Create post";
+}
+
+function contextFromPath(pathname: string): AgentChatContext {
+  if (pathname === "/") {
+    return { page: "list" };
+  }
+  if (pathname === "/posts/new") {
+    return { page: "new_post" };
+  }
+  if (/^\/posts\/\d+\/edit$/.test(pathname)) {
+    const postId = Number(pathname.split("/")[2]);
+    return { page: "edit_post", post_id: postId };
+  }
+  if (/^\/posts\/\d+$/.test(pathname)) {
+    const postId = Number(pathname.split("/")[2]);
+    return { page: "detail", post_id: postId };
+  }
+  return { page: "unknown" };
+}
+
+function statusLabel(status: AgentWorkflowStep["status"]) {
+  if (status === "completed") {
+    return "완료";
+  }
+  if (status === "needs_confirmation") {
+    return "확인 필요";
+  }
+  return "대기";
+}
+
+function statusVariant(status: AgentWorkflowStep["status"]) {
+  return status === "needs_confirmation" ? "default" : "secondary";
+}
+
+function canConfirmAction(action: AgentPendingAction, hasEditorDraftHandler: boolean) {
+  return action.type !== "apply_post_draft" || hasEditorDraftHandler;
+}
+
 export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPanelProps) {
+  const pathname = usePathname();
+  const applyDraft = useEditorAgentStore((state) => state.applyDraft);
+  const editorContext = useEditorAgentStore((state) => state.context);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -56,6 +106,7 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
         role: "assistant",
         content: response.answer,
         sources: response.sources,
+        steps: response.steps,
         pendingAction: response.pending_action ?? undefined,
         createdPost: response.created_post,
       },
@@ -87,7 +138,7 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
     setIsSending(true);
 
     try {
-      appendAgentResponse(await sendAgentMessage(message));
+      appendAgentResponse(await sendAgentMessage(message, undefined, editorContext ?? contextFromPath(pathname)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI Agent 응답을 생성하지 못했습니다.");
     } finally {
@@ -97,6 +148,35 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
 
   const handleConfirm = async (action: AgentPendingAction) => {
     if (isSending) {
+      return;
+    }
+
+    if (action.type === "apply_post_draft" && !applyDraft) {
+      setMessages((current) => [
+        ...clearPendingActions(current),
+        {
+          id: nextId.current++,
+          role: "assistant",
+          content: "작성/수정 페이지에서만 초안을 적용할 수 있습니다.",
+        },
+      ]);
+      return;
+    }
+
+    if (applyDraft) {
+      applyDraft({
+        title: action.title,
+        content: action.content,
+        tags: action.tags ?? [],
+      });
+      setMessages((current) => [
+        ...clearPendingActions(current),
+        {
+          id: nextId.current++,
+          role: "assistant",
+          content: "초안을 작성/수정 폼에 적용했습니다.",
+        },
+      ]);
       return;
     }
 
@@ -112,7 +192,7 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
     setIsSending(true);
 
     try {
-      appendAgentResponse(await sendAgentMessage("confirm create_post", action));
+      appendAgentResponse(await sendAgentMessage("confirm create_post", action, editorContext ?? contextFromPath(pathname)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "게시글을 생성하지 못했습니다.");
     } finally {
@@ -132,7 +212,7 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
   };
 
   return (
-    <section className="fixed right-4 top-20 z-50 flex h-[34rem] max-h-[calc(100vh-6rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-xl">
+    <aside className="fixed bottom-0 right-0 top-0 z-50 flex w-[24rem] max-w-full flex-col overflow-hidden border-l border-border bg-card text-card-foreground shadow-xl md:sticky md:bottom-auto md:top-[61px] md:h-[calc(100vh-61px)] md:shadow-none">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <h2 className="text-sm font-extrabold">AI Agent</h2>
@@ -155,6 +235,23 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
               }
             >
               <p className="whitespace-pre-wrap break-words">{message.content}</p>
+              {message.steps && message.steps.length > 0 ? (
+                <div className="mt-3 space-y-2 border-t border-border/70 pt-2">
+                  {message.steps.map((step) => (
+                    <div key={step.id} className="rounded-md border border-border bg-background px-2 py-1.5 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{step.label}</span>
+                        <Badge variant={statusVariant(step.status)}>
+                          {statusLabel(step.status)}
+                        </Badge>
+                      </div>
+                      {step.detail ? (
+                        <p className="mt-1 text-muted-foreground">{step.detail}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               {message.pendingAction ? (
                 <div className="mt-3 space-y-2 border-t border-border/70 pt-2">
                   <div className="rounded-md border border-border bg-background p-2 text-xs">
@@ -162,22 +259,37 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
                     <p className="mt-1 line-clamp-4 text-muted-foreground">
                       {message.pendingAction.content}
                     </p>
+                    {message.pendingAction.tags.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {message.pendingAction.tags.map((tag) => (
+                          <Badge variant="secondary" key={tag}>
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => void handleConfirm(message.pendingAction!)}
-                      disabled={isSending}
-                    >
-                      <Check />
-                      <span>Create post</span>
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={handleCancel}>
-                      <X />
-                      <span>Cancel</span>
-                    </Button>
-                  </div>
+                  {canConfirmAction(message.pendingAction, Boolean(applyDraft)) ? (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => void handleConfirm(message.pendingAction!)}
+                        disabled={isSending}
+                      >
+                        <Check />
+                        <span>{confirmLabel(message.pendingAction, Boolean(applyDraft))}</span>
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={handleCancel}>
+                        <X />
+                        <span>Cancel</span>
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground">
+                      작성/수정 페이지에서만 초안을 적용할 수 있습니다.
+                    </p>
+                  )}
                 </div>
               ) : null}
               {message.createdPost ? (
@@ -265,6 +377,6 @@ export default function AgentPanel({ isAuthenticated, isOpen, onClose }: AgentPa
           </Button>
         </form>
       ) : null}
-    </section>
+    </aside>
   );
 }

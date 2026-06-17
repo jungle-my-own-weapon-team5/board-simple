@@ -29,6 +29,20 @@ export type PostPage = {
   size: number;
 };
 
+export type PostDuplicateCandidate = PostListItem & {
+  reasons: string[];
+  snippet: string;
+};
+
+export type PostDuplicateCheckResponse = {
+  items: PostDuplicateCandidate[];
+};
+
+export type PostThumbnailResponse = {
+  image_markdown: string;
+  image_data_url: string;
+};
+
 export type Comment = {
   id: number;
   post_id: number;
@@ -59,9 +73,25 @@ export type RagChatResponse = {
 };
 
 export type AgentPendingAction = {
-  type: "create_post";
+  type: "create_post" | "apply_post_draft";
   title: string;
   content: string;
+  tags: string[];
+};
+
+export type AgentChatContext = {
+  page: "new_post" | "edit_post" | "list" | "detail" | "unknown";
+  post_id?: number | null;
+  title?: string | null;
+  content?: string | null;
+  tags?: string[];
+};
+
+export type AgentWorkflowStep = {
+  id: string;
+  label: string;
+  status: "completed" | "needs_confirmation" | "pending";
+  detail: string | null;
 };
 
 export type AgentSource = {
@@ -80,6 +110,7 @@ export type AgentCreatedPost = {
 export type AgentChatResponse = {
   answer: string;
   sources: AgentSource[];
+  steps: AgentWorkflowStep[];
   pending_action: AgentPendingAction | null;
   created_post: AgentCreatedPost | null;
 };
