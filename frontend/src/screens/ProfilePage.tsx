@@ -80,12 +80,12 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <section className="mx-auto flex max-w-lg flex-col gap-4">
-        <Card>
+        <Card className="rounded-sm">
           <CardContent className="flex flex-col gap-4 p-6">
-            <h1 className="text-2xl font-extrabold">로그인이 필요합니다</h1>
+            <h1 className="font-serif-display text-2xl font-bold">로그인이 필요합니다</h1>
             <p className="text-sm text-muted-foreground">내 정보와 활동 내역은 로그인 후 확인할 수 있습니다.</p>
-            <Button asChild className="w-fit">
-              <Link href="/login?next=/me">Login</Link>
+            <Button asChild className="w-fit rounded-sm">
+              <Link href="/login?next=/me">로그인</Link>
             </Button>
           </CardContent>
         </Card>
@@ -94,18 +94,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="flex items-center gap-2 text-3xl font-extrabold">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <div className="border-b border-border/70 pb-5">
+        <h1 className="font-serif-display flex items-center gap-2 text-3xl font-bold leading-[1.35]">
           <UserRound />
           <span>내 정보</span>
         </h1>
-        <p className="text-sm text-muted-foreground">{user.email}</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{user.email}</p>
       </div>
 
-      <Card>
+      <Card className="rounded-sm">
         <CardHeader>
-          <CardTitle>닉네임 변경</CardTitle>
+          <CardTitle className="font-serif-display text-xl font-bold">닉네임 변경</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="flex flex-col gap-3 sm:flex-row" onSubmit={handleNicknameSubmit}>
@@ -116,7 +116,7 @@ export default function ProfilePage() {
               maxLength={32}
               required
             />
-            <Button type="submit" className="sm:w-fit">
+            <Button type="submit" className="rounded-sm sm:w-fit">
               <Save />
               <span>저장</span>
             </Button>
@@ -127,9 +127,9 @@ export default function ProfilePage() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="rounded-sm">
           <CardHeader>
-            <CardTitle>내 글</CardTitle>
+            <CardTitle className="font-serif-display text-xl font-bold">내 글</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {posts?.items.length ? (
@@ -139,7 +139,7 @@ export default function ProfilePage() {
                     <Badge>{post.post_type}</Badge>
                     <Badge variant="outline">{post.category}</Badge>
                   </div>
-                  <Link href={`/posts/${post.id}`} className="font-bold hover:text-primary">
+                  <Link href={`/posts/${post.id}`} className="font-serif-display font-bold leading-7 hover:text-primary">
                     {post.title}
                   </Link>
                   <p className="text-sm text-muted-foreground">
@@ -156,15 +156,15 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-sm">
           <CardHeader>
-            <CardTitle>내 댓글</CardTitle>
+            <CardTitle className="font-serif-display text-xl font-bold">내 댓글</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {comments?.items.length ? (
               comments.items.map((comment) => (
                 <div key={comment.id} className="border-b border-border pb-3 last:border-b-0 last:pb-0">
-                  <Link href={`/posts/${comment.post_id}`} className="font-bold hover:text-primary">
+                  <Link href={`/posts/${comment.post_id}`} className="font-serif-display font-bold leading-7 hover:text-primary">
                     {comment.post_title}
                   </Link>
                   <p className="mt-1 break-words text-sm">{comment.content}</p>

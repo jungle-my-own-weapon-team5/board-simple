@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Song+Myung&display=swap");
 @import "tailwindcss";
 
 @theme inline {
@@ -21,23 +22,23 @@
 }
 
 :root {
-  --background: 42 38% 96%;
-  --foreground: 30 18% 12%;
-  --card: 48 42% 98%;
-  --card-foreground: 30 18% 12%;
-  --primary: 354 62% 32%;
+  --background: 0 0% 98%;
+  --foreground: 0 2% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 2% 11%;
+  --primary: 0 0% 0%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 42 22% 88%;
-  --secondary-foreground: 30 18% 12%;
-  --muted: 42 22% 88%;
-  --muted-foreground: 33 12% 42%;
-  --accent: 48 38% 91%;
-  --accent-foreground: 354 62% 28%;
+  --secondary: 1 66% 43%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 180 3% 27%;
+  --accent: 0 0% 95%;
+  --accent-foreground: 0 2% 11%;
   --destructive: 4 78% 40%;
   --destructive-foreground: 0 0% 100%;
-  --border: 38 18% 76%;
-  --input: 38 18% 70%;
-  --ring: 354 62% 32%;
+  --border: 180 3% 77%;
+  --input: 180 3% 77%;
+  --ring: 0 2% 11%;
 }
 
 * {
@@ -51,13 +52,108 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: hsl(var(--background));
+  background:
+    radial-gradient(circle at 12% 8%, hsl(var(--accent) / 0.52), transparent 28rem),
+    linear-gradient(90deg, hsl(var(--foreground) / 0.018) 1px, transparent 1px),
+    hsl(var(--background));
+  background-size: auto, 8px 100%, auto;
   color: hsl(var(--foreground));
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Hanken Grotesk", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
+}
+
+.font-serif-display {
+  font-family: "Nanum Myeongjo", "Song Myung", serif;
+  letter-spacing: 0;
+}
+
+.bal-focus::after,
+.bal-card::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 7px,
+    hsl(var(--foreground) / 0.055) 7px,
+    hsl(var(--foreground) / 0.055) 8px
+  );
+  transform: translateY(-10%);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.bal-focus:focus-within::after,
+.bal-card:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-bal-mask {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 8px,
+    hsl(var(--foreground) / 0.5) 8px,
+    hsl(var(--foreground) / 0.5) 9px
+  );
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+}
+
+.hero-obongdo {
+  pointer-events: none;
+  opacity: 0.48;
+  background:
+    radial-gradient(circle at 50% 34%, hsl(var(--secondary) / 0.16) 0 3.2rem, transparent 3.3rem),
+    radial-gradient(circle at 67% 34%, hsl(var(--foreground) / 0.055) 0 2.4rem, transparent 2.5rem),
+    linear-gradient(146deg, transparent 0 61%, hsl(var(--foreground) / 0.055) 61.2% 66%, transparent 66.2%),
+    linear-gradient(34deg, transparent 0 58%, hsl(var(--foreground) / 0.045) 58.2% 64%, transparent 64.2%),
+    linear-gradient(154deg, transparent 0 66%, hsl(var(--secondary) / 0.08) 66.2% 70%, transparent 70.2%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 13px,
+      hsl(var(--foreground) / 0.025) 13px,
+      hsl(var(--foreground) / 0.025) 14px
+    );
+  background-position:
+    center 40%,
+    calc(50% + 11rem) 40%,
+    left bottom,
+    right bottom,
+    center bottom,
+    center;
+  background-repeat: no-repeat;
+  background-size:
+    auto,
+    auto,
+    55% 58%,
+    54% 58%,
+    72% 50%,
+    auto;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 78%, transparent 100%);
+}
+
+.shimmer-ai {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--muted-foreground)) 50%,
+    hsl(var(--primary)) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
 }
 
 button,
@@ -77,8 +173,8 @@ textarea {
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3 {
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .markdown-body h1 {
@@ -124,4 +220,31 @@ textarea {
 .markdown-body pre code {
   background: transparent;
   padding: 0;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  max-height: 640px;
+  border: 1px solid hsl(var(--border));
+  object-fit: contain;
+}
+
+.chat-markdown {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.chat-markdown > * + * {
+  margin-top: 0.5rem;
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3 {
+  font-size: 1em;
+}
+
+.chat-markdown ul,
+.chat-markdown ol {
+  padding-left: 1rem;
 }

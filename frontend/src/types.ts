@@ -70,20 +70,41 @@ export type MyCommentPage = {
 };
 
 export type DiscussionTopic = {
+  id?: number | null;
+  topic_date?: string | null;
   source: string;
   title: string;
   summary: string;
   question: string;
   reason: string;
   tags: string[];
+  draft_title?: string | null;
+  draft_content?: string | null;
+  draft_post_type: string;
+  draft_category: string;
+  citations: RagCitation[];
+  is_pinned: boolean;
+  is_hidden: boolean;
 };
 
-export type WritingAssist = {
-  improved_titles: string[];
+export type EditorAgentResponse = {
+  action: "answer" | "fill_content" | "revise_content" | string;
+  agent_message: string;
+  suggested_title?: string | null;
+  suggested_content?: string | null;
   tags: string[];
-  category: string;
+  category?: string | null;
   questions: string[];
-  keywords: string[];
+  external_resources: ExternalSearchResponse["resources"];
+  tool_logs: ExternalSearchResponse["tool_log"][];
+  agent_steps: { name: string; output: string }[];
+  evidence_summary?: string | null;
+  weak_evidence: boolean;
+};
+
+export type EditorAgentHistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
 };
 
 export type RagCitation = {
@@ -95,10 +116,13 @@ export type RagCitation = {
   source_url: string;
 };
 
+export type RagCorpusMode = "auto" | "encykorea" | "legacy" | "sinpyeon_hanguksa" | "all";
+
 export type RagSearchResponse = {
   answer_summary: string;
   citations: RagCitation[];
   weak_evidence: boolean;
+  searched_corpora: string[];
 };
 
 export type RagQualityAttempt = {
@@ -114,6 +138,7 @@ export type RagQualityAgentResponse = {
   answer_summary: string;
   citations: RagCitation[];
   weak_evidence: boolean;
+  searched_corpora: string[];
   attempts: RagQualityAttempt[];
   agent_steps: { name: string; output: string }[];
   needs_external_search: boolean;
@@ -126,6 +151,11 @@ export type ExternalSearchResponse = {
     provider: string;
     url: string;
     description: string;
+    source_type?: string;
+    result_type?: string;
+    content_excerpt?: string | null;
+    confidence?: number;
+    can_quote?: boolean;
   }[];
   tool_log: {
     tool: string;
@@ -159,4 +189,10 @@ export type ThumbnailPreviewResponse = {
     status: string;
     elapsed_ms: number;
   };
+};
+
+export type ThumbnailCandidate = ThumbnailPreviewResponse;
+
+export type ThumbnailCandidatesResponse = {
+  candidates: ThumbnailCandidate[];
 };

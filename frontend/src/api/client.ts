@@ -33,7 +33,53 @@ export function getAssetUrl(pathOrUrl: string) {
 
 type RequestOptions = RequestInit & {
   json?: unknown;
+  cacheTtlMs?: number;
+  cacheKey?: string;
+  invalidateCache?: boolean | string[];
 };
+
+type ApiCacheEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const apiCache = new Map<string, ApiCacheEntry>();
+const inFlightGetRequests = new Map<string, Promise<unknown>>();
+
+function cacheKeyFor(path: string, options: RequestOptions) {
+  return options.cacheKey ?? path;
+}
+
+export function clearApiCache(prefix?: string) {
+  if (!prefix) {
+    apiCache.clear();
+    inFlightGetRequests.clear();
+    return;
+  }
+  for (const key of apiCache.keys()) {
+    if (key.startsWith(prefix)) {
+      apiCache.delete(key);
+    }
+  }
+  for (const key of inFlightGetRequests.keys()) {
+    if (key.startsWith(prefix)) {
+      inFlightGetRequests.delete(key);
+    }
+  }
+}
+
+function invalidateAfterMutation(setting: RequestOptions["invalidateCache"]) {
+  if (setting === false) {
+    return;
+  }
+  if (Array.isArray(setting)) {
+    for (const prefix of setting) {
+      clearApiCache(prefix);
+    }
+    return;
+  }
+  clearApiCache();
+}
 
 export class ApiError extends Error {
   status: number;
@@ -49,39 +95,88 @@ export async function apiRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const headers = new Headers(options.headers);
+  const method = (options.method ?? "GET").toUpperCase();
+  const shouldCache = method === "GET" && Boolean(options.cacheTtlMs);
+  const requestCacheKey = cacheKeyFor(path, options);
+
+  if (shouldCache) {
+    const cached = apiCache.get(requestCacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as T;
+    }
+
+    const inFlight = inFlightGetRequests.get(requestCacheKey);
+    if (inFlight) {
+      return inFlight as Promise<T>;
+    }
+  }
+
   if (options.json !== undefined) {
     headers.set("Content-Type", "application/json");
   }
 
-  let response: Response;
-  try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, {
-      ...options,
-      headers,
-      credentials: "include",
-      body: options.json !== undefined ? JSON.stringify(options.json) : options.body
+  const requestPromise = fetch(`${getApiBaseUrl()}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+    body: options.json !== undefined ? JSON.stringify(options.json) : options.body
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        let message = response.statusText;
+        try {
+          const payload = await response.json();
+          message = payload.detail ?? message;
+        } catch {
+          // Keep the response status text when the server does not send JSON.
+        }
+        throw new ApiError(response.status, message);
+      }
+
+      if (response.status === 204) {
+        if (method !== "GET") {
+          invalidateAfterMutation(options.invalidateCache);
+        }
+        return undefined as T;
+      }
+
+      const value = await response.json() as T;
+      if (shouldCache) {
+        apiCache.set(requestCacheKey, {
+          expiresAt: Date.now() + (options.cacheTtlMs ?? 0),
+          value,
+        });
+      }
+      if (method !== "GET") {
+        invalidateAfterMutation(options.invalidateCache);
+      }
+      return value;
+    })
+    .catch((error) => {
+      if (error instanceof ApiError || error instanceof DOMException && error.name === "AbortError") {
+        throw error;
+      }
+      throw new ApiError(
+        0,
+        "API 서버에 연결하지 못했습니다. 백엔드 서버가 실행 중인지, 프론트와 백엔드 주소가 같은 localhost/127.0.0.1 조합인지 확인해 주세요."
+      );
+    })
+    .finally(() => {
+      if (shouldCache) {
+        inFlightGetRequests.delete(requestCacheKey);
+      }
     });
-  } catch {
-    throw new ApiError(
-      0,
-      "API 서버에 연결하지 못했습니다. 백엔드 서버가 실행 중인지, 프론트와 백엔드 주소가 같은 localhost/127.0.0.1 조합인지 확인해 주세요."
-    );
+
+  if (shouldCache) {
+    inFlightGetRequests.set(requestCacheKey, requestPromise);
   }
 
-  if (!response.ok) {
-    let message = response.statusText;
-    try {
-      const payload = await response.json();
-      message = payload.detail ?? message;
-    } catch {
-      // Keep the response status text when the server does not send JSON.
-    }
-    throw new ApiError(response.status, message);
-  }
+  return requestPromise;
+}
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
+export async function uncachedApiRequest<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<T> {
+  return apiRequest<T>(path, { ...options, cacheTtlMs: undefined });
 }

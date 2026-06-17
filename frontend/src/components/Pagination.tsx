@@ -13,7 +13,7 @@ export default function Pagination({ page, size, total, onPageChange }: Paginati
   return (
     <div className="flex items-center justify-center gap-3">
       <Button type="button" variant="outline" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-        Previous
+        이전
       </Button>
       <span className="text-sm font-semibold">
         {page} / {totalPages}
@@ -24,7 +24,7 @@ export default function Pagination({ page, size, total, onPageChange }: Paginati
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
       >
-        Next
+        다음
       </Button>
     </div>
   );
