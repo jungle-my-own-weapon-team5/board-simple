@@ -69,6 +69,9 @@ export default function FitlogDashboardPage() {
               <Link href={`/fitlog/strategies?date=${today}`}>전략 기록 보기</Link>
             </Button>
             {strategy ? <p className="text-sm">{strategy.summary}</p> : null}
+            {strategy?.agent_steps?.length ? (
+              <p className="text-xs text-muted-foreground">Agent tools: {strategy.agent_steps.map((step) => step.tool).join(" -> ")}</p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

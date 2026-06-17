@@ -51,6 +51,16 @@ export default function FitlogStrategiesPage() {
               <p>{item.summary}</p>
               <p><strong>오늘:</strong> {item.today_strategy}</p>
               <p><strong>내일:</strong> {item.tomorrow_strategy}</p>
+              {item.agent_steps?.length ? (
+                <div className="rounded-md border p-3">
+                  <p className="font-semibold">Agent 실행 단계</p>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                    {item.agent_steps.map((step, index) => (
+                      <li key={`${item.id}-${step.tool}-${index}`}>{step.tool}: {step.summary}</li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
               {item.rag_evidence.map((evidence) => (
                 <blockquote key={`${item.id}-${evidence.title}`} className="border-l-2 pl-3 text-muted-foreground">
                   {evidence.title}: {evidence.snippet}

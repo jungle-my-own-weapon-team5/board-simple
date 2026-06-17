@@ -1,0 +1,59 @@
+[33mcommit e9e7e2372cc96a31ce68e9393718a31ec450cf35[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mproject/yeonghoon-feat-implement_RAG[m[33m)[m
+Author: gannak1 <gi676788@gmail.com>
+Date:   Wed Jun 17 16:57:06 2026 +0900
+
+    feat : 이미지 검색기까지 구현 완료
+
+[33mcommit 84b6907e3aaab0fae73345d31c18bc76390f29ff[m[33m ([m[1;31morigin/project/yeonghoon-feat-implement_RAG[m[33m)[m
+Author: gannak1 <gi676788@gmail.com>
+Date:   Tue Jun 16 01:03:35 2026 +0900
+
+    feat : UI 구조 개선 및 작업 진행중
+
+[33mcommit 35c8d525961c28c1303935c11ac2cd1b1d2f89d5[m[33m ([m[1;31morigin/project/yeonghoon[m[33m, [m[1;32mproject/yeonghoon[m[33m, [m[1;32mdev[m[33m)[m
+Author: gannak1 <gi676788@gmail.com>
+Date:   Sun Jun 14 18:06:55 2026 +0900
+
+    refactor: 환경에 맞춘 테스트 실행
+
+[33mcommit ce78747b53a8051e9c296b0c3389fd304b0960db[m[33m ([m[1;31morigin/dev[m[33m)[m
+Author: hojun-lee99 <hijun990810@gmail.com>
+Date:   Sat Jun 13 17:42:33 2026 +0900
+
+    docs: gitignore .env 케이스 추가
+
+[33mcommit 5fd17b226550955974da60208b91aa43bda8a90b[m
+Author: yoonki1207 <yoonki1207@gmail.com>
+Date:   Fri Jun 12 14:01:26 2026 +0900
+
+    docs: README.md 도커 배포&개발 환경 설정 설명
+
+[33mcommit d510a8a5a3d583af2cdad70fdd421eefca0ca5e6[m
+Author: yoonki1207 <yoonki1207@gmail.com>
+Date:   Fri Jun 12 13:10:39 2026 +0900
+
+    refactor: migrate app stack to nextjs and docker
+
+[33mcommit ba2975a2a80ce5abaeb395682a52723598091776[m
+Author: yoonki1207 <yoonki1207@gmail.com>
+Date:   Fri Jun 12 10:55:51 2026 +0900
+
+    docs: 브랜치 전략
+
+[33mcommit 033ccd30fab6b93e88dc0e0ff71c40ad719a92ed[m
+Author: yoonki1207 <yoonki1207@gmail.com>
+Date:   Fri Jun 12 10:55:33 2026 +0900
+
+    add: karpathy 스킬
+
+[33mcommit 7d5d3a40760162d7af77b83554730cb33c0d2ed6[m
+Author: yoonki1207 <yoonki1207@gmail.com>
+Date:   Sat Jun 6 16:50:51 2026 +0900
+
+    Initial board app scaffold
+
+[33mcommit f79c0da49cdcdf2e76bd0cd796837dec513e721e[m
+Author: 홍윤기 <yoonki1207@gmail.com>
+Date:   Sat Jun 6 12:59:59 2026 +0900
+
+    Update issue templates

@@ -216,6 +216,7 @@ def list_strategy(
                 tomorrow_strategy=item.tomorrow_strategy,
                 risk_notes=item.risk_notes_json,
                 rag_evidence=item.rag_evidence_json,
+                agent_steps=item.agent_trace_json,
                 created_at=item.created_at,
             )
             for item in items

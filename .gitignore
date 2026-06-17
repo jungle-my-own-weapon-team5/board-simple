@@ -16,6 +16,8 @@ __pycache__/
 .venv/
 venv/
 env/
+resnet_test/
+
 
 # Node
 node_modules/

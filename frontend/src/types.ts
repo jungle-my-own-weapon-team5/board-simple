@@ -110,6 +110,7 @@ export type StrategyResponse = {
   tomorrow_strategy: string;
   risk_notes: string[];
   rag_evidence: Array<{ title: string; snippet: string; source_url?: string | null }>;
+  agent_steps?: Array<{ tool: string; status: string; summary: string }>;
 };
 
 export type StrategyAdvice = StrategyResponse & {
@@ -130,4 +131,23 @@ export type ImageSearchTestResponse = {
     fat_g: number;
     notes: string[];
   }>;
+};
+
+export type ImageRagCandidate = {
+  food_name: string;
+  confidence: number;
+  estimated_calories: number;
+  carbs_g: number;
+  protein_g: number;
+  fat_g: number;
+  notes: string[];
+};
+
+export type ImageRagSearchResponse = {
+  query_handled: boolean;
+  mode: string;
+  action?: string | null;
+  accepted_food_name?: string | null;
+  training_candidate_required: boolean;
+  top_k: ImageRagCandidate[];
 };

@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import type { DailyReport, GoalProfile, ImageSearchTestResponse, MealFoodItem, MealLog, StrategyAdvice, StrategyResponse } from "../types";
+import type { DailyReport, GoalProfile, ImageRagSearchResponse, ImageSearchTestResponse, MealFoodItem, MealLog, StrategyAdvice, StrategyResponse } from "../types";
 
 export function getGoal() {
   return apiRequest<GoalProfile>("/api/fitlog/goals/me");
@@ -87,4 +87,10 @@ export function imageSearchTest(image: Blob) {
   const form = new FormData();
   form.set("image", image, "query.jpg");
   return apiRequest<ImageSearchTestResponse>("/api/fitlog/image-search-test", { method: "POST", body: form });
+}
+
+export function searchImageRag(image: Blob) {
+  const form = new FormData();
+  form.set("image", image, "query.jpg");
+  return apiRequest<ImageRagSearchResponse>("/api/fitlog/image-rag/search", { method: "POST", body: form });
 }

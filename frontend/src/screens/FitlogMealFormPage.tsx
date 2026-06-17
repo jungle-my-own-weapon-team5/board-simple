@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { todayString } from "@/lib/date";
-import type { MealFoodItem } from "@/types";
+import type { ImageRagCandidate, ImageRagSearchResponse, MealFoodItem } from "@/types";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -44,6 +44,17 @@ function resetNutrition(food: MealFoodItem, patch: Partial<MealFoodItem>): MealF
   return { ...food, ...patch, calories: 0, carbs_g: 0, protein_g: 0, fat_g: 0 };
 }
 
+function imageCandidateToFood(candidate: ImageRagCandidate): MealFoodItem {
+  return {
+    name: candidate.food_name,
+    calories: candidate.estimated_calories,
+    carbs_g: candidate.carbs_g,
+    protein_g: candidate.protein_g,
+    fat_g: candidate.fat_g,
+    portion_text: "1인분",
+  };
+}
+
 export default function FitlogMealFormPage() {
   const router = useRouter();
   const params = useParams<{ mealId?: string }>();
@@ -58,6 +69,9 @@ export default function FitlogMealFormPage() {
   const [foods, setFoods] = useState<MealFoodItem[]>([]);
   const [imageState, setImageState] = useState<{ image: File | null; cropImage: Blob | null; crop: { x: number; y: number; width: number; height: number } | null }>({ image: null, cropImage: null, crop: null });
   const [existingImages, setExistingImages] = useState<{ image?: string | null; crop?: string | null }>({});
+  const [imageAnalysis, setImageAnalysis] = useState<ImageRagSearchResponse | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [imageAnalysisError, setImageAnalysisError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,6 +88,39 @@ export default function FitlogMealFormPage() {
 
   const updateFood = (index: number, patch: Partial<MealFoodItem>) => {
     setFoods((current) => current.map((food, itemIndex) => itemIndex === index ? resetNutrition(food, patch) : food));
+  };
+
+  const applyImageCandidate = (candidate: ImageRagCandidate) => {
+    const nextFood = imageCandidateToFood(candidate);
+    setFoods((current) => {
+      const emptyIndex = current.findIndex((food) => !food.name.trim());
+      if (emptyIndex >= 0) {
+        return current.map((food, index) => index === emptyIndex ? nextFood : food);
+      }
+      return [...current, nextFood];
+    });
+  };
+
+  const analyzeImage = async () => {
+    const targetImage = imageState.cropImage ?? imageState.image;
+    if (!targetImage) {
+      setImageAnalysisError("분석할 이미지를 먼저 선택해 주세요.");
+      return;
+    }
+    setIsAnalyzingImage(true);
+    setImageAnalysisError(null);
+    setImageAnalysis(null);
+    try {
+      const result = await fitlogApi.searchImageRag(targetImage);
+      setImageAnalysis(result);
+      if (result.action === "auto_accept_label" && result.top_k[0]) {
+        applyImageCandidate(result.top_k[0]);
+      }
+    } catch (err) {
+      setImageAnalysisError(err instanceof Error ? err.message : "이미지 분석에 실패했습니다.");
+    } finally {
+      setIsAnalyzingImage(false);
+    }
   };
 
   const changeMealType = (nextType: MealType) => {
@@ -130,7 +177,46 @@ export default function FitlogMealFormPage() {
             </label>
             {existingImages.image ? <img src={assetUrl(existingImages.image)} alt="" className="max-h-56 rounded-md border object-contain" /> : null}
             {existingImages.crop ? <img src={assetUrl(existingImages.crop)} alt="" className="max-h-40 rounded-md border object-contain" /> : null}
-            <ImageCropPicker onChange={(value) => setImageState({ image: value.image, cropImage: value.cropImage, crop: value.crop })} />
+            <ImageCropPicker onChange={(value) => {
+              setImageState({ image: value.image, cropImage: value.cropImage, crop: value.crop });
+              setImageAnalysis(null);
+              setImageAnalysisError(null);
+            }} />
+            <div className="grid gap-3 rounded-md border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">이미지 음식 분석</p>
+                  <p className="text-xs text-muted-foreground">선택 영역이 있으면 잘라낸 이미지를 우선 분석합니다.</p>
+                </div>
+                <Button type="button" variant="outline" onClick={analyzeImage} disabled={isAnalyzingImage || (!imageState.image && !imageState.cropImage)}>
+                  {isAnalyzingImage ? "분석 중..." : "음식 분석"}
+                </Button>
+              </div>
+              {imageAnalysisError ? <p className="text-sm font-semibold text-destructive">{imageAnalysisError}</p> : null}
+              {imageAnalysis ? (
+                <div className="grid gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {imageAnalysis.action === "auto_accept_label" ? "신뢰도가 높아 첫 번째 후보를 Foods에 반영했습니다." : "후보를 확인하고 하나를 선택해 Foods에 반영하세요."}
+                  </p>
+                  <div className="grid gap-2 md:grid-cols-3">
+                    {imageAnalysis.top_k.map((candidate) => (
+                      <button
+                        key={`${candidate.food_name}-${candidate.confidence}`}
+                        type="button"
+                        className="grid gap-1 rounded-md border p-3 text-left text-sm hover:bg-accent"
+                        onClick={() => applyImageCandidate(candidate)}
+                      >
+                        <span className="font-semibold">{candidate.food_name}</span>
+                        <span className="text-xs text-muted-foreground">신뢰도 {(candidate.confidence * 100).toFixed(1)}%</span>
+                        <span className="text-xs text-muted-foreground">
+                          {candidate.estimated_calories} kcal · 탄 {candidate.carbs_g}g · 단 {candidate.protein_g}g · 지 {candidate.fat_g}g
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
         <Card>

@@ -15,9 +15,16 @@ class Settings(BaseSettings):
     frontend_origin: AnyUrl = "http://localhost:3000"
     auth_cookie_secure: bool = False
     openai_api_key: str | None = None
+    openai_embedding_model: str = "text-embedding-3-small"
+    openai_embedding_dimensions: int = 1536
     openai_strategy_agent_model: str = "gpt-5.4-mini"
-    openai_fallback_model: str = "gpt-5.5"
+    openai_fallback_model: str = "gpt-5.4-mini"
     upload_dir: str = "uploads"
+    food_classifier_model_path: str = "app/services/resnet34_food_fc_only.pt"
+    food_classifier_device: str = "auto"
+    food_classifier_top_k: int = 3
+    food_classifier_auto_accept_threshold: float = 0.8
+    food_classifier_user_confirm_threshold: float = 0.5
 
     model_config = SettingsConfigDict(
         env_file=(ROOT_ENV_FILE,),

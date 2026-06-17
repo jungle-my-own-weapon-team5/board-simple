@@ -1,6 +1,4 @@
-import hashlib
 import json
-import math
 import re
 import urllib.error
 import urllib.request
@@ -12,9 +10,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
 from app.models.fitlog import FoodNutritionEstimate, GoalProfile, MealFoodItem, MealLog, NutritionKnowledgeDoc, StrategyAdvice
-from app.schemas.fitlog import DailyReport, MealFoodItemInput, MealSummary, RagEvidence, StrategyResponse
+from app.schemas.fitlog import AgentStep, DailyReport, MealFoodItemInput, MealSummary, RagEvidence, StrategyResponse
 
-EMBEDDING_DIM = 64
+EMBEDDING_DIM = 1536
 
 DEFAULT_KNOWLEDGE = [
     ("Protein basics", "protein", "감량 중에도 단백질을 충분히 먹으면 포만감과 근육 유지에 도움이 됩니다.", None),
@@ -296,19 +294,65 @@ def tokenize(text_value: str) -> list[str]:
     return re.findall(r"[0-9A-Za-z가-힣]+", text_value.lower())
 
 
-def local_text_embedding(text_value: str) -> list[float]:
-    vector = [0.0] * EMBEDDING_DIM
-    for token in tokenize(text_value):
-        digest = hashlib.sha256(token.encode("utf-8")).digest()
-        index = int.from_bytes(digest[:4], "big") % EMBEDDING_DIM
-        sign = 1.0 if digest[4] % 2 == 0 else -1.0
-        vector[index] += sign
-    norm = math.sqrt(sum(value * value for value in vector)) or 1.0
-    return [round(value / norm, 6) for value in vector]
+def langchain_text_embedding(text_value: str) -> list[float] | None:
+    settings = get_settings()
+    if not settings.openai_api_key:
+        return None
+    try:
+        from langchain_openai import OpenAIEmbeddings
+        embeddings = OpenAIEmbeddings(
+            model=settings.openai_embedding_model,
+            api_key=settings.openai_api_key,
+            dimensions=settings.openai_embedding_dimensions,
+        )
+        vector = embeddings.embed_query(text_value)
+    except Exception:
+        return None
+    if len(vector) != settings.openai_embedding_dimensions:
+        return None
+    return [round(float(value), 6) for value in vector]
 
 
 def vector_literal(values: list[float]) -> str:
     return "[" + ",".join(f"{value:.6f}" for value in values) + "]"
+
+
+def extract_openai_response_text(payload: dict) -> str:
+    text_value = payload.get("output_text")
+    if isinstance(text_value, str) and text_value.strip():
+        return text_value.strip()
+    chunks: list[str] = []
+    for item in payload.get("output", []):
+        if not isinstance(item, dict):
+            continue
+        for content in item.get("content", []):
+            if not isinstance(content, dict):
+                continue
+            content_text = content.get("text")
+            if isinstance(content_text, str):
+                chunks.append(content_text)
+    return "\n".join(chunks).strip()
+
+
+def parse_json_text(text_value: str) -> dict:
+    cleaned = text_value.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+    return json.loads(cleaned)
+
+
+def normalize_strategy_payload(parsed: dict) -> dict:
+    risk_notes = parsed.get("risk_notes")
+    if isinstance(risk_notes, str):
+        parsed["risk_notes"] = [risk_notes]
+    elif risk_notes is None:
+        parsed["risk_notes"] = []
+    elif not isinstance(risk_notes, list):
+        parsed["risk_notes"] = [str(risk_notes)]
+    else:
+        parsed["risk_notes"] = [str(note) for note in risk_notes]
+    return parsed
 
 
 def ensure_knowledge(db: Session) -> None:
@@ -333,7 +377,10 @@ def ensure_knowledge_embeddings(db: Session) -> None:
         )
     ).mappings().all()
     for row in rows:
-        embedding = vector_literal(local_text_embedding(f"{row['title']} {row['category']} {row['content']}"))
+        embedding_values = langchain_text_embedding(f"{row['title']} {row['category']} {row['content']}")
+        if embedding_values is None:
+            continue
+        embedding = vector_literal(embedding_values)
         db.execute(
             text("UPDATE nutrition_knowledge_docs SET embedding = CAST(:embedding AS vector) WHERE id = :id"),
             {"embedding": embedding, "id": row["id"]},
@@ -365,6 +412,9 @@ def search_knowledge(db: Session, query: str, limit: int = 3) -> list[RagEvidenc
     ensure_knowledge(db)
     if is_postgresql(db):
         try:
+            query_embedding = langchain_text_embedding(query)
+            if query_embedding is None:
+                return keyword_search_knowledge(db, query, limit)
             rows = db.execute(
                 text(
                     """
@@ -375,7 +425,7 @@ def search_knowledge(db: Session, query: str, limit: int = 3) -> list[RagEvidenc
                     LIMIT :limit
                     """
                 ),
-                {"embedding": vector_literal(local_text_embedding(query)), "limit": limit},
+                {"embedding": vector_literal(query_embedding), "limit": limit},
             ).mappings().all()
             if rows:
                 return [
@@ -387,7 +437,7 @@ def search_knowledge(db: Session, query: str, limit: int = 3) -> list[RagEvidenc
     return keyword_search_knowledge(db, query, limit)
 
 
-def generate_strategy_text(goal: GoalProfile, report: DailyReport, question: str | None, evidence: list[RagEvidence]) -> StrategyResponse:
+def _generate_strategy_text_legacy(goal: GoalProfile, report: DailyReport, question: str | None, evidence: list[RagEvidence]) -> StrategyResponse:
     settings = get_settings()
     prompt = {
         "goal": {
@@ -440,7 +490,95 @@ def generate_strategy_text(goal: GoalProfile, report: DailyReport, question: str
         return fallback
 
 
-def create_strategy(db: Session, user_id: int, target_date: date, question: str | None) -> StrategyResponse:
+def fallback_strategy_response(report: DailyReport, question: str | None, evidence: list[RagEvidence], reason: str) -> StrategyResponse:
+    question_text = (question or "오늘 목표 달성을 위해 무엇을 조정해야 하나요?").strip()
+    remaining = report.remaining_calories
+    evidence_title = evidence[0].title if evidence else "기본 영양 지식"
+
+    if report.meal_count == 0:
+        summary = f"{report.date.isoformat()}에는 식단 기록이 없어 정확한 전략을 만들기 어렵습니다."
+        today_strategy = "먼저 아침, 점심, 저녁 중 실제로 먹은 식사를 1개 이상 기록하세요. 이후 남은 칼로리와 단백질 비율을 기준으로 조정할 수 있습니다."
+        tomorrow_strategy = "내일은 식사 직후 바로 기록하는 흐름을 우선 만들고, 각 식사에 단백질 식품을 하나씩 포함하세요."
+    elif remaining is not None and remaining < 0:
+        summary = f"{report.total_calories} kcal로 목표보다 {abs(remaining)} kcal 초과했습니다."
+        today_strategy = "오늘 남은 식사는 추가 칼로리를 줄이고, 물과 저열량 채소 중심으로 마무리하세요. 야식이나 음료 칼로리는 피하는 편이 좋습니다."
+        tomorrow_strategy = "내일은 첫 식사부터 단백질을 먼저 정하고, 나트륨이 높은 국물/가공식품은 분량을 줄여 초과를 방지하세요."
+    elif remaining is not None:
+        summary = f"{report.total_calories} kcal를 기록했고 목표까지 {remaining} kcal 남았습니다."
+        today_strategy = "남은 칼로리 안에서 단백질이 있는 식사를 우선 선택하세요. 탄수화물은 운동량이나 허기에 맞춰 분량을 조절하세요."
+        tomorrow_strategy = "내일도 같은 시간대에 식사를 기록하고, 부족했던 영양소가 있으면 첫 식사에서 보완하세요."
+    else:
+        summary = f"{report.total_calories} kcal를 기록했지만 활성 목표가 없어 목표 대비 판단은 제한됩니다."
+        today_strategy = "먼저 목표 칼로리를 설정하면 더 구체적인 조정 전략을 만들 수 있습니다."
+        tomorrow_strategy = "목표 체중, 목표 날짜, 하루 목표 칼로리를 설정한 뒤 식단을 기록하세요."
+
+    if report.total_calories > 0 and report.protein_g * 4 < report.total_calories * 0.15:
+        today_strategy += " 현재 단백질 비율이 낮아 보이므로 다음 식사에는 계란, 닭가슴살, 두부, 생선 같은 단백질을 추가하세요."
+
+    return StrategyResponse(
+        date=report.date,
+        pace_status=report.status if report.status in {"on_track", "slightly_over", "over", "insufficient_data"} else "on_track",
+        summary=f"{summary} 질문: {question_text}",
+        today_strategy=today_strategy,
+        tomorrow_strategy=tomorrow_strategy,
+        risk_notes=[
+            reason,
+            f"참고 근거: {evidence_title}",
+            "의학적 진단이나 치료 조언이 아니라 식단 기록 기반의 일반적인 조정 제안입니다.",
+        ],
+        rag_evidence=evidence,
+    )
+
+
+def generate_strategy_text(goal: GoalProfile, report: DailyReport, question: str | None, evidence: list[RagEvidence]) -> StrategyResponse:
+    settings = get_settings()
+    if not settings.openai_api_key:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is required for FitLog Diet Strategy Agent")
+
+    prompt = {
+        "goal": {
+            "current_weight_kg": float(goal.current_weight_kg),
+            "target_weight_kg": float(goal.target_weight_kg),
+            "target_date": goal.target_date.isoformat(),
+            "daily_calorie_target": goal.daily_calorie_target,
+        },
+        "report": report.model_dump(mode="json"),
+        "question": question or "오늘 목표 달성을 위해 무엇을 조정해야 하나요?",
+        "evidence": [item.model_dump() for item in evidence],
+    }
+    body = json.dumps(
+        {
+            "model": settings.openai_strategy_agent_model,
+            "input": [
+                {
+                    "role": "system",
+                    "content": "Return strict JSON with keys pace_status, summary, today_strategy, tomorrow_strategy, risk_notes. Do not give medical diagnosis. Reflect the user's question and daily report.",
+                },
+                {"role": "user", "content": json.dumps(prompt, ensure_ascii=False)},
+            ],
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=body,
+        headers={"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        parsed = normalize_strategy_payload(parse_json_text(extract_openai_response_text(payload)))
+        return StrategyResponse(date=report.date, rag_evidence=evidence, **parsed)
+    except urllib.error.HTTPError as exc:
+        error_text = exc.read().decode("utf-8", errors="replace")[:500]
+        raise HTTPException(status_code=502, detail=f"OpenAI API error {exc.code}: {error_text}") from exc
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI API connection failed: {exc}") from exc
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI response parsing failed: {exc}") from exc
+
+
+def _create_strategy_pipeline_without_agent(db: Session, user_id: int, target_date: date, question: str | None) -> StrategyResponse:
     goal = get_active_goal(db, user_id)
     if goal is None:
         return StrategyResponse(
@@ -471,3 +609,94 @@ def create_strategy(db: Session, user_id: int, target_date: date, question: str 
     )
     db.commit()
     return response
+
+
+class FitLogDietStrategyAgent:
+    """Tool-orchestrating agent for daily FitLog diet strategy."""
+
+    def __init__(self, db: Session, user_id: int, target_date: date, question: str | None):
+        self.db = db
+        self.user_id = user_id
+        self.target_date = target_date
+        self.question = question
+        self.steps: list[AgentStep] = []
+
+    def record(self, tool: str, status: str, summary: str) -> None:
+        self.steps.append(AgentStep(tool=tool, status=status, summary=summary))
+
+    def load_goal(self) -> GoalProfile | None:
+        goal = get_active_goal(self.db, self.user_id)
+        self.record(
+            "get_active_goal",
+            "ok" if goal else "missing",
+            "Loaded active goal profile." if goal else "Active goal profile is required before strategy generation.",
+        )
+        return goal
+
+    def load_daily_report(self) -> DailyReport:
+        report = build_daily_report(self.db, self.user_id, self.target_date)
+        self.record(
+            "build_daily_report",
+            "ok",
+            f"Loaded {report.meal_count} meals and {report.total_calories} kcal for {report.date.isoformat()}.",
+        )
+        return report
+
+    def retrieve_evidence(self, report: DailyReport) -> list[RagEvidence]:
+        query = " ".join([self.question or "", *report.warnings, report.status])
+        evidence = search_knowledge(self.db, query)
+        self.record("search_nutrition_knowledge", "ok", f"Retrieved {len(evidence)} RAG evidence items.")
+        return evidence
+
+    def generate_strategy(self, goal: GoalProfile, report: DailyReport, evidence: list[RagEvidence]) -> StrategyResponse:
+        response = generate_strategy_text(goal, report, self.question, evidence)
+        self.record("generate_strategy", "ok", f"Generated strategy with pace status {response.pace_status}.")
+        response.agent_steps = self.steps.copy()
+        return response
+
+    def save_strategy(self, goal: GoalProfile, response: StrategyResponse) -> StrategyResponse:
+        self.record("save_strategy", "ok", "Saved generated strategy and agent trace.")
+        response.agent_steps = self.steps.copy()
+        self.db.add(
+            StrategyAdvice(
+                user_id=self.user_id,
+                goal_profile_id=goal.id,
+                target_date=self.target_date,
+                question=self.question,
+                pace_status=response.pace_status,
+                summary=response.summary,
+                today_strategy=response.today_strategy,
+                tomorrow_strategy=response.tomorrow_strategy,
+                risk_notes_json=response.risk_notes,
+                rag_evidence_json=[item.model_dump() for item in response.rag_evidence],
+                agent_trace_json=[item.model_dump() for item in self.steps],
+            )
+        )
+        self.db.commit()
+        return response
+
+    def missing_goal_response(self) -> StrategyResponse:
+        return StrategyResponse(
+            date=self.target_date,
+            pace_status="insufficient_data",
+            summary="Active goal profile is required before strategy generation.",
+            today_strategy="Set your current weight, target weight, target date, and daily calorie target first.",
+            tomorrow_strategy="After the goal is configured, the agent can use meal records and RAG evidence to create a strategy.",
+            risk_notes=["This is not medical diagnosis or treatment advice."],
+            rag_evidence=[],
+            agent_steps=self.steps.copy(),
+        )
+
+    def run(self) -> StrategyResponse:
+        self.record("agent_start", "ok", "FitLog Diet Strategy Agent started.")
+        goal = self.load_goal()
+        if goal is None:
+            return self.missing_goal_response()
+        report = self.load_daily_report()
+        evidence = self.retrieve_evidence(report)
+        response = self.generate_strategy(goal, report, evidence)
+        return self.save_strategy(goal, response)
+
+
+def create_strategy(db: Session, user_id: int, target_date: date, question: str | None) -> StrategyResponse:
+    return FitLogDietStrategyAgent(db, user_id, target_date, question).run()

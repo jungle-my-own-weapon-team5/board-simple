@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
 from app.main import app
+from app.schemas.fitlog import StrategyResponse
+import app.services.fitlog as fitlog_service
 
 
 @pytest.fixture()
@@ -44,7 +46,20 @@ def login(client: TestClient, email: str = "fitlog@example.com") -> None:
     assert response.status_code == 200
 
 
-def test_fitlog_goal_meal_report_strategy_and_stub(client: TestClient) -> None:
+def test_fitlog_goal_meal_report_strategy_and_stub(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_generate_strategy_text(goal, report, question, evidence):
+        return StrategyResponse(
+            date=report.date,
+            pace_status=report.status,
+            summary=f"{report.total_calories} kcal report for {question}",
+            today_strategy=f"Use {len(evidence)} evidence items for today's plan.",
+            tomorrow_strategy="Keep logging meals tomorrow.",
+            risk_notes=["test llm response"],
+            rag_evidence=evidence,
+        )
+
+    monkeypatch.setattr(fitlog_service, "generate_strategy_text", fake_generate_strategy_text)
+
     login(client)
     goal = client.post(
         "/api/fitlog/goals",
@@ -78,9 +93,18 @@ def test_fitlog_goal_meal_report_strategy_and_stub(client: TestClient) -> None:
     )
     assert strategy.status_code == 200
     assert strategy.json()["today_strategy"]
+    assert [step["tool"] for step in strategy.json()["agent_steps"]] == [
+        "agent_start",
+        "get_active_goal",
+        "build_daily_report",
+        "search_nutrition_knowledge",
+        "generate_strategy",
+        "save_strategy",
+    ]
     strategies = client.get("/api/fitlog/strategy", params={"date": str(date.today())})
     assert strategies.status_code == 200
     assert len(strategies.json()["items"]) == 1
+    assert strategies.json()["items"][0]["agent_steps"][-1]["tool"] == "save_strategy"
 
     image = client.post(
         "/api/fitlog/image-search-test",

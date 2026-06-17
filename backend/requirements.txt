@@ -8,4 +8,5 @@ pydantic-settings==2.5.2
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
 SQLAlchemy==2.0.35
+langchain-openai==0.2.14
 uvicorn[standard]==0.30.6

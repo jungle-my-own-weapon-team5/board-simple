@@ -45,6 +45,16 @@ export default function FitlogCoachPage() {
             <p><strong>Today:</strong> {answer.today_strategy}</p>
             <p><strong>Tomorrow:</strong> {answer.tomorrow_strategy}</p>
             <ul className="list-disc pl-5">{answer.risk_notes.map((note) => <li key={note}>{note}</li>)}</ul>
+            {answer.agent_steps?.length ? (
+              <div className="rounded-md border p-3">
+                <p className="font-semibold">Agent 실행 단계</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                  {answer.agent_steps.map((step, index) => (
+                    <li key={`${step.tool}-${index}`}>{step.tool}: {step.summary}</li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
             {answer.rag_evidence.map((item) => <blockquote key={item.title} className="border-l-2 pl-3 text-muted-foreground">{item.title}: {item.snippet}</blockquote>)}
           </CardContent>
         </Card>

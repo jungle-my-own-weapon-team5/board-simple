@@ -105,6 +105,12 @@ class RagEvidence(BaseModel):
     source_url: str | None = None
 
 
+class AgentStep(BaseModel):
+    tool: str
+    status: str
+    summary: str
+
+
 class StrategyResponse(BaseModel):
     date: date
     pace_status: PaceStatus
@@ -113,6 +119,7 @@ class StrategyResponse(BaseModel):
     tomorrow_strategy: str
     risk_notes: list[str]
     rag_evidence: list[RagEvidence]
+    agent_steps: list[AgentStep] = Field(default_factory=list)
 
 
 class StrategyAdviceRead(StrategyResponse):

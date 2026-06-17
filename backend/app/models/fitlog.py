@@ -108,4 +108,5 @@ class StrategyAdvice(Base):
     tomorrow_strategy: Mapped[str] = mapped_column(Text)
     risk_notes_json: Mapped[list] = mapped_column(JSON, default=list)
     rag_evidence_json: Mapped[list] = mapped_column(JSON, default=list)
+    agent_trace_json: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
