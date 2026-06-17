@@ -11,5 +11,6 @@ psycopg[binary]==3.2.1
 pydantic-settings==2.5.2
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
+redis==5.0.8
 SQLAlchemy==2.0.35
 uvicorn[standard]==0.30.6
