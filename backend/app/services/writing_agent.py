@@ -129,11 +129,7 @@ def _generate_recommendations_node(
         augmented_content,
         state["post_type"],
     )
-    graph_output = (
-        "LangGraph 노드 흐름으로 추천을 생성했습니다."
-        if state.get("graph_mode") == "langgraph"
-        else "LangGraph 패키지가 없는 환경이라 같은 순서를 로컬 fallback으로 처리했습니다."
-    )
+    graph_output = "초안과 근거를 바탕으로 추천을 생성했습니다."
     steps = [
         *state.get("agent_steps", []),
         AgentStep(name="draft.generate", output=graph_output),

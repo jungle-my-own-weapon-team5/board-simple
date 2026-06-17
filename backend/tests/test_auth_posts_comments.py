@@ -640,7 +640,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     )
     assert chat_response.status_code == 200
     chat_payload = chat_response.json()
-    assert chat_payload["steps"][0]["name"] == "langgraph.chat"
+    assert chat_payload["steps"][0]["name"] == "agent.chat"
     assert chat_payload["final_answer"]
 
     jang_noksu_chat_response = client.post(
@@ -649,7 +649,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     )
     assert jang_noksu_chat_response.status_code == 200
     jang_noksu_chat_payload = jang_noksu_chat_response.json()
-    assert jang_noksu_chat_payload["steps"][0]["name"] == "langgraph.chat"
+    assert jang_noksu_chat_payload["steps"][0]["name"] == "agent.chat"
     assert all(step["name"] != "safety.off_topic" for step in jang_noksu_chat_payload["steps"])
     assert jang_noksu_chat_payload["final_answer"]
 
@@ -659,7 +659,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     )
     assert unknown_person_chat_response.status_code == 200
     unknown_person_chat_payload = unknown_person_chat_response.json()
-    assert unknown_person_chat_payload["steps"][0]["name"] == "langgraph.chat"
+    assert unknown_person_chat_payload["steps"][0]["name"] == "agent.chat"
     assert all(step["name"] != "safety.off_topic" for step in unknown_person_chat_payload["steps"])
 
     post_search_chat_response = client.post(

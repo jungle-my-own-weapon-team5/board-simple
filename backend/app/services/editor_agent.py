@@ -258,11 +258,7 @@ def _respond_node(state: EditorAgentState, settings: Settings) -> EditorAgentSta
     else:
         response = _make_local_response(state)
 
-    graph_output = (
-        "LangGraph 노드 흐름으로 응답을 생성했습니다."
-        if state.get("graph_mode") == "langgraph"
-        else "LangGraph 패키지가 없는 환경이라 같은 순서를 로컬 fallback으로 처리했습니다."
-    )
+    graph_output = "근거와 요청 의도를 바탕으로 응답을 생성했습니다."
     return {
         "response": response.model_copy(
             update={

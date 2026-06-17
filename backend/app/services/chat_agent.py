@@ -330,15 +330,12 @@ def _run_retrieval_agent_node(
     settings: Settings,
 ) -> ChatAgentState:
     response = run_agent(db, settings, state["goal"], state["topic"])
-    if state.get("graph_mode") == "langgraph":
-        graph_output = "prepare_context -> run_retrieval_agent 순서로 챗봇 요청을 처리했습니다."
-    else:
-        graph_output = "LangGraph 패키지가 없는 환경이라 같은 노드 순서를 로컬 fallback으로 처리했습니다."
+    graph_output = "현재 화면 맥락과 사용자 요청을 바탕으로 답변을 생성했습니다."
 
     return {
         "response": AgentRunResponse(
             steps=[
-                AgentStep(name="langgraph.chat", output=graph_output),
+                AgentStep(name="agent.chat", output=graph_output),
                 *response.steps,
             ],
             final_answer=response.final_answer,
