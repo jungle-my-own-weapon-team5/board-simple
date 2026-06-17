@@ -735,3 +735,254 @@ def test_board_mcp_duplicate_tool_is_preview_only(monkeypatch: pytest.MonkeyPatc
     assert matches == [
         {"post_id": 1, "title": "MCP article", "reason": "same_url", "score": None}
     ]
+
+
+def test_board_mcp_duplicate_judgement_tool_is_check_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    with TestingSessionLocal() as db:
+        db.add(
+            Post(
+                title="MCP judgement article",
+                content="body",
+                author_id=1,
+                source_url="https://example.com/judgement",
+            )
+        )
+        db.commit()
+
+    monkeypatch.setattr(board_mcp, "get_session_local", lambda: TestingSessionLocal)
+    response = board_mcp.judge_news_duplicates_tool(
+        [
+            {
+                "client_id": "mcp-1",
+                "title": "MCP candidate",
+                "url": "https://example.com/judgement",
+                "summary": "후보 요약",
+                "key_points": ["핵심"],
+                "duplicate_matches": [
+                    {
+                        "post_id": 1,
+                        "title": "MCP judgement article",
+                        "reason": "same_url",
+                        "score": None,
+                    },
+                    {
+                        "post_id": 999,
+                        "title": "Missing",
+                        "reason": "rag",
+                        "score": 0.2,
+                    },
+                ],
+            },
+            {
+                "client_id": "mcp-empty",
+                "title": "No duplicates",
+                "duplicate_matches": [],
+            },
+        ]
+    )
+    assert response == {
+        "items": [
+            {
+                "client_id": "mcp-1",
+                "results": [
+                    {
+                        "post_id": 1,
+                        "title": "MCP judgement article",
+                        "verdict": "duplicate",
+                        "confidence": 1.0,
+                        "reason": "같은 원문 URL입니다.",
+                    }
+                ],
+            },
+            {"client_id": "mcp-empty", "results": []},
+        ]
+    }
+
+
+def test_board_mcp_web_preview_includes_duplicate_judgements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    with TestingSessionLocal() as db:
+        db.add(
+            Post(
+                title="Existing web article",
+                content="body",
+                author_id=1,
+                source_url="https://example.com/web",
+            )
+        )
+        db.commit()
+
+    class FakeNewsCurationService:
+        def preview_web_article(
+            self,
+            url: str,
+            duplicate_matches: list,
+            article_text: str | None = None,
+        ) -> WebArticleCandidate:
+            return WebArticleCandidate(
+                source_type="web_article",
+                source_id="web-source",
+                title="Existing web article",
+                url=url,
+                summary_status="success",
+                summary="웹 요약",
+                key_points=["핵심"],
+                duplicate_matches=duplicate_matches,
+                error=None,
+            )
+
+    monkeypatch.setattr(board_mcp, "get_session_local", lambda: TestingSessionLocal)
+    monkeypatch.setattr(
+        board_mcp,
+        "get_news_curation_service",
+        lambda: FakeNewsCurationService(),
+    )
+    result = board_mcp.preview_web_article_tool("https://example.com/web", "본문")
+
+    assert result["duplicate_matches"] == [
+        {"post_id": 1, "title": "Existing web article", "reason": "same_url", "score": None}
+    ]
+    assert result["duplicate_judgements"] == [
+        {
+            "post_id": 1,
+            "title": "Existing web article",
+            "verdict": "duplicate",
+            "confidence": 1.0,
+            "reason": "같은 원문 URL입니다.",
+        }
+    ]
+
+
+def test_board_mcp_hacker_news_preview_includes_duplicate_judgements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    with TestingSessionLocal() as db:
+        db.add(
+            Post(
+                title="Existing HN article",
+                content="body",
+                author_id=1,
+                source_url="https://example.com/hn",
+            )
+        )
+        db.commit()
+
+    class FakeHackerNewsPreviewService:
+        def preview(
+            self,
+            db: Session,
+            source: str,
+            query: str | None,
+            limit: int,
+        ) -> list[HackerNewsCandidate]:
+            return [
+                HackerNewsCandidate(
+                    hn_id=777,
+                    title="Existing HN article",
+                    url="https://example.com/hn",
+                    hn_url="https://news.ycombinator.com/item?id=777",
+                    author="author",
+                    points=1,
+                    comment_count=2,
+                    created_at=None,
+                    summary_status="success",
+                    summary="HN 요약",
+                    key_points=["핵심"],
+                    is_imported=False,
+                    error=None,
+                )
+            ]
+
+    monkeypatch.setattr(board_mcp, "get_session_local", lambda: TestingSessionLocal)
+    monkeypatch.setattr(
+        board_mcp,
+        "get_hacker_news_service",
+        lambda: FakeHackerNewsPreviewService(),
+    )
+    result = board_mcp.preview_hacker_news_tool("top", limit=1)
+
+    assert result[0]["duplicate_matches"] == [
+        {"post_id": 1, "title": "Existing HN article", "reason": "same_url", "score": None}
+    ]
+    assert result[0]["duplicate_judgements"] == [
+        {
+            "post_id": 1,
+            "title": "Existing HN article",
+            "verdict": "duplicate",
+            "confidence": 1.0,
+            "reason": "같은 원문 URL입니다.",
+        }
+    ]
+
+
+def test_board_mcp_hacker_news_preview_empty_duplicate_judgements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    class FakeHackerNewsPreviewService:
+        def preview(
+            self,
+            db: Session,
+            source: str,
+            query: str | None,
+            limit: int,
+        ) -> list[HackerNewsCandidate]:
+            return [
+                HackerNewsCandidate(
+                    hn_id=778,
+                    title="New HN article",
+                    url="https://example.com/new-hn",
+                    hn_url="https://news.ycombinator.com/item?id=778",
+                    author=None,
+                    points=None,
+                    comment_count=None,
+                    created_at=None,
+                    summary_status="success",
+                    summary="새 요약",
+                    key_points=["핵심"],
+                    is_imported=False,
+                    error=None,
+                )
+            ]
+
+    monkeypatch.setattr(board_mcp, "get_session_local", lambda: TestingSessionLocal)
+    monkeypatch.setattr(
+        board_mcp,
+        "get_hacker_news_service",
+        lambda: FakeHackerNewsPreviewService(),
+    )
+    result = board_mcp.preview_hacker_news_tool("top", limit=1)
+
+    assert result[0]["duplicate_matches"] == []
+    assert result[0]["duplicate_judgements"] == []
