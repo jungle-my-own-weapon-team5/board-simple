@@ -49,3 +49,4 @@ legacy_pgvector_inventory.csv
 .idea/
 .vscode/
 backend/.venv312/
+.tmp_pytest/
