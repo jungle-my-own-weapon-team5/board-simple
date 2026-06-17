@@ -13,10 +13,14 @@ import { usePostStore } from "../stores/postStore";
 import type { PostPage } from "../types";
 
 export default function PostListPage() {
-  const { query, page, size, setQuery, setPage } = usePostStore();
+  const { query, page, size, resetSearchToken, setQuery, setPage } = usePostStore();
   const [draftQuery, setDraftQuery] = useState(query);
   const [data, setData] = useState<PostPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDraftQuery(query);
+  }, [query, resetSearchToken]);
 
   useEffect(() => {
     setError(null);
