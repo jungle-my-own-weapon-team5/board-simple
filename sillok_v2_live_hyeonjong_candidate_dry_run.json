@@ -1,0 +1,27 @@
+{
+  "schema_version": "sillok-live-candidate-manifest-v1",
+  "seed_version": "sillok-v2-live-to-100",
+  "generated_at": "2026-06-17T20:58:13.945573+00:00",
+  "source": "shortage_plan_only",
+  "live_fetch": false,
+  "detail_fetch": false,
+  "target_per_period": 100,
+  "candidate_multiplier": 2,
+  "record_count": 0,
+  "quality": {
+    "duplicates": {
+      "sillok_ids": [],
+      "source_urls": []
+    },
+    "period_counts": {}
+  },
+  "periods": {
+    "현종실록": {
+      "status": "dry_run",
+      "record_code": "kra",
+      "remaining_after_legacy": 51,
+      "wanted_candidates": 102
+    }
+  },
+  "records": []
+}

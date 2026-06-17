@@ -1,0 +1,7 @@
+{
+  "schema_version": "temp-sillok-period-plan",
+  "target_per_period": 100,
+  "periods": {
+    "현종실록": {}
+  }
+}
