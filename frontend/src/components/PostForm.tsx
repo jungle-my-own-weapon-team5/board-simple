@@ -136,26 +136,43 @@ function AgentResultPanel({
       </div>
 
       {externalResources.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <p className="flex items-center gap-2 text-xs font-bold">
-            <ExternalLink size={14} />
-            외부 자료
-          </p>
-          {externalResources.map((resource) => (
-            <a
-              key={`${resource.provider}-${resource.url}`}
-              href={resource.url}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-sm border border-border bg-background p-2 text-xs hover:bg-accent"
-            >
-              <span className="block break-words font-semibold">{resource.title}</span>
-              <span className="mt-1 block break-words text-muted-foreground">
-                {resource.provider} · {resource.description}
-              </span>
-            </a>
-          ))}
-        </div>
+        <details className="rounded-sm border border-border bg-background p-2 text-xs">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold">
+            <span className="flex items-center gap-2">
+              <ExternalLink size={14} />
+              외부 자료 {externalResources.length}건
+            </span>
+            <span className="text-muted-foreground">펼치기</span>
+          </summary>
+          <div className="mt-2 flex flex-col gap-2">
+            {externalResources.slice(0, 6).map((resource) => (
+              <div
+                key={`${resource.provider}-${resource.url}`}
+                className="rounded-sm border border-border/70 bg-card p-2"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="block break-words font-semibold leading-5">{resource.title}</span>
+                    <span className="mt-1 block truncate text-muted-foreground">{resource.provider}</span>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" asChild className="h-8 shrink-0 rounded-sm px-2 text-xs">
+                    <a href={resource.url} target="_blank" rel="noreferrer">
+                      원문 보기
+                    </a>
+                  </Button>
+                </div>
+                {resource.description ? (
+                  <p className="mt-2 line-clamp-2 break-words leading-5 text-muted-foreground">
+                    {resource.description}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+            {externalResources.length > 6 ? (
+              <p className="text-xs text-muted-foreground">나머지 {externalResources.length - 6}건은 AI 실행 로그에서 확인할 수 있습니다.</p>
+            ) : null}
+          </div>
+        </details>
       ) : externalSearchLog ? (
         <div className="rounded-sm border border-border bg-background p-2 text-xs text-muted-foreground">
           조선왕조실록에서 표시할 수 있는 외부 기사 링크를 찾지 못했습니다. 상태: {externalSearchLog.status}
@@ -812,8 +829,8 @@ export default function PostForm({
         )}
       </aside>
 
-      <footer className="sticky bottom-0 z-10 col-span-full -mx-4 border-t border-border bg-background/95 px-4 py-4 shadow-[0_-12px_28px_-26px_rgba(28,27,27,0.6)] backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="col-span-full -mx-4 border-t border-border bg-background/95 px-4 py-4 shadow-[0_-12px_28px_-26px_rgba(28,27,27,0.6)] sm:-mx-6 sm:px-6 lg:col-span-1 lg:col-start-1 lg:mx-0 lg:px-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-4">
             <Button type="button" variant="ghost" asChild className="rounded-sm">
               <Link href="/">
