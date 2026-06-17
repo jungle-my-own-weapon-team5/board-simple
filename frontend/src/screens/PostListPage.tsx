@@ -2,7 +2,8 @@
 
 import { Search } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { SubmitEvent } from "react";
 import * as postApi from "../api/posts";
 import Pagination from "../components/Pagination";
 import { Badge } from "../components/ui/badge";
@@ -26,7 +27,7 @@ export default function PostListPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "게시글을 불러오지 못했습니다."));
   }, [page, query, size]);
 
-  const handleSearch = (event: FormEvent) => {
+  const handleSearch = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setQuery(draftQuery.trim());
   };

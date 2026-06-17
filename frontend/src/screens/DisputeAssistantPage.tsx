@@ -11,7 +11,7 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { ComponentProps, FormEvent, ReactNode } from "react";
+import type { ComponentProps, ReactNode, SubmitEvent } from "react";
 
 import * as aiApi from "../api/ai";
 import * as ragApi from "../api/rag";
@@ -29,14 +29,18 @@ import type {
   RagSearchResponse
 } from "../types";
 
-const DOCUMENT_TYPE_OPTIONS: Array<{ value: LegalDocumentType | ""; label: string }> = [
+const DOCUMENT_TYPE_OPTIONS: Array<{
+  value: LegalDocumentType | "";
+  label: string;
+  disabled?: boolean;
+}> = [
   { value: "", label: "전체" },
   { value: "statute", label: "법령" },
-  { value: "case", label: "판례" },
-  { value: "interpretation", label: "해석례" },
-  { value: "admin_appeal", label: "행정심판" },
-  { value: "user_file", label: "사용자 문서" },
-  { value: "memo", label: "메모" }
+  { value: "case", label: "판례 - 후속 지원", disabled: true },
+  { value: "interpretation", label: "해석례 - 후속 지원", disabled: true },
+  { value: "admin_appeal", label: "행정심판 - 후속 지원", disabled: true },
+  { value: "user_file", label: "사용자 문서 - 후속 지원", disabled: true },
+  { value: "memo", label: "메모 - 후속 지원", disabled: true }
 ];
 
 type GeneratedBlockTitle = "쟁점 정리" | "답변 초안";
@@ -49,6 +53,9 @@ const GENERATED_EMPTY_TEXT: Record<GeneratedBlockTitle, string> = {
 const DEFAULT_FACTS =
   "임대차 계약이 종료되었지만 임대인이 보증금을 반환하지 않고 있습니다.";
 const DEFAULT_QUESTION = "검토해야 할 쟁점과 답변 초안 방향을 알려주세요.";
+const RESULT_PANEL_CARD_CLASS = "flex h-[34rem] flex-col xl:h-[calc(100vh-6rem)]";
+const RESULT_PANEL_CONTENT_CLASS = "min-h-0 flex-1 overflow-y-auto";
+const EMPTY_RESULT_PANEL_CARD_CLASS = "flex min-h-40 flex-col";
 
 type ActionState =
   | "idle"
@@ -86,9 +93,9 @@ export default function DisputeAssistantPage() {
   const retrievalOptions = useMemo(
     () => ({
       search_mode: searchMode,
-      top_k: optionalPositiveNumber(topK),
-      score_threshold: optionalNumber(scoreThreshold),
-      max_chunks_per_document: optionalPositiveNumber(maxChunksPerDocument)
+      top_k: optionalBoundedInteger(topK, 1, 100),
+      score_threshold: optionalBoundedNumber(scoreThreshold, 0, 1),
+      max_chunks_per_document: optionalBoundedInteger(maxChunksPerDocument, 1, 100)
     }),
     [maxChunksPerDocument, scoreThreshold, searchMode, topK]
   );
@@ -109,7 +116,7 @@ export default function DisputeAssistantPage() {
   const buildSearchPayload = () => ({
     query: `${trimmedFacts}\n${trimmedQuestion}`,
     ...retrievalOptions,
-    filters: documentType ? { document_type: documentType } : undefined
+    filters: documentType ? { document_types: [documentType] } : undefined
   });
 
   const buildAgentPayload = () => ({
@@ -118,8 +125,8 @@ export default function DisputeAssistantPage() {
     ...retrievalOptions
   });
 
-  const handleFullAnalysis = async (event?: FormEvent) => {
-    event?.preventDefault();
+  const handleFullAnalysis = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!isRunnable) {
       return;
     }
@@ -145,8 +152,7 @@ export default function DisputeAssistantPage() {
   };
 
   // 자료 검색은 답변 생성을 하지 않고 backend retrieval 결과만 받아옵니다.
-  const handleSearch = async (event?: FormEvent) => {
-    event?.preventDefault();
+  const handleSearch = async () => {
     if (!isRunnable) {
       return;
     }
@@ -208,7 +214,7 @@ export default function DisputeAssistantPage() {
         <div className="flex items-center gap-2">
           <Gavel className="size-7 text-primary" />
           <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">
-            분쟁 보조
+            AI 법률 검토
           </h1>
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">
@@ -227,7 +233,7 @@ export default function DisputeAssistantPage() {
               <Textarea
                 value={facts}
                 onChange={(event) => setFacts(event.target.value)}
-                className="min-h-40 resize-y"
+                className="min-h-72 resize-y lg:min-h-[22rem]"
                 maxLength={20000}
               />
             </label>
@@ -321,6 +327,9 @@ export default function DisputeAssistantPage() {
                 쟁점 탐지
               </Button>
             </div>
+            <p className="text-xs leading-5 text-muted-foreground">
+              집중 답변은 좁은 근거를, 쟁점 탐지는 쟁점별 후보를 넓게 검색합니다.
+            </p>
             <label className="grid gap-2 text-sm font-semibold">
               문서 유형
               <select
@@ -329,40 +338,50 @@ export default function DisputeAssistantPage() {
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {DOCUMENT_TYPE_OPTIONS.map((option) => (
-                  <option value={option.value} key={option.value}>
+                  <option value={option.value} key={option.value} disabled={option.disabled}>
                     {option.label}
                   </option>
                 ))}
               </select>
             </label>
+            <p className="text-xs leading-5 text-muted-foreground">
+              현재 자동 수집·색인은 법령만 지원합니다. 법령에는 법률, 대통령령, 총리령, 부령 계열이 포함됩니다.
+            </p>
             <NumberField
               label="Top K"
               value={topK}
-              onChange={setTopK}
+              onChange={(value) => setTopK(normalizeIntegerInput(value, 1, 100))}
               min={1}
               max={100}
+              step={1}
               placeholder="모드 기본값"
+              description="쟁점별로 검색할 후보 청크 수입니다. 비워두면 검색 모드의 기본값을 사용합니다."
             />
             <NumberField
               label="문서당 청크"
               value={maxChunksPerDocument}
-              onChange={setMaxChunksPerDocument}
+              onChange={(value) => setMaxChunksPerDocument(normalizeIntegerInput(value, 1, 100))}
               min={1}
               max={100}
+              step={1}
               placeholder="제한 없음"
+              description="한 문서가 결과를 과도하게 차지하지 않도록 문서별 청크 수를 제한합니다. 비워두면 제한하지 않습니다."
             />
             <label className="grid gap-2 text-sm font-semibold">
               Score Threshold
               <Input
                 type="number"
                 value={scoreThreshold}
-                onChange={(event) => setScoreThreshold(event.target.value)}
+                onChange={(event) => setScoreThreshold(normalizeDecimalInput(event.target.value, 0, 1))}
                 inputMode="decimal"
                 min={0}
                 max={1}
                 step={0.01}
                 placeholder="선택"
               />
+              <span className="text-xs font-normal leading-5 text-muted-foreground">
+                지정한 점수 미만의 검색 결과를 제외합니다. 비워두면 점수로 강제 제외하지 않고 후속 검토 단계에 맡깁니다.
+              </span>
             </label>
           </CardContent>
         </Card>
@@ -412,14 +431,18 @@ function NumberField({
   onChange,
   min,
   max,
-  placeholder
+  step,
+  placeholder,
+  description
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   min: number;
   max: number;
+  step?: number;
   placeholder?: string;
+  description?: string;
 }) {
   return (
     <label className="grid gap-2 text-sm font-semibold">
@@ -430,8 +453,14 @@ function NumberField({
         onChange={(event) => onChange(event.target.value)}
         min={min}
         max={max}
+        step={step}
         placeholder={placeholder}
       />
+      {description ? (
+        <span className="text-xs font-normal leading-5 text-muted-foreground">
+          {description}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -470,7 +499,9 @@ function SearchResultsPanel({
   }
 
   return (
-    <Card className="xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)]">
+    <Card
+      className={`${result ? RESULT_PANEL_CARD_CLASS : EMPTY_RESULT_PANEL_CARD_CLASS} xl:sticky xl:top-20`}
+    >
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
@@ -493,7 +524,7 @@ function SearchResultsPanel({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="grid max-h-[34rem] gap-2 overflow-y-auto xl:max-h-[calc(100vh-12rem)]">
+      <CardContent className={`grid gap-2 ${RESULT_PANEL_CONTENT_CLASS}`}>
         {!result ? (
           <EmptyState text="검색을 실행하면 관련 청크가 표시됩니다." />
         ) : result.items.length === 0 ? (
@@ -586,14 +617,14 @@ function GeneratedBlock({
   disclaimer?: string | null;
 }) {
   return (
-    <Card className="min-h-[28rem]">
+    <Card className={body ? RESULT_PANEL_CARD_CLASS : EMPTY_RESULT_PANEL_CARD_CLASS}>
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg">{title}</CardTitle>
           {runId ? <Badge variant="secondary">Run #{runId}</Badge> : null}
         </div>
       </CardHeader>
-      <CardContent className="grid gap-3">
+      <CardContent className={`grid gap-3 ${RESULT_PANEL_CONTENT_CLASS}`}>
         {body ? (
           <p className="whitespace-pre-wrap text-sm leading-7 [overflow-wrap:anywhere]">
             {body}
@@ -673,25 +704,63 @@ function workingMessageForAction(action: ActionState): string | null {
   return null;
 }
 
-function optionalPositiveNumber(value: string): number | undefined {
+function normalizeIntegerInput(value: string, min: number, max: number) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) {
+    return "";
+  }
+  const parsed = Number(digits);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  return String(Math.min(Math.max(parsed, min), max));
+}
+
+function normalizeDecimalInput(value: string, min: number, max: number) {
+  const normalized = value
+    .replace(/,/g, ".")
+    .replace(/[^\d.]/g, "")
+    .replace(/(\..*)\./g, "$1");
+
+  if (!normalized) {
+    return "";
+  }
+  if (normalized === ".") {
+    return "0.";
+  }
+
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    return "";
+  }
+  if (parsed > max) {
+    return String(max);
+  }
+  if (parsed < min) {
+    return String(min);
+  }
+  return normalized;
+}
+
+function optionalBoundedInteger(value: string, min: number, max: number): number | undefined {
   const trimmed = value.trim();
   if (!trimmed) {
     return undefined;
   }
   const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
     return undefined;
   }
   return parsed;
 }
 
-function optionalNumber(value: string): number | undefined {
+function optionalBoundedNumber(value: string, min: number, max: number): number | undefined {
   const trimmed = value.trim();
   if (!trimmed) {
     return undefined;
   }
   const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed)) {
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
     return undefined;
   }
   return parsed;

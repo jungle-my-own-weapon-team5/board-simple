@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { SubmitEvent } from "react";
 import * as commentApi from "../api/comments";
 import { useAuthStore } from "../stores/authStore";
 import type { Comment } from "../types";
@@ -34,7 +35,7 @@ export default function CommentList({ postId }: CommentListProps) {
     void loadComments(0);
   }, [postId]);
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!content.trim()) {
       return;

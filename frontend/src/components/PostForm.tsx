@@ -1,7 +1,8 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import type { SubmitEvent } from "react";
 import MarkdownEditor from "./MarkdownEditor";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -32,7 +33,7 @@ export default function PostForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const tags = useMemo(() => extractTags(content), [content]);
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
