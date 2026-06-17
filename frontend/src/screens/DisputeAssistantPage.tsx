@@ -55,9 +55,7 @@ type ActionState =
   | "searching"
   | "issues"
   | "draft"
-  | "analysis-searching"
-  | "analysis-issues"
-  | "analysis-draft";
+  | "analysis";
 
 export default function DisputeAssistantPage() {
   // 입력값과 실행 결과를 분리해 검색 결과를 보존한 상태에서 초안만 다시 생성할 수 있게 합니다.
@@ -79,10 +77,10 @@ export default function DisputeAssistantPage() {
   const trimmedFacts = facts.trim();
   const trimmedQuestion = question.trim();
   const isBusy = activeAction !== "idle";
-  const isFullAnalysisRunning = activeAction.startsWith("analysis");
-  const isSearchRunning = activeAction === "searching" || activeAction === "analysis-searching";
-  const isIssuesRunning = activeAction === "issues" || activeAction === "analysis-issues";
-  const isDraftRunning = activeAction === "draft" || activeAction === "analysis-draft";
+  const isFullAnalysisRunning = activeAction === "analysis";
+  const isSearchRunning = activeAction === "searching";
+  const isIssuesRunning = activeAction === "issues";
+  const isDraftRunning = activeAction === "draft";
   const workingMessage = workingMessageForAction(activeAction);
   const isRunnable = trimmedFacts.length > 0 && trimmedQuestion.length > 0 && !isBusy;
   const retrievalOptions = useMemo(
@@ -131,20 +129,14 @@ export default function DisputeAssistantPage() {
     setIssuesResult(null);
     setDraftResult(null);
     try {
-      setActiveAction("analysis-searching");
-      const search = await ragApi.searchRagDocuments(buildSearchPayload());
-      setSearchResult(search);
-
-      setActiveAction("analysis-issues");
-      const issues = await aiApi.createDisputeIssues(buildAgentPayload());
-      setIssuesResult(issues);
-
-      setActiveAction("analysis-draft");
-      const draft = await aiApi.createAnswerDraft({
+      setActiveAction("analysis");
+      const result = await aiApi.createFullAnalysis({
         ...buildAgentPayload(),
         tone: "formal"
       });
-      setDraftResult(draft);
+      setSearchResult(result.search);
+      setIssuesResult(result.issues);
+      setDraftResult(result.draft);
     } catch (err) {
       setError(messageFromError(err, "전체 분석에 실패했습니다."));
     } finally {
@@ -666,13 +658,16 @@ function EmptyState({ text }: { text: string }) {
 }
 
 function workingMessageForAction(action: ActionState): string | null {
-  if (action === "searching" || action === "analysis-searching") {
+  if (action === "analysis") {
+    return "공식 법령 색인, 근거 검토, 쟁점 정리, 답변 초안을 한 번에 진행하는 중입니다.";
+  }
+  if (action === "searching") {
     return "근거 자료를 검색하고 필요한 경우 공식 법령을 색인하는 중입니다.";
   }
-  if (action === "issues" || action === "analysis-issues") {
+  if (action === "issues") {
     return "쟁점을 정리하고 검색된 근거와 대조하는 중입니다.";
   }
-  if (action === "draft" || action === "analysis-draft") {
+  if (action === "draft") {
     return "답변 초안을 작성하고 citation을 검증하는 중입니다.";
   }
   return null;

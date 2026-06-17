@@ -597,6 +597,14 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
             content="과실 일반 조항",
             embedding=[1.0, 0.0, 0.0],
         )
+        invalid_expected_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제161조(사체등의 유기)",
+            content="제161조(사체등의 유기)",
+            embedding=[0.0, 1.0, 0.0],
+        )
         expected_embedding = _create_chunk_embedding(
             db,
             profile=profile,
@@ -605,6 +613,7 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
             content="시체를 은닉 또는 유기한 자를 처벌한다.",
             embedding=[0.0, 1.0, 0.0],
         )
+        invalid_expected_chunk_id = invalid_expected_embedding.chunk_id
         expected_chunk_id = expected_embedding.chunk_id
         db.commit()
 
@@ -697,7 +706,9 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
 
     assert response.status_code == 200
     body = response.json()
-    assert expected_chunk_id in [item["chunk_id"] for item in body["items"]]
+    body_chunk_ids = [item["chunk_id"] for item in body["items"]]
+    assert expected_chunk_id in body_chunk_ids
+    assert invalid_expected_chunk_id not in body_chunk_ids
     assert body["items"][0]["chunk_id"] == expected_chunk_id
     expected_item = next(
         item for item in body["items"] if item["chunk_id"] == expected_chunk_id

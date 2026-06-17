@@ -40,6 +40,7 @@ from app.services.rag.embedding_profiles import (
 from app.services.rag.legal_open_api import LawOpenApiClient
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 from app.services.rag.legal_source_planner import (
+    KNOWN_STATUTE_TITLES,
     LegalSourceCandidate,
     plan_legal_source_candidates,
 )
@@ -990,6 +991,7 @@ class OrchestratorAgent:
         error_message: str,
         tool_calls: list[AgentToolCallSummary],
     ) -> AgentRunResult:
+        step_index = _next_available_step_index(db, rag_run, step_index)
         rag_run.status = "failed"
         rag_run.error_code = error_code
         rag_run.error_message = error_message
@@ -1021,6 +1023,7 @@ class OrchestratorAgent:
         assessment: EvidenceAssessment,
         tool_calls: list[AgentToolCallSummary],
     ) -> AgentRunResult:
+        step_index = _next_available_step_index(db, rag_run, step_index)
         rag_run.status = "completed"
         rag_run.answer = _insufficient_evidence_answer(assessment)
         rag_run.disclaimer = LEGAL_AI_DISCLAIMER
@@ -1135,10 +1138,14 @@ def _with_preferred_titles(
     preferred_titles = _candidate_preferred_titles(candidates)
     if not preferred_titles:
         return action
+    primary_candidate = candidates[0]
+    arguments = {**action.arguments, "preferred_titles": preferred_titles}
+    if _should_sync_primary_candidate_query(primary_candidate):
+        arguments["query"] = primary_candidate.query
     return AgentAction(
         action_type=action.action_type,
         tool_name=action.tool_name,
-        arguments={**action.arguments, "preferred_titles": preferred_titles},
+        arguments=arguments,
         reason=action.reason,
     )
 
@@ -1158,6 +1165,19 @@ def _preferred_titles_from_action(action: AgentAction) -> list[str] | None:
         return None
     titles = [item.strip() for item in value if isinstance(item, str) and item.strip()]
     return titles or None
+
+
+def _should_sync_primary_candidate_query(candidate: LegalSourceCandidate) -> bool:
+    if candidate.reason == "required_issue_hint":
+        return True
+    normalized_known_titles = {
+        _normalize_official_title(title) for title in KNOWN_STATUTE_TITLES
+    }
+    return _normalize_official_title(candidate.query) in normalized_known_titles
+
+
+def _normalize_official_title(value: str) -> str:
+    return "".join(value.split()).lower()
 
 
 def _build_draft_action(request: AgentRunRequest) -> AgentAction:
@@ -1641,6 +1661,22 @@ def _build_result(
         error_code=rag_run.error_code,
         error_message=rag_run.error_message,
     )
+
+
+def _next_available_step_index(
+    db: Session,
+    rag_run: RagRun,
+    proposed_step_index: int,
+) -> int:
+    """중간 enrichment가 실패해도 다음 agent step index가 중복되지 않게 보정합니다."""
+
+    db.flush()
+    existing_step_indexes = [
+        step.step_index for step in rag_run_repository.list_agent_steps_by_run(db, rag_run.id)
+    ]
+    if not existing_step_indexes:
+        return proposed_step_index
+    return max(proposed_step_index, max(existing_step_indexes) + 1)
 
 
 def _optional_temperature(value: object) -> float | None:

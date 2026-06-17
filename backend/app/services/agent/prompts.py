@@ -22,6 +22,7 @@ def build_draft_prompt(
     evidence_text = _format_evidence(evidence_items)
     citation_text = _format_citations(citations)
     allowed_article_text = _format_allowed_article_refs(evidence_items)
+    structure_instruction = _structure_instruction(request.task_type)
     return "\n".join(
         [
             "당신은 법률정보 기반 답변 초안 작성 보조자입니다.",
@@ -52,6 +53,7 @@ def build_draft_prompt(
             citation_text,
             "",
             "위 근거만 바탕으로 한국어 답변 초안을 작성하세요.",
+            structure_instruction,
         ]
     )
 
@@ -116,6 +118,12 @@ def _format_evidence(evidence_items: list[dict[str, object]]) -> str:
         content = str(item.get("content") or "").strip()
         lines.append(f"{index}. {title} / {heading}\n{content}")
     return "\n\n".join(lines)
+
+
+def _structure_instruction(task_type: str) -> str:
+    if task_type == "answer_draft":
+        return "권장 구조: 1. 쟁점 정리, 2. 답변 초안, 3. 추가 확인 필요사항."
+    return "권장 구조: 1. 핵심 쟁점, 2. 근거별 검토, 3. 추가 확인 필요사항."
 
 
 def _format_citations(citations: list[dict[str, object]]) -> str:

@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.rag import RagSearchRead
 from app.services.agent.state import AgentRunResult
 
 AgentTaskType = Literal["answer_draft", "dispute_issues"]
@@ -46,6 +47,15 @@ class AnswerDraftCreate(AgentRetrievalOptions):
     facts: str = Field(min_length=1, max_length=20000)
     question: str = Field(min_length=1, max_length=5000)
     tone: str | None = Field(default=None, min_length=1, max_length=50)
+
+
+class FullAnalysisCreate(AgentRetrievalOptions):
+    """검색, 쟁점 정리, 답변 초안을 하나의 Agent run으로 생성하는 요청입니다."""
+
+    facts: str = Field(min_length=1, max_length=20000)
+    question: str = Field(min_length=1, max_length=5000)
+    tone: str | None = Field(default=None, min_length=1, max_length=50)
+    search_mode: AgentSearchMode = "issue_spotting"
 
 
 class AgentToolCallRead(BaseModel):
@@ -163,6 +173,14 @@ class DisputeIssuesRead(BaseModel):
             disclaimer=result.disclaimer,
             tool_calls=_tool_call_reads(result),
         )
+
+
+class FullAnalysisRead(BaseModel):
+    """프론트의 병렬 패널에 한 번에 채워 넣을 전체 분석 응답입니다."""
+
+    search: RagSearchRead
+    issues: DisputeIssuesRead
+    draft: AnswerDraftRead
 
 
 def _tool_call_reads(result: AgentRunResult) -> list[AgentToolCallRead]:

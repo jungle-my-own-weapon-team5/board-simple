@@ -549,7 +549,10 @@ def _augment_plan_with_required_issue_hints(
     if not required_issues:
         return plan
 
-    merged_issues = _dedupe_issues([*plan.issues, *required_issues])
+    # 사실관계에서 명백히 드러난 핵심 도메인 힌트는 외부 API 동기화 우선순위를
+    # 가져야 합니다. LLM이 일반 사용자 표현을 잘못 해석해 엉뚱한 법령을 앞세워도
+    # 형법/형사소송법 같은 필수 후보가 먼저 검색되도록 합니다.
+    merged_issues = _dedupe_issues([*required_issues, *plan.issues])
     merged_candidates = _dedupe_candidates(
         [
             candidate
@@ -708,7 +711,7 @@ def _required_issue(
         domain="criminal",
         official_source_query=candidates[0].query if candidates else None,
         candidates=candidates,
-        expected_article_refs=[],
+        expected_article_refs=refs,
     )
 
 

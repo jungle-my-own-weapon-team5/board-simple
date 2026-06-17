@@ -16,6 +16,10 @@ from app.repositories import rag_runs as rag_run_repository
 from app.services.ai.client import AIClient
 from app.services.ai.errors import ProviderError
 from app.services.ai.types import AITextRequest
+from app.services.rag.chunking import (
+    has_article_boundary_contamination,
+    is_title_only_article_chunk,
+)
 from app.services.rag.legal_open_api import LawOpenApiClient, LawOpenApiError
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 from app.services.rag.legal_source_planner import (
@@ -177,6 +181,8 @@ def _append_keyword_hint_results(
                 break
             if chunk_embedding.chunk_id in existing_chunk_ids:
                 continue
+            if _chunk_embedding_is_invalid(chunk_embedding):
+                continue
             keyword_items.append(
                 _keyword_hint_result_item(
                     chunk_embedding=chunk_embedding,
@@ -227,6 +233,8 @@ def _append_coverage_anchor_results(
         ):
             if chunk_embedding.chunk_id in existing_chunk_ids:
                 continue
+            if _chunk_embedding_is_invalid(chunk_embedding):
+                continue
             anchor_items.append(_coverage_anchor_result_item(chunk_embedding=chunk_embedding))
             existing_chunk_ids.add(chunk_embedding.chunk_id)
             if len(anchor_items) >= 3:
@@ -253,7 +261,8 @@ def _remove_semantic_false_positive_results(
         filtered_items = [
             item
             for item in result.results
-            if not _is_semantic_false_positive(item, issue=issue)
+            if not _is_invalid_retrieval_item(item)
+            and not _is_semantic_false_positive(item, issue=issue)
         ]
         updated_results.append((issue, replace(result, results=filtered_items)))
     return updated_results
@@ -549,6 +558,8 @@ def _append_exact_article_ref_results(
         )
         if chunk_embedding is None or chunk_embedding.chunk_id in existing_chunk_ids:
             continue
+        if _chunk_embedding_is_invalid(chunk_embedding):
+            continue
         query = _query_for_expected_article_ref(ref)
         exact_issue = PlannedLegalIssue(
             issue_key=f"{issue_key_prefix}_{len(appended_results) + 1}",
@@ -636,6 +647,8 @@ def _review_candidate_payload(
     for issue, result in issue_results:
         for item in result.results:
             if item.chunk_id in seen_chunk_ids:
+                continue
+            if _is_invalid_retrieval_item(item):
                 continue
             seen_chunk_ids.add(item.chunk_id)
             candidates.append(
@@ -1146,6 +1159,9 @@ def _item_matches_expected_article_ref(
     item: RagSearchResultItem,
     ref: ExpectedArticleRef,
 ) -> bool:
+    if _is_invalid_retrieval_item(item):
+        return False
+
     title = _normalize_for_article_match(item.title)
     law_title = _normalize_for_article_match(ref.law_title)
     if law_title and law_title not in title:
@@ -1167,6 +1183,25 @@ def _item_matches_expected_article_ref(
 def _query_for_expected_article_ref(ref: ExpectedArticleRef) -> str:
     values = [ref.law_title, ref.article_no, ref.article_title or "", ref.reason or ""]
     return " ".join(value.strip() for value in values if value.strip())
+
+
+def _chunk_embedding_is_invalid(chunk_embedding) -> bool:
+    chunk = chunk_embedding.chunk
+    return _is_invalid_chunk_content(heading=chunk.heading, content=chunk.content)
+
+
+def _is_invalid_retrieval_item(item: RagSearchResultItem) -> bool:
+    return _is_invalid_chunk_content(heading=item.heading, content=item.content)
+
+
+def _is_invalid_chunk_content(*, heading: str | None, content: str) -> bool:
+    return is_title_only_article_chunk(
+        heading=heading,
+        content=content,
+    ) or has_article_boundary_contamination(
+        heading=heading,
+        content=content,
+    )
 
 
 def _dedupe_supplemental_requests(

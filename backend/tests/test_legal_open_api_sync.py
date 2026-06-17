@@ -219,6 +219,48 @@ def test_sync_reindexes_and_replaces_stale_chunking_schema_document(
     assert client.body_call_count == 1
 
 
+def test_sync_reindexes_title_only_article_chunk_document(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    existing_document, chunk = _create_indexed_document(
+        db,
+        content="제52조(자수, 자복)",
+    )
+    existing_document_id = existing_document.id
+    chunk.heading = "제52조(자수, 자복)"
+    profile = _create_embedding_profile(db)
+    _create_chunk_embedding(
+        db,
+        chunk=chunk,
+        profile=profile,
+        content_checksum=calculate_text_checksum(chunk.content),
+    )
+    body = _body(
+        raw_text=(
+            "자동차관리법\n\n"
+            "제52조(자수, 자복) 죄를 범한 후 수사기관에 자수한 때에는 형을 감경하거나 면제할 수 있다. "
+            "제53조(정상참작감경) 정상에 참작할 만한 사유가 있을 때에는 그 형을 감경할 수 있다."
+        ),
+    )
+    client = _FakeLawOpenApiClient(metadata=metadata, body=body)
+
+    result = sync_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+        embedding_profile=profile,
+    )
+
+    assert result.status == "ingested"
+    assert result.body_fetched is True
+    assert result.replaced_document_ids == [existing_document_id]
+    assert client.body_call_count == 1
+    assert db.query(LegalDocument).count() == 1
+    assert all(chunk.content.strip() != chunk.heading for chunk in result.chunks)
+    assert any("형을 감경하거나 면제" in chunk.content for chunk in result.chunks)
+
+
 def test_force_refresh_creates_conflict_when_same_version_body_checksum_differs(
     db: Session,
 ) -> None:

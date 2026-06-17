@@ -142,6 +142,22 @@ export type AnswerDraftResponse = {
   tool_calls: AgentToolCall[];
 };
 
+export type FullAnalysisRequest = {
+  facts: string;
+  question: string;
+  tone?: string;
+  search_mode: RagSearchMode;
+  top_k?: number;
+  score_threshold?: number;
+  max_chunks_per_document?: number;
+};
+
+export type FullAnalysisResponse = {
+  search: RagSearchResponse;
+  issues: DisputeIssuesResponse;
+  draft: AnswerDraftResponse;
+};
+
 export type DisputeIssuesRequest = {
   facts: string;
   question: string;

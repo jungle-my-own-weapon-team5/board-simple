@@ -154,6 +154,47 @@ def test_get_law_body_calls_service_endpoint_with_mst_and_extracts_articles() ->
     assert "test-oc" in captured_urls[0]
 
 
+def test_get_law_body_keeps_article_heading_before_paragraphs() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "법령": {
+                    "기본정보": {
+                        "법령일련번호": "123456",
+                        "법령ID": "001234",
+                        "법령명_한글": "형법",
+                    },
+                    "조문": {
+                        "조문단위": [
+                            {
+                                "항": [
+                                    {
+                                        "항번호": "①",
+                                        "항내용": "① 죄를 지은 후 수사기관에 자수한 경우에는 형을 감경하거나 면제할 수 있다.",
+                                    }
+                                ],
+                                "조문내용": "제52조(자수, 자복)",
+                                "조문제목": "자수, 자복",
+                            }
+                        ]
+                    },
+                }
+            },
+        )
+
+    client = LawOpenApiClient(
+        oc="test-oc",
+        service_url="https://law.example.test/DRF/lawService.do",
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = client.get_law_body(mst="123456")
+
+    assert "제52조(자수, 자복)\n① 죄를 지은 후" in result.raw_text
+    assert "None" not in result.raw_text
+
+
 def test_get_law_body_can_call_service_endpoint_with_law_id() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         params = dict(request.url.params)

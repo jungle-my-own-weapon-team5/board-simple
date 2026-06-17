@@ -77,37 +77,20 @@ def test_live_criminal_story_rag_outputs_quality() -> None:
     with _client_context(settings) as context:
         register_and_login(context.client, email="live-ai-rag@example.com")
 
-        search_body = _post_json(
+        analysis_body = _post_json(
             context.client,
-            "/api/rag/search",
-            {
-                "query": LIVE_QUERY,
-                "search_mode": "issue_spotting",
-                "top_k": 3,
-                "filters": {"document_type": "statute"},
-            },
-        )
-        issues_body = _post_json(
-            context.client,
-            "/api/ai/dispute-issues",
+            "/api/ai/full-analysis",
             {
                 "facts": LIVE_FACTS,
                 "question": LIVE_QUESTION,
                 "search_mode": "issue_spotting",
-                "top_k": 3,
-            },
-        )
-        draft_body = _post_json(
-            context.client,
-            "/api/ai/answer-drafts",
-            {
-                "facts": LIVE_FACTS,
-                "question": LIVE_QUESTION,
-                "search_mode": "issue_spotting",
-                "top_k": 3,
+                "top_k": 8,
                 "tone": "formal",
             },
         )
+        search_body = analysis_body["search"]
+        issues_body = analysis_body["issues"]
+        draft_body = analysis_body["draft"]
 
     quality = _evaluate_quality(search_body, issues_body, draft_body)
     _print_live_report(search_body, issues_body, draft_body, quality)

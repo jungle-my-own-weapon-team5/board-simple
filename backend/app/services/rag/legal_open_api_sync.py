@@ -16,7 +16,11 @@ from app.models.legal_source import LegalSource
 from app.repositories import document_chunks as chunk_repository
 from app.repositories import embeddings as embedding_repository
 from app.repositories import legal_documents as document_repository
-from app.services.rag.chunking import CHUNKING_SCHEMA_VERSION
+from app.services.rag.chunking import (
+    CHUNKING_SCHEMA_VERSION,
+    has_article_boundary_contamination,
+    is_title_only_article_chunk,
+)
 from app.services.rag.embeddings import (
     EmbedDocumentChunksResult,
     EmbeddingClient,
@@ -432,6 +436,16 @@ def _document_reindex_reason(
         metadata = chunk.metadata_json or {}
         if metadata.get("chunking_schema_version") != CHUNKING_SCHEMA_VERSION:
             return "chunking_schema_changed"
+        if is_title_only_article_chunk(
+            heading=chunk.heading,
+            content=chunk.content,
+        ):
+            return "invalid_title_only_article_chunk"
+        if has_article_boundary_contamination(
+            heading=chunk.heading,
+            content=chunk.content,
+        ):
+            return "invalid_article_boundary_contamination"
     return None
 
 

@@ -14,6 +14,10 @@ from app.repositories.embeddings import ChunkEmbeddingSearchResult
 from app.repositories import rag_runs as rag_run_repository
 from app.services.ai.errors import ProviderError
 from app.services.ai.types import EmbeddingRequest, EmbeddingResult
+from app.services.rag.chunking import (
+    has_article_boundary_contamination,
+    is_title_only_article_chunk,
+)
 from app.services.rag.normalization import calculate_text_checksum
 
 
@@ -430,6 +434,16 @@ def _filter_current_search_results(
         chunk_embedding = scored_candidate.chunk_embedding
         if chunk_embedding.content_checksum != calculate_text_checksum(
             chunk_embedding.chunk.content
+        ):
+            continue
+        if is_title_only_article_chunk(
+            heading=chunk_embedding.chunk.heading,
+            content=chunk_embedding.chunk.content,
+        ):
+            continue
+        if has_article_boundary_contamination(
+            heading=chunk_embedding.chunk.heading,
+            content=chunk_embedding.chunk.content,
         ):
             continue
         if score_threshold is not None and scored_candidate.score < score_threshold:

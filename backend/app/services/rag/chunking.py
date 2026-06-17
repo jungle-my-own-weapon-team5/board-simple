@@ -9,8 +9,12 @@ ARTICLE_HEADING_PATTERN = re.compile(
     r"^(제\s*\d+\s*조(?:의\s*\d+)?(?:\s*\([^)]*\))?)"
 )
 ARTICLE_BOUNDARY_PATTERN = re.compile(r"제\s*\d+\s*조(?:의\s*\d+)?\s*\([^)]*\)")
+STRUCTURE_HEADING_PATTERN = re.compile(r"^제\s*\d+\s*(?:편|장|절|관)(?:\s+|$)")
+TRAILING_STRUCTURE_HEADING_PATTERN = re.compile(
+    r"^(?P<body>.+?)\s+(?P<structure>제\s*\d+\s*(?:편|장|절|관)\s+[^.。;；]+)$"
+)
 NORMALIZED_ARTICLE_HEADING_PATTERN = re.compile(r"^(제\d+조(?:의\d+)?)(?:\(([^)]*)\))?$")
-CHUNKING_SCHEMA_VERSION = "article_boundary_v2"
+CHUNKING_SCHEMA_VERSION = "article_boundary_v3"
 
 
 @dataclass(frozen=True)
@@ -160,6 +164,51 @@ def extract_article_heading(line: str) -> str | None:
     return re.sub(r"\s+", "", match.group(1))
 
 
+def is_title_only_article_chunk(
+    *,
+    heading: str | None,
+    content: str,
+) -> bool:
+    """조문 제목만 있고 실제 본문이 없는 chunk인지 판정합니다.
+
+    짧은 조문 자체는 유효합니다. 예를 들어 "제1조(목적) 목적"처럼 heading 뒤에
+    짧은 본문이 있으면 보존하고, "제52조(자수, 자복)"처럼 제목만 있는 경우만
+    검색/인용 후보에서 제외하기 위한 기준입니다.
+    """
+
+    stripped_content = content.strip()
+    if not stripped_content:
+        return True
+
+    if heading and _normalize_article_chunk_text(stripped_content) == (
+        _normalize_article_chunk_text(heading)
+    ):
+        return True
+
+    match = ARTICLE_HEADING_PATTERN.match(stripped_content)
+    if match is None:
+        return False
+    remainder = stripped_content[match.end() :].strip()
+    return not remainder
+
+
+def has_article_boundary_contamination(
+    *,
+    heading: str | None,
+    content: str,
+) -> bool:
+    """하나의 조문 chunk에 다음 조문 heading이 섞였는지 판정합니다."""
+
+    if heading is None:
+        return False
+    normalized_heading = _normalize_article_chunk_text(heading)
+    matches = list(ARTICLE_BOUNDARY_PATTERN.finditer(content))
+    for match in matches[1:]:
+        if _normalize_article_chunk_text(match.group(0)) != normalized_heading:
+            return True
+    return False
+
+
 def chunk_document_text(
     text: str,
     *,
@@ -195,6 +244,16 @@ def chunk_text(
         content = _join_section_lines(section.lines)
         if not content:
             continue
+        if section.heading is not None and is_title_only_article_chunk(
+            heading=section.heading,
+            content=content,
+        ):
+            continue
+        if has_article_boundary_contamination(
+            heading=section.heading,
+            content=content,
+        ):
+            continue
 
         content_parts = _split_long_content(content, resolved_config)
         for part_index, content_part in enumerate(content_parts):
@@ -229,6 +288,7 @@ def _split_article_sections(lines: list[str]) -> list[_TextSection]:
     current_heading: str | None = None
     current_lines: list[tuple[int, str]] = []
     current_strategy = "preamble"
+    pending_structure_lines: list[tuple[int, str]] = []
 
     def flush_current() -> None:
         nonlocal current_lines
@@ -247,14 +307,28 @@ def _split_article_sections(lines: list[str]) -> list[_TextSection]:
     for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.strip()
         heading = extract_article_heading(line) if line else None
+        if line and STRUCTURE_HEADING_PATTERN.match(line):
+            flush_current()
+            pending_structure_lines.append((line_number, line))
+            current_heading = None
+            current_strategy = "preamble"
+            continue
+
         if heading is not None:
             flush_current()
             current_heading = heading
             current_strategy = "article"
+            if pending_structure_lines:
+                current_lines.extend(pending_structure_lines)
+                pending_structure_lines = []
 
         if line or current_lines:
             current_lines.append((line_number, line))
 
+    if pending_structure_lines:
+        current_heading = None
+        current_strategy = "preamble"
+        current_lines.extend(pending_structure_lines)
     flush_current()
     return sections
 
@@ -282,13 +356,20 @@ def _split_line_at_article_boundaries(raw_line: str) -> list[str]:
             continue
         previous = line[start : match.start()].strip()
         if previous:
-            split_lines.append(previous)
+            split_lines.extend(_split_trailing_structure_heading(previous))
         start = match.start()
 
     remainder = line[start:].strip()
     if remainder:
         split_lines.append(remainder)
     return split_lines or [raw_line]
+
+
+def _split_trailing_structure_heading(line: str) -> list[str]:
+    match = TRAILING_STRUCTURE_HEADING_PATTERN.match(line)
+    if match is None:
+        return [line]
+    return [match.group("body").strip(), match.group("structure").strip()]
 
 
 def _split_paragraph_sections(lines: list[str]) -> list[_TextSection]:
@@ -505,3 +586,7 @@ def _article_heading_metadata(heading: str) -> dict[str, str]:
     if match.group(2):
         metadata["article_title"] = match.group(2)
     return metadata
+
+
+def _normalize_article_chunk_text(value: str) -> str:
+    return re.sub(r"\s+", "", value).lower()

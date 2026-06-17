@@ -578,7 +578,7 @@ def _extract_law_body_parts(law_root: dict[str, Any]) -> list[str]:
     if article_rows is not None:
         for row in article_rows:
             row_parts: list[str] = []
-            _collect_law_content_texts(row, row_parts)
+            _collect_law_article_row_texts(row, row_parts)
             parts.extend(row_parts)
 
     if parts:
@@ -587,6 +587,24 @@ def _extract_law_body_parts(law_root: dict[str, Any]) -> list[str]:
     fallback_parts: list[str] = []
     _collect_law_content_texts(law_root, fallback_parts)
     return _deduplicate_adjacent_texts(fallback_parts)
+
+
+def _collect_law_article_row_texts(row: Any, parts: list[str]) -> None:
+    """조문 row는 조문 제목을 항/호보다 먼저 배치해 경계가 밀리지 않게 합니다."""
+
+    if not isinstance(row, dict):
+        _collect_law_content_texts(row, parts)
+        return
+
+    for key in ("조문내용", "부칙내용"):
+        text = _clean_body_text(row.get(key))
+        if text:
+            parts.append(text)
+
+    for key, nested_value in row.items():
+        if key in {"조문내용", "부칙내용"}:
+            continue
+        _collect_law_content_texts(nested_value, parts)
 
 
 def _collect_law_content_texts(value: Any, parts: list[str]) -> None:
@@ -606,6 +624,8 @@ def _collect_law_content_texts(value: Any, parts: list[str]) -> None:
 
 
 def _clean_body_text(value: Any) -> str | None:
+    if value is None:
+        return None
     if isinstance(value, (dict, list)):
         nested_parts: list[str] = []
         _collect_law_content_texts(value, nested_parts)

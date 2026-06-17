@@ -84,11 +84,12 @@ def test_planner_parses_expected_article_refs() -> None:
         search_mode="issue_spotting",
     )
 
-    assert plan.issues[0].expected_article_refs[0].law_title == "형법"
-    assert plan.issues[0].expected_article_refs[0].article_no == "제52조"
+    surrender_issue = next(issue for issue in plan.issues if issue.issue_key == "surrender")
+    assert surrender_issue.expected_article_refs[0].law_title == "형법"
+    assert surrender_issue.expected_article_refs[0].article_no == "제52조"
 
 
-def test_planner_augments_required_criminal_issue_hints_without_article_refs() -> None:
+def test_planner_augments_required_criminal_issue_hints_for_reviewer() -> None:
     ai_client = _PlanningAIClient(
         text='{"issues":[],"candidates":[]}'
     )
@@ -104,15 +105,41 @@ def test_planner_augments_required_criminal_issue_hints_without_article_refs() -
         search_mode="issue_spotting",
     )
 
-    assert all(not issue.expected_article_refs for issue in plan.issues)
     criminal_issues = [
         issue for issue in plan.issues if issue.issue_key.startswith("criminal_")
     ]
     assert criminal_issues
     assert all(issue.domain == "criminal" for issue in criminal_issues)
+    assert any(issue.expected_article_refs for issue in criminal_issues)
     assert all("제" not in issue.internal_rag_query for issue in plan.issues)
     assert {candidate.title for candidate in plan.candidates} >= {"형법", "형사소송법"}
     assert "required_issue_hint" in {candidate.reason for candidate in plan.candidates}
+
+
+def test_planner_prioritizes_required_criminal_candidates_before_llm_noise() -> None:
+    ai_client = _PlanningAIClient(
+        text=(
+            '{"candidates":[{"document_type":"statute",'
+            '"title":"군에서의 형의 집행 및 군수용자의 처우에 관한 법률",'
+            '"query":"군에서의 형의 집행 및 군수용자의 처우에 관한 법률"}]}'
+        )
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts=(
+            "A는 실수로 B를 죽였고 시체를 비닐백에 담아 야산에 매장했습니다. "
+            "1주일 뒤 경찰서에 가서 자수했지만 시체를 찾지 못했습니다."
+        ),
+        question="검토할 쟁점을 알려주세요.",
+        search_mode="issue_spotting",
+    )
+
+    assert [candidate.title for candidate in plan.candidates[:2]] == [
+        "형법",
+        "형사소송법",
+    ]
 
 
 def test_planner_ignores_unsupported_document_types() -> None:

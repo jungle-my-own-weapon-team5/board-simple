@@ -143,6 +143,46 @@ def test_agent_runs_endpoint_returns_common_response_shape(
     assert "error_code" not in body
 
 
+def test_full_analysis_endpoint_uses_single_agent_run_for_all_panels(
+    ai_client_context: ApiTestContext,
+) -> None:
+    register_and_login(ai_client_context.client, email="full-analysis@example.com")
+    with ai_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        chunk_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제267조(과실치사)",
+            content="과실로 인하여 사람을 사망에 이르게 한 자는 처벌한다.",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        chunk_id = chunk_embedding.chunk_id
+        db.commit()
+
+    response = ai_client_context.client.post(
+        "/api/ai/full-analysis",
+        json={
+            "facts": "A가 실수로 B를 사망하게 했습니다.",
+            "question": "검토할 쟁점과 답변 초안 방향을 알려주세요.",
+            "search_mode": "issue_spotting",
+            "top_k": 1,
+            "tone": "formal",
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    run_id = body["draft"]["run_id"]
+    assert body["search"]["run_id"] == run_id
+    assert body["issues"]["run_id"] == run_id
+    assert body["search"]["search_mode"] == "issue_spotting"
+    assert body["search"]["items"][0]["chunk_id"] == chunk_id
+    assert body["issues"]["issues_text"] == "Mock provider response"
+    assert body["draft"]["draft"] == "Mock provider response"
+
+
 def test_ai_agent_endpoints_require_authentication_and_origin(
     ai_client_context: ApiTestContext,
 ) -> None:

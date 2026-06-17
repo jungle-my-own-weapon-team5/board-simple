@@ -7,6 +7,7 @@ from app.services.rag.chunking import (
     estimate_token_count,
     extract_article_heading,
     get_chunking_config,
+    is_title_only_article_chunk,
 )
 from app.services.rag.normalization import normalize_text
 
@@ -97,7 +98,7 @@ def test_chunk_document_text_applies_statute_profile() -> None:
     assert chunks[0].metadata_json["min_chars"] == 0
     assert chunks[0].metadata_json["overlap_chars"] == 80
     assert [chunk.heading for chunk in chunks] == ["제1조(목적)", "제2조(정의)"]
-    assert chunks[0].metadata_json["chunking_schema_version"] == "article_boundary_v2"
+    assert chunks[0].metadata_json["chunking_schema_version"] == "article_boundary_v3"
     assert chunks[0].metadata_json["article_no"] == "제1조"
     assert chunks[0].metadata_json["article_title"] == "목적"
 
@@ -117,9 +118,35 @@ def test_chunk_document_text_splits_inline_article_boundaries() -> None:
     ]
     assert "제164조" not in chunks[0].content
     assert "현주건조물" not in chunks[0].content
-    assert "제13장 방화와 실화의 죄" in chunks[0].content
+    assert "불을 놓아" not in chunks[0].content
+    assert "제13장 방화와 실화의 죄" not in chunks[0].content
+    assert "제13장 방화와 실화의 죄" in chunks[1].content
     assert chunks[1].metadata_json["article_no"] == "제164조"
     assert chunks[1].metadata_json["article_title"] == "현주건조물등에의방화"
+
+
+def test_chunk_document_text_skips_title_only_article_chunks() -> None:
+    text = normalize_text(
+        """
+        제52조(자수, 자복)
+
+        제53조(정상참작감경)
+        범죄의 정상에 참작할 만한 사유가 있는 때에는 그 형을 감경할 수 있다.
+        """
+    )
+
+    chunks = chunk_document_text(text, document_type="statute")
+
+    assert [chunk.heading for chunk in chunks] == ["제53조(정상참작감경)"]
+    assert "제52조" not in chunks[0].content
+    assert is_title_only_article_chunk(
+        heading="제52조(자수, 자복)",
+        content="제52조(자수, 자복)",
+    )
+    assert not is_title_only_article_chunk(
+        heading="제1조(목적)",
+        content="제1조(목적) 목적.",
+    )
 
 
 def test_chunk_document_text_applies_memo_profile() -> None:

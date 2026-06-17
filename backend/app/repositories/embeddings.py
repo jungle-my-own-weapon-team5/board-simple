@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from math import sqrt
+import re
 
 from sqlalchemy import bindparam
 from sqlalchemy import select
@@ -227,6 +228,8 @@ def find_searchable_chunk_embedding_by_article_ref(
         document = chunk.document
         if normalized_law_title not in _normalize_article_match_text(document.title):
             continue
+        if _is_invalid_article_chunk(chunk):
+            continue
         if _chunk_matches_article_no(chunk, normalized_article_no):
             return candidate
     return None
@@ -415,3 +418,31 @@ def _chunk_matches_article_no(
 
 def _normalize_article_match_text(value: str) -> str:
     return "".join(value.split()).lower()
+
+
+def _is_invalid_article_chunk(chunk: LegalDocumentChunk) -> bool:
+    content = (chunk.content or "").strip()
+    if not content:
+        return True
+    heading = (chunk.heading or "").strip()
+    if heading and _normalize_article_match_text(content) == _normalize_article_match_text(
+        heading
+    ):
+        return True
+    match = re.match(r"^(제\s*\d+\s*조(?:의\s*\d+)?(?:\s*\([^)]*\))?)", content)
+    if match is not None and not content[match.end() :].strip():
+        return True
+    return _has_article_boundary_contamination(chunk)
+
+
+def _has_article_boundary_contamination(chunk: LegalDocumentChunk) -> bool:
+    if not chunk.heading:
+        return False
+    normalized_heading = _normalize_article_match_text(chunk.heading)
+    matches = list(
+        re.finditer(r"제\s*\d+\s*조(?:의\s*\d+)?\s*\([^)]*\)", chunk.content or "")
+    )
+    return any(
+        _normalize_article_match_text(match.group(0)) != normalized_heading
+        for match in matches[1:]
+    )
