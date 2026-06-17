@@ -43,6 +43,35 @@ KING_NAMES = [
     "순종",
 ]
 SOURCE_KEYWORDS = ["어찰", "편지", "서찰", "문서", "일기", "실록", "사료", "원문", "국역"]
+GENERIC_EVIDENCE_TERMS = {
+    "조선",
+    "조선시대",
+    "역사",
+    "인물",
+    "사람",
+    "일화",
+    "기록",
+    "관련",
+    "게시물",
+    "게시글",
+    "본문",
+    "토론",
+    "질문",
+    "자료",
+    "근거",
+    "사료",
+    "원문",
+    "찾아서",
+    "채워줘",
+    "어떻게",
+    "기록되었을까",
+    "그녀",
+    "그",
+    "900자",
+    "800자",
+    "정도",
+}
+SECONDARY_EXTERNAL_SIGNALS = ("드라마", "KBS", "줄거리", "소설", "전설", "공연", "방영", "문학")
 
 
 class EditorAgentState(TypedDict, total=False):
@@ -157,9 +186,12 @@ def _retrieve_node(
         }
 
     result = search_rag(db, settings, query, 3)
-    usable_citations = _usable_citations(result.citations)
+    entities = _evidence_entities(state)
+    usable_citations = _usable_citations(result.citations, entities)
+    rejected_count = len(result.citations) - len(usable_citations)
     weak_evidence = result.weak_evidence or not usable_citations
     titles = ", ".join(citation.title for citation in usable_citations[:2]) or "없음"
+    entity_text = entities[0] if entities else "없음"
     return {
         "evidence_summary": result.answer_summary if not weak_evidence else None,
         "citations": usable_citations,
@@ -169,9 +201,12 @@ def _retrieve_node(
             AgentStep(
                 name="rag.search",
                 output=(
-                    f"관련 내부 RAG 근거 {len(usable_citations)}건을 조회했습니다. 근거: {titles}"
+                    f"핵심어 `{entity_text}` 기준으로 내부 RAG 근거 {len(usable_citations)}건을 채택했습니다. 근거: {titles}"
                     if not weak_evidence
-                    else f"내부 RAG에서 직접 근거로 쓰기 어려운 결과만 확인했습니다. 후보: {titles}"
+                    else (
+                        f"핵심어 `{entity_text}` 기준으로 내부 RAG 후보 {len(result.citations)}건 중 "
+                        f"{rejected_count}건을 불일치로 제외했습니다. 채택 근거: {titles}"
+                    )
                 ),
             ),
         ],
@@ -191,14 +226,27 @@ def _external_search_node(state: EditorAgentState, db: Session, settings: Settin
 
     keyword = _external_keyword(state)
     result = search_external(db, settings, keyword)
+    primary_resources, secondary_resources = _classify_external_resources(result.resources, _evidence_entities(state))
+    selected_resources = [*primary_resources, *secondary_resources]
+    weak_evidence = bool(state.get("weak_evidence", False))
+    if primary_resources and weak_evidence:
+        weak_evidence = False
     return {
-        "external_resources": result.resources,
+        "external_resources": selected_resources,
         "tool_logs": [result.tool_log],
+        "weak_evidence": weak_evidence,
         "agent_steps": [
             *state.get("agent_steps", []),
             AgentStep(
                 name="external.search",
-                output=f"`{keyword}` 외부 자료 검색을 실행했습니다. 상태: {result.tool_log.status}",
+                output=(
+                    f"`{keyword}` 외부 자료 검색을 실행했습니다. 상태: {result.tool_log.status}. "
+                    f"주요 후보 {len(primary_resources)}건, 보조 후보 {len(secondary_resources)}건을 분류했습니다."
+                ),
+            ),
+            AgentStep(
+                name="evidence.judge",
+                output=_evidence_judge_message(state, primary_resources, secondary_resources),
             ),
         ],
     }
@@ -260,9 +308,16 @@ def stateful_content_hint(normalized_message: str) -> bool:
 
 
 def _needs_external_search(state: EditorAgentState) -> bool:
-    if state.get("action") == "answer":
+    if state.get("action") in {"answer", "fill_content"}:
+        return True
+    if _requires_source_lookup(state["message"]):
         return True
     return bool(state.get("weak_evidence", False)) or not state.get("citations")
+
+
+def _requires_source_lookup(message: str) -> bool:
+    normalized = message.replace(" ", "")
+    return any(term in normalized for term in ["찾아서", "기록", "사료", "일화", "원문", "근거", "누구야", "어떤사람"])
 
 
 def _external_keyword(state: EditorAgentState) -> str:
@@ -331,6 +386,8 @@ def _make_llm_response(state: EditorAgentState, settings: Settings) -> EditorAge
         "사용자가 역사 질문을 하면 답변하고, 본문 작성/수정 요청이면 게시글 본문을 작성한다. "
         "사실 기반으로 쓰되, 내부 RAG가 약하면 검증된 외부 검색 결과와 일반 역사 지식을 함께 활용하고 근거 한계를 밝혀라. "
         "weak_evidence가 true이면 RAG 요약이나 근거 제목을 사실 근거처럼 사용하지 말고, 내부 근거가 부족하다고 말해라. "
+        "외부 자료만 채택된 경우에는 '외부 자료 후보 기준'이라고 밝혀라. "
+        "드라마, 문학, 전설, 줄거리 성격의 외부 자료는 후대 이미지 설명에만 쓰고 사실 근거처럼 쓰지 마라. "
         "사용자의 현재 질문에 직접 답하고, 최근 대화의 이전 인물이나 이전 오류 문구를 현재 인물의 근거로 섞지 마라. "
         "외부 자료 배열이 비어 있으면 참고 링크, 외부 링크, 원문 링크를 만들거나 추측하지 마라. "
         "외부 자료 URL은 제공된 external_resources 안의 URL만 사용해라. "
@@ -472,8 +529,102 @@ def _external_suffix(state: EditorAgentState) -> str:
     return f" 외부 확인용으로는 {first.provider}의 `{first.title}` 자료를 함께 열어볼 수 있습니다."
 
 
-def _usable_citations(citations: list[RagCitation]) -> list[RagCitation]:
-    return [citation for citation in citations if citation.relevance >= 0.55]
+def _usable_citations(citations: list[RagCitation], entities: list[str] | None = None) -> list[RagCitation]:
+    terms = [entity for entity in (entities or []) if entity]
+    primary_terms = terms[:1]
+    return [
+        citation
+        for citation in citations
+        if citation.relevance >= 0.55 and (not primary_terms or _citation_mentions_any(citation, primary_terms))
+    ]
+
+
+def _citation_mentions_any(citation: RagCitation, terms: list[str]) -> bool:
+    haystack = f"{citation.title} {citation.period} {citation.summary} {citation.source_url}"
+    return any(term in haystack for term in terms)
+
+
+def _evidence_entities(state: EditorAgentState) -> list[str]:
+    candidates: list[str] = []
+    candidates.extend(_entity_terms_from_text(_external_keyword(state)))
+    candidates.extend(_entity_terms_from_text(state.get("title", "")))
+    candidates.extend(_entity_terms_from_text(state.get("message", "")))
+    unique: list[str] = []
+    for candidate in candidates:
+        if candidate in unique or candidate in GENERIC_EVIDENCE_TERMS:
+            continue
+        unique.append(candidate)
+    return unique[:3]
+
+
+def _entity_terms_from_text(text: str) -> list[str]:
+    cleaned = _clean_markdown(text)
+    for term in [
+        "알려줘",
+        "설명해줘",
+        "찾아줘",
+        "누구야",
+        "뭐야",
+        "어떤",
+        "사람이야",
+        "대해서",
+        "집필하려고",
+        "채워줘",
+    ]:
+        cleaned = cleaned.replace(term, " ")
+    cleaned = re.sub(r"[?!.~,;:()\[\]{}\"'`]", " ", cleaned)
+    terms: list[str] = []
+    for word in cleaned.split():
+        normalized = _strip_korean_particle(word.strip().lstrip("#"))
+        if re.fullmatch(r"\d+자?", normalized):
+            continue
+        if 2 <= len(normalized) <= 12 and normalized not in GENERIC_EVIDENCE_TERMS:
+            terms.append(normalized)
+    return terms
+
+
+def _classify_external_resources(
+    resources: list[ExternalResource],
+    entities: list[str],
+) -> tuple[list[ExternalResource], list[ExternalResource]]:
+    primary: list[ExternalResource] = []
+    secondary: list[ExternalResource] = []
+    primary_entities = entities[:1]
+    for resource in resources:
+        if primary_entities and not _external_resource_mentions_any(resource, primary_entities):
+            continue
+        if _is_secondary_external_resource(resource):
+            secondary.append(resource)
+        else:
+            primary.append(resource)
+    return primary[:3], secondary[:2]
+
+
+def _external_resource_mentions_any(resource: ExternalResource, terms: list[str]) -> bool:
+    haystack = f"{resource.title} {resource.description} {resource.url}"
+    return any(term in haystack for term in terms)
+
+
+def _is_secondary_external_resource(resource: ExternalResource) -> bool:
+    haystack = f"{resource.title} {resource.description}"
+    return any(signal in haystack for signal in SECONDARY_EXTERNAL_SIGNALS)
+
+
+def _evidence_judge_message(
+    state: EditorAgentState,
+    primary_resources: list[ExternalResource],
+    secondary_resources: list[ExternalResource],
+) -> str:
+    rag_count = len(state.get("citations", []))
+    if rag_count and primary_resources:
+        return f"내부 RAG {rag_count}건과 외부 주요 후보 {len(primary_resources)}건을 함께 근거 후보로 채택했습니다."
+    if rag_count:
+        return f"외부 주요 후보는 부족하지만 내부 RAG {rag_count}건을 근거 후보로 채택했습니다."
+    if primary_resources:
+        return f"내부 RAG는 핵심어 불일치로 약하지만 외부 주요 후보 {len(primary_resources)}건을 근거 후보로 채택했습니다."
+    if secondary_resources:
+        return f"주요 근거는 부족하고 드라마/문학/전설 등 보조 후보 {len(secondary_resources)}건만 확인했습니다."
+    return "내부 RAG와 외부 검색 모두에서 핵심어와 직접 연결되는 근거 후보를 찾지 못했습니다."
 
 
 def _clean_history_for_prompt(content: str) -> str:
@@ -486,7 +637,9 @@ def _make_local_content(state: EditorAgentState, tags: list[str]) -> str:
     title = state.get("title") or _make_title_from_message(state["message"])
     content = _clean_markdown(state.get("content", ""))
     evidence = state.get("evidence_summary")
+    external_resources = state.get("external_resources", [])
     base = content or state["message"]
+    external_sentence = _external_content_sentence(external_resources)
     paragraphs = [
         f"{title}은 단순한 흥밋거리로만 보기보다, 기록에 남은 장면과 그 장면이 보여주는 시대 분위기를 함께 읽을 때 더 흥미롭습니다.",
         (
@@ -499,9 +652,29 @@ def _make_local_content(state: EditorAgentState, tags: list[str]) -> str:
             else "다만 내부 근거가 충분하지 않은 상태에서는, 장면을 꾸며내기보다 확인 가능한 사실과 해석을 분리해서 쓰는 편이 안전합니다. "
         )
         + "따라서 서술은 사실로 확인되는 부분을 먼저 놓고, 그 다음에 독자가 생각해볼 만한 해석을 덧붙이는 구조가 좋습니다.",
+        external_sentence,
         "이 이야기가 흥미로운 이유는 사소한 일처럼 보이는 장면이 인물의 성격, 권력자의 체면, 당대 사회의 시선과 맞물리기 때문입니다. 독자는 웃고 넘길 수도 있지만, 동시에 왜 이런 기록이 남았고 왜 후대에 반복해서 소환되는지 묻게 됩니다.",
     ]
     return "\n\n".join(part for part in paragraphs if part)
+
+
+def _external_content_sentence(resources: list[ExternalResource]) -> str:
+    if not resources:
+        return ""
+    primary = [resource for resource in resources if not _is_secondary_external_resource(resource)]
+    secondary = [resource for resource in resources if _is_secondary_external_resource(resource)]
+    if primary:
+        first = primary[0]
+        return (
+            f"외부 자료 후보 기준으로는 `{first.title}`({first.provider})가 먼저 확인됩니다. "
+            "이 자료는 사실관계를 확인하는 출발점으로 두고, 세부 일화는 원문 기록과 대조해 쓰는 편이 안전합니다."
+        )
+    if secondary:
+        first = secondary[0]
+        return (
+            f"`{first.title}`({first.provider}) 같은 자료는 후대 이미지나 대중문화 수용을 보는 보조 자료로만 다루는 편이 적절합니다."
+        )
+    return ""
 
 
 def _default_agent_message(state: EditorAgentState) -> str:

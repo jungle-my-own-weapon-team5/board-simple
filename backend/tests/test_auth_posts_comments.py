@@ -433,6 +433,98 @@ def test_editor_agent_does_not_mix_history_into_rag_query_or_weak_evidence(
     assert "직접 연결되는 내부 RAG 근거가 충분하지 않습니다" in payload["agent_message"]
 
 
+def test_editor_agent_uses_external_evidence_when_rag_entity_mismatches(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import editor_agent
+    from app.schemas.ai import ExternalResource, ExternalSearchResponse, RagCitation, RagSearchResponse, ToolLog
+
+    external_keywords: list[str] = []
+
+    monkeypatch.setattr(
+        editor_agent,
+        "search_rag",
+        lambda db, settings, query, top_k: RagSearchResponse(
+            answer_summary="엉뚱한 내부 RAG 요약입니다.",
+            citations=[
+                RagCitation(
+                    id="wrong-1",
+                    title="세종의 식생활과 건강",
+                    period="세종",
+                    summary="세종의 식성과 건강 문제를 다룹니다.",
+                    source_url="https://sillok.history.go.kr",
+                    relevance=1.0,
+                ),
+                RagCitation(
+                    id="wrong-2",
+                    title="태종실록: 세자가 금빛 고양이를 구하려 하다",
+                    period="태종",
+                    summary="양녕대군의 고양이 일화로 언급되는 자료입니다.",
+                    source_url="https://sillok.history.go.kr/id/kca_11711024_002",
+                    relevance=0.9,
+                ),
+            ],
+            weak_evidence=False,
+            searched_corpora=["legacy", "encykorea"],
+        ),
+    )
+
+    def fake_search_external(db, settings, keyword: str) -> ExternalSearchResponse:
+        external_keywords.append(keyword)
+        return ExternalSearchResponse(
+            resources=[
+                ExternalResource(
+                    title="「장녹수」 (도봉)",
+                    provider="네이버 검색/encyc",
+                    url="https://terms.naver.com/entry.naver?docId=2595810",
+                    description="KBS2 TV 드라마. 방영된 공연 상황을 다룬 자료입니다.",
+                ),
+                ExternalResource(
+                    title="장녹수",
+                    provider="네이버 검색/encyc",
+                    url="https://terms.naver.com/entry.naver?docId=538165",
+                    description="조선 중기 연산군의 총희. 본래 제안대군의 가비였고 가무를 익혔습니다.",
+                ),
+            ],
+            tool_log=ToolLog(
+                tool="history.external_evidence_bundle",
+                input=keyword,
+                status="ok",
+                elapsed_ms=0,
+            ),
+        )
+
+    monkeypatch.setattr(editor_agent, "search_external", fake_search_external)
+
+    register_and_login(client)
+    response = client.post(
+        "/api/ai/editor-agent/run",
+        json={
+            "title": "장녹수의 일화는 어떻게 기록되었을까?",
+            "content": "",
+            "post_type": "토론",
+            "category": "인물 열전",
+            "message": (
+                "장녹수에 대해서 집필하려고 해. 그녀의 일화와 관련 기록을 찾아서 "
+                "게시물 본문을 900자 정도로 채워줘."
+            ),
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert external_keywords == ["장녹수"]
+    assert payload["evidence_summary"] is None
+    assert payload["weak_evidence"] is False
+    assert [resource["title"] for resource in payload["external_resources"]] == ["장녹수", "「장녹수」 (도봉)"]
+    assert any(step["name"] == "evidence.judge" for step in payload["agent_steps"])
+    judge_output = next(step["output"] for step in payload["agent_steps"] if step["name"] == "evidence.judge")
+    assert "외부 주요 후보 1건" in judge_output
+    assert "외부 자료 후보 기준" in payload["suggested_content"]
+    assert "세종의 식생활" not in payload["suggested_content"]
+
+
 def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     from app.services import mcp_server
 
