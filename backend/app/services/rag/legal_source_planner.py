@@ -36,6 +36,16 @@ class LegalSourceCandidate:
 
 
 @dataclass(frozen=True)
+class ExpectedArticleRef:
+    """쟁점 검색에서 반드시 확인해야 하는 조문 후보입니다."""
+
+    law_title: str
+    article_no: str
+    article_title: str | None = None
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
 class PlannedLegalIssue:
     """Single legal issue used as a retrieval unit before vector search."""
 
@@ -45,6 +55,7 @@ class PlannedLegalIssue:
     internal_rag_query: str
     official_source_query: str | None = None
     candidates: list[LegalSourceCandidate] = field(default_factory=list)
+    expected_article_refs: list[ExpectedArticleRef] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -78,7 +89,12 @@ def plan_legal_source_candidates(
 
     model_name = settings.source_planner_model_name
     if not model_name or not hasattr(ai_client, "generate_text"):
-        return _fallback_plan(facts, question, limit=candidate_limit)
+        return _augment_plan_with_required_article_refs(
+            _fallback_plan(facts, question, limit=candidate_limit),
+            facts=facts,
+            question=question,
+            limit=candidate_limit,
+        )
 
     prompt = _build_planner_prompt(
         facts=facts,
@@ -97,19 +113,34 @@ def plan_legal_source_candidates(
             )
         )
     except ProviderError:
-        return _fallback_plan(facts, question, limit=candidate_limit)
+        return _augment_plan_with_required_article_refs(
+            _fallback_plan(facts, question, limit=candidate_limit),
+            facts=facts,
+            question=question,
+            limit=candidate_limit,
+        )
     plan = _parse_plan(result.text, limit=candidate_limit)
     if not plan.candidates and not plan.issues:
         fallback = _fallback_plan(facts, question, limit=candidate_limit)
-        return LegalSourcePlan(
-            candidates=fallback.candidates,
-            issues=fallback.issues,
-            raw_text=result.text,
+        return _augment_plan_with_required_article_refs(
+            LegalSourcePlan(
+                candidates=fallback.candidates,
+                issues=fallback.issues,
+                raw_text=result.text,
+            ),
+            facts=facts,
+            question=question,
+            limit=candidate_limit,
         )
-    return LegalSourcePlan(
-        candidates=plan.candidates,
-        issues=plan.issues,
-        raw_text=result.text,
+    return _augment_plan_with_required_article_refs(
+        LegalSourcePlan(
+            candidates=plan.candidates,
+            issues=plan.issues,
+            raw_text=result.text,
+        ),
+        facts=facts,
+        question=question,
+        limit=candidate_limit,
     )
 
 
@@ -128,6 +159,14 @@ def _build_planner_prompt(
                 "description": "deposit return dispute",
                 "internal_rag_query": "lease deposit return statute",
                 "official_source_query": "Residential Lease Protection Act",
+                "expected_article_refs": [
+                    {
+                        "law_title": "Residential Lease Protection Act",
+                        "article_no": "Article 3-2",
+                        "article_title": "deposit return",
+                        "reason": "direct issue provision",
+                    }
+                ],
                 "official_source_candidates": [
                     {
                         "document_type": "statute",
@@ -145,6 +184,8 @@ def _build_planner_prompt(
         "The plan is not a legal conclusion and must not be cited directly.\n"
         "Each issue must have one internal_rag_query. top_k is applied per issue.\n"
         "Each official_source_candidates item must target an official statute search.\n"
+        "For each issue, include expected_article_refs when specific statutes/articles "
+        "must be checked before drafting.\n"
         f"Return at most {max_candidates} issues and source candidates.\n"
         f"Schema example:\n{json.dumps(example, ensure_ascii=False)}\n"
         "Prefer exact statute titles when possible. If unsure, include a concise "
@@ -224,6 +265,7 @@ def _issues_from_payload(
                 internal_rag_query=issue.internal_rag_query,
                 official_source_query=issue.official_source_query,
                 candidates=issue.candidates,
+                expected_article_refs=issue.expected_article_refs,
             )
         seen.add(issue.issue_key)
         issues.append(issue)
@@ -244,6 +286,9 @@ def _issue_from_payload(
     candidates = _candidates_from_payload_list(
         value.get("official_source_candidates") or value.get("candidates"),
         limit=limit,
+    )
+    expected_article_refs = _article_refs_from_payload_list(
+        value.get("expected_article_refs") or value.get("article_refs")
     )
     official_source_query = (
         _string_value(value.get("official_source_query"))
@@ -287,6 +332,7 @@ def _issue_from_payload(
         internal_rag_query=internal_rag_query,
         official_source_query=official_source_query,
         candidates=candidates,
+        expected_article_refs=expected_article_refs,
     )
 
 
@@ -302,6 +348,40 @@ def _issue_from_candidates(
         internal_rag_query=query,
         official_source_query=candidates[0].query if candidates else None,
         candidates=candidates,
+    )
+
+
+def _article_refs_from_payload_list(raw_refs: object) -> list[ExpectedArticleRef]:
+    if not isinstance(raw_refs, list):
+        return []
+    refs = [
+        article_ref
+        for item in raw_refs
+        if (article_ref := _article_ref_from_payload(item)) is not None
+    ]
+    return _dedupe_article_refs(refs)
+
+
+def _article_ref_from_payload(value: object) -> ExpectedArticleRef | None:
+    if not isinstance(value, dict):
+        return None
+    law_title = (
+        _string_value(value.get("law_title"))
+        or _string_value(value.get("statute_title"))
+        or _string_value(value.get("title"))
+    )
+    article_no = (
+        _string_value(value.get("article_no"))
+        or _string_value(value.get("article"))
+        or _string_value(value.get("article_number"))
+    )
+    if not law_title or not article_no:
+        return None
+    return ExpectedArticleRef(
+        law_title=law_title,
+        article_no=_normalize_article_no(article_no),
+        article_title=_string_value(value.get("article_title")),
+        reason=_string_value(value.get("reason")),
     )
 
 
@@ -421,6 +501,7 @@ def _fallback_plan(
                 internal_rag_query=f"{fallback_query} {issue.internal_rag_query}".strip(),
                 official_source_query=issue.official_source_query,
                 candidates=issue.candidates,
+                expected_article_refs=issue.expected_article_refs,
             )
         return LegalSourcePlan(candidates=candidates, issues=[issue])
     if not fallback_query:
@@ -437,6 +518,225 @@ def _fallback_plan(
             )
         ]
     )
+
+
+def _augment_plan_with_required_article_refs(
+    plan: LegalSourcePlan,
+    *,
+    facts: str,
+    question: str,
+    limit: int,
+) -> LegalSourcePlan:
+    required_issues = _criminal_required_issues(facts=facts, question=question)
+    if not required_issues:
+        return plan
+
+    merged_issues = _dedupe_issues([*plan.issues, *required_issues])
+    merged_candidates = _dedupe_candidates(
+        [
+            candidate
+            for issue in merged_issues
+            for candidate in issue.candidates
+        ]
+        + plan.candidates,
+        limit=limit,
+    )
+    return LegalSourcePlan(
+        candidates=merged_candidates,
+        issues=merged_issues,
+        raw_text=plan.raw_text,
+    )
+
+
+def _criminal_required_issues(
+    *,
+    facts: str,
+    question: str,
+) -> list[PlannedLegalIssue]:
+    text = f"{facts}\n{question}"
+    normalized_text = _normalize_title(text)
+    issues: list[PlannedLegalIssue] = []
+
+    has_death_fact = any(
+        keyword in normalized_text
+        for keyword in ("죽", "사망", "시체", "시신", "사체", "살해")
+    )
+    has_accidental_fact = any(
+        keyword in normalized_text
+        for keyword in ("실수", "과실", "부주의", "잘못")
+    )
+    if has_death_fact and has_accidental_fact:
+        issues.append(
+            _required_issue(
+                issue_key="criminal_negligent_death",
+                title="과실 사망 결과",
+                query="형법 제267조 과실치사 제14조 과실 사망 결과",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제267조",
+                        article_title="과실치사",
+                        reason="실수로 사람을 사망하게 한 최초 행위의 구성요건 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제14조",
+                        article_title="과실",
+                        reason="과실범 처벌 가능성의 일반 원칙 확인",
+                    ),
+                ],
+            )
+        )
+
+    has_corpse_fact = any(
+        keyword in normalized_text for keyword in ("시체", "시신", "사체", "변사체")
+    )
+    has_concealment_fact = any(
+        keyword in normalized_text
+        for keyword in ("매장", "묻", "은닉", "숨", "비닐", "유기")
+    )
+    if has_corpse_fact and has_concealment_fact:
+        issues.append(
+            _required_issue(
+                issue_key="criminal_corpse_concealment",
+                title="사체 은닉 및 매장",
+                query="형법 제161조 사체유기 시체 은닉 매장 제163조 변사체 검시 방해",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제161조",
+                        article_title="사체등의 유기",
+                        reason="시신을 옮기거나 매장한 행위의 별도 범죄 성립 가능성 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제163조",
+                        article_title="변사체 검시 방해",
+                        reason="변사체 은닉으로 검시가 방해되는지 확인",
+                    ),
+                ],
+            )
+        )
+
+    if "자수" in normalized_text or "경찰서" in normalized_text:
+        issues.append(
+            _required_issue(
+                issue_key="criminal_self_surrender",
+                title="자수와 감경",
+                query="형법 제52조 자수 제53조 정상참작감경",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제52조",
+                        article_title="자수ㆍ자복",
+                        reason="경찰서에 자진 신고한 행위의 감경 가능성 확인",
+                    ),
+                    ExpectedArticleRef(
+                        law_title="형법",
+                        article_no="제53조",
+                        article_title="정상참작감경",
+                        reason="자수 외 양형상 정상참작 가능성 확인",
+                    ),
+                ],
+            )
+        )
+
+    if has_corpse_fact and any(
+        keyword in normalized_text for keyword in ("찾지못", "수색", "장소", "발굴")
+    ):
+        issues.append(
+            _required_issue(
+                issue_key="criminal_procedure_body_search",
+                title="시신 미발견 상태의 수사상 처분",
+                query="형사소송법 제140조 검증 필요한 처분 사체 해부 분묘 발굴",
+                refs=[
+                    ExpectedArticleRef(
+                        law_title="형사소송법",
+                        article_no="제140조",
+                        article_title="검증과 필요한 처분",
+                        reason="시신 위치 특정과 발굴 등 수사상 처분 가능성 확인",
+                    )
+                ],
+            )
+        )
+
+    return issues
+
+
+def _required_issue(
+    *,
+    issue_key: str,
+    title: str,
+    query: str,
+    refs: list[ExpectedArticleRef],
+) -> PlannedLegalIssue:
+    candidates = _dedupe_candidates(
+        [
+            LegalSourceCandidate(
+                document_type="statute",
+                title=ref.law_title,
+                query=ref.law_title,
+                reason="required_article_ref",
+            )
+            for ref in refs
+        ],
+        limit=len(refs),
+    )
+    return PlannedLegalIssue(
+        issue_key=issue_key,
+        title=title,
+        description="사실관계상 누락되면 안 되는 필수 조문 후보입니다.",
+        internal_rag_query=query,
+        official_source_query=candidates[0].query if candidates else None,
+        candidates=candidates,
+        expected_article_refs=_dedupe_article_refs(refs),
+    )
+
+
+def _dedupe_issues(issues: list[PlannedLegalIssue]) -> list[PlannedLegalIssue]:
+    deduped: list[PlannedLegalIssue] = []
+    seen_keys: set[str] = set()
+    seen_article_refs: set[tuple[str, str]] = set()
+    for issue in issues:
+        article_refs = _dedupe_article_refs(issue.expected_article_refs)
+        new_refs = [
+            ref
+            for ref in article_refs
+            if (_article_ref_key(ref) not in seen_article_refs)
+        ]
+        if issue.issue_key in seen_keys and not new_refs:
+            continue
+        seen_keys.add(issue.issue_key)
+        for ref in article_refs:
+            seen_article_refs.add(_article_ref_key(ref))
+        deduped.append(
+            PlannedLegalIssue(
+                issue_key=issue.issue_key,
+                title=issue.title,
+                description=issue.description,
+                internal_rag_query=issue.internal_rag_query,
+                official_source_query=issue.official_source_query,
+                candidates=issue.candidates,
+                expected_article_refs=article_refs,
+            )
+        )
+    return deduped
+
+
+def _dedupe_article_refs(refs: list[ExpectedArticleRef]) -> list[ExpectedArticleRef]:
+    deduped: list[ExpectedArticleRef] = []
+    seen: set[tuple[str, str]] = set()
+    for ref in refs:
+        key = _article_ref_key(ref)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(ref)
+    return deduped
+
+
+def _article_ref_key(ref: ExpectedArticleRef) -> tuple[str, str]:
+    return (_normalize_title(ref.law_title), _normalize_article_no(ref.article_no))
 
 
 def _extract_json_object(text: str) -> str:
@@ -460,6 +760,10 @@ def _string_value(value: Any) -> str | None:
 
 def _normalize_title(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
+
+
+def _normalize_article_no(value: str) -> str:
+    return re.sub(r"\s+", "", value)
 
 
 def _make_issue_key(value: str, *, index: int) -> str:

@@ -18,6 +18,7 @@ from app.services.rag.legal_open_api import (
     LawOpenApiSearchItem,
     LawOpenApiSearchResult,
 )
+from app.services.rag.chunking import CHUNKING_SCHEMA_VERSION
 from app.services.rag.legal_open_api_sync import (
     sync_and_embed_law_open_api_statute,
     sync_law_open_api_statute,
@@ -178,6 +179,44 @@ def test_force_refresh_reuses_indexed_document_when_body_checksum_matches(
     assert result.body_fetched is True
     assert client.body_call_count == 1
     assert db.query(LegalDocument).count() == 1
+
+
+def test_sync_reindexes_and_replaces_stale_chunking_schema_document(
+    db: Session,
+) -> None:
+    metadata = _metadata()
+    existing_document, _chunk = _create_indexed_document(
+        db,
+        chunk_metadata_json={"fixture": "stale_chunking_schema"},
+    )
+    existing_document_id = existing_document.id
+    body = _body(
+        raw_text=(
+            "자동차관리법\n\n"
+            "제1조(목적) 이 법은 자동차를 효율적으로 관리한다. "
+            "제2조(정의) 이 법에서 사용하는 용어를 정한다."
+        ),
+    )
+    client = _FakeLawOpenApiClient(metadata=metadata, body=body)
+
+    result = sync_law_open_api_statute(
+        db,
+        client=client,
+        query="자동차관리법",
+    )
+
+    assert result.status == "ingested"
+    assert result.body_fetched is True
+    assert result.replaced_document_ids == [existing_document_id]
+    assert db.query(LegalDocument).count() == 1
+    assert result.document.raw_text == body.raw_text
+    article_chunks = [chunk for chunk in result.chunks if chunk.heading is not None]
+    assert [chunk.heading for chunk in article_chunks] == [
+        "제1조(목적)",
+        "제2조(정의)",
+    ]
+    assert "제2조" not in article_chunks[0].content
+    assert client.body_call_count == 1
 
 
 def test_force_refresh_creates_conflict_when_same_version_body_checksum_differs(
@@ -473,6 +512,7 @@ def _create_indexed_document(
     db: Session,
     *,
     content: str = "제1조(목적) 이 법은 자동차를 효율적으로 관리한다.",
+    chunk_metadata_json: dict[str, str] | None = None,
 ) -> tuple[LegalDocument, LegalDocumentChunk]:
     source = LegalSource(
         provider="law_open_api",
@@ -510,7 +550,11 @@ def _create_indexed_document(
         heading="제1조(목적)",
         content=content,
         token_count=10,
-        metadata_json={"fixture": "sync"},
+        metadata_json=chunk_metadata_json
+        or {
+            "fixture": "sync",
+            "chunking_schema_version": CHUNKING_SCHEMA_VERSION,
+        },
     )
     db.add(chunk)
     db.flush()

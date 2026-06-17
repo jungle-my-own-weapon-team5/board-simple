@@ -9,8 +9,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.models.document_chunk import LegalDocumentChunk
 from app.models.legal_document import LegalDocument
 from app.models.legal_source import LegalSource
+from app.models.rag_run import RagRetrieval
 
 
 def _nullable_equals(column: Any, value: Any) -> Any:
@@ -67,6 +69,15 @@ def add_legal_document(db: Session, document: LegalDocument) -> None:
     db.add(document)
 
 
+def delete_legal_document(db: Session, document: LegalDocument) -> None:
+    """현재 트랜잭션에서 문서를 삭제합니다.
+
+    chunk와 chunk embedding은 cascade로 함께 삭제됩니다. 이미 검색 이력이 chunk를
+    참조하는 문서는 삭제하지 말고 `replaced` 상태로 전환해야 합니다.
+    """
+    db.delete(document)
+
+
 def get_legal_document(db: Session, document_id: int) -> LegalDocument | None:
     return db.scalar(
         select(LegalDocument)
@@ -111,6 +122,46 @@ def find_indexed_document_by_identity(
     )
 
 
+def list_documents_by_identity(
+    db: Session,
+    *,
+    document_type: str,
+    canonical_id: str | None,
+    version_label: str | None,
+    effective_date: date | None,
+    published_date: date | None,
+) -> list[LegalDocument]:
+    """같은 공식 문서/version으로 저장된 모든 문서 row를 조회합니다."""
+    return list(
+        db.scalars(
+            select(LegalDocument)
+            .where(
+                *_same_version_filters(
+                    document_type=document_type,
+                    canonical_id=canonical_id,
+                    version_label=version_label,
+                    effective_date=effective_date,
+                ),
+                _nullable_equals(LegalDocument.published_date, published_date),
+            )
+            .order_by(LegalDocument.id.asc())
+        ).all()
+    )
+
+
+def document_has_retrieval_history(db: Session, document_id: int) -> bool:
+    """문서 chunk가 과거 RAG retrieval에서 인용된 적이 있는지 확인합니다."""
+    return (
+        db.scalar(
+            select(RagRetrieval.id)
+            .join(LegalDocumentChunk, RagRetrieval.chunk_id == LegalDocumentChunk.id)
+            .where(LegalDocumentChunk.document_id == document_id)
+            .limit(1)
+        )
+        is not None
+    )
+
+
 def find_duplicate_document_candidate(
     db: Session,
     *,
@@ -138,6 +189,7 @@ def find_duplicate_document_candidate(
             ),
             LegalDocument.normalized_checksum == normalized_checksum,
             LegalDocument.dedup_status != "duplicate",
+            LegalDocument.index_status != "replaced",
         )
         .order_by(LegalDocument.id.asc())
         .limit(1)
@@ -172,6 +224,7 @@ def list_conflicting_document_candidates(
                 ),
                 LegalDocument.normalized_checksum != normalized_checksum,
                 LegalDocument.dedup_status != "duplicate",
+                LegalDocument.index_status != "replaced",
             )
             .order_by(LegalDocument.id.asc())
         ).all()

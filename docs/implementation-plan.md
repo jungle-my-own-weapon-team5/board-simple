@@ -209,6 +209,8 @@ backend/tests/test_rag_ingestion.py
 
 - raw text와 normalized text를 모두 저장합니다.
 - chunk는 `document_id`, `chunk_index`, `heading`, `content`, `metadata_json`을 가집니다.
+- 법령 chunk metadata에는 `article_no`, `article_title`, `article_heading`, `chunking_schema_version`을 저장합니다.
+- 국가법령정보 API 본문에서 한 줄 안에 여러 조문 heading이 붙어 있으면 조문 heading을 새 chunk 경계로 승격해 조문 간 본문 오염을 막습니다.
 - 법령/판례 fixture를 최소 1개씩 둡니다.
 - 세부 파이프라인은 `docs/rag-pipeline.md`를 따릅니다.
 
@@ -218,6 +220,7 @@ backend/tests/test_rag_ingestion.py
 - 같은 canonical/version인데 정규화 본문이 달라지면 conflict review 상태를 기록합니다.
 - 같은 canonical document라도 `effective_date` 또는 `version_label`이 다르면 별도 version으로 보존합니다.
 - chunk 순서가 안정적인지 확인합니다.
+- 한 줄에 붙은 복수 조문이 서로 다른 chunk로 분리되는지 확인합니다.
 - 한글 text가 깨지지 않는지 확인합니다.
 
 ## 5단계: Embedding과 vector retrieval
@@ -248,8 +251,10 @@ backend/tests/test_rag_retrieval.py
 - `search_mode=focused_answer`는 답변 생성용 근거를 좁게 선택하고, `search_mode=issue_spotting`은 다수 쟁점 탐지를 위해 쟁점별 검색 예산을 넓게 둡니다.
 - `score_threshold`는 사용자가 명시한 경우에만 hard filter로 적용합니다. 요청값이 없으면 `RAG_MIN_RELEVANCE_SCORE` 같은 서버 기본값으로 최종 결과를 자동 삭제하지 않습니다.
 - 내부 RAG 검색 전 issue/source planning을 먼저 수행하고, `top_k`는 전체 입력이 아니라 계획된 각 쟁점별 query에 적용합니다.
+- issue/source planning 결과에는 필요 시 `expected_article_refs`를 포함합니다. 사용자가 법률 용어를 쓰지 않아도 사망 결과, 사체 은닉, 자수처럼 사실관계상 명확한 필수 조문 후보는 backend가 보강합니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 중복을 병합하고 `planned_issue_key`, `planned_issue_title`, `planned_issue_query`, `planned_issue_queries` metadata를 보존합니다.
 - LLM evidence review는 단순히 점수가 낮은 후보를 제거하는 단계가 아니라, 쟁점별 필수 근거 coverage를 점검하고 부족한 경우 보강 query를 생성하는 단계로 조정합니다.
+- LLM evidence review가 비활성화되어도 `expected_article_refs`가 최종 후보에 없으면 법령명과 조문번호를 포함한 보강 query를 1회 실행합니다.
 - 검색 결과에는 `run_id`, `embedding_profile_id`, `embedding_provider`, `embedding_model_name`, `embedding_dimensions`, `chunk_embedding_id`, `chunk_id`, `document_id`, `rank`, `score`, `title`, `source_url`, `heading`, `content`를 포함합니다.
 - 검색 요청도 `rag_runs.run_type=search`와 `rag_retrievals`에 저장합니다.
 
@@ -258,6 +263,7 @@ backend/tests/test_rag_retrieval.py
 - `backend/app/api/rag.py`의 최종 관련도 필터에서 `settings.rag_min_relevance_score` 기본 적용을 제거합니다.
 - `payload.score_threshold`가 명시된 경우에만 최종 score filter와 rank 재부여를 수행합니다.
 - `backend/app/services/rag/issue_retrieval.py`의 LLM evidence review prompt를 쟁점별 coverage 확인과 필수 근거 누락 보강 중심으로 수정합니다.
+- `backend/app/services/rag/legal_source_planner.py`에 `expected_article_refs` schema와 핵심 형사 사실관계 필수 조문 보강 규칙을 추가합니다.
 - 최종 선택 chunk만 대표 run의 `rag_retrievals`에 남기는 현재 citation 검증 경계는 유지합니다.
 
 검증:
@@ -270,6 +276,8 @@ backend/tests/test_rag_retrieval.py
 - `score_threshold` 명시 시에만 threshold 미만 chunk가 제외되는지 테스트
 - `max_chunks_per_document` 적용 테스트
 - `focused_answer`와 `issue_spotting` 기본값 테스트
+- planner가 필수 조문 후보를 보강하는지 테스트
+- 필수 조문 후보가 검색 결과에 없을 때 보강 검색이 실행되는지 테스트
 
 ## 6단계: MCP 서버와 tool registry
 
@@ -500,6 +508,8 @@ backend/tests/test_legal_open_api_sync.py
 - 전문 API를 호출하기 전에 metadata preflight를 수행합니다.
 - preflight 응답에서 `provider`, `external_id`, `canonical_id`, `version_label`, `effective_date`, `published_date`를 추출해 기존 DB 문서와 비교합니다.
 - 같은 canonical/version 문서가 이미 `index_status=indexed`이고 선택 embedding profile의 chunk embedding이 최신이면 전문 API, chunking, embedding API 호출을 생략하고 기존 DB 데이터를 사용합니다.
+- 단, 기존 chunk의 `metadata_json.chunking_schema_version`이 현재 backend chunking schema와 다르면 전문 API를 다시 호출해 재색인합니다.
+- 재색인 시 같은 canonical/version의 기존 문서는 검색 후보에서 제거합니다. 과거 `rag_retrievals` 이력이 없으면 삭제하고, 이력이 있으면 감사 추적을 위해 `index_status=replaced`로 전환합니다.
 - 새 시행일 또는 새 version은 기존 문서를 덮어쓰지 않고 새 `legal_documents` row로 저장합니다.
 - 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 달라지면 `conflict_status=review_required`로 저장합니다.
 - `conflict_status=review_required`, `index_status=failed`, embedding 실패 문서는 on-demand 응답의 citation 후보에서 제외합니다.
@@ -515,6 +525,7 @@ backend/tests/test_legal_open_api_sync.py
 - 새 version metadata가 들어오면 전문 조회와 ingestion이 실행되는지 테스트합니다.
 - 같은 canonical/version의 checksum 충돌이 conflict review로 저장되는지 테스트합니다.
 - 기존 chunk와 embedding checksum이 최신이면 embedding provider가 호출되지 않는지 테스트합니다.
+- stale chunking schema 문서가 재색인되며 기존 문서가 삭제 또는 `replaced` 처리되는지 테스트합니다.
 - 내부 RAG 근거 부족 시 on-demand sync가 호출되고, sync 후 retrieval이 재실행되는지 테스트합니다.
 - 요청당 후보 문서 수와 tool 호출 수 제한을 초과하면 안전하게 중단되는지 테스트합니다.
 

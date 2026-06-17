@@ -16,6 +16,7 @@ from app.models.legal_source import LegalSource
 from app.repositories import document_chunks as chunk_repository
 from app.repositories import embeddings as embedding_repository
 from app.repositories import legal_documents as document_repository
+from app.services.rag.chunking import CHUNKING_SCHEMA_VERSION
 from app.services.rag.embeddings import (
     EmbedDocumentChunksResult,
     EmbeddingClient,
@@ -83,6 +84,7 @@ class LegalOpenApiSyncResult:
     body_fetched: bool = False
     embeddings_reusable: bool = False
     skipped_reason: str | None = None
+    replaced_document_ids: list[int] | None = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +111,7 @@ def sync_law_open_api_statute(
     search_limit: int = 1,
     preferred_titles: list[str] | None = None,
     force_refresh: bool = False,
+    replace_existing: bool = False,
     commit: bool = True,
 ) -> LegalOpenApiSyncResult:
     """현행법령 1건을 preflight 후 필요할 때만 본문 조회/ingestion합니다.
@@ -147,7 +150,9 @@ def sync_law_open_api_statute(
         effective_date=metadata.effective_date,
         published_date=metadata.published_date,
     )
-    if indexed_document is not None and not force_refresh:
+    reindex_reason = _document_reindex_reason(db, indexed_document)
+    should_replace_existing = replace_existing or reindex_reason is not None
+    if indexed_document is not None and not force_refresh and not should_replace_existing:
         return _reuse_indexed_document_if_possible(
             db,
             document=indexed_document,
@@ -162,13 +167,21 @@ def sync_law_open_api_statute(
     if indexed_document is not None and _body_matches_indexed_document(
         body,
         indexed_document,
-    ):
+    ) and not should_replace_existing:
         return _reuse_indexed_document_if_possible(
             db,
             document=indexed_document,
             preflight_metadata=metadata,
             embedding_profile=embedding_profile,
             body_fetched=True,
+        )
+
+    replaced_document_ids: list[int] = []
+    if should_replace_existing:
+        replaced_document_ids = _remove_existing_documents_for_reindex(
+            db,
+            metadata=metadata,
+            reason="manual_reindex" if replace_existing else reindex_reason,
         )
 
     ingestion_result = ingest_legal_document(
@@ -185,6 +198,7 @@ def sync_law_open_api_statute(
         ingestion_result=ingestion_result,
         body_fetched=True,
         embeddings_reusable=False,
+        replaced_document_ids=replaced_document_ids,
     )
 
 
@@ -202,6 +216,7 @@ def sync_and_embed_law_open_api_statute(
     retry_failed: bool = False,
     force_reembed: bool = False,
     force_refresh: bool = False,
+    replace_existing: bool = False,
     commit: bool = True,
 ) -> LegalOpenApiSyncAndEmbedResult:
     """국가법령정보 법령을 검색 가능한 embedding 상태까지 동기화합니다.
@@ -219,6 +234,7 @@ def sync_and_embed_law_open_api_statute(
             search_limit=search_limit,
             preferred_titles=preferred_titles,
             force_refresh=force_refresh,
+            replace_existing=replace_existing,
             commit=False,
         )
         if sync_result.status == "not_found":
@@ -400,6 +416,58 @@ def _body_matches_indexed_document(
 ) -> bool:
     normalized = normalize_document_text(body.raw_text)
     return normalized.normalized_checksum == document.normalized_checksum
+
+
+def _document_reindex_reason(
+    db: Session,
+    document: LegalDocument | None,
+) -> str | None:
+    if document is None:
+        return None
+
+    chunks = chunk_repository.list_chunks_by_document(db, document.id)
+    if not chunks:
+        return "chunk_missing"
+    for chunk in chunks:
+        metadata = chunk.metadata_json or {}
+        if metadata.get("chunking_schema_version") != CHUNKING_SCHEMA_VERSION:
+            return "chunking_schema_changed"
+    return None
+
+
+def _remove_existing_documents_for_reindex(
+    db: Session,
+    *,
+    metadata: LawOpenApiDocumentMetadata,
+    reason: str | None,
+) -> list[int]:
+    """재색인 대상 문서를 검색 후보에서 제거합니다.
+
+    과거 retrieval 이력이 없는 문서는 실제 삭제하고, 이력이 있는 문서는 FK 감사 추적을
+    보존하기 위해 `replaced` 상태로 전환합니다. 두 경우 모두 새 ingestion의 중복/충돌
+    판정에서는 제외됩니다.
+    """
+    documents = document_repository.list_documents_by_identity(
+        db,
+        document_type=metadata.document_type,
+        canonical_id=metadata.canonical_id,
+        version_label=metadata.version_label,
+        effective_date=metadata.effective_date,
+        published_date=metadata.published_date,
+    )
+    removed_document_ids: list[int] = []
+    for document in documents:
+        if document.index_status == "replaced":
+            continue
+        removed_document_ids.append(document.id)
+        if document_repository.document_has_retrieval_history(db, document.id):
+            document.index_status = "replaced"
+            document.index_error = reason or "reindexed"
+            document.indexed_at = None
+        else:
+            document_repository.delete_legal_document(db, document)
+    db.flush()
+    return removed_document_ids
 
 
 def _mark_document_indexed(document: LegalDocument) -> None:

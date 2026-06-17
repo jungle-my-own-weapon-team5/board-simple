@@ -106,6 +106,7 @@ planning 규칙:
 - 사용자 계약서, PDF, 메모는 사용자 또는 tenant 범위의 private corpus로 남기며 다른 사용자 요청의 공용 근거로 사용하지 않습니다.
 - on-demand sync는 요청당 후보 문서 수, provider timeout, API quota, rate limit을 적용합니다.
 - `conflict_status=review_required` 또는 `index_status=failed` 문서는 검색 결과와 citation 후보에서 제외합니다.
+- `index_status=replaced` 문서는 재색인으로 대체된 이전 문서입니다. 과거 retrieval audit을 위해 남아 있을 수 있지만 검색 결과와 citation 후보에서는 제외합니다.
 - 새 chunk embedding이 준비되면 같은 요청에서 내부 RAG 검색을 다시 수행해야 합니다.
 
 국가법령정보 Open API preflight 흐름:
@@ -125,6 +126,7 @@ preflight 규칙:
 - metadata 조회 결과는 `legal_sources.provider`, `legal_sources.external_id`, `legal_sources.metadata_json`과 `legal_documents.canonical_id`, `version_label`, `effective_date`, `published_date` 비교에 사용합니다.
 - 기존 문서가 `index_status=indexed`이고 선택한 `embedding_profile_id`의 chunk embedding이 모두 `embedded`이며 `content_checksum`이 현재 chunk 본문과 맞으면 DB의 chunk와 embedding을 재사용합니다.
 - metadata 기준 최신 문서가 이미 준비되어 있으면 전문 API, normalization, chunking, embedding API 호출을 모두 생략할 수 있습니다.
+- 기존 문서의 chunk `metadata_json.chunking_schema_version`이 현재 backend chunking schema와 다르면 전문 API를 다시 호출해 재색인합니다. 이 경우 과거 retrieval 이력이 없는 기존 문서는 삭제하고, 이력이 있으면 `index_status=replaced`로 전환합니다.
 - 새 시행일 또는 새 version이면 기존 문서를 덮어쓰지 않고 별도 `legal_documents` version으로 저장합니다.
 - 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 다르면 자동 병합하거나 삭제하지 않고 `conflict_status=review_required`로 저장합니다.
 - 외부 API 장애, rate limit, timeout이 발생하더라도 기존 indexed 문서가 있으면 임시로 cached/stale source로 사용할 수 있어야 하며, 이 상태는 metadata나 sync log에 남겨야 합니다.
@@ -201,6 +203,8 @@ chunk 기준:
 - chunk 순서는 안정적이어야 합니다.
 - 하나의 chunk는 너무 길지 않아야 합니다.
 - citation에 필요한 source anchor를 metadata에 포함합니다.
+- 법령 chunk는 `article_no`, `article_title`, `article_heading`, `chunking_schema_version`을 metadata에 포함합니다.
+- 국가법령정보 API 본문처럼 한 줄 안에 여러 조문 heading이 붙어 있으면 내부 조문 heading을 새 chunk 경계로 승격합니다. 예를 들어 `제163조 ... 제164조 ...`가 한 줄에 있어도 두 조문은 분리되어야 합니다.
 - chunk row는 embedding 상태를 직접 갖지 않습니다. embedding 상태는 profile별 `legal_document_chunk_embeddings` row에서 관리합니다.
 
 ## 4. Embedding
@@ -271,7 +275,9 @@ MVP 방식:
 - `score_threshold`가 요청에 명시된 경우에만 threshold 미만 결과를 hard filter로 제외합니다. 요청값이 없으면 서버 기본 관련도 점수로 최종 결과를 자동 삭제하지 않습니다.
 - `max_chunks_per_document`가 지정되면 한 문서가 검색 결과를 과도하게 차지하지 않게 제한합니다. 다만 형사 구성요건처럼 한 법령 문서 안의 여러 조문을 넓게 검토해야 하는 경우에는 생략할 수 있습니다.
 - 같은 chunk가 여러 쟁점에서 검색되면 최종 응답에서는 중복을 병합하고, 어떤 쟁점 query에서 검색되었는지 metadata로 보존합니다.
-- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하되, 단순 삭제보다 쟁점별 필수 근거 coverage 확인을 우선합니다. 필수 쟁점 근거가 부족하면 보강 query를 최대 2개 생성합니다.
+- issue/source planner는 `expected_article_refs`로 반드시 확인해야 할 법령명과 조문번호를 지정할 수 있습니다. 사망 결과, 사체 은닉, 자수처럼 사실관계상 핵심 조문이 명확한 경우 backend는 최소 필수 조문 후보를 후처리로 보강합니다.
+- LLM evidence review가 활성화된 경우 검색 후보를 한 번 검토해 관련 없는 chunk를 제외하되, 단순 삭제보다 쟁점별 필수 근거 coverage 확인을 우선합니다. 필수 쟁점 근거가 부족하면 보강 query를 생성합니다.
+- review가 비활성화되어도 `expected_article_refs`가 현재 결과에 없으면 법령명과 조문번호를 포함한 보강 query를 생성합니다.
 - 보강 query는 `top_k=2`로 한 번만 추가 검색합니다. 무한 반복을 막기 위해 review와 보강 검색은 단일 pass로 제한합니다.
 - 최종 도출된 chunk만 대표 `rag_run_id`의 `rag_retrievals`에 다시 기록합니다. 따라서 `verify_citations`는 화면이나 Agent 응답에 쓰인 최종 chunk만 유효한 citation으로 인식합니다.
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import json
 import re
 
@@ -18,6 +18,7 @@ from app.services.ai.types import AITextRequest
 from app.services.rag.legal_open_api import LawOpenApiClient, LawOpenApiError
 from app.services.rag.legal_open_api_sync import sync_and_embed_law_open_api_statute
 from app.services.rag.legal_source_planner import (
+    ExpectedArticleRef,
     LegalSourceCandidate,
     LegalSourcePlan,
     PlannedLegalIssue,
@@ -28,6 +29,12 @@ from app.services.rag.retrieval import (
     SearchLegalDocumentsResult,
     search_legal_documents,
 )
+
+
+@dataclass(frozen=True)
+class _SupplementalRetrievalRequest:
+    query: str
+    expected_article_ref: ExpectedArticleRef | None = None
 
 
 def search_legal_documents_by_planned_issues(
@@ -276,24 +283,41 @@ def _review_and_supplement_issue_results(
         question=question,
         issue_results=issue_results,
     )
-    if review is None:
-        return issue_results
 
-    reviewed_results = _apply_reviewed_chunk_ids(
-        issue_results,
-        keep_chunk_ids=review["keep_chunk_ids"],
+    reviewed_results = issue_results
+    supplemental_requests: list[_SupplementalRetrievalRequest] = []
+    if review is not None:
+        reviewed_results = _apply_reviewed_chunk_ids(
+            issue_results,
+            keep_chunk_ids=review["keep_chunk_ids"],
+        )
+        supplemental_requests.extend(
+            _SupplementalRetrievalRequest(query=query)
+            for query in review["supplemental_queries"]
+        )
+
+    supplemental_requests = _dedupe_supplemental_requests(
+        [
+            *_missing_expected_article_ref_requests(reviewed_results),
+            *supplemental_requests,
+        ]
     )
-    for index, supplemental_query in enumerate(review["supplemental_queries"], start=1):
+    for index, supplemental_request in enumerate(supplemental_requests, start=1):
         supplemental_issue = PlannedLegalIssue(
             issue_key=f"supplemental_{index}",
-            title=supplemental_query,
+            title=supplemental_request.query,
             description="LLM evidence review requested supplemental retrieval.",
-            internal_rag_query=supplemental_query,
+            internal_rag_query=supplemental_request.query,
+            expected_article_refs=(
+                [supplemental_request.expected_article_ref]
+                if supplemental_request.expected_article_ref is not None
+                else []
+            ),
         )
         supplemental_result = search_legal_documents(
             db,
             user_id=user_id,
-            query=supplemental_query,
+            query=supplemental_request.query,
             embedding_profile=embedding_profile,
             ai_client=ai_client,
             search_mode=search_mode,
@@ -332,6 +356,7 @@ def _review_retrieved_evidence(
                     facts=facts,
                     question=question,
                     candidates=candidates,
+                    expected_article_refs=_expected_article_refs_payload(issue_results),
                 ),
                 model=model_name,
                 temperature=0,
@@ -364,6 +389,10 @@ def _review_candidate_payload(
                     "issue_key": issue.issue_key,
                     "issue_title": issue.title,
                     "query": issue.internal_rag_query,
+                    "expected_article_refs": [
+                        _expected_article_ref_payload(ref)
+                        for ref in issue.expected_article_refs
+                    ],
                     "title": item.title,
                     "heading": item.heading,
                     "score": round(item.score, 4),
@@ -380,10 +409,14 @@ def _build_evidence_review_prompt(
     facts: str,
     question: str,
     candidates: list[dict[str, object]],
+    expected_article_refs: list[dict[str, object]],
 ) -> str:
     schema = {
         "keep_chunk_ids": [1, 2],
         "supplemental_queries": ["형법 사체유기 조문"],
+        "missing_expected_article_refs": [
+            {"law_title": "형법", "article_no": "제161조"}
+        ],
     }
     return (
         "You review Korean legal RAG evidence candidates.\n"
@@ -396,9 +429,13 @@ def _build_evidence_review_prompt(
         "useful for any essential issue.\n"
         "If an essential issue is missing, add at most 2 concise supplemental "
         "Korean retrieval queries. Do not add queries when current evidence is enough.\n"
+        "Also check expected_article_refs. If any expected article is not covered by "
+        "kept chunks, report it in missing_expected_article_refs and add a supplemental "
+        "query containing the statute title and article number.\n"
         f"Schema example:\n{json.dumps(schema, ensure_ascii=False)}\n\n"
         f"facts:\n{facts.strip()}\n\n"
         f"question:\n{question.strip()}\n\n"
+        f"expected_article_refs:\n{json.dumps(expected_article_refs, ensure_ascii=False)}\n\n"
         f"candidates:\n{json.dumps(candidates, ensure_ascii=False)}\n"
     )
 
@@ -427,6 +464,113 @@ def _parse_evidence_review(text: str) -> dict[str, list[int] | list[str]] | None
         "keep_chunk_ids": keep_chunk_ids,
         "supplemental_queries": supplemental_queries,
     }
+
+
+def _expected_article_refs_payload(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> list[dict[str, object]]:
+    refs: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    for issue, _result in issue_results:
+        for ref in issue.expected_article_refs:
+            key = _expected_article_ref_key(ref)
+            if key in seen:
+                continue
+            seen.add(key)
+            payload = _expected_article_ref_payload(ref)
+            payload["issue_key"] = issue.issue_key
+            payload["issue_title"] = issue.title
+            refs.append(payload)
+    return refs
+
+
+def _expected_article_ref_payload(ref: ExpectedArticleRef) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "law_title": ref.law_title,
+        "article_no": ref.article_no,
+    }
+    if ref.article_title:
+        payload["article_title"] = ref.article_title
+    if ref.reason:
+        payload["reason"] = ref.reason
+    return payload
+
+
+def _missing_expected_article_ref_requests(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> list[_SupplementalRetrievalRequest]:
+    requests: list[_SupplementalRetrievalRequest] = []
+    seen_refs: set[tuple[str, str]] = set()
+    all_items = [item for _issue, result in issue_results for item in result.results]
+    for issue, _result in issue_results:
+        for ref in issue.expected_article_refs:
+            key = _expected_article_ref_key(ref)
+            if key in seen_refs:
+                continue
+            seen_refs.add(key)
+            if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
+                continue
+            requests.append(
+                _SupplementalRetrievalRequest(
+                    query=_query_for_expected_article_ref(ref),
+                    expected_article_ref=ref,
+                )
+            )
+    return requests
+
+
+def _item_matches_expected_article_ref(
+    item: RagSearchResultItem,
+    ref: ExpectedArticleRef,
+) -> bool:
+    title = _normalize_for_article_match(item.title)
+    law_title = _normalize_for_article_match(ref.law_title)
+    if law_title and law_title not in title:
+        return False
+
+    article_no = _normalize_for_article_match(ref.article_no)
+    metadata_article_no = _normalize_for_article_match(
+        str(item.metadata_json.get("article_no") or "")
+    )
+    heading = _normalize_for_article_match(item.heading or "")
+    content_prefix = _normalize_for_article_match(item.content[:200])
+    return (
+        metadata_article_no == article_no
+        or article_no in heading
+        or article_no in content_prefix
+    )
+
+
+def _query_for_expected_article_ref(ref: ExpectedArticleRef) -> str:
+    values = [ref.law_title, ref.article_no, ref.article_title or "", ref.reason or ""]
+    return " ".join(value.strip() for value in values if value.strip())
+
+
+def _dedupe_supplemental_requests(
+    requests: list[_SupplementalRetrievalRequest],
+) -> list[_SupplementalRetrievalRequest]:
+    deduped: list[_SupplementalRetrievalRequest] = []
+    seen_queries: set[str] = set()
+    for request in requests:
+        key = _normalize_for_article_match(request.query)
+        if not key or key in seen_queries:
+            continue
+        seen_queries.add(key)
+        deduped.append(request)
+        if len(deduped) >= 8:
+            break
+    return deduped
+
+
+def _expected_article_ref_key(ref: ExpectedArticleRef) -> tuple[str, str]:
+    return (
+        _normalize_for_article_match(ref.law_title),
+        _normalize_for_article_match(ref.article_no),
+    )
+
+
+def _normalize_for_article_match(value: str) -> str:
+    return re.sub(r"\s+", "", value).lower()
 
 
 def _extract_json_object(text: str) -> str:

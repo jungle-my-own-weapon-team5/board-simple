@@ -167,7 +167,7 @@ Foreign keys:
 | `dedup_status` | varchar(30) | no | `unique`, `duplicate`, `superseded` 등 중복/대체 상태 |
 | `conflict_status` | varchar(30) | no | `none`, `review_required`, `resolved` 등 canonical/version 충돌 상태 |
 | `duplicate_of_document_id` | integer | yes | 중복으로 판단된 원본 `legal_documents.id` |
-| `index_status` | varchar(30) | no | `pending`, `indexed`, `failed` |
+| `index_status` | varchar(30) | no | `pending`, `indexed`, `failed`, `replaced` |
 | `indexed_at` | timestamptz | yes | 색인 완료 시각 |
 | `index_error` | text | yes | 안전하게 정제된 색인 실패 사유 |
 | `created_at` | timestamptz | no | 생성 시각 |
@@ -199,12 +199,14 @@ Foreign keys:
 - `effective_date` 또는 `version_label`이 다르면 같은 canonical document의 다른 버전으로 보존합니다.
 - 완전 중복으로 판단한 문서는 `dedup_status=duplicate`, `duplicate_of_document_id`로 원본 문서를 가리키고, 검색 색인 대상에서는 제외할 수 있습니다.
 - 최신 법령만 최종 진실로 간주해 과거 버전을 삭제하지 않습니다. 분쟁 발생 시점에 따라 과거 시행 버전이 근거가 될 수 있습니다.
+- 재색인으로 같은 canonical/version의 기존 문서를 대체할 때 과거 retrieval 이력이 없으면 기존 문서를 삭제할 수 있습니다. 이력이 있으면 감사 추적을 위해 row와 chunk를 보존하되 `index_status=replaced`로 전환해 검색 후보와 중복/충돌 판정에서 제외합니다.
 
 공식 source 최신성/preflight 정책:
 
 - 국가법령정보 Open API 같은 공식 provider는 전문 API를 호출하기 전에 metadata API로 최신성 정보를 먼저 확인합니다.
 - preflight metadata의 `document_type`, `canonical_id`, `version_label`, `effective_date`, `published_date`가 기존 `legal_documents` row와 일치하고 `index_status=indexed`이면 전문 API 호출을 생략할 수 있습니다.
 - 전문 API를 생략하는 경우 기존 `legal_document_chunks`와 선택된 `embedding_profile_id`의 `legal_document_chunk_embeddings`를 재사용합니다.
+- 단, chunking schema version이 현재 backend의 `chunking_schema_version`과 다르면 전문 API를 다시 조회해 chunking과 embedding을 재수행합니다. 이때 기존 검색 이력이 없는 문서는 삭제하고, 이력이 있는 문서는 `index_status=replaced`로 전환합니다.
 - 새 `effective_date` 또는 새 `version_label`이 발견되면 기존 문서를 수정하지 않고 새 `legal_documents` row로 저장합니다.
 - 같은 canonical/version인데 전문 재조회 후 `normalized_checksum`이 달라지면 자동 갱신하지 않고 `conflict_status=review_required`로 저장합니다.
 - provider metadata만으로 동일 version 여부를 확정하기 어렵다면 전문을 가져와 normalization과 checksum 비교를 수행합니다.
@@ -221,7 +223,7 @@ Foreign keys:
 | `heading` | varchar(500) | yes | 조문명, 제목, 판례 섹션 등 |
 | `content` | text | no | chunk 본문 |
 | `token_count` | integer | yes | 추정 token 수 |
-| `metadata_json` | jsonb | no | 조문 번호, 법원, 사건번호 등 |
+| `metadata_json` | jsonb | no | 조문 번호, 조문 제목, chunking schema version, 법원, 사건번호 등 |
 | `created_at` | timestamptz | no | 생성 시각 |
 | `updated_at` | timestamptz | no | 수정 시각 |
 

@@ -57,6 +57,60 @@ def test_planner_parses_issue_queries() -> None:
     assert [candidate.query for candidate in plan.candidates] == ["Criminal Act"]
 
 
+def test_planner_parses_expected_article_refs() -> None:
+    ai_client = _PlanningAIClient(
+        text=(
+            '{"issues":[{"issue_key":"surrender",'
+            '"title":"자수","internal_rag_query":"형법 자수",'
+            '"expected_article_refs":[{"law_title":"형법",'
+            '"article_no":"제 52 조","article_title":"자수ㆍ자복",'
+            '"reason":"자수 감경 확인"}],'
+            '"official_source_candidates":[{"document_type":"statute",'
+            '"title":"형법","query":"형법"}]}]}'
+        )
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts="A가 경찰서에 가서 자수했습니다.",
+        question="쟁점을 알려주세요.",
+        search_mode="issue_spotting",
+    )
+
+    assert plan.issues[0].expected_article_refs[0].law_title == "형법"
+    assert plan.issues[0].expected_article_refs[0].article_no == "제52조"
+
+
+def test_planner_augments_required_criminal_article_refs() -> None:
+    ai_client = _PlanningAIClient(
+        text='{"issues":[],"candidates":[]}'
+    )
+
+    plan = plan_legal_source_candidates(
+        ai_client=ai_client,
+        settings=_settings(),
+        facts=(
+            "A는 실수로 B를 죽였고 시체를 비닐백에 담아 야산에 매장했습니다. "
+            "1주일 뒤 경찰서에 가서 자수했지만 시체를 찾지 못했습니다."
+        ),
+        question="검토할 쟁점을 알려주세요.",
+        search_mode="issue_spotting",
+    )
+
+    expected_refs = {
+        (ref.law_title, ref.article_no)
+        for issue in plan.issues
+        for ref in issue.expected_article_refs
+    }
+    assert ("형법", "제267조") in expected_refs
+    assert ("형법", "제14조") in expected_refs
+    assert ("형법", "제161조") in expected_refs
+    assert ("형법", "제52조") in expected_refs
+    assert ("형사소송법", "제140조") in expected_refs
+    assert {candidate.title for candidate in plan.candidates} >= {"형법", "형사소송법"}
+
+
 def test_planner_ignores_unsupported_document_types() -> None:
     ai_client = _PlanningAIClient(
         text=(

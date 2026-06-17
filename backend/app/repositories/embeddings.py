@@ -178,6 +178,7 @@ def list_searchable_chunk_embeddings(
             LegalDocumentChunkEmbedding.embedding_profile_id == embedding_profile_id,
             LegalDocumentChunkEmbedding.embedding_status == "embedded",
             LegalDocumentChunkEmbedding.embedding.is_not(None),
+            LegalDocument.index_status.not_in(("failed", "replaced")),
             LegalDocument.dedup_status != "duplicate",
             LegalDocument.conflict_status == "none",
         )
@@ -317,6 +318,7 @@ def _base_searchable_chunk_embedding_statement(
             LegalDocumentChunkEmbedding.embedding_profile_id == embedding_profile_id,
             LegalDocumentChunkEmbedding.embedding_status == "embedded",
             LegalDocumentChunkEmbedding.embedding.is_not(None),
+            LegalDocument.index_status.not_in(("failed", "replaced")),
             LegalDocument.dedup_status != "duplicate",
             LegalDocument.conflict_status == "none",
         )

@@ -97,6 +97,29 @@ def test_chunk_document_text_applies_statute_profile() -> None:
     assert chunks[0].metadata_json["min_chars"] == 0
     assert chunks[0].metadata_json["overlap_chars"] == 80
     assert [chunk.heading for chunk in chunks] == ["제1조(목적)", "제2조(정의)"]
+    assert chunks[0].metadata_json["chunking_schema_version"] == "article_boundary_v2"
+    assert chunks[0].metadata_json["article_no"] == "제1조"
+    assert chunks[0].metadata_json["article_title"] == "목적"
+
+
+def test_chunk_document_text_splits_inline_article_boundaries() -> None:
+    text = normalize_text(
+        """
+        제163조(변사체 검시 방해) 변사자의 시체를 은닉한 자는 벌금에 처한다. 제13장 방화와 실화의 죄 제164조(현주건조물등에의 방화) 불을 놓아 사람이 주거로 사용하는 건조물을 불태운 자는 처벌한다.
+        """
+    )
+
+    chunks = chunk_document_text(text, document_type="statute")
+
+    assert [chunk.heading for chunk in chunks] == [
+        "제163조(변사체검시방해)",
+        "제164조(현주건조물등에의방화)",
+    ]
+    assert "제164조" not in chunks[0].content
+    assert "현주건조물" not in chunks[0].content
+    assert "제13장 방화와 실화의 죄" in chunks[0].content
+    assert chunks[1].metadata_json["article_no"] == "제164조"
+    assert chunks[1].metadata_json["article_title"] == "현주건조물등에의방화"
 
 
 def test_chunk_document_text_applies_memo_profile() -> None:

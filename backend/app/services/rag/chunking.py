@@ -8,6 +8,9 @@ from typing import Any
 ARTICLE_HEADING_PATTERN = re.compile(
     r"^(제\s*\d+\s*조(?:의\s*\d+)?(?:\s*\([^)]*\))?)"
 )
+ARTICLE_BOUNDARY_PATTERN = re.compile(r"제\s*\d+\s*조(?:의\s*\d+)?\s*\([^)]*\)")
+NORMALIZED_ARTICLE_HEADING_PATTERN = re.compile(r"^(제\d+조(?:의\d+)?)(?:\(([^)]*)\))?$")
+CHUNKING_SCHEMA_VERSION = "article_boundary_v2"
 
 
 @dataclass(frozen=True)
@@ -176,9 +179,14 @@ def chunk_text(
     resolved_config.validate()
 
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    has_article_headings = any(extract_article_heading(line.strip()) for line in lines)
+    if has_article_headings:
+        # 국가법령정보 API 본문은 조문 경계가 한 줄 안에 붙는 경우가 있어,
+        # article mode에서만 내부 조문 heading을 줄 경계로 승격합니다.
+        lines = _split_inline_article_boundaries(lines)
     sections = (
         _split_article_sections(lines)
-        if any(extract_article_heading(line.strip()) for line in lines)
+        if has_article_headings
         else _split_paragraph_sections(lines)
     )
 
@@ -249,6 +257,38 @@ def _split_article_sections(lines: list[str]) -> list[_TextSection]:
 
     flush_current()
     return sections
+
+
+def _split_inline_article_boundaries(lines: list[str]) -> list[str]:
+    expanded_lines: list[str] = []
+    for raw_line in lines:
+        expanded_lines.extend(_split_line_at_article_boundaries(raw_line))
+    return expanded_lines
+
+
+def _split_line_at_article_boundaries(raw_line: str) -> list[str]:
+    line = raw_line.strip()
+    if not line:
+        return [raw_line]
+
+    matches = list(ARTICLE_BOUNDARY_PATTERN.finditer(line))
+    if len(matches) <= 1:
+        return [raw_line]
+
+    split_lines: list[str] = []
+    start = 0
+    for match in matches:
+        if match.start() == start:
+            continue
+        previous = line[start : match.start()].strip()
+        if previous:
+            split_lines.append(previous)
+        start = match.start()
+
+    remainder = line[start:].strip()
+    if remainder:
+        split_lines.append(remainder)
+    return split_lines or [raw_line]
 
 
 def _split_paragraph_sections(lines: list[str]) -> list[_TextSection]:
@@ -405,6 +445,7 @@ def _merge_parts(parts: list[_ChunkPart], config: ChunkingConfig) -> _ChunkPart:
         content="\n\n".join(part.content for part in parts),
         metadata_json={
             "chunking_strategy": "merged",
+            "chunking_schema_version": CHUNKING_SCHEMA_VERSION,
             "source_parts": source_parts,
             "source_anchors": source_anchors,
             "start_line": min(metadata["start_line"] for metadata in source_parts),
@@ -435,8 +476,9 @@ def _build_part_metadata(
         else f"{section.strategy}:{section.section_index}"
     )
 
-    return {
+    metadata = {
         "chunking_strategy": section.strategy,
+        "chunking_schema_version": CHUNKING_SCHEMA_VERSION,
         "section_index": section.section_index,
         "part_index": part_index,
         "part_count": part_count,
@@ -447,3 +489,19 @@ def _build_part_metadata(
         "max_chars": config.max_chars,
         "overlap_chars": config.overlap_chars,
     }
+    if section.heading is not None:
+        metadata.update(_article_heading_metadata(section.heading))
+    return metadata
+
+
+def _article_heading_metadata(heading: str) -> dict[str, str]:
+    match = NORMALIZED_ARTICLE_HEADING_PATTERN.match(heading)
+    if match is None:
+        return {"article_heading": heading}
+    metadata = {
+        "article_no": match.group(1),
+        "article_heading": heading,
+    }
+    if match.group(2):
+        metadata["article_title"] = match.group(2)
+    return metadata
