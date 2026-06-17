@@ -447,6 +447,39 @@ TRUSTED_EXTERNAL_DOMAINS = (
     "kostma.aks.ac.kr",
     "nl.go.kr",
 )
+MAX_EXTERNAL_RESOURCES = 3
+HISTORY_RESOURCE_SIGNALS = (
+    "조선",
+    "왕조",
+    "실록",
+    "태종",
+    "세종",
+    "성종",
+    "연산군",
+    "중종",
+    "왕자",
+    "왕족",
+    "세자",
+    "대군",
+    "공주",
+    "궁인",
+    "문신",
+    "무신",
+    "정치",
+    "관직",
+    "시호",
+    "자는",
+    "이름은",
+)
+LOW_QUALITY_RESOURCE_SIGNALS = (
+    "줄거리",
+    "사이버 문학광장",
+    "갈래",
+    "전설",
+    "소설",
+    "드라마",
+    "운명의 드라마",
+)
 
 def search_external(db: Session, settings: Settings, keyword: str) -> ExternalSearchResponse:
     from app.services import mcp_server
@@ -454,7 +487,7 @@ def search_external(db: Session, settings: Settings, keyword: str) -> ExternalSe
     started = time.perf_counter()
     query = _external_search_query(keyword)
     cache_key = make_cache_key(
-        "external_evidence_bundle:v1",
+        "external_evidence_bundle:v4",
         {
             "query": query,
             "naver_enabled": bool(settings.naver_client_id and settings.naver_client_secret),
@@ -648,8 +681,27 @@ def _rank_external_resources(raw_resources: list[dict[str, str]], query: str) ->
     unique: dict[str, ExternalResource] = {}
     for resource in resources:
         unique.setdefault(resource.url, resource)
+    ranked_candidates = list(unique.values())
     query_terms = _external_rank_terms(query)
-    return sorted(unique.values(), key=lambda resource: _external_resource_rank(resource, query_terms))[:5]
+    entity = _entity_query_from_question(query) or (query_terms[0] if query_terms else "")
+    if entity:
+        entity_candidates = [
+            resource
+            for resource in ranked_candidates
+            if entity in f"{resource.title} {resource.description}"
+        ]
+        if entity_candidates:
+            ranked_candidates = entity_candidates
+    historical_candidates = [
+        resource
+        for resource in ranked_candidates
+        if _has_history_resource_signal(resource) and not _looks_like_low_quality_resource(resource)
+    ]
+    if historical_candidates:
+        ranked_candidates = historical_candidates
+    return sorted(ranked_candidates, key=lambda resource: _external_resource_rank(resource, query_terms, query))[
+        :MAX_EXTERNAL_RESOURCES
+    ]
 
 
 def _is_allowed_external_resource(url: str) -> bool:
@@ -668,19 +720,42 @@ def _external_rank_terms(query: str) -> list[str]:
     return [term for term in terms if len(term) >= 2]
 
 
-def _external_resource_rank(resource: ExternalResource, query_terms: list[str]) -> tuple[int, int, str]:
+def _external_resource_rank(resource: ExternalResource, query_terms: list[str], query: str) -> tuple[int, int, int, int, str]:
     haystack = f"{resource.title} {resource.description}".lower()
     relevance_penalty = -sum(1 for term in query_terms if term.lower() in haystack)
+    entity = _entity_query_from_question(query) or (query_terms[0] if query_terms else "")
+    title = resource.title.strip()
+    exact_title_penalty = 0 if entity and title == entity else 1
+    low_quality_penalty = 2 if _looks_like_low_quality_resource(resource) else 0
+    history_signal_penalty = 0 if _has_history_resource_signal(resource) else 1
     url = resource.url.lower()
     if "sillok.history.go.kr/id/" in url:
-        return (relevance_penalty, 0, resource.title)
-    if any(domain in url for domain in TRUSTED_EXTERNAL_DOMAINS):
-        return (relevance_penalty, 1, resource.title)
-    if "naver.com" in url and "encyc" in resource.provider:
-        return (relevance_penalty, 2, resource.title)
-    if any(source in resource.provider.lower() for source in ["blog", "news"]):
-        return (relevance_penalty, 5, resource.title)
-    return (relevance_penalty, 3, resource.title)
+        source_penalty = 0
+    elif any(domain in url for domain in TRUSTED_EXTERNAL_DOMAINS):
+        source_penalty = 1
+    elif "naver.com" in url and "encyc" in resource.provider:
+        source_penalty = 2
+    elif any(source in resource.provider.lower() for source in ["blog", "news"]):
+        source_penalty = 5
+    else:
+        source_penalty = 3
+    return (
+        exact_title_penalty,
+        low_quality_penalty + history_signal_penalty,
+        relevance_penalty,
+        source_penalty,
+        resource.title,
+    )
+
+
+def _has_history_resource_signal(resource: ExternalResource) -> bool:
+    haystack = f"{resource.title} {resource.description}"
+    return any(signal in haystack for signal in HISTORY_RESOURCE_SIGNALS)
+
+
+def _looks_like_low_quality_resource(resource: ExternalResource) -> bool:
+    haystack = f"{resource.title} {resource.description}"
+    return any(signal in haystack for signal in LOW_QUALITY_RESOURCE_SIGNALS)
 
 
 

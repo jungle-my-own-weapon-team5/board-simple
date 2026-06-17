@@ -314,6 +314,58 @@ def test_external_resource_ranking_prefers_query_relevant_titles() -> None:
     assert ranked[0].title.startswith("외가에 보낸 정조어찰")
 
 
+def test_external_resource_ranking_prefers_historical_person_entries() -> None:
+    from app.services.ai_runtime import _rank_external_resources
+
+    ranked = _rank_external_resources(
+        [
+            {
+                "title": "양녕대군",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=3572981",
+                "description": "모든 사람에게 자신의 삶은 거대하고 복잡한 운명의 드라마일 것이다.",
+            },
+            {
+                "title": "양녕대군",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=335906",
+                "description": "[줄거리] 태종은 태종 7년 어린 양녕을 명나라 사신으로 보낸다.",
+            },
+            {
+                "title": "양녕대군",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=580358",
+                "description": "조선전기 제3대 태종의 첫째 아들인 왕자. 이름은 이제. 자는 후백.",
+            },
+            {
+                "title": "양녕대군",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=882996",
+                "description": "조선 태종의 장남. 세종의 형. 1404년 세자로 책봉되었으나 폐위되었다.",
+            },
+            {
+                "title": "양녕대군",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=1783483",
+                "description": "갈래: 전설. 시대: 조선. 신분: 왕족. 지역: 기호.",
+            },
+            {
+                "title": "조선 후기 인물 연표",
+                "provider": "네이버 검색/encyc",
+                "url": "https://terms.naver.com/entry.naver?docId=3584284",
+                "description": "광해군, 허준 등 조선 후기 인물을 정리한 자료입니다.",
+            },
+        ],
+        "양녕대군은 어떤 사람이야",
+    )
+
+    assert len(ranked) == 2
+    assert ranked[0].url == "https://terms.naver.com/entry.naver?docId=580358"
+    assert ranked[1].url == "https://terms.naver.com/entry.naver?docId=882996"
+    assert "줄거리" not in ranked[0].description
+    assert all("양녕대군" in f"{item.title} {item.description}" for item in ranked)
+
+
 def test_editor_agent_does_not_mix_history_into_rag_query_or_weak_evidence(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
