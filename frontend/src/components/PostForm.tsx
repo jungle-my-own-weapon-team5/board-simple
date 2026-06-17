@@ -106,7 +106,8 @@ type AgentResultPanelProps = {
   onAppendContent: (content: string) => void;
   onApplyTitle: (title: string) => void;
   onAppendTags: (tags: string[]) => void;
-  onAppendQuestion: (question: string) => void;
+  onRequestQuestion: (question: string) => void;
+  isRequestingQuestion: boolean;
 };
 
 function AgentResultPanel({
@@ -115,7 +116,8 @@ function AgentResultPanel({
   onAppendContent,
   onApplyTitle,
   onAppendTags,
-  onAppendQuestion
+  onRequestQuestion,
+  isRequestingQuestion
 }: AgentResultPanelProps) {
   const externalResources = result.external_resources ?? [];
   const externalSearchLog = (result.tool_logs ?? []).find(
@@ -211,7 +213,8 @@ function AgentResultPanel({
               key={item}
               type="button"
               className="rounded-md border border-border bg-background p-2 text-left text-xs leading-5 text-muted-foreground hover:bg-accent"
-              onClick={() => onAppendQuestion(item)}
+              disabled={isRequestingQuestion}
+              onClick={() => onRequestQuestion(item)}
             >
               {item}
             </button>
@@ -363,8 +366,8 @@ export default function PostForm({
     }
   };
 
-  const handleAgentSend = async () => {
-    const message = agentInput.trim();
+  const handleAgentSend = async (nextMessage?: string) => {
+    const message = (nextMessage ?? agentInput).trim();
     if (!message || isAssisting) {
       return;
     }
@@ -423,6 +426,11 @@ export default function PostForm({
       event.preventDefault();
       void handleAgentSend();
     }
+  };
+
+  const handleRequestQuestion = (question: string) => {
+    setAgentInput(question);
+    void handleAgentSend(question);
   };
 
   const handleClearAgentChat = () => {
@@ -739,7 +747,8 @@ export default function PostForm({
                       onAppendContent={(nextContent) => setContent((current) => `${current.trim()}\n\n${nextContent}`.trim())}
                       onApplyTitle={setTitle}
                       onAppendTags={appendTags}
-                      onAppendQuestion={(question) => setContent((current) => `${current.trim()}\n\n${question}`.trim())}
+                      onRequestQuestion={handleRequestQuestion}
+                      isRequestingQuestion={isAssisting}
                     />
                   ) : null}
                 </div>
