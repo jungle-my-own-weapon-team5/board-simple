@@ -1,0 +1,47 @@
+sequenceDiagram
+    actor User as 사용자
+    participant FE as Next.js UI
+    participant BE as FastAPI API
+    participant Guard as Request/Intent Guard
+    participant Planner as Orchestrator Planner
+    participant RAG as RAG Retrieval
+    participant Law as Law Open API
+    participant DB as PostgreSQL/pgvector
+    participant LLM as OpenAI Provider
+    participant Verify as Citation Verifier
+
+    User->>FE: 사실관계와 질문 입력
+    FE->>BE: 전체 분석 요청
+    BE->>Guard: 요청 목적과 위험 신호 검토
+    Guard-->>BE: legal review intent
+    BE->>Planner: 쟁점/source 계획 요청
+    Planner->>LLM: issue/source planning prompt
+    LLM-->>Planner: issue tracks / source candidates
+    Planner-->>BE: 검색 계획
+
+    BE->>RAG: 쟁점별 내부 검색
+    RAG->>DB: pgvector similarity search
+    DB-->>RAG: 후보 chunk
+    RAG-->>BE: 내부 검색 결과
+
+    alt 근거 부족 또는 최신 법령 필요
+        BE->>Law: 공식 법령 metadata/body 조회
+        Law-->>BE: 법령 원문과 metadata
+        BE->>DB: normalize / chunk / embed / index
+        BE->>RAG: 재검색
+        RAG->>DB: pgvector similarity search
+        DB-->>RAG: 보강된 후보 chunk
+        RAG-->>BE: 보강 검색 결과
+    end
+
+    BE->>LLM: 근거 검토 및 쟁점 정리 생성
+    LLM-->>BE: 쟁점 정리
+    BE->>LLM: 답변 초안 생성
+    LLM-->>BE: 답변 초안과 citation 후보
+    BE->>Verify: citation 검증
+    Verify->>DB: run retrieval 근거 확인
+    DB-->>Verify: 검증 결과
+    Verify-->>BE: 유효 citation
+    BE->>DB: rag_runs / retrievals / agent_steps 저장
+    BE-->>FE: 검색 결과, 쟁점 정리, 답변 초안
+    FE-->>User: 3패널 결과 표시

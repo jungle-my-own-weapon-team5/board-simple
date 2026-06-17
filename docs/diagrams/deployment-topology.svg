@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">발표용 배포 토폴로지</title>
+  <desc id="desc">발표용 최소 구성에서 사용자 브라우저, EC2, Docker Compose, frontend, backend, migrate, PostgreSQL pgvector, OpenAI API, 국가법령정보센터 Open API가 연결되는 구조</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0891b2" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9" />
+    </marker>
+    <style>
+      .label { font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; fill: #0f172a; font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+      .small { font-size: 12px; fill: #334155; }
+      .title { font-size: 15px; font-weight: 700; }
+      .group-title { font-size: 15px; font-weight: 700; text-anchor: start; dominant-baseline: auto; }
+      .box { rx: 8; ry: 8; stroke-width: 1.5; }
+      .edge { fill: none; stroke: #334155; stroke-width: 1.8; marker-end: url(#arrow); }
+      .edge-green { fill: none; stroke: #15803d; stroke-width: 1.8; marker-end: url(#arrow-green); }
+      .edge-blue { fill: none; stroke: #0891b2; stroke-width: 1.8; marker-end: url(#arrow-blue); }
+      .edge-purple { fill: none; stroke: #6d28d9; stroke-width: 1.8; marker-end: url(#arrow-purple); }
+      .edge-dashed { stroke-dasharray: 6 5; marker-end: none; }
+    </style>
+  </defs>
+
+  <rect x="300" y="90" width="620" height="420" rx="10" fill="#f8fafc" stroke="#64748b" stroke-dasharray="7 5" />
+  <text x="315" y="113" class="label group-title">AWS EC2 Instance</text>
+  <rect x="330" y="140" width="560" height="330" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-dasharray="7 5" />
+  <text x="345" y="163" class="label group-title">Docker Compose</text>
+
+  <rect class="box" x="60" y="180" width="160" height="70" fill="#dbeafe" stroke="#1d4ed8" />
+  <text x="140" y="206" class="label title">발표 청중</text>
+  <text x="140" y="228" class="label small">사용자 브라우저</text>
+  <rect class="box" x="60" y="330" width="160" height="70" fill="#e0f2fe" stroke="#0369a1" />
+  <text x="140" y="356" class="label title">EC2 Elastic IP</text>
+  <text x="140" y="378" class="label small">또는 Domain</text>
+
+  <rect class="box" x="380" y="200" width="150" height="86" fill="#dcfce7" stroke="#15803d" />
+  <text x="455" y="226" class="label title">frontend</text>
+  <text x="455" y="248" class="label small">Next.js</text>
+  <text x="455" y="268" class="label small">port 3000</text>
+  <rect class="box" x="600" y="200" width="150" height="86" fill="#fef9c3" stroke="#a16207" />
+  <text x="675" y="226" class="label title">backend</text>
+  <text x="675" y="248" class="label small">FastAPI</text>
+  <text x="675" y="268" class="label small">port 8000</text>
+  <rect class="box" x="380" y="350" width="150" height="72" fill="#ffedd5" stroke="#c2410c" />
+  <text x="455" y="376" class="label title">migrate</text>
+  <text x="455" y="398" class="label small">alembic upgrade head</text>
+  <path d="M 600 355 C 600 340, 770 340, 770 355 L 770 417 C 770 432, 600 432, 600 417 Z" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5" />
+  <ellipse cx="685" cy="355" rx="85" ry="15" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.5" />
+  <text x="685" y="378" class="label title">db</text>
+  <text x="685" y="400" class="label small">PostgreSQL 17 + pgvector</text>
+  <text x="685" y="418" class="label small">volume: postgres_data</text>
+
+  <rect class="box" x="1020" y="180" width="160" height="64" fill="#f0fdf4" stroke="#16a34a" />
+  <text x="1100" y="214" class="label title">OpenAI API</text>
+  <rect class="box" x="1020" y="310" width="160" height="70" fill="#ecfeff" stroke="#0891b2" />
+  <text x="1100" y="336" class="label title">국가법령정보센터</text>
+  <text x="1100" y="358" class="label small">Open API</text>
+
+  <path d="M 330 540 L 555 540 L 580 565 L 580 630 L 330 630 Z" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" />
+  <path d="M 555 540 L 555 565 L 580 565" fill="none" stroke="#b45309" stroke-width="1.2" />
+  <text x="455" y="568" class="label title">발표용 최소 구성</text>
+  <text x="455" y="592" class="label small">EC2 한 대에 frontend / backend / db 배치</text>
+  <path d="M 640 540 L 875 540 L 900 565 L 900 630 L 640 630 Z" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5" />
+  <path d="M 875 540 L 875 565 L 900 565" fill="none" stroke="#0369a1" stroke-width="1.2" />
+  <text x="770" y="568" class="label title">운영 확장 시 고려</text>
+  <text x="770" y="592" class="label small">HTTPS proxy / managed DB / backend 분리 배포</text>
+
+  <path class="edge" d="M 140 250 L 140 330" />
+  <path class="edge" d="M 220 365 C 280 365, 320 243, 380 243" />
+  <path class="edge-green" d="M 530 243 L 600 243" />
+  <text x="565" y="225" class="label small">NEXT_PUBLIC_API_BASE_URL</text>
+  <path class="edge-purple" d="M 675 286 L 685 340" />
+  <path class="edge-purple" d="M 530 386 L 600 386" />
+  <path class="edge-green" d="M 750 227 C 860 200, 920 205, 1020 212" />
+  <path class="edge-blue" d="M 750 260 C 870 285, 920 335, 1020 345" />
+  <path class="edge-dashed" d="M 455 540 C 455 510, 455 480, 455 286" stroke="#b45309" stroke-width="1.6" fill="none" />
+  <path class="edge-dashed" d="M 770 540 C 760 460, 735 360, 700 286" stroke="#0369a1" stroke-width="1.6" fill="none" />
+</svg>

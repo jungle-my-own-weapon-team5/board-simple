@@ -1,0 +1,26 @@
+flowchart TB
+    user["발표 청중 / 사용자 브라우저"] --> ip["EC2 Elastic IP 또는 Domain"]
+
+    subgraph ec2["AWS EC2 Instance"]
+        subgraph compose["Docker Compose"]
+            frontend["frontend<br/>Next.js<br/>port 3000"]
+            backend["backend<br/>FastAPI<br/>port 8000"]
+            migrate["migrate<br/>alembic upgrade head"]
+            db["db<br/>PostgreSQL 17 + pgvector<br/>volume: postgres_data"]
+        end
+    end
+
+    ip --> frontend
+    frontend -->|NEXT_PUBLIC_API_BASE_URL| backend
+    backend --> db
+    migrate --> db
+    backend --> openai["OpenAI API"]
+    backend --> lawapi["국가법령정보센터 Open API"]
+
+    note1["발표용 최소 구성:<br/>EC2 한 대에 frontend/backend/db를 함께 배치"]
+    note2["운영 확장 시:<br/>HTTPS proxy, managed DB, separate backend hosting 고려"]
+
+    note1 -.-> frontend
+    note1 -.-> backend
+    note1 -.-> db
+    note2 -.-> backend

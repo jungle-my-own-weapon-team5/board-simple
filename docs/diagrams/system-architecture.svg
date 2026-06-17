@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">전체 시스템 아키텍처</title>
+  <desc id="desc">사용자, Next.js 프론트엔드, FastAPI 백엔드, PostgreSQL pgvector, OpenAI API, 국가법령정보센터 Open API, MCP 도구의 연결 구조</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0891b2" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9" />
+    </marker>
+    <style>
+      .label { font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; fill: #0f172a; font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+      .small { font-size: 12px; fill: #334155; }
+      .title { font-size: 15px; font-weight: 700; }
+      .group-title { font-size: 15px; font-weight: 700; text-anchor: start; dominant-baseline: auto; }
+      .box { rx: 8; ry: 8; stroke-width: 1.5; }
+      .edge { fill: none; stroke: #334155; stroke-width: 1.8; marker-end: url(#arrow); }
+      .edge-green { fill: none; stroke: #16a34a; stroke-width: 1.8; marker-end: url(#arrow-green); }
+      .edge-blue { fill: none; stroke: #0891b2; stroke-width: 1.8; marker-end: url(#arrow-blue); }
+      .edge-purple { fill: none; stroke: #6d28d9; stroke-width: 1.8; marker-end: url(#arrow-purple); }
+      .edge-dashed { stroke-dasharray: 6 5; }
+    </style>
+  </defs>
+
+  <rect x="390" y="90" width="430" height="260" rx="10" fill="#f8fafc" stroke="#64748b" stroke-dasharray="7 5" />
+  <text x="405" y="113" class="label group-title">FastAPI Backend</text>
+  <rect x="390" y="430" width="520" height="210" rx="10" fill="#f8fafc" stroke="#64748b" stroke-dasharray="7 5" />
+  <text x="405" y="453" class="label group-title">RAG 저장소</text>
+  <rect x="910" y="150" width="280" height="200" rx="10" fill="#f8fafc" stroke="#64748b" stroke-dasharray="7 5" />
+  <text x="925" y="173" class="label group-title">MCP JSON-RPC Tools</text>
+
+  <rect class="box" x="60" y="150" width="110" height="54" fill="#dbeafe" stroke="#1d4ed8" />
+  <text x="115" y="178" class="label title">사용자</text>
+  <rect class="box" x="210" y="150" width="120" height="54" fill="#e0f2fe" stroke="#0369a1" />
+  <text x="270" y="178" class="label">Browser</text>
+  <rect class="box" x="200" y="260" width="150" height="70" fill="#dcfce7" stroke="#15803d" />
+  <text x="275" y="286" class="label title">Next.js Frontend</text>
+  <text x="275" y="308" class="label small">AI 법률 검토 UI</text>
+
+  <rect class="box" x="430" y="135" width="130" height="62" fill="#fef9c3" stroke="#a16207" />
+  <text x="495" y="157" class="label title">Backend Entry</text>
+  <text x="495" y="179" class="label small">REST API</text>
+  <rect class="box" x="430" y="240" width="130" height="70" fill="#fff7ed" stroke="#c2410c" />
+  <text x="495" y="264" class="label title">API Routes</text>
+  <text x="495" y="286" class="label small">auth / posts / rag</text>
+  <text x="495" y="302" class="label small">ai / mcp</text>
+  <rect class="box" x="600" y="240" width="160" height="70" fill="#ffedd5" stroke="#c2410c" />
+  <text x="680" y="264" class="label title">Services</text>
+  <text x="680" y="286" class="label small">RAG / Agent / MCP</text>
+  <text x="680" y="302" class="label small">AI Provider</text>
+  <rect class="box" x="610" y="135" width="140" height="62" fill="#fff7ed" stroke="#c2410c" />
+  <text x="680" y="167" class="label">Repositories</text>
+
+  <path d="M 590 385 C 590 370, 740 370, 740 385 L 740 425 C 740 440, 590 440, 590 425 Z" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5" />
+  <ellipse cx="665" cy="385" rx="75" ry="15" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.5" />
+  <text x="665" y="404" class="label title">PostgreSQL 17</text>
+  <text x="665" y="424" class="label small">pgvector</text>
+
+  <rect class="box" x="940" y="40" width="210" height="62" fill="#f0fdf4" stroke="#16a34a" />
+  <text x="1045" y="63" class="label title">OpenAI API</text>
+  <text x="1045" y="84" class="label small">generation / embedding</text>
+  <rect class="box" x="940" y="430" width="230" height="70" fill="#ecfeff" stroke="#0891b2" />
+  <text x="1055" y="456" class="label title">국가법령정보센터 Open API</text>
+  <text x="1055" y="478" class="label small">official legal sources</text>
+
+  <rect class="box" x="940" y="195" width="210" height="40" fill="#ffffff" stroke="#64748b" />
+  <text x="1045" y="216" class="label small">search_legal_documents</text>
+  <rect class="box" x="940" y="245" width="210" height="40" fill="#ffffff" stroke="#64748b" />
+  <text x="1045" y="266" class="label small">search_law_open_api</text>
+  <rect class="box" x="940" y="295" width="210" height="40" fill="#ffffff" stroke="#64748b" />
+  <text x="1045" y="316" class="label small">verify_citations</text>
+
+  <rect class="box" x="420" y="485" width="140" height="42" fill="#ffffff" stroke="#64748b" />
+  <text x="490" y="507" class="label small">legal_sources</text>
+  <rect class="box" x="590" y="485" width="150" height="42" fill="#ffffff" stroke="#64748b" />
+  <text x="665" y="507" class="label small">legal_documents</text>
+  <rect class="box" x="420" y="550" width="170" height="42" fill="#ffffff" stroke="#64748b" />
+  <text x="505" y="572" class="label small">legal_document_chunks</text>
+  <rect class="box" x="620" y="550" width="150" height="42" fill="#ffffff" stroke="#64748b" />
+  <text x="695" y="572" class="label small">chunk_embeddings</text>
+  <rect class="box" x="790" y="485" width="100" height="107" fill="#ffffff" stroke="#64748b" />
+  <text x="840" y="520" class="label small">rag_runs</text>
+  <text x="840" y="540" class="label small">retrievals</text>
+  <text x="840" y="560" class="label small">agent_steps</text>
+
+  <path class="edge" d="M 170 177 L 210 177" />
+  <path class="edge" d="M 270 204 L 275 260" />
+  <path class="edge" d="M 350 295 L 430 182" />
+  <text x="370" y="246" class="label small">REST API</text>
+  <path class="edge" d="M 495 197 L 495 240" />
+  <path class="edge" d="M 560 275 L 600 275" />
+  <path class="edge" d="M 680 240 L 680 197" />
+  <path class="edge" d="M 680 197 L 680 370" />
+  <path class="edge-green" d="M 760 246 L 940 82" />
+  <path class="edge-blue" d="M 760 286 L 940 455" />
+  <path class="edge" d="M 760 275 L 940 215" />
+  <path class="edge-blue edge-dashed" d="M 1045 285 L 1045 430" />
+  <path class="edge-purple edge-dashed" d="M 940 315 L 740 405" />
+  <path class="edge-purple" d="M 625 440 L 505 485" />
+  <path class="edge-purple" d="M 655 440 L 665 485" />
+  <path class="edge-purple" d="M 635 440 L 505 550" />
+  <path class="edge-purple" d="M 685 440 L 695 550" />
+  <path class="edge-purple" d="M 720 440 L 840 485" />
+</svg>

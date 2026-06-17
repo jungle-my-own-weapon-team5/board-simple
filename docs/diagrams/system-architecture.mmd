@@ -1,0 +1,40 @@
+flowchart LR
+    user["사용자"] --> browser["Browser"]
+    browser --> frontend["Next.js Frontend<br/>AI 법률 검토 UI"]
+
+    frontend -->|REST API<br/>credentials 포함| backend["FastAPI Backend"]
+
+    subgraph backend_layers["Backend Service Layers"]
+        api["API Routes<br/>auth / posts / rag / ai / mcp"]
+        services["Services<br/>RAG / Agent / MCP / AI Provider"]
+        repos["Repositories"]
+        api --> services --> repos
+    end
+
+    backend --> api
+    repos --> db[("PostgreSQL 17<br/>pgvector")]
+
+    services --> openai["OpenAI API<br/>generation / embedding"]
+    services --> lawapi["국가법령정보센터 Open API<br/>official legal sources"]
+
+    subgraph rag_storage["RAG Storage"]
+        legal_sources["legal_sources"]
+        legal_documents["legal_documents"]
+        chunks["legal_document_chunks"]
+        embeddings["chunk_embeddings"]
+        runs["rag_runs / rag_retrievals / agent_steps"]
+    end
+
+    db --> legal_sources
+    db --> legal_documents
+    db --> chunks
+    db --> embeddings
+    db --> runs
+
+    subgraph mcp["MCP JSON-RPC Tools"]
+        t1["search_legal_documents"]
+        t2["search_law_open_api"]
+        t3["verify_citations"]
+    end
+
+    services --> mcp

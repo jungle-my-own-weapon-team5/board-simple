@@ -1,0 +1,73 @@
+<mxfile host="app.diagrams.net" modified="2026-06-17T00:00:00.000Z" agent="Codex" version="26.0.0">
+  <diagram id="deployment-topology" name="Deployment Topology">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ec2" value="AWS EC2 Instance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;dashed=1;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="300" y="90" width="620" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="compose" value="Docker Compose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;dashed=1;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="330" y="140" width="560" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="발표 청중 / 사용자 브라우저" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1d4ed8;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ip" value="EC2 Elastic IP&lt;br&gt;또는 Domain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0369a1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="330" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" value="frontend&lt;br&gt;Next.js&lt;br&gt;port 3000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="200" width="150" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="backend&lt;br&gt;FastAPI&lt;br&gt;port 8000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#a16207;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="200" width="150" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="migrate" value="migrate&lt;br&gt;alembic upgrade head" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffedd5;strokeColor=#c2410c;" vertex="1" parent="1">
+          <mxGeometry x="380" y="350" width="150" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="db&lt;br&gt;PostgreSQL 17 + pgvector&lt;br&gt;volume: postgres_data" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ede9fe;strokeColor=#6d28d9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="340" width="170" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="openai" value="OpenAI API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="180" width="160" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="lawapi" value="국가법령정보센터&lt;br&gt;Open API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfeff;strokeColor=#0891b2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="310" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="note1" value="발표용 최소 구성&lt;br&gt;EC2 한 대에 frontend / backend / db 배치" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fef3c7;strokeColor=#b45309;" vertex="1" parent="1">
+          <mxGeometry x="330" y="540" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="note2" value="운영 확장 시 고려&lt;br&gt;HTTPS proxy / managed DB / backend 분리 배포" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#e0f2fe;strokeColor=#0369a1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="540" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e-user-ip" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="user" target="ip">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-ip-front" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="ip" target="frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-front-back" value="NEXT_PUBLIC_API_BASE_URL" style="endArrow=block;html=1;rounded=0;strokeColor=#15803d;" edge="1" parent="1" source="frontend" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-back-db" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="backend" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-migrate-db" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="migrate" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-back-openai" style="endArrow=block;html=1;rounded=0;strokeColor=#16a34a;" edge="1" parent="1" source="backend" target="openai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-back-law" style="endArrow=block;html=1;rounded=0;strokeColor=#0891b2;" edge="1" parent="1" source="backend" target="lawapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-note1" style="endArrow=none;html=1;rounded=0;strokeColor=#b45309;dashed=1;" edge="1" parent="1" source="note1" target="compose">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-note2" style="endArrow=none;html=1;rounded=0;strokeColor=#0369a1;dashed=1;" edge="1" parent="1" source="note2" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

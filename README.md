@@ -1,101 +1,100 @@
-# Board Simple
+# AI 법률 검토 보조 시스템
 
-Next.js + FastAPI + PostgreSQL(pgvector)로 구성한 기본 게시판입니다.
+법률 분쟁의 사실관계와 질문을 입력하면, 공식 법령 데이터를 기반으로 관련 근거를 검색하고 쟁점을 정리한 뒤 답변 초안 작성을 보조하는 웹 애플리케이션입니다.
 
-## Branch Strategy
+이 프로젝트는 기존 게시판 애플리케이션 위에 `FastAPI + PostgreSQL(pgvector) + OpenAI + 국가법령정보센터 Open API` 기반 RAG와 Agent 흐름을 단계적으로 확장한 학습형 MVP입니다. 생성 결과는 법률 자문이 아니라 법률 검토를 돕기 위한 초안 보조 결과입니다.
 
-- `main`: 메인 브랜치입니다. `README.md`를 포함한 최소 파일/폴더만 존재합니다.
-- `dev`: 프로젝트에서 사용할 기반 프로젝트까지만 구현한 브랜치입니다.
-- `project/{nickname}`: 각자 사용할 브랜치입니다. 기반 프로젝트에 기반하여 AI를 활용한 추가 기능들을 붙인 프로젝트입니다.
+## 주요 기능
 
-## Features
+- 이메일/비밀번호 회원가입, 로그인, HttpOnly cookie 기반 인증
+- 게시글, 댓글, 태그 기반 기본 게시판 기능
+- 사실관계와 질문을 입력하는 `AI 법률 검토` 화면
+- 검색 모드 선택: `집중 답변`, `쟁점 탐지`
+- 법령 근거 검색 결과, 쟁점 정리, 답변 초안 병렬 표시
+- PostgreSQL + pgvector 기반 법률 문서 chunk embedding 검색
+- 국가법령정보센터 Open API 기반 공식 법령 데이터 조회 및 색인
+- OpenAI 기반 embedding/generation provider adapter
+- MCP JSON-RPC endpoint와 allowlist 기반 tool 호출 구조
+- Agent 실행 이력, 검색 근거, citation 검증을 위한 audit 저장 구조
 
-- 이메일/비밀번호 회원가입, 로그인, 로그아웃
-- HttpOnly 쿠키 기반 JWT 인증
-- 닉네임 unique 검증과 `익명0000` 형식 자동 닉네임 생성
-- 게시글 CRUD, Markdown 작성/미리보기/표시
-- 댓글 작성과 `View more` 방식 페이지네이션
-- `#태그명` 형식 태그 추출
-- 게시글 제목 검색과 페이지네이션
+## 현재 구현 범위
 
-## Stack
+현재 UI의 자동 수집 및 색인 흐름은 `법령` 중심입니다. 법령 범위에는 법률, 대통령령, 총리령, 부령 계열이 포함될 수 있습니다.
 
-- FE: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, zustand
-- BE: FastAPI, Pydantic, SQLAlchemy, Alembic
-- DB: PostgreSQL with pgvector
-- Container: Docker, Docker Compose
+판례, 해석례, 행정심판례, 사용자 업로드 문서, 메모는 데이터 모델과 API 확장을 고려해 설계되어 있으나, 발표용 MVP 화면에서는 후속 지원 대상으로 표시합니다.
 
-## Project Structure
+## 기술 스택
+
+| 영역 | 기술 |
+| --- | --- |
+| Frontend | Next.js App Router, React, TypeScript, Tailwind CSS, shadcn/ui, Zustand |
+| Backend | FastAPI, Pydantic, SQLAlchemy, Alembic |
+| Database | PostgreSQL 17, pgvector |
+| AI/RAG | OpenAI provider adapter, embedding profile, pgvector similarity search |
+| External API | 국가법령정보센터 Open API |
+| Agent/MCP | FastAPI 내부 MCP JSON-RPC endpoint, bounded Orchestrator Agent |
+| Container | Docker, Docker Compose |
+
+## 시스템 구조
 
 ```text
-.
-├── backend/
-│   ├── app/
-│   ├── alembic/
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── src/app/
-│   ├── src/components/
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml
-├── .env.example
-└── README.md
+사용자
+  -> Next.js frontend
+  -> FastAPI backend
+  -> RAG / Agent / MCP services
+  -> PostgreSQL + pgvector
+  -> OpenAI API / 국가법령정보센터 Open API
 ```
 
-## 환경변수
+시각화 자료:
 
-로컬 개발과 Docker Compose 실행 모두 루트 `.env` 파일을 사용합니다.
+- 전체 시스템 아키텍처: [Mermaid](docs/diagrams/system-architecture.mmd) / [draw.io](docs/diagrams/system-architecture.drawio)
+- RAG/Agent 처리 흐름: [Mermaid](docs/diagrams/rag-agent-flow.mmd) / [draw.io](docs/diagrams/rag-agent-flow.drawio)
+- 발표용 배포 토폴로지: [Mermaid](docs/diagrams/deployment-topology.mmd) / [draw.io](docs/diagrams/deployment-topology.drawio)
 
-```bash
-cp .env.example .env
-```
+상세 소개:
 
-필요한 환경변수는 `.env.example`에 정리되어 있습니다.
+- [시스템 소개 문서](docs/system-overview.md)
+- [아키텍처 설계](docs/architecture.md)
+- [RAG Pipeline 설계](docs/rag-pipeline.md)
+- [MCP/Agent 설계](docs/mcp-agent-design.md)
+- [API 명세](docs/api-spec.md)
 
-`APP_ENV=production`으로 실행하면 운영 안전 설정을 강제합니다. 이 모드에서는 운영용 JWT 시크릿, HTTPS 프론트엔드 origin, secure 인증 쿠키 설정이 필요하며 FastAPI 문서 엔드포인트는 비활성화됩니다. 기본 `docker-compose.yml`은 로컬 개발과 배포 유사 환경 확인용이며, 운영 배포에서는 데이터베이스 포트 공개와 개발용 기본값을 사용하지 마세요.
+## 빠른 실행
 
-로컬 개발에서는 Windows에 설치된 PostgreSQL 17 + pgvector를 사용하고, backend/frontend는 내 컴퓨터에서 직접 실행합니다. 이 경우 DB host는 `localhost`를 사용합니다.
-
-```env
-DATABASE_URL=postgresql+psycopg://board:<local-dev-password>@localhost:5432/board
-```
-
-전체 Docker 실행에서는 backend가 Docker Compose 네트워크 안에서 실행됩니다. 이 경우 DB host는 `db`를 사용합니다.
-
-```env
-DATABASE_URL=postgresql+psycopg://board:board@db:5432/board
-```
-
-## 개발용 실행 방법
-
-개발할 때는 아래 방식을 권장합니다.
-
-- PostgreSQL 17(pgvector)은 로컬 설치본을 사용합니다.
-- FastAPI는 로컬에서 reload 모드로 실행합니다.
-- Next.js는 로컬에서 hot reload 모드로 실행합니다.
-
-DB 서비스를 확인합니다.
+루트에 `.env`를 준비합니다. 실제 secret 값은 커밋하지 않습니다.
 
 ```powershell
-Get-Service postgresql-x64-17
+Copy-Item .env.example .env
 ```
 
-backend를 실행합니다.
+Docker Compose로 전체 스택을 실행합니다.
 
 ```powershell
-cd backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
-$env:DATABASE_URL = "postgresql+psycopg://board:<local-dev-password>@localhost:5432/board"
-alembic upgrade head
-uvicorn app.main:app --reload
+docker compose up --build
 ```
 
-Windows PowerShell에서는 아래 명령을 사용합니다.
+기본 주소:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+- Backend health check: `http://localhost:8000/health`
+
+컨테이너 종료:
+
+```powershell
+docker compose down
+```
+
+데이터베이스 볼륨까지 제거:
+
+```powershell
+docker compose down -v
+```
+
+## 로컬 개발 실행
+
+Backend:
 
 ```powershell
 cd backend
@@ -104,79 +103,35 @@ py -3.12 -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
 alembic upgrade head
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-다른 터미널에서 frontend를 실행합니다.
+Frontend:
 
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-개발 서버 주소:
+## 검증 명령
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-- API docs: `http://localhost:8000/docs`
+Backend:
 
-테스트 실행:
-
-```bash
+```powershell
 cd backend
 pytest
 ```
 
-## Docker 배포용 실행 방법
+Frontend:
 
-전체 서비스를 Docker로 실행하거나 배포와 유사한 환경을 확인할 때 사용합니다. Docker Compose가 PostgreSQL을 실행하고, migration을 적용한 뒤 backend와 frontend를 실행합니다.
-
-```bash
-docker compose up --build
+```powershell
+cd frontend
+npx tsc --noEmit --pretty false
 ```
 
-서비스 구성:
+## 보안 원칙
 
-- `db`: `pgvector/pgvector:pg17` 기반 PostgreSQL 17 컨테이너
-- `migrate`: `alembic upgrade head`를 한 번 실행하고 종료합니다.
-- `backend`: `http://localhost:8000`에서 실행되는 FastAPI 서버
-- `frontend`: `http://localhost:3000`에서 실행되는 Next.js 서버
-
-로컬 개발 기본값은 PostgreSQL 17입니다. 전체 Docker 실행은 배포 유사 환경 확인용이며, 이때 backend container는 Compose 네트워크의 `db` host를 사용해야 합니다.
-Docker DB를 host에서 직접 접속할 때는 기본 포트 `5433`을 사용합니다. `.env`의 `POSTGRES_HOST_PORT`로 변경할 수 있으며, Compose 내부의 backend/migrate는 계속 `db:5432`로 접속합니다.
-
-상태 확인:
-
-```bash
-curl http://localhost:8000/health
-```
-
-컨테이너 종료:
-
-```bash
-docker compose down
-```
-
-PostgreSQL 데이터까지 삭제하려면 아래 명령을 사용합니다.
-
-```bash
-docker compose down -v
-```
-
-## API Overview
-
-- `POST /api/auth/register`: 회원가입
-- `POST /api/auth/login`: 로그인, HttpOnly JWT 쿠키 설정
-- `POST /api/auth/logout`: 로그아웃, 쿠키 삭제
-- `GET /api/auth/me`: 현재 사용자 조회
-- `GET /api/posts?page=&size=&q=`: 게시글 목록, 제목 검색
-- `POST /api/posts`: 게시글 생성
-- `GET /api/posts/{post_id}`: 게시글 상세
-- `PUT /api/posts/{post_id}`: 게시글 수정
-- `DELETE /api/posts/{post_id}`: 게시글 삭제
-- `GET /api/posts/{post_id}/comments?offset=&limit=`: 댓글 목록
-- `POST /api/posts/{post_id}/comments`: 댓글 작성
-- `PUT /api/comments/{comment_id}`: 댓글 수정
-- `DELETE /api/comments/{comment_id}`: 댓글 삭제
-- `GET /api/tags`: 태그 목록
+- `.env`와 secret 값은 커밋하지 않습니다.
+- `OPENAI_API_KEY`, `LAW_OPEN_API_OC`, JWT secret 등은 환경변수에서만 읽습니다.
+- secret, 인증 cookie, raw JWT, 전체 private dispute facts는 로그에 남기지 않는 것을 원칙으로 합니다.

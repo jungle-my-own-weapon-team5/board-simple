@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-labelledby="title desc">
+  <title id="title">RAG/Agent 처리 흐름</title>
+  <desc id="desc">사용자 입력부터 요청 검토, 쟁점 계획, 내부 RAG 검색, 법령 API 보강, 근거 검토, 쟁점 정리, 답변 초안, citation 검증, UI 출력까지의 처리 흐름</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0891b2" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9" />
+    </marker>
+    <style>
+      .label { font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; fill: #0f172a; font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+      .small { font-size: 12px; fill: #334155; }
+      .title { font-size: 15px; font-weight: 700; }
+      .box { rx: 8; ry: 8; stroke-width: 1.5; }
+      .edge { fill: none; stroke: #334155; stroke-width: 1.8; marker-end: url(#arrow); }
+      .edge-green { fill: none; stroke: #16a34a; stroke-width: 1.8; marker-end: url(#arrow-green); }
+      .edge-blue { fill: none; stroke: #0891b2; stroke-width: 1.8; marker-end: url(#arrow-blue); }
+      .edge-purple { fill: none; stroke: #6d28d9; stroke-width: 1.8; marker-end: url(#arrow-purple); }
+      .edge-dashed { stroke-dasharray: 6 5; }
+    </style>
+  </defs>
+
+  <rect class="box" x="80" y="40" width="180" height="64" fill="#dbeafe" stroke="#1d4ed8" />
+  <text x="170" y="63" class="label title">사용자 입력</text>
+  <text x="170" y="85" class="label small">사실관계 + 질문</text>
+  <rect class="box" x="80" y="140" width="180" height="64" fill="#dcfce7" stroke="#15803d" />
+  <text x="170" y="162" class="label title">전체 분석 요청</text>
+  <text x="170" y="184" class="label small">Next.js UI -> FastAPI API</text>
+  <rect class="box" x="80" y="240" width="220" height="72" fill="#fef9c3" stroke="#a16207" />
+  <text x="190" y="264" class="label title">Request / Intent Guard</text>
+  <text x="190" y="286" class="label small">법률 검토 목적 및 위험 신호 확인</text>
+  <rect class="box" x="80" y="350" width="220" height="72" fill="#ffedd5" stroke="#c2410c" />
+  <text x="190" y="374" class="label title">Orchestrator Planner</text>
+  <text x="190" y="396" class="label small">쟁점 후보와 source 후보 계획</text>
+  <rect class="box" x="80" y="460" width="220" height="72" fill="#ede9fe" stroke="#6d28d9" />
+  <text x="190" y="484" class="label title">쟁점별 내부 RAG 검색</text>
+  <text x="190" y="506" class="label small">pgvector similarity search</text>
+  <path d="M 190 570 L 275 620 L 190 670 L 105 620 Z" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" />
+  <text x="190" y="611" class="label title">근거 부족 또는</text>
+  <text x="190" y="633" class="label title">최신 법령 필요?</text>
+
+  <rect class="box" x="430" y="535" width="230" height="72" fill="#ecfeff" stroke="#0891b2" />
+  <text x="545" y="559" class="label title">국가법령정보센터 Open API</text>
+  <text x="545" y="581" class="label small">metadata / body 조회</text>
+  <rect class="box" x="430" y="640" width="230" height="72" fill="#f0fdf4" stroke="#16a34a" />
+  <text x="545" y="664" class="label title">정규화 / 청킹 / 임베딩 / 색인</text>
+  <text x="545" y="686" class="label small">공식 법령을 DB에 저장</text>
+  <rect class="box" x="430" y="750" width="230" height="64" fill="#ede9fe" stroke="#6d28d9" />
+  <text x="545" y="773" class="label title">보강 검색</text>
+  <text x="545" y="795" class="label small">새로 색인한 chunk 포함</text>
+
+  <rect class="box" x="770" y="520" width="250" height="72" fill="#fee2e2" stroke="#b91c1c" />
+  <text x="895" y="544" class="label title">Evidence Review</text>
+  <text x="895" y="566" class="label small">관련 없는 근거 제거 / 누락 확인</text>
+  <rect class="box" x="800" y="635" width="190" height="58" fill="#fff7ed" stroke="#c2410c" />
+  <text x="895" y="665" class="label title">쟁점 정리 생성</text>
+  <rect class="box" x="800" y="730" width="190" height="64" fill="#fff7ed" stroke="#c2410c" />
+  <text x="895" y="753" class="label title">답변 초안 생성</text>
+  <text x="895" y="775" class="label small">citation 후보 포함</text>
+  <rect class="box" x="1040" y="635" width="210" height="72" fill="#e0f2fe" stroke="#0369a1" />
+  <text x="1145" y="659" class="label title">Citation Verifier</text>
+  <text x="1145" y="681" class="label small">검색 근거와 인용 일치 확인</text>
+  <rect class="box" x="1040" y="760" width="210" height="72" fill="#dbeafe" stroke="#1d4ed8" />
+  <text x="1145" y="784" class="label title">UI 3패널 출력</text>
+  <text x="1145" y="806" class="label small">검색 결과 / 쟁점 정리 / 답변 초안</text>
+
+  <rect class="box" x="430" y="250" width="230" height="72" fill="#f0fdf4" stroke="#16a34a" />
+  <text x="545" y="274" class="label title">OpenAI Provider</text>
+  <text x="545" y="296" class="label small">planning / review / generation</text>
+  <path d="M 770 265 C 770 250, 990 250, 990 265 L 990 315 C 990 330, 770 330, 770 315 Z" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5" />
+  <ellipse cx="880" cy="265" rx="110" ry="15" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.5" />
+  <text x="880" y="288" class="label title">PostgreSQL + pgvector</text>
+  <text x="880" y="310" class="label small">documents / chunks / embeddings / audit</text>
+
+  <path class="edge" d="M 170 104 L 170 140" />
+  <path class="edge" d="M 170 204 L 170 240" />
+  <path class="edge" d="M 190 312 L 190 350" />
+  <path class="edge" d="M 190 422 L 190 460" />
+  <path class="edge" d="M 190 532 L 190 570" />
+  <path class="edge-blue" d="M 275 620 C 340 620, 350 571, 430 571" />
+  <text x="352" y="600" class="label small">예</text>
+  <path class="edge-blue" d="M 545 607 L 545 640" />
+  <path class="edge-green" d="M 545 712 L 545 750" />
+  <path class="edge" d="M 275 620 C 480 620, 555 555, 770 555" />
+  <text x="560" y="535" class="label small">아니오 또는 보강 후</text>
+  <path class="edge" d="M 660 782 C 705 782, 720 556, 770 556" />
+  <path class="edge" d="M 895 592 L 895 635" />
+  <path class="edge" d="M 895 693 L 895 730" />
+  <path class="edge-blue" d="M 990 762 C 1030 762, 1010 671, 1040 671" />
+  <path class="edge-blue" d="M 1145 707 L 1145 760" />
+  <path class="edge-green edge-dashed" d="M 300 386 C 360 386, 365 286, 430 286" />
+  <text x="358" y="327" class="label small">LLM 계획</text>
+  <path class="edge-green edge-dashed" d="M 770 542 C 705 510, 690 315, 660 286" />
+  <text x="728" y="424" class="label small">LLM 검토/생성</text>
+  <path class="edge-purple edge-dashed" d="M 300 496 C 500 496, 610 290, 770 290" />
+  <text x="535" y="398" class="label small">검색/저장</text>
+  <path class="edge-purple edge-dashed" d="M 660 676 C 720 640, 760 350, 840 330" />
+  <text x="745" y="520" class="label small">색인</text>
+  <path class="edge-purple edge-dashed" d="M 1145 635 C 1130 430, 1000 330, 925 315" />
+  <text x="1080" y="468" class="label small">run 근거 확인</text>
+</svg>

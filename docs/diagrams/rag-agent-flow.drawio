@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" modified="2026-06-17T00:00:00.000Z" agent="Codex" version="26.0.0">
+  <diagram id="rag-agent-flow" name="RAG Agent Flow">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="input" value="사용자 입력&lt;br&gt;사실관계 + 질문" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1d4ed8;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="40" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="request" value="전체 분석 요청&lt;br&gt;Next.js UI -> FastAPI API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;" vertex="1" parent="1">
+          <mxGeometry x="80" y="140" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="guard" value="Request / Intent Guard&lt;br&gt;법률 검토 목적 및 위험 신호 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#a16207;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="220" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="planner" value="Orchestrator Planner&lt;br&gt;쟁점 후보와 source 후보 계획" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffedd5;strokeColor=#c2410c;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="350" width="220" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="rag" value="쟁점별 내부 RAG 검색&lt;br&gt;pgvector similarity search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#6d28d9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="460" width="220" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="decision" value="근거 부족 또는&lt;br&gt;최신 법령 필요?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#b45309;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="105" y="570" width="170" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="lawapi" value="국가법령정보센터 Open API&lt;br&gt;metadata / body 조회" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfeff;strokeColor=#0891b2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="535" width="230" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="index" value="정규화 / 청킹 / 임베딩 / 색인&lt;br&gt;공식 법령을 DB에 저장" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="640" width="230" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="rerag" value="보강 검색&lt;br&gt;새로 색인한 chunk 포함" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#6d28d9;" vertex="1" parent="1">
+          <mxGeometry x="430" y="750" width="230" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="review" value="Evidence Review&lt;br&gt;관련 없는 근거 제거 / 누락 근거 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#b91c1c;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="770" y="520" width="250" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="issue" value="쟁점 정리 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#c2410c;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="635" width="190" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="draft" value="답변 초안 생성&lt;br&gt;citation 후보 포함" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#c2410c;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="730" width="190" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="verify" value="Citation Verifier&lt;br&gt;검색 근거와 인용 일치 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0369a1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="635" width="210" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="output" value="UI 3패널 출력&lt;br&gt;검색 결과 / 쟁점 정리 / 답변 초안" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1d4ed8;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="760" width="210" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" value="OpenAI Provider&lt;br&gt;planning / review / generation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="250" width="230" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="PostgreSQL + pgvector&lt;br&gt;documents / chunks / embeddings / audit" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ede9fe;strokeColor=#6d28d9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="770" y="250" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="input" target="request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="request" target="guard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="guard" target="planner">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="planner" target="rag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="rag" target="decision">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="예" style="endArrow=block;html=1;rounded=0;strokeColor=#0891b2;" edge="1" parent="1" source="decision" target="lawapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="endArrow=block;html=1;rounded=0;strokeColor=#0891b2;" edge="1" parent="1" source="lawapi" target="index">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="endArrow=block;html=1;rounded=0;strokeColor=#16a34a;" edge="1" parent="1" source="index" target="rerag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="아니오 또는 보강 후" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="decision" target="review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="rerag" target="review">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="review" target="issue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="issue" target="draft">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="endArrow=block;html=1;rounded=0;strokeColor=#0369a1;" edge="1" parent="1" source="draft" target="verify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" style="endArrow=block;html=1;rounded=0;strokeColor=#0369a1;" edge="1" parent="1" source="verify" target="output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-planner-llm" value="LLM 계획" style="endArrow=block;html=1;rounded=0;strokeColor=#16a34a;dashed=1;" edge="1" parent="1" source="planner" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-review-llm" value="LLM 검토/생성" style="endArrow=block;html=1;rounded=0;strokeColor=#16a34a;dashed=1;" edge="1" parent="1" source="review" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rag-db" value="검색/저장" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;dashed=1;" edge="1" parent="1" source="rag" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-index-db" value="색인" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;dashed=1;" edge="1" parent="1" source="index" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-verify-db" value="run 근거 확인" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;dashed=1;" edge="1" parent="1" source="verify" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

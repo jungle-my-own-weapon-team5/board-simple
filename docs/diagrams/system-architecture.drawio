@@ -1,0 +1,124 @@
+<mxfile host="app.diagrams.net" modified="2026-06-17T00:00:00.000Z" agent="Codex" version="26.0.0">
+  <diagram id="system-architecture" name="System Architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1280" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="backend-group" value="FastAPI Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;dashed=1;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="90" width="430" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-group" value="RAG 저장소" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;dashed=1;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="430" width="520" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="mcp-group" value="MCP JSON-RPC Tools" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;dashed=1;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="910" y="150" width="280" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="사용자" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1d4ed8;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="110" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" value="Browser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0369a1;" vertex="1" parent="1">
+          <mxGeometry x="210" y="150" width="120" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" value="Next.js Frontend&lt;br&gt;AI 법률 검토 UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="260" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="Backend Entry&lt;br&gt;REST API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#a16207;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="135" width="130" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="API Routes&lt;br&gt;auth / posts / rag / ai / mcp" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#c2410c;" vertex="1" parent="1">
+          <mxGeometry x="430" y="240" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="services" value="Services&lt;br&gt;RAG / Agent / MCP / AI Provider" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffedd5;strokeColor=#c2410c;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="240" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="repos" value="Repositories" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7ed;strokeColor=#c2410c;" vertex="1" parent="1">
+          <mxGeometry x="610" y="135" width="140" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="db" value="PostgreSQL 17&lt;br&gt;pgvector" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ede9fe;strokeColor=#6d28d9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="370" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="openai" value="OpenAI API&lt;br&gt;generation / embedding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#16a34a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="40" width="210" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="lawapi" value="국가법령정보센터 Open API&lt;br&gt;official legal sources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfeff;strokeColor=#0891b2;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="430" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="tool1" value="search_legal_documents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="940" y="195" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tool2" value="search_law_open_api" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="940" y="245" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tool3" value="verify_citations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="940" y="295" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="source" value="legal_sources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="420" y="485" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="documents" value="legal_documents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="590" y="485" width="150" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="chunks" value="legal_document_chunks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="420" y="550" width="170" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="embeddings" value="chunk_embeddings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="620" y="550" width="150" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="runs" value="rag_runs / retrievals / agent_steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="790" y="485" width="100" height="107" as="geometry" />
+        </mxCell>
+        <mxCell id="e-user-browser" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="user" target="browser">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-browser-front" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="browser" target="frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-front-back" value="REST API&lt;br&gt;credentials 포함" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="frontend" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-back-api" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="backend" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-api-services" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="api" target="services">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-services-repos" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="services" target="repos">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-repos-db" style="endArrow=block;html=1;rounded=0;strokeColor=#334155;" edge="1" parent="1" source="repos" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-services-openai" style="endArrow=block;html=1;rounded=0;strokeColor=#16a34a;" edge="1" parent="1" source="services" target="openai">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-services-law" style="endArrow=block;html=1;rounded=0;strokeColor=#0891b2;" edge="1" parent="1" source="services" target="lawapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-services-tool1" style="endArrow=block;html=1;rounded=0;strokeColor=#64748b;" edge="1" parent="1" source="services" target="tool1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-tool2-law" style="endArrow=block;html=1;rounded=0;strokeColor=#0891b2;dashed=1;" edge="1" parent="1" source="tool2" target="lawapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-tool3-db" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;dashed=1;" edge="1" parent="1" source="tool3" target="db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db-source" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="db" target="source">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db-documents" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="db" target="documents">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db-chunks" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="db" target="chunks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db-embeddings" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="db" target="embeddings">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-db-runs" style="endArrow=block;html=1;rounded=0;strokeColor=#6d28d9;" edge="1" parent="1" source="db" target="runs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
