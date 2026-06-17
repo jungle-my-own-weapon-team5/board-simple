@@ -10,6 +10,14 @@ from app.services.ai.types import AITextResult
 
 
 AgentName = Literal[
+    "domain_planner",
+    "criminal_law",
+    "civil_law",
+    "labor_law",
+    "administrative_law",
+    "lease_law",
+    "evidence_verifier",
+    "synthesis",
     "issue_spotting",
     "retrieval",
     "legal_source",
@@ -57,6 +65,10 @@ class AgentContext:
 
     request: AgentRunRequest
     issue_plan: dict[str, object] = field(default_factory=dict)
+    domain_tasks: list[dict[str, object]] = field(default_factory=list)
+    domain_reports: list[dict[str, object]] = field(default_factory=list)
+    verified_evidence: list[dict[str, object]] = field(default_factory=list)
+    synthesis_report: dict[str, object] = field(default_factory=dict)
     rag_run_id: int | None = None
     evidence_items: list[dict[str, object]] = field(default_factory=list)
     citations: list[dict[str, object]] = field(default_factory=list)

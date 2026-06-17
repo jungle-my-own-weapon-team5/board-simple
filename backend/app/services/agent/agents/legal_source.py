@@ -34,6 +34,7 @@ class LegalSourceAgent:
             )
 
         context.metadata["evidence_assessment_reason"] = "evidence_available"
+        next_agent = _first_domain_agent(context)
         return AgentResult(
             agent_name=self.agent_name,
             status="completed",
@@ -44,8 +45,12 @@ class LegalSourceAgent:
                 "reason": "evidence_available",
             },
             handoff=AgentHandoff(
-                next_agent="drafting",
-                reason="evidence_available_for_draft",
+                next_agent=next_agent or "drafting",
+                reason=(
+                    "evidence_available_for_domain_reports"
+                    if next_agent is not None
+                    else "evidence_available_for_draft"
+                ),
             ),
             confidence=0.75,
         )
@@ -74,3 +79,11 @@ def _insufficient_result(
         confidence=0.5,
         requires_human_review=True,
     )
+
+
+def _first_domain_agent(context: AgentContext) -> str | None:
+    for domain_task in context.domain_tasks:
+        agent_name = domain_task.get("agent_name")
+        if isinstance(agent_name, str) and agent_name.strip():
+            return agent_name
+    return None

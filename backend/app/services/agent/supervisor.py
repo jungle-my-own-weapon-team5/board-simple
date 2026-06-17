@@ -13,12 +13,20 @@ from app.models.rag_run import AgentStep, RagRun
 from app.repositories import agent_steps as agent_step_repository
 from app.repositories import rag_runs as rag_run_repository
 from app.services.agent.agents import (
+    AdministrativeLawAgent,
     CitationVerifierAgent,
+    CivilLawAgent,
+    CriminalLawAgent,
     DraftingAgent,
+    EvidenceVerifierAgent,
+    IssueDomainPlannerAgent,
     IssueSpottingAgent,
+    LaborLawAgent,
     LegalSourceAgent,
+    LeaseLawAgent,
     RetrievalAgent,
     SafetyReviewAgent,
+    SynthesisAgent,
 )
 from app.services.agent.citations import build_chunk_citations
 from app.services.agent.contracts import (
@@ -73,7 +81,7 @@ class SupervisorAgent:
         context = AgentContext(request=normalized_request)
         state = _SupervisorState()
         pending_results: list[tuple[int, AgentTask, AgentResult]] = []
-        current_agent: AgentName | None = "issue_spotting"
+        current_agent: AgentName | None = "domain_planner"
 
         try:
             while current_agent is not None:
@@ -122,6 +130,20 @@ class SupervisorAgent:
                     )
                 elif current_agent == "citation_verifier":
                     self._execute_citation_verification(
+                        db,
+                        context=context,
+                        state=state,
+                        result=result,
+                    )
+                elif current_agent == "evidence_verifier":
+                    self._execute_evidence_verification(
+                        db,
+                        context=context,
+                        state=state,
+                        result=result,
+                    )
+                elif current_agent == "synthesis":
+                    self._execute_synthesis(
                         db,
                         context=context,
                         state=state,
@@ -369,6 +391,117 @@ class SupervisorAgent:
                 "Citation verification failed",
             )
 
+    def _execute_evidence_verification(
+        self,
+        db: Session,
+        *,
+        context: AgentContext,
+        state: _SupervisorState,
+        result: AgentResult,
+    ) -> None:
+        if state.rag_run is None:
+            raise SupervisorAgentError(
+                "supervisor_rag_run_missing",
+                "Evidence verification requires a RAG run",
+            )
+        tool_name, arguments = _tool_from_handoff(
+            result,
+            expected_tool_name="verify_citations",
+        )
+        _ensure_tool_budget(state, self.settings)
+        response = self._call_tool(
+            db,
+            tool_name=tool_name,
+            arguments=arguments,
+            user_id=context.request.user_id,
+        )
+        state.tool_call_count += 1
+        verify_result = _unwrap_tool_result(response)
+        verify_status = "completed" if verify_result.get("valid") is True else "failed"
+        _add_step(
+            db,
+            rag_run=state.rag_run,
+            step_index=state.step_index,
+            step_type="multi_agent_execute_tool",
+            tool_name=tool_name,
+            status=verify_status,
+            input_json={
+                "run_id": state.rag_run.id,
+                "domain_report_count": len(context.domain_reports),
+                "citation_count": len(context.citations),
+            },
+            output_json={
+                "valid": verify_result.get("valid"),
+                "invalid_count": len(verify_result.get("invalid_citations") or []),
+            },
+        )
+        context.tool_calls.append(
+            AgentToolCallSummary(
+                step_index=state.step_index,
+                tool_name=tool_name,
+                status=verify_status,
+            )
+        )
+        state.step_index += 1
+        if verify_result.get("valid") is not True:
+            raise SupervisorAgentError(
+                "supervisor_evidence_verification_failed",
+                "Evidence verification failed",
+            )
+        context.verified_evidence = list(context.evidence_items)
+
+    def _execute_synthesis(
+        self,
+        db: Session,
+        *,
+        context: AgentContext,
+        state: _SupervisorState,
+        result: AgentResult,
+    ) -> None:
+        if state.rag_run is None:
+            raise SupervisorAgentError(
+                "supervisor_rag_run_missing",
+                "Synthesis requires a RAG run",
+            )
+        prompt = result.output.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise SupervisorAgentError(
+                "supervisor_prompt_missing",
+                "Synthesis agent did not return a prompt",
+            )
+        synthesis_result = self.ai_client.generate_text(
+            AITextRequest(
+                prompt=prompt,
+                model=self.settings.ai_agent_model,
+                temperature=_optional_temperature(
+                    context.request.options.get("temperature")
+                ),
+                timeout_seconds=self.settings.ai_request_timeout_seconds,
+                metadata={"purpose": "multi_agent_synthesis"},
+            )
+        )
+        context.draft_result = synthesis_result
+        context.answer = synthesis_result.text
+        _apply_draft_result(state.rag_run, synthesis_result)
+        _add_step(
+            db,
+            rag_run=state.rag_run,
+            step_index=state.step_index,
+            step_type="multi_agent_execute_model",
+            status="completed",
+            input_json={
+                "agent_name": "synthesis",
+                "prompt_length": len(prompt),
+                "model": self.settings.ai_agent_model,
+            },
+            output_json={
+                "text_length": len(synthesis_result.text),
+                "agent_provider": synthesis_result.agent_provider,
+                "agent_model_name": synthesis_result.agent_model_name,
+            },
+        )
+        state.step_index += 1
+
     def _call_tool(
         self,
         db: Session,
@@ -457,6 +590,14 @@ class SupervisorAgentError(Exception):
 
 def _default_agents() -> dict[AgentName, SpecializedAgent]:
     return {
+        "domain_planner": IssueDomainPlannerAgent(),
+        "criminal_law": CriminalLawAgent(),
+        "civil_law": CivilLawAgent(),
+        "labor_law": LaborLawAgent(),
+        "administrative_law": AdministrativeLawAgent(),
+        "lease_law": LeaseLawAgent(),
+        "evidence_verifier": EvidenceVerifierAgent(),
+        "synthesis": SynthesisAgent(),
         "issue_spotting": IssueSpottingAgent(),
         "retrieval": RetrievalAgent(),
         "legal_source": LegalSourceAgent(),

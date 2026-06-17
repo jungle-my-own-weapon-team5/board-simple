@@ -106,27 +106,34 @@ def test_supervisor_runs_specialized_agents_and_persists_handoff_audit(
     assert rag_run.answer == result.answer
 
     assert [step.step_type for step in steps] == [
-        "agent_issue_spotting",
+        "agent_domain_planner",
         "agent_retrieval",
         "multi_agent_execute_tool",
         "agent_legal_source",
-        "agent_drafting",
-        "multi_agent_execute_model",
-        "agent_citation_verifier",
+        "agent_lease_law",
+        "agent_civil_law",
+        "agent_evidence_verifier",
         "multi_agent_execute_tool",
+        "agent_synthesis",
+        "multi_agent_execute_model",
         "agent_safety_review",
         "multi_agent_persist",
     ]
     assert steps[0].output_json is not None
     assert steps[0].output_json["handoff"]["next_agent"] == "retrieval"
     assert steps[4].output_json is not None
-    assert "prompt" not in steps[4].output_json["output"]
-    assert steps[4].output_json["output"]["prompt_length"] > 0
-    assert "임대차 보증금" not in str(steps[4].output_json)
-    assert steps[8].status == "completed"
+    assert steps[4].output_json["output"]["domain"] == "lease"
+    assert steps[5].output_json is not None
+    assert steps[5].output_json["output"]["domain"] == "civil"
+    assert steps[8].output_json is not None
+    assert "prompt" not in steps[8].output_json["output"]
+    assert steps[8].output_json["output"]["prompt_length"] > 0
+    assert "임대차 보증금" not in str(steps[8].output_json)
+    assert steps[10].status == "completed"
     assert len(ai_client.text_requests) == 2
     assert ai_client.text_requests[0].metadata == {"purpose": "legal_source_planner"}
     assert ai_client.text_requests[0].model == "agent-test-model"
+    assert ai_client.text_requests[1].metadata == {"purpose": "multi_agent_synthesis"}
     assert ai_client.text_requests[1].model == "agent-test-model"
     assert "임대차 보증금" in ai_client.text_requests[1].prompt
 
@@ -245,7 +252,7 @@ def test_supervisor_fails_when_required_review_agents_would_be_skipped(
 
 def _settings(
     *,
-    ai_agent_max_iterations: int = 6,
+    ai_agent_max_iterations: int = 12,
     ai_agent_max_tool_calls: int = 5,
     ai_agent_max_handoffs: int = 8,
 ) -> Settings:

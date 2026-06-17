@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ai_embedding_model: str = ""
     ai_embedding_dimensions: int | None = None
     ai_request_timeout_seconds: int = 60
-    ai_agent_max_iterations: int = 6
+    ai_agent_max_iterations: int = 12
     ai_agent_max_tool_calls: int = 5
     ai_agent_max_handoffs: int = 8
     ai_agent_max_repeated_actions: int = 2

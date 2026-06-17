@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 from app.services.agent.state import AgentRunRequest
@@ -51,6 +52,56 @@ def build_draft_prompt(
             citation_text,
             "",
             "위 근거만 바탕으로 한국어 답변 초안을 작성하세요.",
+        ]
+    )
+
+
+def build_synthesis_prompt(
+    *,
+    request: AgentRunRequest,
+    domain_reports: list[dict[str, object]],
+    evidence_items: list[dict[str, object]],
+    citations: list[dict[str, object]],
+) -> str:
+    evidence_text = _format_evidence(evidence_items)
+    citation_text = _format_citations(citations)
+    allowed_article_text = _format_allowed_article_refs(evidence_items)
+    domain_report_text = json.dumps(
+        domain_reports,
+        ensure_ascii=False,
+        indent=2,
+        default=str,
+    )
+    return "\n".join(
+        [
+            "당신은 여러 법률 도메인 전문 Agent의 보고서를 통합하는 SynthesisAgent입니다.",
+            "도메인별 보고서는 중간 분석 자료이며, 최종 답변은 검증된 검색 근거와 citation만 바탕으로 작성하세요.",
+            "근거에 없는 법령, 판례, URL, 사실관계는 새로 만들지 마세요.",
+            "사용 가능한 citation에 없는 조문 번호나 법률 효과를 단정하지 마세요.",
+            "도메인별 보고와 종합 보고를 모두 포함하되, 중복 쟁점과 선결문제는 정리해서 합치세요.",
+            "형사, 민사, 노동, 행정, 임대차 등 여러 도메인이 함께 있으면 영역 간 영향 관계를 설명하세요.",
+            "확실하지 않은 부분은 추가 확인이 필요하다고 표시하세요.",
+            "마지막에 '원하시면', '더 다듬어 드릴게요', '다시 정리해드릴게요' 같은 후속 대화 유도 문구를 쓰지 마세요.",
+            "답변은 현재 요청에 대한 완결된 검토 초안으로 끝내세요.",
+            "",
+            f"작업 유형: {request.task_type}",
+            f"사용자 사실관계:\n{request.facts.strip()}",
+            f"사용자 질문:\n{request.question.strip()}",
+            "",
+            "도메인별 전문 Agent 보고:",
+            domain_report_text,
+            "",
+            "검증된 검색 근거:",
+            evidence_text,
+            "",
+            "사용 가능한 조문 목록:",
+            allowed_article_text,
+            "",
+            "사용 가능한 citation:",
+            citation_text,
+            "",
+            "위 자료만 바탕으로 한국어 최종 보고를 작성하세요.",
+            "권장 구조: 1. 도메인별 분석, 2. 종합 쟁점 정리, 3. 답변 초안 방향, 4. 추가 확인 필요사항.",
         ]
     )
 
