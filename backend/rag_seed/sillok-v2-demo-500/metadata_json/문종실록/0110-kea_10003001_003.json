@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 110,
+  "sillok_id": "kea_10003001_003",
+  "source_url": "https://sillok.history.go.kr/id/kea_10003001_003",
+  "period": "문종실록",
+  "title": "문종실록: 집현전 부제학 정창손 등이 불사의 중지를 요청하자 다시 의논할 것을 명하다",
+  "date": "문종실록1권, 문종 즉위년 3월 1일 을사 3/6 기사 / 1450년 명 경태(景泰) 1년",
+  "record_code": "kea",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-불교(佛敎)",
+    "출판-서책(書冊)",
+    "왕실-비빈(妃嬪)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.275,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e653cf5208f2614ddd2001482d5931351fd69dae870a3a3a7ea80a4f132e2d7b",
+  "content_length": 2794,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\문종실록\\0110-kea_10003001_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\문종실록\\0110-kea_10003001_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\문종실록\\0110-kea_10003001_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 289,
+  "sillok_id": "kua_10008030_001",
+  "source_url": "https://sillok.history.go.kr/id/kua_10008030_001",
+  "period": "영조실록",
+  "title": "영조실록: 대왕이 창덕궁 인정문에서 즉위하다",
+  "date": "영조실록1권, 영조 즉위년 8월 30일 경자 1/5 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "어문학-문학(文學)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.7,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.0,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ddd5b4cf0d3865726de104ce1087eaa0221f7e836abc41459e8eda6d44d18b12",
+  "content_length": 3604,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0289-kua_10008030_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0289-kua_10008030_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0289-kua_10008030_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

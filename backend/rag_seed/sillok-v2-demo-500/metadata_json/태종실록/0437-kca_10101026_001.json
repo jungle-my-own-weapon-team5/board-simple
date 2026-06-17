@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 437,
+  "sillok_id": "kca_10101026_001",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101026_001",
+  "period": "태종실록",
+  "title": "태종실록: 좌산기 상시 이복시 등이 대사헌 김약채·중승 전순 등을 탄핵하는 상소문",
+  "date": "태종실록1권, 태종 1년 1월 26일 병술 1/1 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 26,
+  "article_no": 1,
+  "categories": [
+    "정론-간쟁(諫諍)",
+    "인사-관리(管理)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.625,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "124e8ec42bdd18d8afda989a079b127f77be216876804998b27a55c74a695d1f",
+  "content_length": 1061,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0437-kca_10101026_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0437-kca_10101026_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0437-kca_10101026_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

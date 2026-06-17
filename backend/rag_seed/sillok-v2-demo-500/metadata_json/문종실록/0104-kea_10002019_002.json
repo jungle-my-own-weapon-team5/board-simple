@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 104,
+  "sillok_id": "kea_10002019_002",
+  "source_url": "https://sillok.history.go.kr/id/kea_10002019_002",
+  "period": "문종실록",
+  "title": "문종실록: 하연·황보인 등이 왕의 종기를 염려하여 동궁에 물러가 조섭하기를 청하다",
+  "date": "문종실록1권, 문종 즉위년 2월 19일 갑오 2/4 기사 / 1450년 명 경태(景泰) 1년",
+  "record_code": "kea",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "의약-의학(醫學)"
+  ],
+  "primary_bucket": "event",
+  "score": 17.025,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "b08f0fb099a84da30fe90cc87b4ae4ee96ff63b9b4087df431709d2812dff29e",
+  "content_length": 807,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\문종실록\\0104-kea_10002019_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\문종실록\\0104-kea_10002019_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\문종실록\\0104-kea_10002019_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

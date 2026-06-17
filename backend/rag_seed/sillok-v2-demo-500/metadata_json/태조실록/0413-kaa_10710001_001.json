@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 413,
+  "sillok_id": "kaa_10710001_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10710001_001",
+  "period": "태조실록",
+  "title": "태조실록: 정사 공신의 책록과 등급별 포상 내역",
+  "date": "태조실록15권, 태조 7년 10월 1일 계묘 1/1 기사 / 1398년 명 홍무(洪武) 31년",
+  "record_code": "kaa",
+  "volume": 15,
+  "king_year": 7,
+  "month": 10,
+  "day": 1,
+  "article_no": 1,
+  "categories": [
+    "변란-정변(政變)",
+    "인사-관리(管理)",
+    "농업-전제(田制)",
+    "신분-천인(賤人)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 24.45,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 4.8,
+    "title_clarity": 3.25,
+    "length_quality": 3.0,
+    "category_quality": 5.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "56a08066dda5f8c3f021af97225867b28fbf0c35aaaf22630d68ac0d43c48294",
+  "content_length": 2351,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0413-kaa_10710001_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0413-kaa_10710001_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0413-kaa_10710001_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

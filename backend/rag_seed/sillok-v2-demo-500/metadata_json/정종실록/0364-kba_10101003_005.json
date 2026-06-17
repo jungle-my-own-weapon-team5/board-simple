@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 364,
+  "sillok_id": "kba_10101003_005",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101003_005",
+  "period": "정종실록",
+  "title": "정종실록: 노비 변정 도감에서 송사를 결단하는 것을 2월 그믐날까지로 한정하다",
+  "date": "정종실록1권, 정종 1년 1월 3일 갑술 5/5 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 3,
+  "article_no": 5,
+  "categories": [
+    "행정-중앙행정(中央行政)",
+    "신분-천인(賤人)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.775,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "6b84882050df19b124b2e16f28ef9371b67e1bd498080b5258f03d526dfa7f23",
+  "content_length": 88,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0364-kba_10101003_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0364-kba_10101003_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0364-kba_10101003_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

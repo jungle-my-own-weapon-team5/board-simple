@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 342,
+  "sillok_id": "kva_10003023_001",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003023_001",
+  "period": "정조실록",
+  "title": "정조실록: 태묘 이하 각 사당의 축문 격식을 정하다",
+  "date": "정조실록1권, 정조 즉위년 3월 23일 갑오 1/2 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.2,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "f2242ea25956b5f422a02323f81d4413d5a8da8da3fab27399242420806e74c1",
+  "content_length": 1196,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0342-kva_10003023_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0342-kva_10003023_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0342-kva_10003023_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

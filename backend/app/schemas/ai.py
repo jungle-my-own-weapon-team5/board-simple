@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-RagCorpusMode = Literal["auto", "encykorea", "legacy", "sinpyeon_hanguksa", "all"]
+RagCorpusMode = Literal["auto", "encykorea", "legacy", "sinpyeon_hanguksa", "sillok-v2", "all"]
 
 
 class RagCitation(BaseModel):

@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 237,
+  "sillok_id": "kwa_10007013_004",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007013_004",
+  "period": "순조실록",
+  "title": "순조실록: 현륭원 내 산릉으로 쓸 곳을 살피고 총호사 이시수 등이 장계하다",
+  "date": "순조실록1권, 순조 즉위년 7월 13일 계사 4/4 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-토속신앙(土俗信仰)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.125,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c396bc3015763a275985e2f6bf9e4bdf3907e17cf73c72a0d4cdfd1eee8f0ac8",
+  "content_length": 602,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0237-kwa_10007013_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0237-kwa_10007013_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0237-kwa_10007013_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

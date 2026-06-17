@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 296,
+  "sillok_id": "kua_10009022_003",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009022_003",
+  "period": "영조실록",
+  "title": "영조실록: 심단·이정제·이중술·윤회에게 관직을 제수하다",
+  "date": "영조실록1권, 영조 즉위년 9월 22일 임술 3/4 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 7.15,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 3.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ca03c13f1db28072d4f39e3209043f7c9d27d150e5bddecf445e113aff3de89c",
+  "content_length": 131,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0296-kua_10009022_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0296-kua_10009022_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0296-kua_10009022_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

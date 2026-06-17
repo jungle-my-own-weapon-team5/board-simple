@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 46,
+  "sillok_id": "kob_10002001_018",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002001_018",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 내전에서 해사가 어려우므로 억지로 옷감을 들여올 필요가 없다고 하교하다",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 1일 무오 18/22 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "재정-국용(國用)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0a5183996a2c5b5a0ff19dc8a8e50f3928b314f3132f4f8f2d967542a922d614",
+  "content_length": 230,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0046-kob_10002001_018.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0046-kob_10002001_018.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0046-kob_10002001_018.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

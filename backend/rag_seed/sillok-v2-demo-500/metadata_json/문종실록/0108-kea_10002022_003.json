@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 108,
+  "sillok_id": "kea_10002022_003",
+  "source_url": "https://sillok.history.go.kr/id/kea_10002022_003",
+  "period": "문종실록",
+  "title": "문종실록: 최복 차림으로 의식대로 교서를 반포하다",
+  "date": "문종실록1권, 문종 즉위년 2월 22일 정유 3/7 기사 / 1450년 명 경태(景泰) 1년",
+  "record_code": "kea",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.775,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 3.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1bc8d65ab616200a4292721ad2be595e97d0ff483be1972f22de19261508f093",
+  "content_length": 1515,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\문종실록\\0108-kea_10002022_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\문종실록\\0108-kea_10002022_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\문종실록\\0108-kea_10002022_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

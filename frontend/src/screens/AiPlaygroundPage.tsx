@@ -103,6 +103,7 @@ export default function AiPlaygroundPage() {
           <option value="encykorea">encykorea</option>
           <option value="legacy">legacy</option>
           <option value="sinpyeon_hanguksa">sinpyeon_hanguksa</option>
+          <option value="sillok-v2">sillok-v2</option>
           <option value="all">all</option>
         </select>
         <Button type="submit" className="rounded-sm" disabled={isSubmitting}>{isSubmitting ? "실행 중" : "실행"}</Button>

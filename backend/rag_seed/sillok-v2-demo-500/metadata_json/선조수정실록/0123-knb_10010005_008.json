@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 123,
+  "sillok_id": "knb_10010005_008",
+  "source_url": "https://sillok.history.go.kr/id/knb_10010005_008",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 기대승이 선비 등용시 우선 시비가 분명하도록 해야 할 것에 관해 아뢰다",
+  "date": "선조수정실록1권, 선조 즉위년 10월 5일 병술 8/23 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "knb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "인사-임면(任免)",
+    "역사-전사(前史)"
+  ],
+  "primary_bucket": "event",
+  "score": 17.575,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "decdfcc2b8f1d700ca9f5159a0756674491e297c6ad064d704e2e07fdaa7d7fd",
+  "content_length": 1945,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0123-knb_10010005_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0123-knb_10010005_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0123-knb_10010005_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

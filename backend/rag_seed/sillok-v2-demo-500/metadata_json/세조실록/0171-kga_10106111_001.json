@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 171,
+  "sillok_id": "kga_10106111_001",
+  "source_url": "https://sillok.history.go.kr/id/kga_10106111_001",
+  "period": "세조실록",
+  "title": "세조실록: 혜빈 양씨·상궁 박씨 등을 귀양보내다. 노산군이 세조에게 선위하다",
+  "date": "세조실록1권, 세조 1년 윤6월 11일 을묘 1/2 기사 / 1455년 명 경태(景泰) 6년",
+  "record_code": "kga",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "변란-정변(政變)",
+    "사법-행형(行刑)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.65,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "11463ec384bfd2a0aecd40c413c63d8da1bca3c425fb97552b6809accededde4",
+  "content_length": 5281,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세조실록\\0171-kga_10106111_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세조실록\\0171-kga_10106111_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세조실록\\0171-kga_10106111_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

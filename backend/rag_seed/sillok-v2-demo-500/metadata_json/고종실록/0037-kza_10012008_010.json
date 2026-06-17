@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 37,
+  "sillok_id": "kza_10012008_010",
+  "source_url": "https://sillok.history.go.kr/id/kza_10012008_010",
+  "period": "고종실록",
+  "title": "고종실록: 예조에서 등극하는 절차와 날짜, 그리고 왕비 등에게 올릴 존호 절차를 아뢰다",
+  "date": "고종실록1권, 고종 즉위년 12월 8일 경진 10/14 기사 / 1863년 청 동치(同治) 2년",
+  "record_code": "kza",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-비빈(妃嬪)",
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "05fe21877f1dda94ae960f98eadc37ede274e673ef17f785b0c27b384a6211d3",
+  "content_length": 678,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\고종실록\\0037-kza_10012008_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\고종실록\\0037-kza_10012008_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\고종실록\\0037-kza_10012008_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

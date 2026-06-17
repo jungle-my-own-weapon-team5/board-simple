@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 392,
+  "sillok_id": "kya_10007015_003",
+  "source_url": "https://sillok.history.go.kr/id/kya_10007015_003",
+  "period": "철종실록",
+  "title": "철종실록: 홍재룡·유상필 등에게 관직을 제수하다",
+  "date": "철종실록1권, 철종 즉위년 7월 15일 경술 3/5 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 6.65,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 3.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9f81eb996faa20feca1c501a58804735668a01371625cd10c03f77e9bce9e801",
+  "content_length": 84,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0392-kya_10007015_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0392-kya_10007015_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0392-kya_10007015_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

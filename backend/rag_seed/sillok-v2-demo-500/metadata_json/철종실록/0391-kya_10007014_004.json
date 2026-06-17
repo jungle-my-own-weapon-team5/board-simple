@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 391,
+  "sillok_id": "kya_10007014_004",
+  "source_url": "https://sillok.history.go.kr/id/kya_10007014_004",
+  "period": "철종실록",
+  "title": "철종실록: 장령 이정두가 상소하여 이응식·이능권 등을 절도에 정배하기를 청하다",
+  "date": "철종실록1권, 철종 즉위년 7월 14일 기유 4/4 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-정론(政論)",
+    "사법-행형(行刑)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e8e6ba5b300a09e16d62eb7dc18434e5605d38e3377600644bf34705baa3f2d8",
+  "content_length": 930,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0391-kya_10007014_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0391-kya_10007014_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0391-kya_10007014_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

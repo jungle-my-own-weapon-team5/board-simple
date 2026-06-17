@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 304,
+  "sillok_id": "kha_10009009_006",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009009_006",
+  "period": "예종실록",
+  "title": "예종실록: 금 캐는 것을 정지하였으므로 군인을 보내지 말 것을 병조에 전지하다",
+  "date": "예종실록1권, 예종 즉위년 9월 9일 을축 6/8 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "군사-군역(軍役)",
+    "광업-채광(採鑛)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.775,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8f6df0ea33b9f9e1d17ed28e4043f1c86e16b1caef7f40b849077cac2ddb54fc",
+  "content_length": 102,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0304-kha_10009009_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0304-kha_10009009_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0304-kha_10009009_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

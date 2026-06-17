@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 71,
+  "sillok_id": "koa_10002002_007",
+  "source_url": "https://sillok.history.go.kr/id/koa_10002002_007",
+  "period": "광해군중초본",
+  "title": "광해군중초본: 유영경·한응인·박동량 등에게 유교를 내리다",
+  "date": "광해군일기[중초본]1권, 광해 즉위년 2월 2일 기미 7/10 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "koa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-종친(宗親)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.575,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "2a1fcae1172d0031f43736e3180b9a951ac3e0bc1169bba1897a69ce1708a5f7",
+  "content_length": 609,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군중초본\\0071-koa_10002002_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군중초본\\0071-koa_10002002_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군중초본\\0071-koa_10002002_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

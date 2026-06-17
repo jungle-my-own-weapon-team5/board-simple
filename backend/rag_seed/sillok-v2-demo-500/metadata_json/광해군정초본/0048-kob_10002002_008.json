@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 48,
+  "sillok_id": "kob_10002002_008",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002002_008",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 예조에서 중전·세자비·원자의 휘호를 올리는 것에 대하여 아뢰다",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 2일 기미 8/10 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-비빈(妃嬪)",
+    "왕실-종친(宗親)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 22.05,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 10.8,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a36ef9d02e500f6363d1320a3782624e3a7d3f700b24a43923b276165d06e9c2",
+  "content_length": 394,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0048-kob_10002002_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0048-kob_10002002_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0048-kob_10002002_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

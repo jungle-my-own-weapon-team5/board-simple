@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 114,
+  "sillok_id": "kea_10002018_001",
+  "source_url": "https://sillok.history.go.kr/id/kea_10002018_001",
+  "period": "문종실록",
+  "title": "문종실록: 염습을 마치고 종친과 백관이 곡림하다",
+  "date": "문종실록1권, 문종 즉위년 2월 18일 계사 1/7 기사 / 1450년 명 경태(景泰) 1년",
+  "record_code": "kea",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "의생활-예복(禮服)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 9.25,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "654f4e9a9694e1e1c8dc59097ea9782715778f7bc1a190e5371e2045c2068c93",
+  "content_length": 125,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\문종실록\\0114-kea_10002018_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\문종실록\\0114-kea_10002018_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\문종실록\\0114-kea_10002018_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

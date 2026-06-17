@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 489,
+  "sillok_id": "kqa_10006008_008",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10006008_008",
+  "period": "효종실록",
+  "title": "효종실록: 김집·송준길·권시·이유태 등을 조정으로 불렀으나 권시·이유태는 돌아갈 것을 간하다",
+  "date": "효종실록1권, 효종 즉위년 6월 8일 병신 8/9 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e3e4fe80c382c7d3594dc0633ce15ecf454f523bdd0b075a88ad71c0cf323d90",
+  "content_length": 448,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0489-kqa_10006008_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0489-kqa_10006008_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0489-kqa_10006008_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

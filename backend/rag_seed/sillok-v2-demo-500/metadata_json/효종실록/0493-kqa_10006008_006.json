@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 493,
+  "sillok_id": "kqa_10006008_006",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10006008_006",
+  "period": "효종실록",
+  "title": "효종실록: 《오례의》에 근거하여 임금과 세자의 복장에 대하여 예조가 아뢰다",
+  "date": "효종실록1권, 효종 즉위년 6월 8일 병신 6/9 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "의생활-예복(禮服)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 19.525,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a5cfb18a2c2acd66d6bb208f670f7b8b594fc4b3b29edf615d6f73c96528ac55",
+  "content_length": 556,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0493-kqa_10006008_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0493-kqa_10006008_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0493-kqa_10006008_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

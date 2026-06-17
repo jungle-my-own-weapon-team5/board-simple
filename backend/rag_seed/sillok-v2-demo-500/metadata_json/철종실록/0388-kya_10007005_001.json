@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 388,
+  "sillok_id": "kya_10007005_001",
+  "source_url": "https://sillok.history.go.kr/id/kya_10007005_001",
+  "period": "철종실록",
+  "title": "철종실록: 청나라의 휘와 비슷한 임금의 휘를 올린 영부사 조인영이 총호사를 사임할 것을 청하다",
+  "date": "철종실록1권, 철종 즉위년 7월 5일 경자 1/1 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-정론(政論)",
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.5,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5fcbf70436e7ff1a84d00e7b9dce1954d20cb01fdfdd6ece99d5860d27205f69",
+  "content_length": 740,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0388-kya_10007005_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0388-kya_10007005_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0388-kya_10007005_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,16 @@
+{
+  "processed": 500,
+  "written": 500,
+  "missing": 0,
+  "failed": 0,
+  "document_count": 500,
+  "metadata_json_count": 500,
+  "embedding_text_count": 500,
+  "empty_file_count": 0,
+  "embedding_text_min_chars": 313,
+  "embedding_text_max_chars": 1135,
+  "embedding_text_avg_chars": 780.3,
+  "embedding_text_issue_file_count": 0,
+  "embedding_text_issue_counts": {},
+  "empty_files": []
+}

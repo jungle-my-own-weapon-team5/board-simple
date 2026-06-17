@@ -1,0 +1,57 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 144,
+  "sillok_id": "kna_10012009_001",
+  "source_url": "https://sillok.history.go.kr/id/kna_10012009_001",
+  "period": "선조실록",
+  "title": "선조실록: 상이 비현각에서 소대하였는데 기대승이 《대학》과 《시경》을 설명하다",
+  "date": "선조실록1권, 선조 즉위년 12월 9일 기축 1/1 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "kna",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "정론-정론(政論)",
+    "재정-전세(田稅)",
+    "재정-상공(上供)",
+    "사상-유학(儒學)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 16.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 4.8,
+    "title_clarity": 5.375,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1eefdc5ea4188aca1b1a0d6cb2ef202e7cd3a7c451545ad9ba147382d330afef",
+  "content_length": 12890,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0144-kna_10012009_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0144-kna_10012009_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0144-kna_10012009_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 461,
+  "sillok_id": "krb_10005004_007",
+  "source_url": "https://sillok.history.go.kr/id/krb_10005004_007",
+  "period": "현종개수실록",
+  "title": "현종개수실록: 정원이 순장 감군으로 번을 드는 것과 군호의 일을 대신에게 품의하다",
+  "date": "현종개수실록1권, 현종 즉위년 5월 4일 갑자 7/12 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "krb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-치안(治安)",
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "98c8e0f78ff9f3633339a2415926a2523f235fa3fd1ffd0bb53115baeca3bd75",
+  "content_length": 169,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종개수실록\\0461-krb_10005004_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종개수실록\\0461-krb_10005004_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종개수실록\\0461-krb_10005004_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

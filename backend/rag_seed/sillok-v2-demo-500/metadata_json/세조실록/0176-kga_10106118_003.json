@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 176,
+  "sillok_id": "kga_10106118_003",
+  "source_url": "https://sillok.history.go.kr/id/kga_10106118_003",
+  "period": "세조실록",
+  "title": "세조실록: 사헌부에 명하여 일이 많을 때는 경연에 참여하지 말도록 하다",
+  "date": "세조실록1권, 세조 1년 윤6월 18일 임술 3/3 기사 / 1455년 명 경태(景泰) 6년",
+  "record_code": "kga",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 10.875,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "420a557d6299299b2694782d9bd4b1149b239a7f07f08e5e44cca4437398f215",
+  "content_length": 117,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세조실록\\0176-kga_10106118_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세조실록\\0176-kga_10106118_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세조실록\\0176-kga_10106118_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

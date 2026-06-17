@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 382,
+  "sillok_id": "kka_10109002_005",
+  "source_url": "https://sillok.history.go.kr/id/kka_10109002_005",
+  "period": "중종실록",
+  "title": "중종실록: 홍 숙의·박숭질을 복관하고 폐주의 동서 금표를 폐하다",
+  "date": "중종실록1권, 중종 1년 9월 2일 무인 5/6 기사 / 1506년 명 정덕(正德) 1년",
+  "record_code": "kka",
+  "volume": 1,
+  "king_year": 1,
+  "month": 9,
+  "day": 2,
+  "article_no": 5,
+  "categories": [
+    "왕실-궁관(宮官)",
+    "왕실-비빈(妃嬪)",
+    "왕실-의식(儀式)",
+    "행정-중앙행정(中央行政)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "53b9a9402d8bd0683382b17f22349b1929e38183ab956dda176215c24dac20c5",
+  "content_length": 249,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\중종실록\\0382-kka_10109002_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\중종실록\\0382-kka_10109002_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\중종실록\\0382-kka_10109002_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

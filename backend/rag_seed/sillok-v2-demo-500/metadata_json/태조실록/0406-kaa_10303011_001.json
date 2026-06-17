@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 406,
+  "sillok_id": "kaa_10303011_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10303011_001",
+  "period": "태조실록",
+  "title": "태조실록: 수미포에서 《오군진도》대로 군사 훈련을 하다. 정도전과 사냥한 동물의 제향을 논의하다",
+  "date": "태조실록5권, 태조 3년 3월 11일 경술 1/2 기사 / 1394년 명 홍무(洪武) 27년",
+  "record_code": "kaa",
+  "volume": 5,
+  "king_year": 3,
+  "month": 3,
+  "day": 11,
+  "article_no": 1,
+  "categories": [
+    "왕실-행행(行幸)",
+    "왕실-경연(經筵)",
+    "왕실-의식(儀式)",
+    "군사-병법(兵法)"
+  ],
+  "primary_bucket": "event",
+  "score": 23.625,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.625,
+    "length_quality": 6.0,
+    "category_quality": 5.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "2943c526f9bc858f4b2e9aa8a8a95a31c53d79a19208a5b543a5eaab19b39e23",
+  "content_length": 496,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0406-kaa_10303011_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0406-kaa_10303011_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0406-kaa_10303011_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

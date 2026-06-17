@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 174,
+  "sillok_id": "kga_10106113_008",
+  "source_url": "https://sillok.history.go.kr/id/kga_10106113_008",
+  "period": "세조실록",
+  "title": "세조실록: 경상도 가망포의 선군이 익사함에 부조하고 부역을 면제하다",
+  "date": "세조실록1권, 세조 1년 윤6월 13일 정사 8/9 기사 / 1455년 명 경태(景泰) 6년",
+  "record_code": "kga",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-사급(賜給)",
+    "군사-지방군(地方軍)",
+    "군사-군역(軍役)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.025,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "4b1eb49596d5ca9799e1d8b297a178f216d1e4d1084f2571ce008c8ee1c1614f",
+  "content_length": 136,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세조실록\\0174-kga_10106113_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세조실록\\0174-kga_10106113_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세조실록\\0174-kga_10106113_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

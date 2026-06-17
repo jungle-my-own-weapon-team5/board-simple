@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 80,
+  "sillok_id": "kfa_10005018_006",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005018_006",
+  "period": "단종실록",
+  "title": "단종실록: 사헌부와 사간원에서 내의 전순의 등과 장죄를 범한 오명의를 엄벌할 것을 청하다",
+  "date": "단종실록1권, 단종 즉위년 5월 18일 경술 6/9 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-재판(裁判)",
+    "인사-관리(管理)",
+    "의약-의학(醫學)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.225,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 6.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "267902055eb4ed99e2f5299d1f1e9abc9882dbe84edc1a0c73902c6eaad0ffe0",
+  "content_length": 689,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0080-kfa_10005018_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0080-kfa_10005018_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0080-kfa_10005018_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

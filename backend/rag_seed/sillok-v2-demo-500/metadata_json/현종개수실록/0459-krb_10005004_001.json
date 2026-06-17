@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 459,
+  "sillok_id": "krb_10005004_001",
+  "source_url": "https://sillok.history.go.kr/id/krb_10005004_001",
+  "period": "현종개수실록",
+  "title": "현종개수실록: 효종 대왕이 창덕궁의 대조전에서 승하하다",
+  "date": "현종개수실록1권, 현종 즉위년 5월 4일 갑자 1/12 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "krb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 18.15,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 3.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7716b564fd65bccb044c7888673953c0e203e1d96fc65836ba439d8c45d55ac3",
+  "content_length": 1513,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종개수실록\\0459-krb_10005004_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종개수실록\\0459-krb_10005004_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종개수실록\\0459-krb_10005004_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

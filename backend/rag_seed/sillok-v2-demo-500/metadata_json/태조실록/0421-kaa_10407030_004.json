@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 421,
+  "sillok_id": "kaa_10407030_004",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10407030_004",
+  "period": "태조실록",
+  "title": "태조실록: 산사태와 홍수가 난 광주와 천녕 사이 고을의 세곡을 면제하고 양식을 주다",
+  "date": "태조실록8권, 태조 4년 7월 30일 신유 4/4 기사 / 1395년 명 홍무(洪武) 28년",
+  "record_code": "kaa",
+  "volume": 8,
+  "king_year": 4,
+  "month": 7,
+  "day": 30,
+  "article_no": 4,
+  "categories": [
+    "과학-천기(天氣)",
+    "재정-전세(田稅)",
+    "왕실-사급(賜給)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 24.05,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 5.75,
+    "length_quality": 6.0,
+    "category_quality": 4.5,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "545fb6e7b5f6350fb5ad4524d2586a8ff342fdb8d48998f32d3a5e48f9e33335",
+  "content_length": 126,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0421-kaa_10407030_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0421-kaa_10407030_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0421-kaa_10407030_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

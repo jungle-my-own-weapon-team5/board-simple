@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 283,
+  "sillok_id": "kja_10012026_006",
+  "source_url": "https://sillok.history.go.kr/id/kja_10012026_006",
+  "period": "연산군일기",
+  "title": "연산군일기: 승지 강귀손이 태종에 대한 세자의 호칭 문제를 상고할 것을 아뢰다",
+  "date": "연산군일기1권, 연산 즉위년 12월 26일 신사 6/9 기사 / 1494년 명 홍치(弘治) 7년",
+  "record_code": "kja",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종친(宗親)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "b43c4ca2b3beba263c2883a786fcf3e35b31bc0b217919befff2493ee6c71fde",
+  "content_length": 315,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0283-kja_10012026_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0283-kja_10012026_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0283-kja_10012026_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

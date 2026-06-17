@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 203,
+  "sillok_id": "ksb_10606008_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10606008_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 과거에 급제한 황윤이 청의 연호를 홍패에 쓰지 말아 줄 것을 건의하다",
+  "date": "숙종실록보궐정오9권, 숙종 6년 6월 8일 을축 1/1 기사 / 1680년 청 강희(康熙) 19년",
+  "record_code": "ksb",
+  "volume": 9,
+  "king_year": 6,
+  "month": 6,
+  "day": 8,
+  "article_no": 1,
+  "categories": [
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 19.55,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 5.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "d8f838e417ecf3de015bbbff63be717bdf24d27e486f19eb4751a925d3ce2c75",
+  "content_length": 590,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0203-ksb_10606008_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0203-ksb_10606008_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0203-ksb_10606008_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

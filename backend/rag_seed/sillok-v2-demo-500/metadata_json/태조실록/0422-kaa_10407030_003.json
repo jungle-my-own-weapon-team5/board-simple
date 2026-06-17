@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 422,
+  "sillok_id": "kaa_10407030_003",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10407030_003",
+  "period": "태조실록",
+  "title": "태조실록: 제언을 쌓고 산불을 방지하자는 전 낭장 정분의 진언을 사사에서 아뢰다",
+  "date": "태조실록8권, 태조 4년 7월 30일 신유 3/4 기사 / 1395년 명 홍무(洪武) 28년",
+  "record_code": "kaa",
+  "volume": 8,
+  "king_year": 4,
+  "month": 7,
+  "day": 30,
+  "article_no": 3,
+  "categories": [
+    "행정-지방행정(地方行政)",
+    "농업-권농(勸農)",
+    "농업-수리(水利)",
+    "농업-임업(林業)",
+    "교통-육운(陸運)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 23.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 7.2,
+    "title_clarity": 5.5,
+    "length_quality": 6.0,
+    "category_quality": 5.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "607b5b0aad94f6a4749c8881d6afa0cef6b2047df58230254f045a85e9867b68",
+  "content_length": 1121,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0422-kaa_10407030_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0422-kaa_10407030_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0422-kaa_10407030_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

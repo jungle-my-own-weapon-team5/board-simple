@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 207,
+  "sillok_id": "ksb_10012018_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10012018_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 이조 참판 이단하가 송시열의 일과 이우정의 피사에 대하여 상소하다",
+  "date": "숙종실록보궐정오1권, 숙종 즉위년 12월 18일 정미 1/1 기사 / 1674년 청 강희(康熙) 13년",
+  "record_code": "ksb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 17.2,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "72484cfaaf11e305577ca19d01ef0e3016121e1e16c4a2dce360a822712d88ca",
+  "content_length": 1081,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0207-ksb_10012018_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0207-ksb_10012018_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0207-ksb_10012018_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

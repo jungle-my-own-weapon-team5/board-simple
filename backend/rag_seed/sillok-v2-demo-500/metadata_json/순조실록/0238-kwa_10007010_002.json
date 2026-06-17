@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 238,
+  "sillok_id": "kwa_10007010_002",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007010_002",
+  "period": "순조실록",
+  "title": "순조실록: 도승지 윤행임·산릉 당상 서유린·예조 판서 이만수 등을 소견하다",
+  "date": "순조실록1권, 순조 즉위년 7월 10일 경인 2/2 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-토속신앙(土俗信仰)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.125,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "d83776c1e8641f0176ce099a9dbef78a01c606c7a534633300e2de08e2b8fa02",
+  "content_length": 707,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0238-kwa_10007010_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0238-kwa_10007010_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0238-kwa_10007010_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

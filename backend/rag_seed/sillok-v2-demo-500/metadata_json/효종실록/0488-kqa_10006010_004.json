@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 488,
+  "sillok_id": "kqa_10006010_004",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10006010_004",
+  "period": "효종실록",
+  "title": "효종실록: 사간원이 관방의 문란함을 시정할 것과 졸곡 전에 경연을 열 것을 간하다",
+  "date": "효종실록1권, 효종 즉위년 6월 10일 무술 4/5 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-간쟁(諫諍)",
+    "왕실-의식(儀式)",
+    "왕실-경연(經筵)",
+    "농업-전제(田制)",
+    "농업-경영형태(經營形態)"
+  ],
+  "primary_bucket": "event",
+  "score": 17.325,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a4021aadd8fa6e4e741a1976d913eb9a57c0555af8c04f1493964401edfb694d",
+  "content_length": 1283,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0488-kqa_10006010_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0488-kqa_10006010_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0488-kqa_10006010_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

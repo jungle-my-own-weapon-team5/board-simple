@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 195,
+  "sillok_id": "ksb_10611026_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10611026_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 한구가 공신 추가 등록과 신종화 사건의 논계로 인해 사직을 청하나 허락지 않다",
+  "date": "숙종실록보궐정오10권, 숙종 6년 11월 26일 신사 1/1 기사 / 1680년 청 강희(康熙) 19년",
+  "record_code": "ksb",
+  "volume": 10,
+  "king_year": 6,
+  "month": 11,
+  "day": 26,
+  "article_no": 1,
+  "categories": [
+    "역사-사학(史學)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 21.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 6.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8a5d5a81bbc0eccd0e5d55afc772fbf7d3a8f8a6f0cb03740dee3f152e3adfe4",
+  "content_length": 382,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0195-ksb_10611026_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0195-ksb_10611026_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0195-ksb_10611026_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

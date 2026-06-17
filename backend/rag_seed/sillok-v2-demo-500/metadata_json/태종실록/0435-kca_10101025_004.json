@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 435,
+  "sillok_id": "kca_10101025_004",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101025_004",
+  "period": "태종실록",
+  "title": "태종실록: 공·후·백의 작호를 부원 대군·부원군·군으로 고치다",
+  "date": "태종실록1권, 태종 1년 1월 25일 을유 4/5 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 25,
+  "article_no": 4,
+  "categories": [
+    "인사-관리(管理)",
+    "외교-명(明)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.95,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5add826fd831bbb2b1c9601c9eb1f1812fa812e21be4d46f83a1e2a5d4042d8c",
+  "content_length": 441,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0435-kca_10101025_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0435-kca_10101025_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0435-kca_10101025_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

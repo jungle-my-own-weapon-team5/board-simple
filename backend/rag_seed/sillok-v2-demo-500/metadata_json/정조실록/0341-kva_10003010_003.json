@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 341,
+  "sillok_id": "kva_10003010_003",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003010_003",
+  "period": "정조실록",
+  "title": "정조실록: 중외에 교문을 반포하여 사면의 은전을 내리다",
+  "date": "정조실록1권, 정조 즉위년 3월 10일 신사 3/11 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "사법-행형(行刑)",
+    "어문학-문학(文學)"
+  ],
+  "primary_bucket": "event",
+  "score": 18.45,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "33cda26814b318591a3b9f2a9cc67f2f2b6eb091df3f33bd068189825a0cde73",
+  "content_length": 2050,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0341-kva_10003010_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0341-kva_10003010_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0341-kva_10003010_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

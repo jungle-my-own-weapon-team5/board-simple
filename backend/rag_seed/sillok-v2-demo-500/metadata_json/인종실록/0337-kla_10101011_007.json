@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 337,
+  "sillok_id": "kla_10101011_007",
+  "source_url": "https://sillok.history.go.kr/id/kla_10101011_007",
+  "period": "인종실록",
+  "title": "인종실록: 구수담·이윤경·곽순 등에게 관직을 제수하다",
+  "date": "인종실록1권, 인종 1년 1월 11일 을사 7/8 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kla",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 11,
+  "article_no": 7,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 7.025,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 3.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c2defced33a98abc5c1bf4efee4e4593171a5380203d888841bb9f71f59e9ca6",
+  "content_length": 132,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인종실록\\0337-kla_10101011_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인종실록\\0337-kla_10101011_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인종실록\\0337-kla_10101011_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

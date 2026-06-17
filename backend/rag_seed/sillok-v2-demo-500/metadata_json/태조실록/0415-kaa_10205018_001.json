@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 415,
+  "sillok_id": "kaa_10205018_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10205018_001",
+  "period": "태조실록",
+  "title": "태조실록: 양광도 안렴사 조박과 가뭄에 대해 이야기하며 사임하고자 했으나 윤허하지 않다",
+  "date": "태조실록3권, 태조 2년 5월 18일 임술 1/1 기사 / 1393년 명 홍무(洪武) 26년",
+  "record_code": "kaa",
+  "volume": 3,
+  "king_year": 2,
+  "month": 5,
+  "day": 18,
+  "article_no": 1,
+  "categories": [
+    "인사-임면(任免)",
+    "농업-농작(農作)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 23.4,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 3.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0c1b1abef39a423ffa7b1a7bb7f59877946212d40cfc635d4977e8f13fb7b36f",
+  "content_length": 660,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0415-kaa_10205018_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0415-kaa_10205018_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0415-kaa_10205018_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

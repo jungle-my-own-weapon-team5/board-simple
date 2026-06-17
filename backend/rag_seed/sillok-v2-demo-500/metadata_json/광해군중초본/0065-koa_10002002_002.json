@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 65,
+  "sillok_id": "koa_10002002_002",
+  "source_url": "https://sillok.history.go.kr/id/koa_10002002_002",
+  "period": "광해군중초본",
+  "title": "광해군중초본: 이원익·이덕형 등이 왕위를 물려받는 절차를 행해야 한다고 하다",
+  "date": "광해군일기[중초본]1권, 광해 즉위년 2월 2일 기미 2/10 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "koa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-의식(儀式)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.95,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "511bae45a9e183f63ad85dc5464c39e8c277364a268c43e0922b6488f4c2e5c7",
+  "content_length": 364,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군중초본\\0065-koa_10002002_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군중초본\\0065-koa_10002002_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군중초본\\0065-koa_10002002_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

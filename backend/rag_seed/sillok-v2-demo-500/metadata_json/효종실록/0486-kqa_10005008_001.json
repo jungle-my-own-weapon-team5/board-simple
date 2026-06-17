@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 486,
+  "sillok_id": "kqa_10005008_001",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10005008_001",
+  "period": "효종실록",
+  "title": "효종실록: 인조 대왕 승하 5일 후 효종 대왕이 즉위, 그전의 행실에 대하여 기록하다",
+  "date": "효종실록1권, 효종 즉위년 5월 8일 병인 1/1 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 26.275,
+  "score_parts": {
+    "event": 9.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "545b9d11811fb982d1f9bcfadbaaa07204c956ae3d379f161a3682dfb3f524f4",
+  "content_length": 1570,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0486-kqa_10005008_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0486-kqa_10005008_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0486-kqa_10005008_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

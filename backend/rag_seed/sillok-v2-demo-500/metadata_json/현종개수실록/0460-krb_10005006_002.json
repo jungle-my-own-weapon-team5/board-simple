@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 460,
+  "sillok_id": "krb_10005006_002",
+  "source_url": "https://sillok.history.go.kr/id/krb_10005006_002",
+  "period": "현종개수실록",
+  "title": "현종개수실록: 양사가 신료 복제를 바로잡을 것을 건의하다",
+  "date": "현종개수실록1권, 현종 즉위년 5월 6일 병인 2/4 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "krb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "역사-고사(故事)",
+    "의생활-예복(禮服)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 15.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "fbb697618724467bddd21c0b8828528ce29480981d16a08d9469c8c03bd8e0b7",
+  "content_length": 510,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종개수실록\\0460-krb_10005006_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종개수실록\\0460-krb_10005006_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종개수실록\\0460-krb_10005006_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

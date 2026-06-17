@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 62,
+  "sillok_id": "koa_10002002_010",
+  "source_url": "https://sillok.history.go.kr/id/koa_10002002_010",
+  "period": "광해군중초본",
+  "title": "광해군중초본: 광해군이 선왕의 유교를 받고 어좌에 오르다",
+  "date": "광해군일기[중초본]1권, 광해 즉위년 2월 2일 기미 10/10 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "koa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-의식(儀式)",
+    "왕실-비빈(妃嬪)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "event",
+  "score": 9.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.875,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "75d444823ca2c70abf59cc1beabee1b2b443b9735b39fd0b30ffaf3b7667f176",
+  "content_length": 4039,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군중초본\\0062-koa_10002002_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군중초본\\0062-koa_10002002_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군중초본\\0062-koa_10002002_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

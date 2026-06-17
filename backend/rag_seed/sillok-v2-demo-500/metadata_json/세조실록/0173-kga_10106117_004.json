@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 173,
+  "sillok_id": "kga_10106117_004",
+  "source_url": "https://sillok.history.go.kr/id/kga_10106117_004",
+  "period": "세조실록",
+  "title": "세조실록: 판돈녕부사 송현수가 시장 점포에서 나쁜 쌀을 못 쓰도록 윤대에서 청하다",
+  "date": "세조실록1권, 세조 1년 윤6월 17일 신유 4/7 기사 / 1455년 명 경태(景泰) 6년",
+  "record_code": "kga",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "상업-시장(市場)",
+    "변란-정변(政變)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 14.025,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ff8eb7fd06a8a2cf27b2b38ba1cd6f3e0d8d9490cc22ac53650b4c92c4983636",
+  "content_length": 483,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세조실록\\0173-kga_10106117_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세조실록\\0173-kga_10106117_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세조실록\\0173-kga_10106117_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

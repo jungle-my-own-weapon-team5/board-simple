@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 118,
+  "sillok_id": "kea_10002018_006",
+  "source_url": "https://sillok.history.go.kr/id/kea_10002018_006",
+  "period": "문종실록",
+  "title": "문종실록: 대자암의 증축과 화엄경의 조성을 승정원에 의논하다",
+  "date": "문종실록1권, 문종 즉위년 2월 18일 계사 6/7 기사 / 1450년 명 경태(景泰) 1년",
+  "record_code": "kea",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-불교(佛敎)",
+    "출판-서책(書冊)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.825,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c29f213978d85ad7af33b7a60b48bbbe0e849a59f3cc04a78a87eeda719890b6",
+  "content_length": 602,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\문종실록\\0118-kea_10002018_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\문종실록\\0118-kea_10002018_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\문종실록\\0118-kea_10002018_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

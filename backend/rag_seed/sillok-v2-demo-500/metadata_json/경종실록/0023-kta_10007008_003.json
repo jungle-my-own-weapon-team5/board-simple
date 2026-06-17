@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 23,
+  "sillok_id": "kta_10007008_003",
+  "source_url": "https://sillok.history.go.kr/id/kta_10007008_003",
+  "period": "경종실록",
+  "title": "경종실록: 기제와 묘제의 존폐에 대한 영의정 김창집의 의견",
+  "date": "경종실록1권, 경종 즉위년 7월 8일 계유 3/5 기사 / 1720년 청 강희(康熙) 59년",
+  "record_code": "kta",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 15.4,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "17e299b862dc73b09c451c34f9c0197761db25376437d8cd9fb32da1e36f4f6a",
+  "content_length": 873,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\경종실록\\0023-kta_10007008_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\경종실록\\0023-kta_10007008_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\경종실록\\0023-kta_10007008_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

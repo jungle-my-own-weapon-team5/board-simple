@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 311,
+  "sillok_id": "kha_10009011_004",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009011_004",
+  "period": "예종실록",
+  "title": "예종실록: 찬궁을 조계청에 안치할 때에 머리의 방향을 궁실의 향배를 따를 것을 정하다",
+  "date": "예종실록1권, 예종 즉위년 9월 11일 정묘 4/5 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.875,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "af62bad05ae223f117f8be7a191ab64aee8d8d1c6f434c913540e4790112680c",
+  "content_length": 404,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0311-kha_10009011_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0311-kha_10009011_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0311-kha_10009011_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

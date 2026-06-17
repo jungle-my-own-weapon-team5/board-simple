@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 419,
+  "sillok_id": "kaa_10410005_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10410005_001",
+  "period": "태조실록",
+  "title": "태조실록: 제례를 마친 후 중외의 조하를 받고 국정 쇄신의 내용을 담은 교서를 내리다",
+  "date": "태조실록8권, 태조 4년 10월 5일 을미 1/1 기사 / 1395년 명 홍무(洪武) 28년",
+  "record_code": "kaa",
+  "volume": 8,
+  "king_year": 4,
+  "month": 10,
+  "day": 5,
+  "article_no": 1,
+  "categories": [],
+  "primary_bucket": "system_life",
+  "score": 24.175,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 9.6,
+    "title_clarity": 5.875,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "770b7099e01a5b34513da94c494bad52c9ba7a2af21ffe173e7cffd9d1fd4b17",
+  "content_length": 3060,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0419-kaa_10410005_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0419-kaa_10410005_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0419-kaa_10410005_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 39,
+  "sillok_id": "kza_10012013_007",
+  "source_url": "https://sillok.history.go.kr/id/kza_10012013_007",
+  "period": "고종실록",
+  "title": "고종실록: 대왕대비가 대원군에 작위를 봉하는 절차를 명하다",
+  "date": "고종실록1권, 고종 즉위년 12월 13일 을유 7/17 기사 / 1863년 청 동치(同治) 2년",
+  "record_code": "kza",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종친(宗親)",
+    "인사-임면(任免)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "51c3956ed55d0112881106d3618ee647d8b6109f379d650358e86635b0966828",
+  "content_length": 602,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\고종실록\\0039-kza_10012013_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\고종실록\\0039-kza_10012013_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\고종실록\\0039-kza_10012013_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 227,
+  "sillok_id": "kwa_10007020_003",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007020_003",
+  "period": "순조실록",
+  "title": "순조실록: 대왕 대비가 내의의 처벌은 공제 후를 기다리라 명하다",
+  "date": "순조실록1권, 순조 즉위년 7월 20일 경자 3/5 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 13.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "087f00fae4d38e9e785ea14bb7db2c21e31aef7dec2144d382fc2683afbf019c",
+  "content_length": 265,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0227-kwa_10007020_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0227-kwa_10007020_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0227-kwa_10007020_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

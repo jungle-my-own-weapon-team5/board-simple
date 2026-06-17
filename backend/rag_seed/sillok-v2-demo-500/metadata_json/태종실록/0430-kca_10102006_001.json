@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 430,
+  "sillok_id": "kca_10102006_001",
+  "source_url": "https://sillok.history.go.kr/id/kca_10102006_001",
+  "period": "태종실록",
+  "title": "태종실록: 중국의 사신 육옹과 임사영이 조서를 가지고 오다",
+  "date": "태종실록1권, 태종 1년 2월 6일 을미 1/2 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 2,
+  "day": 6,
+  "article_no": 1,
+  "categories": [
+    "외교-명(明)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.0,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c5e3c72070ac074328d7d72677300802b96fce046f098e8bf1794fea1376607f",
+  "content_length": 1336,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0430-kca_10102006_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0430-kca_10102006_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0430-kca_10102006_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

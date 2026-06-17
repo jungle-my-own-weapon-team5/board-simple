@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 285,
+  "sillok_id": "kua_10009021_003",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009021_003",
+  "period": "영조실록",
+  "title": "영조실록: 복상을 명하여 유봉희를 우의정으로 이광좌를 좌의정으로 삼다",
+  "date": "영조실록1권, 영조 즉위년 9월 21일 신유 3/4 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 18.85,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 4.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9eae817ee92f4b83691dcd0fdd5487cb1d7bf1628ec993c728c31148271496fb",
+  "content_length": 1108,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0285-kua_10009021_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0285-kua_10009021_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0285-kua_10009021_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

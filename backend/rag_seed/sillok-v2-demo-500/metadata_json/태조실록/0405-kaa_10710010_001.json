@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 405,
+  "sillok_id": "kaa_10710010_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10710010_001",
+  "period": "태조실록",
+  "title": "태조실록: 정도전·남은의 일파인 오몽을을 목베고 정진을 수군에 충군하다",
+  "date": "태조실록15권, 태조 7년 10월 10일 임자 1/1 기사 / 1398년 명 홍무(洪武) 31년",
+  "record_code": "kaa",
+  "volume": 15,
+  "king_year": 7,
+  "month": 10,
+  "day": 10,
+  "article_no": 1,
+  "categories": [
+    "변란-정변(政變)",
+    "사법-행형(行刑)",
+    "군사-지방군(地方軍)"
+  ],
+  "primary_bucket": "event",
+  "score": 24.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 4.5,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "44c6636c62568b4acdddf8a6e7a27bd6ded3703091193260b88b015063fd6a80",
+  "content_length": 342,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0405-kaa_10710010_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0405-kaa_10710010_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0405-kaa_10710010_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

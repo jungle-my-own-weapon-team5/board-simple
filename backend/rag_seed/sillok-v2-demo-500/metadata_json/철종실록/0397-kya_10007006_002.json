@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 397,
+  "sillok_id": "kya_10007006_002",
+  "source_url": "https://sillok.history.go.kr/id/kya_10007006_002",
+  "period": "철종실록",
+  "title": "철종실록: 좌의정 김도희가 어휘를 잘못 올린 자신의 죄를 아뢰다",
+  "date": "철종실록1권, 철종 즉위년 7월 6일 신축 2/3 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-정론(政論)"
+  ],
+  "primary_bucket": "event",
+  "score": 13.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "576ef6bf9e39e6ebf08a0c2fa5784bfc638bddc06d5f79c27cb9746f4a1231af",
+  "content_length": 289,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0397-kya_10007006_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0397-kya_10007006_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0397-kya_10007006_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

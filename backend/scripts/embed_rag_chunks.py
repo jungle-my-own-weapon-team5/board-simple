@@ -10,7 +10,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 
 from app.core.config import get_settings
 from app.core.database import get_session_local
@@ -50,6 +50,9 @@ def main() -> None:
             print(f"reset_sillok_documents={deleted}")
 
         _ensure_seed_documents(db)
+        backfilled = _backfill_pgvector_from_json(db, args.corpus, args.source_type)
+        if backfilled:
+            print(f"backfilled_pgvector={backfilled}")
         total = _count_chunks(db, args.corpus, args.source_type, missing_only=False)
         missing = _count_chunks(db, args.corpus, args.source_type, missing_only=True)
         print(f"chunks={total} missing_embeddings={missing} model={settings.openai_embedding_model}")
@@ -77,6 +80,7 @@ def main() -> None:
             embeddings = _embed_texts(settings, [chunk.content for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings, strict=True):
                 chunk.embedding_json = json.dumps(embedding)
+                _set_pgvector_embedding(db, chunk.id, embedding)
             db.commit()
 
             processed += len(chunks)
@@ -113,6 +117,38 @@ def _apply_chunk_filters(statement, corpus: str | None, source_type: str | None)
     if source_type:
         statement = statement.where(RagDocument.source_type == source_type)
     return statement
+
+
+def _backfill_pgvector_from_json(db, corpus: str | None, source_type: str | None) -> int:
+    if db.get_bind().dialect.name != "postgresql":
+        return 0
+    statement = select(RagChunk)
+    if corpus or source_type:
+        statement = statement.join(RagDocument, RagChunk.document_id == RagDocument.id)
+    statement = _apply_chunk_filters(statement, corpus, source_type)
+    chunks = db.scalars(
+        statement
+        .where(RagChunk.embedding_json.is_not(None))
+        .where(text("rag_chunks.embedding IS NULL"))
+    ).all()
+    for chunk in chunks:
+        _set_pgvector_embedding(db, chunk.id, json.loads(chunk.embedding_json or "[]"))
+    if chunks:
+        db.commit()
+    return len(chunks)
+
+
+def _set_pgvector_embedding(db, chunk_id: int, embedding: list[float]) -> None:
+    if db.get_bind().dialect.name != "postgresql":
+        return
+    db.execute(
+        text("UPDATE rag_chunks SET embedding = (:embedding)::vector WHERE id = :chunk_id"),
+        {"embedding": _pgvector_literal(embedding), "chunk_id": chunk_id},
+    )
+
+
+def _pgvector_literal(values: list[float]) -> str:
+    return "[" + ",".join(f"{value:.10g}" for value in values) + "]"
 
 
 if __name__ == "__main__":

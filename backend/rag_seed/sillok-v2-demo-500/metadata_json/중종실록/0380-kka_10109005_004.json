@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 380,
+  "sillok_id": "kka_10109005_004",
+  "source_url": "https://sillok.history.go.kr/id/kka_10109005_004",
+  "period": "중종실록",
+  "title": "중종실록: 영의정 유순 등이 홍경주를 승지에 차임하기를 청하다",
+  "date": "중종실록1권, 중종 1년 9월 5일 신사 4/12 기사 / 1506년 명 정덕(正德) 1년",
+  "record_code": "kka",
+  "volume": 1,
+  "king_year": 1,
+  "month": 9,
+  "day": 5,
+  "article_no": 4,
+  "categories": [
+    "인사-임면(任免)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 10.15,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 4.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -2.5,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "90842b3369f27abe63cc292f546b3d3c345c7e511ea14fd2e9a3fa18efbd2b0c",
+  "content_length": 478,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\중종실록\\0380-kka_10109005_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\중종실록\\0380-kka_10109005_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\중종실록\\0380-kka_10109005_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

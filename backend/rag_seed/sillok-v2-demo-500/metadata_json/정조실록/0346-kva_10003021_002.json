@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 346,
+  "sillok_id": "kva_10003021_002",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003021_002",
+  "period": "정조실록",
+  "title": "정조실록: 김양택·채제공·김종정·이휘지·김한기를 각 도감 제조로 삼다",
+  "date": "정조실록1권, 정조 즉위년 3월 21일 임진 2/4 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "정론-정론(政論)",
+    "인사-임면(任免)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 13.75,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "db4ba666ba608700c7b9d490c4d0a5756c4f2d6d651cc0190a5e38ea168bfb90",
+  "content_length": 242,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0346-kva_10003021_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0346-kva_10003021_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0346-kva_10003021_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

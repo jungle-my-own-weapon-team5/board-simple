@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 462,
+  "sillok_id": "krb_10005011_001",
+  "source_url": "https://sillok.history.go.kr/id/krb_10005011_001",
+  "period": "현종개수실록",
+  "title": "현종개수실록: 이경석·조경·채유후·윤순지·이일상 등에게 관직을 제수하다",
+  "date": "현종개수실록1권, 현종 즉위년 5월 11일 신미 1/2 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "krb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 10.675,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "6ed845a34fdef60b2f0caabe44343c5299bebe6b3d35815ac4c76f8fb6f7585e",
+  "content_length": 282,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종개수실록\\0462-krb_10005011_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종개수실록\\0462-krb_10005011_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종개수실록\\0462-krb_10005011_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

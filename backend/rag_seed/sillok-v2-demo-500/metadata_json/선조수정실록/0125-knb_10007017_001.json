@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 125,
+  "sillok_id": "knb_10007017_001",
+  "source_url": "https://sillok.history.go.kr/id/knb_10007017_001",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 허국과 위시량이 등극 조서를 반포하기 위하여 도성에 들어오다",
+  "date": "선조수정실록1권, 선조 즉위년 7월 17일 경오 1/5 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "knb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "외교-왜(倭)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 19.525,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ed73393caab3691a979797c3e222f10ddc29e8771a4233a1936a66e668c22a14",
+  "content_length": 1083,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0125-knb_10007017_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0125-knb_10007017_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0125-knb_10007017_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

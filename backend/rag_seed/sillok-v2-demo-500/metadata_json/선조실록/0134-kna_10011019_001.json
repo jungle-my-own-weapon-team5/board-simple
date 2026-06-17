@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 134,
+  "sillok_id": "kna_10011019_001",
+  "source_url": "https://sillok.history.go.kr/id/kna_10011019_001",
+  "period": "선조실록",
+  "title": "선조실록: 석강에서 《예기》 간전편을 강하고 기대승이 은전에서 누락된 사람의 신원을 청하다",
+  "date": "선조실록1권, 선조 즉위년 11월 19일 경오 1/1 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "kna",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "event",
+  "score": 20.95,
+  "score_parts": {
+    "event": 9.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 6.25,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9524da161b403879d2484900a5236579887d5a0692719b0dd1f188838854d99e",
+  "content_length": 1663,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0134-kna_10011019_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0134-kna_10011019_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0134-kna_10011019_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 375,
+  "sillok_id": "kka_10109003_001",
+  "source_url": "https://sillok.history.go.kr/id/kka_10109003_001",
+  "period": "중종실록",
+  "title": "중종실록: 폐주 때의 사무를 정리하다",
+  "date": "중종실록1권, 중종 1년 9월 3일 기묘 1/12 기사 / 1506년 명 정덕(正德) 1년",
+  "record_code": "kka",
+  "volume": 1,
+  "king_year": 1,
+  "month": 9,
+  "day": 3,
+  "article_no": 1,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-종사(宗社)",
+    "왕실-비빈(妃嬪)",
+    "인사-선발(選拔)",
+    "인사-관리(管理)",
+    "교통-육운(陸運)",
+    "교통-마정(馬政)",
+    "재정-진상(進上)",
+    "교육-인문교육(人文敎育)",
+    "재정-역(役)",
+    "신분-천인(賤人)",
+    "가족-친족(親族)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 19.3,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 2.4,
+    "title_clarity": 2.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [
+    "jangnoksu"
+  ],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5b6a0be6e52b53b0fdf0650299e9ab47a70dcc986256e583db37fd93337f7acb",
+  "content_length": 1195,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\중종실록\\0375-kka_10109003_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\중종실록\\0375-kka_10109003_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\중종실록\\0375-kka_10109003_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

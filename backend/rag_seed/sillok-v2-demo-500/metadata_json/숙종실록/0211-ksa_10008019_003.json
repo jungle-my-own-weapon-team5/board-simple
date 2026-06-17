@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 211,
+  "sillok_id": "ksa_10008019_003",
+  "source_url": "https://sillok.history.go.kr/id/ksa_10008019_003",
+  "period": "숙종실록",
+  "title": "숙종실록: 초상에 사용할 의대의 준비에 대한 중궁의 교지",
+  "date": "숙종실록1권, 숙종 즉위년 8월 19일 경술 3/6 기사 / 1674년 청 강희(康熙) 13년",
+  "record_code": "ksa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "event",
+  "score": 12.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9f88222a5d20860a5fd37e16b2ccc5da9013ee8e211ad3cf8298b8b86f1fc865",
+  "content_length": 257,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종실록\\0211-ksa_10008019_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종실록\\0211-ksa_10008019_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종실록\\0211-ksa_10008019_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

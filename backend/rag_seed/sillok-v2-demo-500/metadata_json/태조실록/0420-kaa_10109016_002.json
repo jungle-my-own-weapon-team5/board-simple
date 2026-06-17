@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 420,
+  "sillok_id": "kaa_10109016_002",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10109016_002",
+  "period": "태조실록",
+  "title": "태조실록: 공신 도감에서 개국 공신의 포상 규정을 상언하니 윤허하다",
+  "date": "태조실록2권, 태조 1년 9월 16일 갑오 2/2 기사 / 1392년 명 홍무(洪武) 25년",
+  "record_code": "kaa",
+  "volume": 2,
+  "king_year": 1,
+  "month": 9,
+  "day": 16,
+  "article_no": 2,
+  "categories": [
+    "왕실-사급(賜給)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 24.125,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 4.8,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 3.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "977e44568563a94ca769ad4dc70ec9470404ab8ee4274cd42029ca89cdffe029",
+  "content_length": 2197,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0420-kaa_10109016_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0420-kaa_10109016_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0420-kaa_10109016_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

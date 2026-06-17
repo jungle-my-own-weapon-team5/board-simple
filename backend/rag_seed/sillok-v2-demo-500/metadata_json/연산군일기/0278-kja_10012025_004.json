@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 278,
+  "sillok_id": "kja_10012025_004",
+  "source_url": "https://sillok.history.go.kr/id/kja_10012025_004",
+  "period": "연산군일기",
+  "title": "연산군일기: 예조 판서 성현이 절에서 재 지낼지를 묻자 왕비가 허락하다",
+  "date": "연산군일기1권, 연산 즉위년 12월 25일 경진 4/8 기사 / 1494년 명 홍치(弘治) 7년",
+  "record_code": "kja",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-불교(佛敎)",
+    "왕실-국왕(國王)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 16.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "14e94c164a898486b7a15fcf6b3a91c63f55a0cbcd2383369c2bb141f994646f",
+  "content_length": 633,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0278-kja_10012025_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0278-kja_10012025_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0278-kja_10012025_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

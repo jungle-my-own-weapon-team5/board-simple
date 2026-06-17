@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 100,
+  "sillok_id": "kma_10007019_003",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007019_003",
+  "period": "명종실록",
+  "title": "명종실록: 사헌부가 대행왕의 상사가 예문에 따라 행해지지 않았음을 아뢰다",
+  "date": "명종실록1권, 명종 즉위년 7월 19일 기묘 3/5 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.0,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8b6993f21d8527709b90f9b592aca28fd65461f0896124050df71d09a74b8827",
+  "content_length": 592,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0100-kma_10007019_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0100-kma_10007019_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0100-kma_10007019_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

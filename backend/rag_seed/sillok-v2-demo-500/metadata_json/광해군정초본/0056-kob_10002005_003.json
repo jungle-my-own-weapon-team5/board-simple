@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 56,
+  "sillok_id": "kob_10002005_003",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002005_003",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 대사헌 최천건·대사간 이효원 등이 총호사와 예관도 입시하게 해달라고 청하다",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 5일 임술 3/9 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-궁관(宮官)",
+    "정론-간쟁(諫諍)",
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.125,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7bd3088d58730181c11124c3473f5b6b8c29f163f49c5e23756021cab0c7e81d",
+  "content_length": 243,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0056-kob_10002005_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0056-kob_10002005_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0056-kob_10002005_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

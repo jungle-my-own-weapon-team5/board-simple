@@ -1,0 +1,56 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 376,
+  "sillok_id": "kka_10109005_005",
+  "source_url": "https://sillok.history.go.kr/id/kka_10109005_005",
+  "period": "중종실록",
+  "title": "중종실록: 박원종 등이 폐세자 등의 안치 문제를 아뢰니 그대로 윤허하다",
+  "date": "중종실록1권, 중종 1년 9월 5일 신사 5/12 기사 / 1506년 명 정덕(正德) 1년",
+  "record_code": "kka",
+  "volume": 1,
+  "king_year": 1,
+  "month": 9,
+  "day": 5,
+  "article_no": 5,
+  "categories": [
+    "왕실-종친(宗親)",
+    "행정-지방행정(地方行政)",
+    "사법-행형(行刑)",
+    "군사-지방군(地方軍)",
+    "재정-국용(國用)",
+    "신분-천인(賤人)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 15.975,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "33d59807bd2c87ed394c862da70979b5e17a2d04d74a5d8d83e5c9e828751913",
+  "content_length": 457,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\중종실록\\0376-kka_10109005_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\중종실록\\0376-kka_10109005_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\중종실록\\0376-kka_10109005_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

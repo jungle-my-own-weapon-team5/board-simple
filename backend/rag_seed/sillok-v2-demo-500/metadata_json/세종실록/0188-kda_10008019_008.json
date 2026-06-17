@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 188,
+  "sillok_id": "kda_10008019_008",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008019_008",
+  "period": "세종실록",
+  "title": "세종실록: 한성부에서 죽은 관청 노비를 조사하는 방법과 미아(迷兒) 처리 문제를 아뢰다",
+  "date": "세종실록1권, 세종 즉위년 8월 19일 병신 8/10 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "행정-중앙행정(中央行政)",
+    "물가-수수료(手數料)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 16.8,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "71caa730edead36bafff69b2e921add3a358f5f6c06195ad4344d0d693e21f06",
+  "content_length": 739,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0188-kda_10008019_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0188-kda_10008019_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0188-kda_10008019_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

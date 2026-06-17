@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 163,
+  "sillok_id": "kia_10012001_010",
+  "source_url": "https://sillok.history.go.kr/id/kia_10012001_010",
+  "period": "성종실록",
+  "title": "성종실록: 신숙주 등의 말에 따라 예조 낭관을 구타한 귀화인 낭장가로의 고신을 회수하다",
+  "date": "성종실록1권, 성종 즉위년 12월 1일 경술 10/11 기사 / 1469년 명 성화(成化) 5년",
+  "record_code": "kia",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-관리(管理)",
+    "외교-야(野)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.0,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ecb289b5a9c79a3153f2f35e9b6e848b2d7ce9c35cdd9a105de8fd1b8d66838e",
+  "content_length": 289,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\성종실록\\0163-kia_10012001_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\성종실록\\0163-kia_10012001_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\성종실록\\0163-kia_10012001_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 192,
+  "sillok_id": "kda_10008015_005",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008015_005",
+  "period": "세종실록",
+  "title": "세종실록: 순승부를 인수부로 고쳐 상왕전에 소속시키고 새로 경창부를 설치하다",
+  "date": "세종실록1권, 세종 즉위년 8월 15일 임진 5/6 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.65,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "70dfc6306a8211903b7f767e244af77f391067c547e47ad240dd196b25d9cfd5",
+  "content_length": 419,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0192-kda_10008015_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0192-kda_10008015_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0192-kda_10008015_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

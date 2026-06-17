@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 327,
+  "sillok_id": "kla_10101002_004",
+  "source_url": "https://sillok.history.go.kr/id/kla_10101002_004",
+  "period": "인종실록",
+  "title": "인종실록: 이조 정랑 윤희성의 졸기",
+  "date": "인종실록1권, 인종 1년 1월 2일 병신 4/4 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kla",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 2,
+  "article_no": 4,
+  "categories": [
+    "왕실-사급(賜給)"
+  ],
+  "primary_bucket": "event",
+  "score": 17.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 2.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "290ed1e0264e047a66846ae1a67fa39eafc885252d2e3e9e08f6c6720b148b9d",
+  "content_length": 885,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인종실록\\0327-kla_10101002_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인종실록\\0327-kla_10101002_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인종실록\\0327-kla_10101002_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

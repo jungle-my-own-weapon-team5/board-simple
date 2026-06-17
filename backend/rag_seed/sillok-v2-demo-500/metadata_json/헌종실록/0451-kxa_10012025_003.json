@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 451,
+  "sillok_id": "kxa_10012025_003",
+  "source_url": "https://sillok.history.go.kr/id/kxa_10012025_003",
+  "period": "헌종실록",
+  "title": "헌종실록: 궁가에서 비리로 세를 차지하고 평민을 잡아 가두는 폐단을 엄금하다",
+  "date": "헌종실록1권, 헌종 즉위년 12월 25일 을묘 3/5 기사 / 1834년 청 도광(道光) 14년",
+  "record_code": "kxa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-법제(法制)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.25,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "51becdceacddbeef0b50df6a6eba273f3b5ed6190e65dbbea046c36d075f5771",
+  "content_length": 119,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\헌종실록\\0451-kxa_10012025_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\헌종실록\\0451-kxa_10012025_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\헌종실록\\0451-kxa_10012025_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

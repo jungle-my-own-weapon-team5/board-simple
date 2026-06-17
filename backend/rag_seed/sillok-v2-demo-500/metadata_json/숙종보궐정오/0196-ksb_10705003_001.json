@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 196,
+  "sillok_id": "ksb_10705003_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10705003_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 행대사성 김만중이 오시수의 엄격한 처벌을 청하였으나 따르지 않다",
+  "date": "숙종실록보궐정오11권, 숙종 7년 5월 3일 을묘 1/3 기사 / 1681년 청 강희(康熙) 20년",
+  "record_code": "ksb",
+  "volume": 11,
+  "king_year": 7,
+  "month": 5,
+  "day": 3,
+  "article_no": 1,
+  "categories": [
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 20.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8884a27868618b7564d2e1a57da0543342820d0c2f64c39afbcd2703962e66c1",
+  "content_length": 762,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0196-ksb_10705003_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0196-ksb_10705003_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0196-ksb_10705003_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

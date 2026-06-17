@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 417,
+  "sillok_id": "kaa_10602011_003",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10602011_003",
+  "period": "태조실록",
+  "title": "태조실록: 도평의사사에서 군인 징발과 수군 처우개선 등 군사에 관한 여러 문제에 대해 건의하다",
+  "date": "태조실록11권, 태조 6년 2월 11일 갑오 3/3 기사 / 1397년 명 홍무(洪武) 30년",
+  "record_code": "kaa",
+  "volume": 11,
+  "king_year": 6,
+  "month": 2,
+  "day": 11,
+  "article_no": 3,
+  "categories": [
+    "역사-고사(故事)",
+    "군사-군역(軍役)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 28.4,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 7.2,
+    "title_clarity": 6.5,
+    "length_quality": 3.0,
+    "category_quality": 3.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "02626d39a5d07fb14232c19a4da870001a7e9fe444f1fed3976952eba3b45297",
+  "content_length": 2685,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0417-kaa_10602011_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0417-kaa_10602011_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0417-kaa_10602011_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

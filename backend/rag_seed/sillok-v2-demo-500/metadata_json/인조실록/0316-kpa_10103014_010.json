@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 316,
+  "sillok_id": "kpa_10103014_010",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103014_010",
+  "period": "인조실록",
+  "title": "인조실록: 김류 등이 박승종 등을 살릴 것을 청하고 김신국 등의 등용을 청하다",
+  "date": "인조실록1권, 인조 1년 3월 14일 갑진 10/14 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 14,
+  "article_no": 10,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 20.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a472b37760e156eef1b60b17b07f85dda9bd39af95036defbe97a178377799a5",
+  "content_length": 1372,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0316-kpa_10103014_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0316-kpa_10103014_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0316-kpa_10103014_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

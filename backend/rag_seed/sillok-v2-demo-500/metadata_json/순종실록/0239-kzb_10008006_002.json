@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 239,
+  "sillok_id": "kzb_10008006_002",
+  "source_url": "https://sillok.history.go.kr/id/kzb_10008006_002",
+  "period": "순종실록",
+  "title": "순종실록: 장례원 경 신기선이 관례에 대하여 상소를 올리다",
+  "date": "순종실록1권, 순종 즉위년 8월 6일 양력 2/4 기사 / 1907년 대한 융희(隆熙) 1년",
+  "record_code": "kzb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "왕실-종사(宗社)",
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "event",
+  "score": 18.4,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 4.0,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1c3a55d25dfa21495c722c18a43f65bce581a2d318318dc2b27c015b16a5154c",
+  "content_length": 3190,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순종실록\\0239-kzb_10008006_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순종실록\\0239-kzb_10008006_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순종실록\\0239-kzb_10008006_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

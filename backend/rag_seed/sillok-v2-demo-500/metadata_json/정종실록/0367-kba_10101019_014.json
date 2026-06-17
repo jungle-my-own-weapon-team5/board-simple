@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 367,
+  "sillok_id": "kba_10101019_014",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101019_014",
+  "period": "정종실록",
+  "title": "정종실록: 길주 도진무 신분을 보내어 수주의 올량합족과 오음회의 오도리족 만호 등에게 술을 하사하다",
+  "date": "정종실록1권, 정종 1년 1월 19일 경인 14/16 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 19,
+  "article_no": 14,
+  "categories": [
+    "왕실-사급(賜給)",
+    "외교-야(野)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.875,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1cc1322125d8f531cad2a5f4de833ef553defd5e19244c6c2e2c2911aa0b87a0",
+  "content_length": 199,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0367-kba_10101019_014.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0367-kba_10101019_014.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0367-kba_10101019_014.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

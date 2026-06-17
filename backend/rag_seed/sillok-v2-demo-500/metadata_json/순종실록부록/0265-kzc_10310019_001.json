@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 265,
+  "sillok_id": "kzc_10310019_001",
+  "source_url": "https://sillok.history.go.kr/id/kzc_10310019_001",
+  "period": "순종실록부록",
+  "title": "순종실록부록: 왕비가 정무 총감의 부인에게 어배식을 내리다",
+  "date": "순종실록부록1권, 순종 3년 10월 19일 양력 1/1 기사 / 1910년 일본 명치(明治) 43년",
+  "record_code": "kzc",
+  "volume": 1,
+  "king_year": 3,
+  "month": 10,
+  "day": 19,
+  "article_no": 1,
+  "categories": [
+    "외교-일본(日本)",
+    "왕실-비빈(妃嬪)",
+    "왕실-사급(賜給)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "d212e1503a5500dd9271682ada7de034479733688d05547fc041041844287f74",
+  "content_length": 97,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순종실록부록\\0265-kzc_10310019_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순종실록부록\\0265-kzc_10310019_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순종실록부록\\0265-kzc_10310019_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

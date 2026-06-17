@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 279,
+  "sillok_id": "kja_10012025_001",
+  "source_url": "https://sillok.history.go.kr/id/kja_10012025_001",
+  "period": "연산군일기",
+  "title": "연산군일기: 이극돈 등이 성종의 염습을 정침에서 집행할 것을 아뢰다",
+  "date": "연산군일기1권, 연산 즉위년 12월 25일 경진 1/8 기사 / 1494년 명 홍치(弘治) 7년",
+  "record_code": "kja",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 10.625,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7e65d24e3815cf6c3fcf8700b2295aede93b1f70beb849f2993fe864dd8e8f9e",
+  "content_length": 202,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0279-kja_10012025_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0279-kja_10012025_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0279-kja_10012025_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

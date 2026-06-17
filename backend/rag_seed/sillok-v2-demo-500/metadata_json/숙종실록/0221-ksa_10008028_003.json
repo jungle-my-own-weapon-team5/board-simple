@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 221,
+  "sillok_id": "ksa_10008028_003",
+  "source_url": "https://sillok.history.go.kr/id/ksa_10008028_003",
+  "period": "숙종실록",
+  "title": "숙종실록: 총호사가 각 아문과 각영의 미포와 은자를 모군의 부역 대가로 줄 것을 아뢰니 허락하다",
+  "date": "숙종실록1권, 숙종 즉위년 8월 28일 기미 3/3 기사 / 1674년 청 강희(康熙) 13년",
+  "record_code": "ksa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "재정-국용(國用)",
+    "재정-역(役)",
+    "군사-병참(兵站)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.625,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "592fd475312d29f8601841a604d49f2d2fc01a600f61a37aaab3baef9c1d72b2",
+  "content_length": 125,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종실록\\0221-ksa_10008028_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종실록\\0221-ksa_10008028_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종실록\\0221-ksa_10008028_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

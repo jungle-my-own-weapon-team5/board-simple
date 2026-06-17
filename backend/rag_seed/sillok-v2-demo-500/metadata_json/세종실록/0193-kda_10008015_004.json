@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 193,
+  "sillok_id": "kda_10008015_004",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008015_004",
+  "period": "세종실록",
+  "title": "세종실록: 양녕 대군에게 주육과 면포 등을 주다",
+  "date": "세종실록1권, 세종 즉위년 8월 15일 임진 4/6 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종친(宗親)",
+    "왕실-사급(賜給)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 11.95,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "911b69a21a8dc18123928ad484b066155e1632781160d39d8c7ee3f865da3f94",
+  "content_length": 104,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0193-kda_10008015_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0193-kda_10008015_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0193-kda_10008015_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 136,
+  "sillok_id": "kna_10010006_001",
+  "source_url": "https://sillok.history.go.kr/id/kna_10010006_001",
+  "period": "선조실록",
+  "title": "선조실록: 삼공 이하가 죄를 받은 사람과 물러난 사람들을 서계하다",
+  "date": "선조실록1권, 선조 즉위년 10월 6일 정해 1/3 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "kna",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "event",
+  "score": 19.1,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 4.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -2.5,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "b0a421fe35b377460c742a1c651dea75baefaf6c6a13921f55751192e4e041b7",
+  "content_length": 479,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0136-kna_10010006_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0136-kna_10010006_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0136-kna_10010006_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

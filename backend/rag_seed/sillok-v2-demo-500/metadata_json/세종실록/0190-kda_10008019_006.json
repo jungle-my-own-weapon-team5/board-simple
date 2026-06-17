@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 190,
+  "sillok_id": "kda_10008019_006",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008019_006",
+  "period": "세종실록",
+  "title": "세종실록: 왜변이 뜸하여 거제와 남해로 들어간 백성들을 목책을 설치하여 보호케 하다",
+  "date": "세종실록1권, 세종 즉위년 8월 19일 병신 6/10 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "외교-왜(倭)",
+    "군사-관방(關防)",
+    "군사-지방군(地方軍)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 14.15,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "6ad171a5f650a153d6405625c4358e9bd13acd3ffb8e4d83361ee43343652149",
+  "content_length": 868,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0190-kda_10008019_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0190-kda_10008019_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0190-kda_10008019_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

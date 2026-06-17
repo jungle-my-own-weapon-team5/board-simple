@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 335,
+  "sillok_id": "kla_10101005_002",
+  "source_url": "https://sillok.history.go.kr/id/kla_10101005_002",
+  "period": "인종실록",
+  "title": "인종실록: 우의정 윤인경 등이 의논하여 시호를 정하다",
+  "date": "인종실록1권, 인종 1년 1월 5일 기해 2/4 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kla",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 5,
+  "article_no": 2,
+  "categories": [
+    "정론-정론(政論)",
+    "역사-사학(史學)",
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9ef6500baaeb42322345fea64be9664eadb8519293867d27566eee47342e86be",
+  "content_length": 1372,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인종실록\\0335-kla_10101005_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인종실록\\0335-kla_10101005_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인종실록\\0335-kla_10101005_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

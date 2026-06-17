@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 344,
+  "sillok_id": "kva_10003022_003",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003022_003",
+  "period": "정조실록",
+  "title": "정조실록: 표신과 부패를 반포하고, 대자교 소자교 내지를 다시 만들어 입계하라 명하다",
+  "date": "정조실록1권, 정조 즉위년 3월 22일 계사 3/3 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-치안(治安)",
+    "군사-군정(軍政)",
+    "출판-인쇄(印刷)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a5aa9a367abb531188cff087e3d869eb27594b39825c988e243efc873da51b82",
+  "content_length": 144,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0344-kva_10003022_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0344-kva_10003022_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0344-kva_10003022_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

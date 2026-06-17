@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 441,
+  "sillok_id": "kxa_10101010_001",
+  "source_url": "https://sillok.history.go.kr/id/kxa_10101010_001",
+  "period": "헌종실록",
+  "title": "헌종실록: 제도의 장계 중 생략해도 합당한 것은 품지를 거쳐 재감하게 하다",
+  "date": "헌종실록2권, 헌종 1년 1월 10일 경오 1/4 기사 / 1835년 청 도광(道光) 15년",
+  "record_code": "kxa",
+  "volume": 2,
+  "king_year": 1,
+  "month": 1,
+  "day": 10,
+  "article_no": 1,
+  "categories": [
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.125,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "4b12561322628b49bcd2a9177f79bb6e9908fd060d30c730bc51f1aa965ed96f",
+  "content_length": 837,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\헌종실록\\0441-kxa_10101010_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\헌종실록\\0441-kxa_10101010_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\헌종실록\\0441-kxa_10101010_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 120,
+  "sillok_id": "knb_10010005_009",
+  "source_url": "https://sillok.history.go.kr/id/knb_10010005_009",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 경연에 나아가 《예기》를 강하다. 기대승이 예의 중요성을 아뢰다",
+  "date": "선조수정실록1권, 선조 즉위년 10월 5일 병술 9/23 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "knb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "왕실-경연(經筵)",
+    "출판-서책(書冊)",
+    "사상-유학(儒學)"
+  ],
+  "primary_bucket": "event",
+  "score": 20.075,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "30160d73a8a2a7f0c41464d73e4a7a42bdd34fadb95e6f8646bc990e5470e176",
+  "content_length": 1491,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0120-knb_10010005_009.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0120-knb_10010005_009.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0120-knb_10010005_009.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

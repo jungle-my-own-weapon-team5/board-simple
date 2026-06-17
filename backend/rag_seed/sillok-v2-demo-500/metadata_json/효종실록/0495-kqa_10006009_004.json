@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 495,
+  "sillok_id": "kqa_10006009_004",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10006009_004",
+  "period": "효종실록",
+  "title": "효종실록: 정경 부인 김씨·숙안군 주와 숙명군 주·부위에게 새로 작위를 봉하다",
+  "date": "효종실록1권, 효종 즉위년 6월 9일 정유 4/6 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 16.775,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a3d2328973bc8e0d35cea34f549c5c12ffd1b3ae0d8789c18403d8a52721fef4",
+  "content_length": 201,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0495-kqa_10006009_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0495-kqa_10006009_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0495-kqa_10006009_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

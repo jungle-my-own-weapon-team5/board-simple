@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 280,
+  "sillok_id": "kja_10101001_008",
+  "source_url": "https://sillok.history.go.kr/id/kja_10101001_008",
+  "period": "연산군일기",
+  "title": "연산군일기: 의정부와 육조가 성종의 상을 당하여 의관에게 죄주기를 청하다",
+  "date": "연산군일기2권, 연산 1년 1월 1일 을유 8/11 기사 / 1495년 명 홍치(弘治) 8년",
+  "record_code": "kja",
+  "volume": 2,
+  "king_year": 1,
+  "month": 1,
+  "day": 1,
+  "article_no": 8,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)",
+    "신분-중인(中人)",
+    "의약-약학(藥學)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.0,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c1c55d0c8dbc46becf0dd40aba9c4877264a43a8a4944feb82cf075218e78152",
+  "content_length": 472,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0280-kja_10101001_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0280-kja_10101001_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0280-kja_10101001_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

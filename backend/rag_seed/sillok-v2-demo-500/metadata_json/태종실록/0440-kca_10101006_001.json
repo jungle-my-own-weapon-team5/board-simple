@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 440,
+  "sillok_id": "kca_10101006_001",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101006_001",
+  "period": "태종실록",
+  "title": "태종실록: 시위 경패(京牌) 중에서 늙고 가난한 자를 방면하다",
+  "date": "태종실록1권, 태종 1년 1월 6일 병인 1/1 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 6,
+  "article_no": 1,
+  "categories": [
+    "군사-중앙군(中央軍)"
+  ],
+  "primary_bucket": "event",
+  "score": 13.25,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "89fb9799a983ec197d02d3540f805e30ebad41a961335c2cd2a7a978924fd380",
+  "content_length": 68,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0440-kca_10101006_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0440-kca_10101006_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0440-kca_10101006_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

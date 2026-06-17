@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 431,
+  "sillok_id": "kca_10101015_002",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101015_002",
+  "period": "태종실록",
+  "title": "태종실록: 이저·이거이 등에게 좌명 공신의 훈호를 내리는 교서",
+  "date": "태종실록1권, 태종 1년 1월 15일 을해 2/3 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 15,
+  "article_no": 2,
+  "categories": [
+    "인사-선발(選拔)",
+    "인사-관리(管理)",
+    "왕실-사급(賜給)",
+    "농업-전제(田制)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.35,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 4.25,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5355bdeec3b0628ce0e5bb1baf40b0d29e14b3297b05f3f9bd215f204f30dcc5",
+  "content_length": 2622,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0431-kca_10101015_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0431-kca_10101015_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0431-kca_10101015_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

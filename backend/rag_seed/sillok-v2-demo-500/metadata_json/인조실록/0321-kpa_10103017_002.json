@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 321,
+  "sillok_id": "kpa_10103017_002",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103017_002",
+  "period": "인조실록",
+  "title": "인조실록: 영창 대군과 연흥 부원군을 예장하도록 명하고 부원군에 영의정을 추증하다",
+  "date": "인조실록1권, 인조 1년 3월 17일 정미 2/10 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 17,
+  "article_no": 2,
+  "categories": [
+    "왕실-종친(宗親)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7fe5b7daa6b80f5c75932826da0a0c668110b2d91c5c1b86586c54c049104fb0",
+  "content_length": 121,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0321-kpa_10103017_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0321-kpa_10103017_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0321-kpa_10103017_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

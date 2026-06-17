@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 150,
+  "sillok_id": "kia_10011029_010",
+  "source_url": "https://sillok.history.go.kr/id/kia_10011029_010",
+  "period": "성종실록",
+  "title": "성종실록: 원상들이 승습사가 선물을 가져가 한림 학사 진감에게 선물하게 할 것을 청하다",
+  "date": "성종실록1권, 성종 즉위년 11월 29일 기유 10/18 기사 / 1469년 명 성화(成化) 5년",
+  "record_code": "kia",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "외교-명(明)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.0,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e468263733b776b676c42c282c54cf86e7a272714673528df2dd829530d86e9f",
+  "content_length": 544,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\성종실록\\0150-kia_10011029_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\성종실록\\0150-kia_10011029_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\성종실록\\0150-kia_10011029_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 476,
+  "sillok_id": "kra_10005005_006",
+  "source_url": "https://sillok.history.go.kr/id/kra_10005005_006",
+  "period": "현종실록",
+  "title": "현종실록: 원상 정태화가 중사 임우문과 함께 소렴할 시간을 갑시로 정하다",
+  "date": "현종실록1권, 현종 즉위년 5월 5일 을축 6/6 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "kra",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "과학-천기(天氣)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.0,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "06646a3746dc5b07eb53e9296064d8579096b2b66136b359a20288e31c26b898",
+  "content_length": 411,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종실록\\0476-kra_10005005_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종실록\\0476-kra_10005005_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종실록\\0476-kra_10005005_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 378,
+  "sillok_id": "kka_10109007_003",
+  "source_url": "https://sillok.history.go.kr/id/kka_10109007_003",
+  "period": "중종실록",
+  "title": "중종실록: 사간원 소속 서리·나장·조례·노비들을 돌려 주다",
+  "date": "중종실록1권, 중종 1년 9월 7일 계미 3/12 기사 / 1506년 명 정덕(正德) 1년",
+  "record_code": "kka",
+  "volume": 1,
+  "king_year": 1,
+  "month": 9,
+  "day": 7,
+  "article_no": 3,
+  "categories": [
+    "행정-중앙행정(中央行政)",
+    "재정-역(役)",
+    "신분-천인(賤人)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 12.4,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "58ce5bd0fd57cbc5cccc762caabb8a3c892c99929edd87340a5e0f9ba4ff0269",
+  "content_length": 190,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\중종실록\\0378-kka_10109007_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\중종실록\\0378-kka_10109007_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\중종실록\\0378-kka_10109007_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

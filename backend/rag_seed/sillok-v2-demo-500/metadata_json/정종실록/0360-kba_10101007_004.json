@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 360,
+  "sillok_id": "kba_10101007_004",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101007_004",
+  "period": "정종실록",
+  "title": "정종실록: 경연에서 지경연사 조박이 《논어》를 진강하다",
+  "date": "정종실록1권, 정종 1년 1월 7일 무인 4/5 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 7,
+  "article_no": 4,
+  "categories": [
+    "왕실-경연(經筵)",
+    "건설-건축(建築)"
+  ],
+  "primary_bucket": "event",
+  "score": 12.75,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8cb5eaef2146327c3df86a5e2368766386670debcd412f8278ed54d3e7088193",
+  "content_length": 498,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0360-kba_10101007_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0360-kba_10101007_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0360-kba_10101007_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

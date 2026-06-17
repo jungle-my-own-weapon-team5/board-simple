@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 58,
+  "sillok_id": "kob_10002003_002",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002003_002",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 사헌부의 대신들을 체차하여야 한다는 홍문관 부제학 송응순 등의 차자",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 3일 경신 2/3 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.625,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "21e020cece2923f49362c8b0f47cd9207d2d40427c38e3937b56430b2d3a1b4c",
+  "content_length": 833,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0058-kob_10002003_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0058-kob_10002003_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0058-kob_10002003_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

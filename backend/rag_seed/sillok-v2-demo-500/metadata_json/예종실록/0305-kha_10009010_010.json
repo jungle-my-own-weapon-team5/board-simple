@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 305,
+  "sillok_id": "kha_10009010_010",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009010_010",
+  "period": "예종실록",
+  "title": "예종실록: 상장의 일은 과거에 정승 이상을 지낸 자와 의논하여 행하게 하다",
+  "date": "예종실록1권, 예종 즉위년 9월 10일 병인 10/11 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.525,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a825233551b416f2b8a8373f7469c8cffced6017d3ed1efa76e231319b991dfb",
+  "content_length": 139,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0305-kha_10009010_010.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0305-kha_10009010_010.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0305-kha_10009010_010.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

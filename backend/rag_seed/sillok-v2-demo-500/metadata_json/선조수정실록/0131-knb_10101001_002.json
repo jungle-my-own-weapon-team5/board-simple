@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 131,
+  "sillok_id": "knb_10101001_002",
+  "source_url": "https://sillok.history.go.kr/id/knb_10101001_002",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 이황을 숭정 대부 우찬성에 특승하였으나 사직 상소를 올리다",
+  "date": "선조수정실록2권, 선조 1년 1월 1일 신해 2/7 기사 / 1568년 명 융경(隆慶) 2년",
+  "record_code": "knb",
+  "volume": 2,
+  "king_year": 1,
+  "month": 1,
+  "day": 1,
+  "article_no": 2,
+  "categories": [
+    "정론-정론(政論)",
+    "인사-임면(任免)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.4,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.0,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0e4da50ca0fce92d7674910ffd7796e4443d27d3329af7dbdeaec4e37b716d91",
+  "content_length": 1954,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0131-knb_10101001_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0131-knb_10101001_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0131-knb_10101001_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 44,
+  "sillok_id": "kza_10012015_002",
+  "source_url": "https://sillok.history.go.kr/id/kza_10012015_002",
+  "period": "고종실록",
+  "title": "고종실록: 빈전에서 선대왕의 시호, 묘호, 능호의 안을 올리다",
+  "date": "고종실록1권, 고종 즉위년 12월 15일 정해 2/7 기사 / 1863년 청 동치(同治) 2년",
+  "record_code": "kza",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)"
+  ],
+  "primary_bucket": "event",
+  "score": 13.25,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5c223e219228d89954a8061a57a495d68dae4727028f6542acd5622b0b4d2611",
+  "content_length": 577,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\고종실록\\0044-kza_10012015_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\고종실록\\0044-kza_10012015_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\고종실록\\0044-kza_10012015_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

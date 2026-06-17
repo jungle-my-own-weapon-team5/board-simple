@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 236,
+  "sillok_id": "kwa_10007005_002",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007005_002",
+  "period": "순조실록",
+  "title": "순조실록: 대간들이 피혐하다. 이재학·이조승·이익운 등에게 관직을 제수하다",
+  "date": "순조실록1권, 순조 즉위년 7월 5일 을유 2/2 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 11.525,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "83ac8a72b430a040a143264142dd0d39aee6edef69a23b75fc5a42f0897c67ce",
+  "content_length": 307,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0236-kwa_10007005_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0236-kwa_10007005_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0236-kwa_10007005_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

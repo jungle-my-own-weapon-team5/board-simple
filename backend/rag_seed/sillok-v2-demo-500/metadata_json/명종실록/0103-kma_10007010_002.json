@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 103,
+  "sillok_id": "kma_10007010_002",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007010_002",
+  "period": "명종실록",
+  "title": "명종실록: 홍문관 부제학 나숙 등이 윤원로를 절도로 찬축할 것을 청하다",
+  "date": "명종실록1권, 명종 즉위년 7월 10일 경오 2/7 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 13.875,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "51d4aed610d67cdc31d7ea02dcd400e7676ad44c2ad688fcbf3a2de0784b6723",
+  "content_length": 518,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0103-kma_10007010_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0103-kma_10007010_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0103-kma_10007010_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

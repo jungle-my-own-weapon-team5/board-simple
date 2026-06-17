@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 490,
+  "sillok_id": "kqa_10006010_005",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10006010_005",
+  "period": "효종실록",
+  "title": "효종실록: 졸곡 전의 형벌에 대하여 대신들이 의논하다",
+  "date": "효종실록1권, 효종 즉위년 6월 10일 무술 5/5 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-행형(行刑)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.325,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "51a23e0c302cc5d25168ad3d24337ffc406023da1b2e227513d19a42bd49bb0e",
+  "content_length": 517,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0490-kqa_10006010_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0490-kqa_10006010_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0490-kqa_10006010_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

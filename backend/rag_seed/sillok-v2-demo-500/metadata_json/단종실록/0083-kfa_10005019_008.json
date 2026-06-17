@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 83,
+  "sillok_id": "kfa_10005019_008",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005019_008",
+  "period": "단종실록",
+  "title": "단종실록: 의정부에서 유이민을 살도록 허락한 호수(戶首)와 와주(窩主) 가운데 사유 전은 논하지 않기를 청하다",
+  "date": "단종실록1권, 단종 즉위년 5월 19일 신해 8/10 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-행형(行刑)",
+    "호구-이동(移動)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 16.025,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 7.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "2bfc681ad312bbe4d32944dbcfaa519711fe14b086f42dfab7717dbc19ac4d85",
+  "content_length": 334,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0083-kfa_10005019_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0083-kfa_10005019_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0083-kfa_10005019_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 35,
+  "sillok_id": "kza_10012008_002",
+  "source_url": "https://sillok.history.go.kr/id/kza_10012008_002",
+  "period": "고종실록",
+  "title": "고종실록: 대왕대비가 국상 중에 정사를 대리할 사람을 정하였고 철종의 뒤를 흥선군의 두 번째 아들로 정하다",
+  "date": "고종실록1권, 고종 즉위년 12월 8일 경진 2/14 기사 / 1863년 청 동치(同治) 2년",
+  "record_code": "kza",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-종친(宗親)",
+    "군사-중앙군(中央軍)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 7.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "4a3b2eb19f59b2ae703e458f4e935f6b63bff6f3d1746be1a7c4aad5fc07c05d",
+  "content_length": 1214,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\고종실록\\0035-kza_10012008_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\고종실록\\0035-kza_10012008_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\고종실록\\0035-kza_10012008_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

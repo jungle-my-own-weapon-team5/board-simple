@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 387,
+  "sillok_id": "kya_10006016_001",
+  "source_url": "https://sillok.history.go.kr/id/kya_10006016_001",
+  "period": "철종실록",
+  "title": "철종실록: 예조에서 내삼전의 위호를 가상하는 일에 대한 좨주 홍직필·부사직 성근묵 등의 의견을 아뢰다",
+  "date": "철종실록1권, 철종 즉위년 6월 16일 임오 1/1 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 16.0,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 7.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7007b02f562e8639671bdc2c6587a051c94000e67c0055ea5577de7b224a9dca",
+  "content_length": 621,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0387-kya_10006016_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0387-kya_10006016_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0387-kya_10006016_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

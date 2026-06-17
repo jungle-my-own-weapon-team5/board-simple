@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 471,
+  "sillok_id": "kra_10005016_001",
+  "source_url": "https://sillok.history.go.kr/id/kra_10005016_001",
+  "period": "현종실록",
+  "title": "현종실록: 이판 송시열이 대행 대왕의 지문 찬술을 사양하였으나 사양하지 말라고 유시하다",
+  "date": "현종실록1권, 현종 즉위년 5월 16일 병자 1/2 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "kra",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 20.7,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3a463ef3d5f607a254ae9b02d4eec18037c09e027133f8244aa707ed52891c7c",
+  "content_length": 805,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종실록\\0471-kra_10005016_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종실록\\0471-kra_10005016_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종실록\\0471-kra_10005016_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

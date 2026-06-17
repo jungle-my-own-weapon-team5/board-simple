@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 302,
+  "sillok_id": "kha_10009008_007",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009008_007",
+  "period": "예종실록",
+  "title": "예종실록: 백관과 함께 태상왕에게 사은하였는데 그날 밤에 태상왕이 훙하다",
+  "date": "예종실록1권, 예종 즉위년 9월 8일 갑자 7/7 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "892c9b7b866d5ec95aebd7865570e21e6b713e4c16b87cc895ae9dd9f53d2abd",
+  "content_length": 1621,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0302-kha_10009008_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0302-kha_10009008_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0302-kha_10009008_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 225,
+  "sillok_id": "kwa_10007014_001",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007014_001",
+  "period": "순조실록",
+  "title": "순조실록: 대왕 대비가 수렴에 대한 비답문을 고치라 하교하다",
+  "date": "순조실록1권, 순조 즉위년 7월 14일 갑오 1/2 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.125,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "fd1705e9439e8297732132187b5c0840f38da0d8b3b1efe15e050aa44b6a1858",
+  "content_length": 224,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0225-kwa_10007014_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0225-kwa_10007014_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0225-kwa_10007014_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

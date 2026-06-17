@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 492,
+  "sillok_id": "kqa_10005013_002",
+  "source_url": "https://sillok.history.go.kr/id/kqa_10005013_002",
+  "period": "효종실록",
+  "title": "효종실록: 왕이 즉위하고 대사령을 내리고 교서를 반포하다",
+  "date": "효종실록1권, 효종 즉위년 5월 13일 신미 2/3 기사 / 1649년 청 순치(順治) 6년",
+  "record_code": "kqa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "사법-행형(行刑)",
+    "어문학-문학(文學)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 28.775,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 8.1,
+    "system_life": 4.8,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3afe062990cdafe4aa2431b349ceafc93448a27f2fe73bb0251d640caaee5aab",
+  "content_length": 1988,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\효종실록\\0492-kqa_10005013_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\효종실록\\0492-kqa_10005013_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\효종실록\\0492-kqa_10005013_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

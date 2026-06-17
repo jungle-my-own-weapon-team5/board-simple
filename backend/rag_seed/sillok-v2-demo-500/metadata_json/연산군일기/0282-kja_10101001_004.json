@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 282,
+  "sillok_id": "kja_10101001_004",
+  "source_url": "https://sillok.history.go.kr/id/kja_10101001_004",
+  "period": "연산군일기",
+  "title": "연산군일기: 유자광이 어머니의 상을 당하고 임금의 상에 참가함에 대신들과 논란하다",
+  "date": "연산군일기2권, 연산 1년 1월 1일 을유 4/11 기사 / 1495년 명 홍치(弘治) 8년",
+  "record_code": "kja",
+  "volume": 2,
+  "king_year": 1,
+  "month": 1,
+  "day": 1,
+  "article_no": 4,
+  "categories": [
+    "왕실-의식(儀式)",
+    "풍속-예속(禮俗)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "48226f02d18cc4e8cf154acd3978d17c2be34d0e7b4e3f56de7b882f0e156ac8",
+  "content_length": 876,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0282-kja_10101001_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0282-kja_10101001_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0282-kja_10101001_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

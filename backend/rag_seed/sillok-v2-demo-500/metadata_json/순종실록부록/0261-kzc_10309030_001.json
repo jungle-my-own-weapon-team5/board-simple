@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 261,
+  "sillok_id": "kzc_10309030_001",
+  "source_url": "https://sillok.history.go.kr/id/kzc_10309030_001",
+  "period": "순종실록부록",
+  "title": "순종실록부록: 조선 총독부 관제 칙령, 중추원 칙령, 취조국 칙령 등을 공포하다",
+  "date": "순종실록부록1권, 순종 3년 9월 30일 양력 1/1 기사 / 1910년 일본 명치(明治) 43년",
+  "record_code": "kzc",
+  "volume": 1,
+  "king_year": 3,
+  "month": 9,
+  "day": 30,
+  "article_no": 1,
+  "categories": [
+    "사법-법제(法制)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.9,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0a11a5d20781cfef42983332b8050a2c7cfd1c8ee1066228fa4d98510af4c772",
+  "content_length": 250,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순종실록부록\\0261-kzc_10309030_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순종실록부록\\0261-kzc_10309030_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순종실록부록\\0261-kzc_10309030_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

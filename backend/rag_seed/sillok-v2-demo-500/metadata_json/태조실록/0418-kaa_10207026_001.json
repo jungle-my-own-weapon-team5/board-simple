@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 418,
+  "sillok_id": "kaa_10207026_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10207026_001",
+  "period": "태조실록",
+  "title": "태조실록: 정도전이 몽금척·수보록·납씨곡·궁수분곡·정동방곡 등의 악장을 지어 바치다",
+  "date": "태조실록4권, 태조 2년 7월 26일 기사 1/1 기사 / 1393년 명 홍무(洪武) 26년",
+  "record_code": "kaa",
+  "volume": 4,
+  "king_year": 2,
+  "month": 7,
+  "day": 26,
+  "article_no": 1,
+  "categories": [
+    "왕실-사급(賜給)",
+    "역사-고사(故事)",
+    "어문학-문학(文學)",
+    "예술-음악(音樂)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 24.25,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 4.8,
+    "title_clarity": 5.75,
+    "length_quality": 3.0,
+    "category_quality": 5.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3d4978b6364e42c7cb2232a1b4afbcb7d0143aa1fc30fbb18c7e8bb8a2b9d899",
+  "content_length": 4276,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0418-kaa_10207026_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0418-kaa_10207026_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0418-kaa_10207026_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

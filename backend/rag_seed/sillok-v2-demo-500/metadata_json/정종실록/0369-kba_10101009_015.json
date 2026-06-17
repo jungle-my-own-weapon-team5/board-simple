@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 369,
+  "sillok_id": "kba_10101009_015",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101009_015",
+  "period": "정종실록",
+  "title": "정종실록: 대사헌 조박의 아들 조신언에게 상복을 벗고 회안공의 딸에게 장가들라고 명하다",
+  "date": "정종실록1권, 정종 1년 1월 9일 경진 15/16 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 9,
+  "article_no": 15,
+  "categories": [
+    "풍속-예속(禮俗)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.0,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e711b78be1eb41d561b13858f567108492b980101af8848d78e013281616f494",
+  "content_length": 223,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0369-kba_10101009_015.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0369-kba_10101009_015.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0369-kba_10101009_015.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

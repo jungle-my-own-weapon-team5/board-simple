@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 402,
+  "sillok_id": "kaa_10302026_002",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10302026_002",
+  "period": "태조실록",
+  "title": "태조실록: 삼성에서 왕씨 일족을 귀양보내도록 연명 상소하니 공주 등지로 유배시키다",
+  "date": "태조실록5권, 태조 3년 2월 26일 병신 2/4 기사 / 1394년 명 홍무(洪武) 27년",
+  "record_code": "kaa",
+  "volume": 5,
+  "king_year": 3,
+  "month": 2,
+  "day": 26,
+  "article_no": 2,
+  "categories": [
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 30.525,
+  "score_parts": {
+    "event": 12.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 1.5,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "43c9553bd454f1c8d63c1ed4cfc56c006d3f561d1229ca6557b5bf62792c0b59",
+  "content_length": 2210,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0402-kaa_10302026_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0402-kaa_10302026_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0402-kaa_10302026_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

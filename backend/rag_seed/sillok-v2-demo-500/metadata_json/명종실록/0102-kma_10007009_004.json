@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 102,
+  "sillok_id": "kma_10007009_004",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007009_004",
+  "period": "명종실록",
+  "title": "명종실록: 의정부·육조·한성부와 윤원로를 공론에 따라 찬축할 것을 아뢰다",
+  "date": "명종실록1권, 명종 즉위년 7월 9일 기사 4/13 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 14.0,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "72c98fd52c10302c7163d86b964d2dce6f2507deed25ea9db2fc0f8d0694511e",
+  "content_length": 609,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0102-kma_10007009_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0102-kma_10007009_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0102-kma_10007009_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

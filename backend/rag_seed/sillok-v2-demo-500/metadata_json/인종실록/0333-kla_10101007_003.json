@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 333,
+  "sillok_id": "kla_10101007_003",
+  "source_url": "https://sillok.history.go.kr/id/kla_10101007_003",
+  "period": "인종실록",
+  "title": "인종실록: 홍문관 부제학 송세형 등이 졸곡 후의 복제에 대해 아뢰다",
+  "date": "인종실록1권, 인종 1년 1월 7일 신축 3/6 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kla",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 7,
+  "article_no": 3,
+  "categories": [],
+  "primary_bucket": "person_relation",
+  "score": 13.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "186b3b747ee70c7c08103f04a2c9aae7b338652989f4dbedad8c56d3047f4b64",
+  "content_length": 1044,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인종실록\\0333-kla_10101007_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인종실록\\0333-kla_10101007_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인종실록\\0333-kla_10101007_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

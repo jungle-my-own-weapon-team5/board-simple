@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 82,
+  "sillok_id": "kfa_10005019_004",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005019_004",
+  "period": "단종실록",
+  "title": "단종실록: 의정부에서 전조 왕씨의 봉사하는 조건을 아뢰다",
+  "date": "단종실록1권, 단종 즉위년 5월 19일 신해 4/10 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "재정-국용(國用)",
+    "왕실-사급(賜給)",
+    "행정-지방행정(地方行政)",
+    "역사-전사(前史)",
+    "신분-천인(賤人)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.975,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0764e2b5e3d7f94c76b50799744291e9c632552b42dba5a7000a2b2770d73fcd",
+  "content_length": 1279,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0082-kfa_10005019_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0082-kfa_10005019_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0082-kfa_10005019_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 41,
+  "sillok_id": "kza_10012013_015",
+  "source_url": "https://sillok.history.go.kr/id/kza_10012013_015",
+  "period": "고종실록",
+  "title": "고종실록: 대왕대비가 대원군 궁에 주는 토지와 저택을 예조에서 규례대로 정하라고 하다",
+  "date": "고종실록1권, 고종 즉위년 12월 13일 을유 15/17 기사 / 1863년 청 동치(同治) 2년",
+  "record_code": "kza",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종친(宗親)",
+    "왕실-사급(賜給)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 14.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "cf9908d1fd9794f46b721c73b7ef5f5600d19bcf86f91adbb5a3a202b9eff057",
+  "content_length": 130,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\고종실록\\0041-kza_10012013_015.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\고종실록\\0041-kza_10012013_015.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\고종실록\\0041-kza_10012013_015.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

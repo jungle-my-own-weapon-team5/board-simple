@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 148,
+  "sillok_id": "kna_10102001_002",
+  "source_url": "https://sillok.history.go.kr/id/kna_10102001_002",
+  "period": "선조실록",
+  "title": "선조실록: 사헌부에서 이원린을 탄핵하다",
+  "date": "선조실록2권, 선조 1년 2월 1일 신사 2/3 기사 / 1568년 명 융경(隆慶) 2년",
+  "record_code": "kna",
+  "volume": 2,
+  "king_year": 1,
+  "month": 2,
+  "day": 1,
+  "article_no": 2,
+  "categories": [
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.625,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 2.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a203e1d028ef88f81d1ac93a8791e73a595246f2a2095adb34fc8bd72cb5f432",
+  "content_length": 411,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0148-kna_10102001_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0148-kna_10102001_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0148-kna_10102001_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

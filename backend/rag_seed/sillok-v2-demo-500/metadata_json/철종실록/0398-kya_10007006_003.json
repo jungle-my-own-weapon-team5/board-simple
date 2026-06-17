@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 398,
+  "sillok_id": "kya_10007006_003",
+  "source_url": "https://sillok.history.go.kr/id/kya_10007006_003",
+  "period": "철종실록",
+  "title": "철종실록: 판부사 정원용과 박회수가 소를 올려 어휘를 잘못 올린 자신의 죄를 아뢰다",
+  "date": "철종실록1권, 철종 즉위년 7월 6일 신축 3/3 기사 / 1849년 청 도광(道光) 29년",
+  "record_code": "kya",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-정론(政論)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.75,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8b11daba1c1e5657df045ae00a71889eef29b93ea7c2fc14a70566274b1b6eca",
+  "content_length": 366,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\철종실록\\0398-kya_10007006_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\철종실록\\0398-kya_10007006_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\철종실록\\0398-kya_10007006_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

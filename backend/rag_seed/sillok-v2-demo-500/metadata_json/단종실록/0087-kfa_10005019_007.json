@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 87,
+  "sillok_id": "kfa_10005019_007",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005019_007",
+  "period": "단종실록",
+  "title": "단종실록: 의정부에서 졸곡 후 3년 안에는 배표할 때에만 청산선·오장을 쓸 것을 청하다",
+  "date": "단종실록1권, 단종 즉위년 5월 19일 신해 7/10 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.7,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "91b75562e003e27fa9ed8601d59f1374f6bae0cc06f2965ac0a3f2967c294b54",
+  "content_length": 159,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0087-kfa_10005019_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0087-kfa_10005019_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0087-kfa_10005019_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

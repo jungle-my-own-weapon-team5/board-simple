@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 101,
+  "sillok_id": "kma_10007019_002",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007019_002",
+  "period": "명종실록",
+  "title": "명종실록: 영중추부사 홍언필이 병으로 원상에서 체직되기를 청하나 불윤하다",
+  "date": "명종실록1권, 명종 즉위년 7월 19일 기묘 2/5 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 14.0,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "57c1b2c513905a792e242d00fa5059a5abac697249f93c80b7e1cfe69c899aba",
+  "content_length": 210,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0101-kma_10007019_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0101-kma_10007019_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0101-kma_10007019_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

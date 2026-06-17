@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 91,
+  "sillok_id": "kma_10007014_002",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007014_002",
+  "period": "명종실록",
+  "title": "명종실록: 비망기를 내려 근래의 재변에 대한 반성으로 감선할 것임을 알리다",
+  "date": "명종실록1권, 명종 즉위년 7월 14일 갑술 2/3 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "농업-축산(畜産)",
+    "과학-천기(天氣)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.825,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "32be9ccb8f33bdd4d224fd1762edf4d91789abb6cfd36da7715903d1d8b94842",
+  "content_length": 588,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0091-kma_10007014_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0091-kma_10007014_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0091-kma_10007014_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 288,
+  "sillok_id": "kua_10009007_001",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009007_001",
+  "period": "영조실록",
+  "title": "영조실록: 우승지 이정제가 사관을 보내 정제두를 유소해 오게 한 일을 중지할 것에 관해 아룀",
+  "date": "영조실록1권, 영조 즉위년 9월 7일 정미 1/2 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 15.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "aa9a4096b0584e679f053d35dcf41094f3633d052cddca775c7c7673350ca1ee",
+  "content_length": 1017,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0288-kua_10009007_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0288-kua_10009007_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0288-kua_10009007_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 363,
+  "sillok_id": "kba_10101007_005",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101007_005",
+  "period": "정종실록",
+  "title": "정종실록: 선군(船軍)에게 어염의 역사를 면제하다",
+  "date": "정종실록1권, 정종 1년 1월 7일 무인 5/5 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 7,
+  "article_no": 5,
+  "categories": [
+    "군사-군역(軍役)",
+    "군사-지방군(地方軍)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 14.175,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 3.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "352a5328e09cbfa89ea62bf5c132cd0509b751ca528d22ea5e7b282d87199e9f",
+  "content_length": 319,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0363-kba_10101007_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0363-kba_10101007_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0363-kba_10101007_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

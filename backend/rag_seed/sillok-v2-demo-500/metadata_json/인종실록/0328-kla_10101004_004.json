@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 328,
+  "sillok_id": "kla_10101004_004",
+  "source_url": "https://sillok.history.go.kr/id/kla_10101004_004",
+  "period": "인종실록",
+  "title": "인종실록: 헌부에서 창덕궁으로 옮길 것을 청하다",
+  "date": "인종실록1권, 인종 1년 1월 4일 무술 4/4 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kla",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 4,
+  "article_no": 4,
+  "categories": [
+    "정론-간쟁(諫諍)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.95,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5690a2fa3241cf538fe92a9a1eb9117dbedaa0d94fe899ba05961aa5085504ba",
+  "content_length": 803,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인종실록\\0328-kla_10101004_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인종실록\\0328-kla_10101004_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인종실록\\0328-kla_10101004_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

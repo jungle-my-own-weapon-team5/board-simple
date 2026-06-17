@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 216,
+  "sillok_id": "ksa_10008020_002",
+  "source_url": "https://sillok.history.go.kr/id/ksa_10008020_002",
+  "period": "숙종실록",
+  "title": "숙종실록: 왕세자가 예조에서 올린 사위 절목을 다시 내려 보내다",
+  "date": "숙종실록1권, 숙종 즉위년 8월 20일 신해 2/4 기사 / 1674년 청 강희(康熙) 13년",
+  "record_code": "ksa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-종친(宗親)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "2a94d77ebab246581409bfd310385e0bd243217a0ff95c28e3b6bbbe3f28fa74",
+  "content_length": 190,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종실록\\0216-ksa_10008020_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종실록\\0216-ksa_10008020_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종실록\\0216-ksa_10008020_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 59,
+  "sillok_id": "kob_10002002_005",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002002_005",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 대신들이 왕위를 비워둘 수 없다고 속히 대례를 행해야 한다고 아뢰다",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 2일 기미 5/10 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.625,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "5374b4901587ae8824d54b2eff7e1f268d1b530dd9f737462685ec35a29ece65",
+  "content_length": 270,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0059-kob_10002002_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0059-kob_10002002_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0059-kob_10002002_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

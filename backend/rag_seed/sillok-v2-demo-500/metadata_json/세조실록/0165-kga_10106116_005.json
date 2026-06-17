@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 165,
+  "sillok_id": "kga_10106116_005",
+  "source_url": "https://sillok.history.go.kr/id/kga_10106116_005",
+  "period": "세조실록",
+  "title": "세조실록: 대간이 이유 등의 죄를 청하다",
+  "date": "세조실록1권, 세조 1년 윤6월 16일 경신 5/7 기사 / 1455년 명 경태(景泰) 6년",
+  "record_code": "kga",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "변란-정변(政變)",
+    "사법-탄핵(彈劾)",
+    "정론-간쟁(諫諍)",
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.75,
+  "score_parts": {
+    "event": 9.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 2.75,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c2ef1637594c45dd1dd88bb7439c42fe0e9f05491ccd929ab0a8282310b62dfc",
+  "content_length": 4536,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세조실록\\0165-kga_10106116_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세조실록\\0165-kga_10106116_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세조실록\\0165-kga_10106116_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

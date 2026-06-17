@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 250,
+  "sillok_id": "kzb_10008002_002",
+  "source_url": "https://sillok.history.go.kr/id/kzb_10008002_002",
+  "period": "순종실록",
+  "title": "순종실록: 마루야마 시게토시, 김종한, 최석민 등을 관직에 임명하다",
+  "date": "순종실록1권, 순종 즉위년 8월 2일 양력 2/3 기사 / 1907년 대한 광무(光武) 11년",
+  "record_code": "kzb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "외교-일본(日本)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.025,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": "고종·순종 계열 자료는 편찬 경위상 인용 주의",
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1333ffbc8673de428306426c73d8f4847890a5f6c4184a69513c32f2af5e77bd",
+  "content_length": 340,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순종실록\\0250-kzb_10008002_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순종실록\\0250-kzb_10008002_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순종실록\\0250-kzb_10008002_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 286,
+  "sillok_id": "kua_10009005_001",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009005_001",
+  "period": "영조실록",
+  "title": "영조실록: 함경 감사 이의만의 본도의 사록에 대한 장문을 형조에 내려 품처케 하다",
+  "date": "영조실록1권, 영조 즉위년 9월 5일 을사 1/1 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "event",
+  "score": 17.625,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "10a694ec76e53625146f685ba4f1ad8cb1d3ba4fc14378d1b76b874807d75459",
+  "content_length": 701,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0286-kua_10009005_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0286-kua_10009005_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0286-kua_10009005_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

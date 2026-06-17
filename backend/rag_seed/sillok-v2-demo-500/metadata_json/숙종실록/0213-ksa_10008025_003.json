@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 213,
+  "sillok_id": "ksa_10008025_003",
+  "source_url": "https://sillok.history.go.kr/id/ksa_10008025_003",
+  "period": "숙종실록",
+  "title": "숙종실록: 입대를 청하는 원상을 여차에서 인견하다",
+  "date": "숙종실록1권, 숙종 즉위년 8월 25일 병진 3/5 기사 / 1674년 청 강희(康熙) 13년",
+  "record_code": "ksa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "event",
+  "score": 12.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ff4a1fd5ce8e4f6f8399d0ea34f2255301d6d6965039c2b2fab42b3ac34e1d0d",
+  "content_length": 270,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종실록\\0213-ksa_10008025_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종실록\\0213-ksa_10008025_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종실록\\0213-ksa_10008025_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

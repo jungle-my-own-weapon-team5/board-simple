@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 361,
+  "sillok_id": "kba_10101009_008",
+  "source_url": "https://sillok.history.go.kr/id/kba_10101009_008",
+  "period": "정종실록",
+  "title": "정종실록: 경연에서 이서·조용·배중륜 등과 임금의 도리에 관해서 논하다",
+  "date": "정종실록1권, 정종 1년 1월 9일 경진 8/16 기사 / 1399년 명 건문(建文) 1년",
+  "record_code": "kba",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 9,
+  "article_no": 8,
+  "categories": [
+    "왕실-경연(經筵)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 15.975,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3d6d2ba441f44c50cfbed7bd1676aee1f68c24c4199d3c9eee486009750b2b6d",
+  "content_length": 671,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정종실록\\0361-kba_10101009_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정종실록\\0361-kba_10101009_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정종실록\\0361-kba_10101009_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

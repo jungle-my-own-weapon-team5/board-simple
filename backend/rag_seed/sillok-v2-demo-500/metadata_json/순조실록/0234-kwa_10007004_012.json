@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 234,
+  "sillok_id": "kwa_10007004_012",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007004_012",
+  "period": "순조실록",
+  "title": "순조실록: 헌부에서 내의 강명길·피재길 등을 탄핵하다",
+  "date": "순조실록1권, 순조 즉위년 7월 4일 갑신 12/14 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "군사-중앙군(中央軍)",
+    "신분-중인(中人)"
+  ],
+  "primary_bucket": "event",
+  "score": 12.625,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "03c52c3187d5b59f1f2f8a268199a517921ae7cf62df02c56d569e54d4421ab1",
+  "content_length": 1016,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0234-kwa_10007004_012.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0234-kwa_10007004_012.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0234-kwa_10007004_012.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

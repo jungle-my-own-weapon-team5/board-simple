@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 434,
+  "sillok_id": "kca_10101001_002",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101001_002",
+  "period": "태종실록",
+  "title": "태종실록: 수창궁의 화재로 강안전 터에서 정삭을 하례하다. 상장군 이응을 탄핵하다",
+  "date": "태종실록1권, 태종 1년 1월 1일 신유 2/2 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 1,
+  "article_no": 2,
+  "categories": [
+    "왕실-의식(儀式)",
+    "외교-명(明)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.325,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "55a748c4eb3edddf66f8b97bf027ffb729ca77ca39454370cf82eaa8d00687c5",
+  "content_length": 478,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0434-kca_10101001_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0434-kca_10101001_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0434-kca_10101001_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 300,
+  "sillok_id": "kha_10009009_008",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009009_008",
+  "period": "예종실록",
+  "title": "예종실록: 대행 대왕의 상제 의식은 문종시의 예에 의할 것을 예조에서 건의하다",
+  "date": "예종실록1권, 예종 즉위년 9월 9일 을축 8/8 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "의생활-예복(禮服)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 19.175,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 10.8,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3e74fa17d66129aedea0b223aa0d93128b2da086cad1ae4c85c63a6d090b054b",
+  "content_length": 2878,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0300-kha_10009009_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0300-kha_10009009_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0300-kha_10009009_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

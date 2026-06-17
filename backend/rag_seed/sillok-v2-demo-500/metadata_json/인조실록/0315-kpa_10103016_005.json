@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 315,
+  "sillok_id": "kpa_10103016_005",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103016_005",
+  "period": "인조실록",
+  "title": "인조실록: 이원익·이정구·한준겸 등에게 관직을 제수하다",
+  "date": "인조실록1권, 인조 1년 3월 16일 병오 5/8 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 16,
+  "article_no": 5,
+  "categories": [
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 21.25,
+  "score_parts": {
+    "event": 9.0,
+    "person_relation": 8.1,
+    "system_life": 2.4,
+    "title_clarity": 3.75,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -5.0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "1230e9afcd006e14efeb42847411008d38f48d206de1b958ece905b5284e9b0e",
+  "content_length": 3878,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0315-kpa_10103016_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0315-kpa_10103016_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0315-kpa_10103016_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

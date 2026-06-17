@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 186,
+  "sillok_id": "kda_10008015_001",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008015_001",
+  "period": "세종실록",
+  "title": "세종실록: 상왕이 친히 건원릉에 나아가 추석제를 행하고 전위를 고유하다",
+  "date": "세종실록1권, 세종 즉위년 8월 15일 임진 1/6 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-행행(行幸)",
+    "왕실-의식(儀式)",
+    "사상-토속신앙(土俗信仰)",
+    "풍속-풍속(風俗)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.575,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "d2541a1b40f732128e3105d7ea8572acad470b243ad3e34b9158715fe2b952a0",
+  "content_length": 484,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0186-kda_10008015_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0186-kda_10008015_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0186-kda_10008015_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

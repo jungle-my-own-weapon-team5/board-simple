@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 408,
+  "sillok_id": "kaa_10107026_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10107026_001",
+  "period": "태조실록",
+  "title": "태조실록: 사헌부에서 문하 찬성사 김주가 시세에 따라 행동한다고 탄핵하자 파직시키다",
+  "date": "태조실록1권, 태조 1년 7월 26일 을사 1/2 기사 / 1392년 명 홍무(洪武) 25년",
+  "record_code": "kaa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 7,
+  "day": 26,
+  "article_no": 1,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "event",
+  "score": 23.15,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.75,
+    "length_quality": 6.0,
+    "category_quality": 3.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0d7cd7f8cedb849f6fe84adb47473c9e8f344c60361bce1fea57aaaf95eeb71d",
+  "content_length": 388,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0408-kaa_10107026_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0408-kaa_10107026_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0408-kaa_10107026_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

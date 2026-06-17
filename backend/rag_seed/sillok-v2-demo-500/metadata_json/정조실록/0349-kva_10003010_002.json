@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 349,
+  "sillok_id": "kva_10003010_002",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003010_002",
+  "period": "정조실록",
+  "title": "정조실록: 왕비를 왕대비로 삼고 혜빈을 혜경궁으로 삼았으며 빈궁을 왕비로 삼다",
+  "date": "정조실록1권, 정조 즉위년 3월 10일 신사 2/11 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-비빈(妃嬪)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e52f5ad8529b956f76bf903d249ff4e90eb5127c8e0ad3b6aeeb312572f47063",
+  "content_length": 781,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0349-kva_10003010_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0349-kva_10003010_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0349-kva_10003010_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

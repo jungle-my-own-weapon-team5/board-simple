@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 428,
+  "sillok_id": "kca_10101015_003",
+  "source_url": "https://sillok.history.go.kr/id/kca_10101015_003",
+  "period": "태종실록",
+  "title": "태종실록: 노비 변정 도감을 혁파하고, 미결 사건을 파악, 보고하게 하다",
+  "date": "태종실록1권, 태종 1년 1월 15일 을해 3/3 기사 / 1401년 명 건문(建文) 3년",
+  "record_code": "kca",
+  "volume": 1,
+  "king_year": 1,
+  "month": 1,
+  "day": 15,
+  "article_no": 3,
+  "categories": [
+    "신분-천인(賤人)",
+    "행정-중앙행정(中央行政)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.4,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "882bcd1e1ac3c9b1efe0ae166ab59169c037a1c731c7ed4a2810779d2225c0d0",
+  "content_length": 102,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태종실록\\0428-kca_10101015_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태종실록\\0428-kca_10101015_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태종실록\\0428-kca_10101015_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

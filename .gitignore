@@ -42,6 +42,7 @@ sillok_candidate_scores*.json
 sillok_pilot_5_cycles_report*.json
 sillok_seed_*_manifest_*.json
 sillok_seed_*_quality_summary.json
+legacy_pgvector_inventory.csv
 
 # OS/editor
 .DS_Store

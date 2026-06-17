@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 79,
+  "sillok_id": "kfa_10005018_009",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005018_009",
+  "period": "단종실록",
+  "title": "단종실록: 신석조 등이 대행왕의 후궁들이 여승이 되는 것을 그치도록 해 줄 것을 청하다",
+  "date": "단종실록1권, 단종 즉위년 5월 18일 경술 9/9 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사상-불교(佛敎)",
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.4,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3a73132f87f8a1e9a2bf7fd6f7c8506abbb406692adce6e79c238c8f64c43f09",
+  "content_length": 500,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0079-kfa_10005018_009.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0079-kfa_10005018_009.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0079-kfa_10005018_009.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 157,
+  "sillok_id": "kia_10012003_006",
+  "source_url": "https://sillok.history.go.kr/id/kia_10012003_006",
+  "period": "성종실록",
+  "title": "성종실록: 사간원 정언 정극인이 유사를 수릉관으로 삼는 것은 마땅치 않다고 논하다",
+  "date": "성종실록1권, 성종 즉위년 12월 3일 임자 6/10 기사 / 1469년 명 성화(成化) 5년",
+  "record_code": "kia",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-임면(任免)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.625,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "918f55b0b00c9be963da22585e2b507f6cf68a9c46fb7de4abdd9c27bf9b39ef",
+  "content_length": 247,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\성종실록\\0157-kia_10012003_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\성종실록\\0157-kia_10012003_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\성종실록\\0157-kia_10012003_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

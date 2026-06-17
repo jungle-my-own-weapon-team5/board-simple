@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 414,
+  "sillok_id": "kaa_10708015_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10708015_001",
+  "period": "태조실록",
+  "title": "태조실록: 광양 부원군 이무방의 졸기",
+  "date": "태조실록14권, 태조 7년 8월 15일 무오 1/1 기사 / 1398년 명 홍무(洪武) 31년",
+  "record_code": "kaa",
+  "volume": 14,
+  "king_year": 7,
+  "month": 8,
+  "day": 15,
+  "article_no": 1,
+  "categories": [],
+  "primary_bucket": "person_relation",
+  "score": 24.4,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 8.1,
+    "system_life": 4.8,
+    "title_clarity": 2.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "c9004246c8d4fc2c2628d0c274a79e6e092186af8ce6ff1009f55b0809c22ccf",
+  "content_length": 1109,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0414-kaa_10708015_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0414-kaa_10708015_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0414-kaa_10708015_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

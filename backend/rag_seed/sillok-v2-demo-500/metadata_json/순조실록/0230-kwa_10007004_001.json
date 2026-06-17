@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 230,
+  "sillok_id": "kwa_10007004_001",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007004_001",
+  "period": "순조실록",
+  "title": "순조실록: 창덕궁 인정문에서 즉위하다",
+  "date": "순조실록1권, 순조 즉위년 7월 4일 갑신 1/14 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-궁관(宮官)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 19.6,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 8.1,
+    "system_life": 0,
+    "title_clarity": 2.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "89dadd7fe092c33cfcf87b5cf3047447d5edcc8cab51fc03d89434a408882958",
+  "content_length": 1543,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0230-kwa_10007004_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0230-kwa_10007004_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0230-kwa_10007004_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

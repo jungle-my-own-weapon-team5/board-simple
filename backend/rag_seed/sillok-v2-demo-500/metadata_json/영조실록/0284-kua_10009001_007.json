@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 284,
+  "sillok_id": "kua_10009001_007",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009001_007",
+  "period": "영조실록",
+  "title": "영조실록: 왕위의 계승을 종묘, 사직과 영휘전에 고하는 축문에서 칭호문제를 논함",
+  "date": "영조실록1권, 영조 즉위년 9월 1일 신축 7/7 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "역사-사학(史學)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 19.9,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.5,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "0b1f486aaaeed9b15f1a65bd89d6893584599a30cea275e2305419c8bd3099bc",
+  "content_length": 3106,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0284-kua_10009001_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0284-kua_10009001_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0284-kua_10009001_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

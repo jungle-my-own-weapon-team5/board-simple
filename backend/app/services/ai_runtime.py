@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
@@ -38,7 +38,9 @@ from app.services.safety import agent_response_from_safety, moderate_input
 RAG_SEED_DIR = Path(__file__).resolve().parents[2] / "rag_seed"
 _SYNCED_SEED_BINDS: set[int] = set()
 EMBEDDING_MIN_RELEVANCE = 0.45
+PGVECTOR_MIN_RELEVANCE = 0.40
 OVERVIEW_CORPUS = "encykorea"
+SILLOK_V2_CORPUS = "sillok-v2"
 LEGACY_CORPUS_LABEL = "legacy"
 PRIMARY_SOURCE_QUERY_TERMS = [
     "실록",
@@ -262,14 +264,15 @@ def search_rag(
         if settings.openai_api_key:
             query_embedding = _embed_text(settings, query)
             citations = _search_by_corpus_priority(
-                lambda target_corpus: _search_chunks_by_embedding(db, query_embedding, query, top_k, target_corpus),
+                lambda target_corpus: _search_chunks_by_embedding_or_keyword(
+                    db,
+                    query_embedding,
+                    query,
+                    top_k,
+                    target_corpus,
+                ),
                 corpus_priority,
             )
-            if not citations:
-                citations = _search_by_corpus_priority(
-                    lambda target_corpus: _search_chunks_by_keyword(db, query, top_k, target_corpus),
-                    corpus_priority,
-                )
         else:
             citations = _search_by_corpus_priority(
                 lambda target_corpus: _search_chunks_by_keyword(db, query, top_k, target_corpus),
@@ -956,10 +959,10 @@ def _rag_corpus_priority(query: str, corpus: RagCorpusMode = "auto") -> list[str
     if corpus != "auto":
         return [corpus]
     if any(term in query for term in PRIMARY_SOURCE_QUERY_TERMS):
-        return ["", OVERVIEW_CORPUS]
+        return [SILLOK_V2_CORPUS, "", OVERVIEW_CORPUS]
     if _looks_like_primary_source_reconstruction(query):
-        return ["", OVERVIEW_CORPUS]
-    return [OVERVIEW_CORPUS, ""]
+        return [SILLOK_V2_CORPUS, "", OVERVIEW_CORPUS]
+    return [OVERVIEW_CORPUS, SILLOK_V2_CORPUS, ""]
 
 
 def _looks_like_primary_source_reconstruction(query: str) -> bool:
@@ -996,13 +999,41 @@ def _search_by_corpus_priority(search, corpus_priority: list[str | None]) -> lis
     return []
 
 
+def _search_chunks_by_embedding_or_keyword(
+    db: Session,
+    query_embedding: list[float],
+    query: str,
+    top_k: int,
+    corpus: str | None = None,
+) -> list[RagCitation]:
+    citations = _search_chunks_by_embedding(db, query_embedding, query, top_k, corpus)
+    if citations:
+        return citations
+    return _search_chunks_by_keyword(db, query, top_k, corpus)
+
+
 def _load_seed_documents() -> list[dict[str, str]]:
     documents = []
     for path in sorted(RAG_SEED_DIR.rglob("*.md")):
+        if _is_managed_seed_artifact_markdown(path):
+            continue
         parsed = _parse_seed_markdown(path)
         if parsed is not None:
             documents.append(parsed)
     return documents
+
+
+def _is_managed_seed_artifact_markdown(path: Path) -> bool:
+    for parent in path.parents:
+        if parent == RAG_SEED_DIR.parent:
+            return False
+        if (
+            (parent / "manifest.json").exists()
+            and (parent / "metadata_json").is_dir()
+            and (parent / "embedding_text").is_dir()
+        ):
+            return True
+    return False
 
 
 def _parse_seed_markdown(path: Path) -> dict[str, str] | None:
@@ -1139,6 +1170,76 @@ def _search_chunks_by_embedding(
     top_k: int,
     corpus: str | None = None,
 ) -> list[RagCitation]:
+    if db.get_bind().dialect.name == "postgresql":
+        citations = _search_chunks_by_pgvector(db, query_embedding, query, top_k, corpus)
+        if citations:
+            return citations
+    return _search_chunks_by_embedding_json(db, query_embedding, query, top_k, corpus)
+
+
+def _search_chunks_by_pgvector(
+    db: Session,
+    query_embedding: list[float],
+    query: str,
+    top_k: int,
+    corpus: str | None = None,
+) -> list[RagCitation]:
+    where = ["chunk.embedding IS NOT NULL"]
+    params: dict[str, object] = {
+        "query_embedding": _pgvector_literal(query_embedding),
+        "limit": max(top_k * 10, 20),
+    }
+    if corpus is not None:
+        where.append("document.corpus = :corpus")
+        params["corpus"] = corpus
+    sql = text(
+        f"""
+        SELECT
+            chunk.id AS chunk_id,
+            1 - (chunk.embedding <=> (:query_embedding)::vector) AS vector_score
+        FROM rag_chunks AS chunk
+        JOIN rag_documents AS document ON document.id = chunk.document_id
+        WHERE {" AND ".join(where)}
+        ORDER BY chunk.embedding <=> (:query_embedding)::vector
+        LIMIT :limit
+        """
+    )
+    try:
+        rows = db.execute(sql, params).all()
+    except Exception:
+        db.rollback()
+        return []
+    if not rows:
+        return []
+
+    chunk_scores = {int(row.chunk_id): float(row.vector_score or 0.0) for row in rows}
+    chunks = db.scalars(select(RagChunk).where(RagChunk.id.in_(chunk_scores))).all()
+    documents = _documents_by_ids(db, [chunk.document_id for chunk in chunks])
+    scored = []
+    for chunk in chunks:
+        document = documents.get(chunk.document_id)
+        if document is None:
+            continue
+        score = min(chunk_scores[chunk.id] + _metadata_relevance_boost(query, document), 1.0)
+        if score >= PGVECTOR_MIN_RELEVANCE:
+            scored.append((score, chunk))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return _dedupe_citations(
+        [
+            _citation_from_chunk(documents[chunk.document_id], chunk, max(0.0, min(score, 1.0)))
+            for score, chunk in scored
+        ],
+        top_k,
+    )
+
+
+def _search_chunks_by_embedding_json(
+    db: Session,
+    query_embedding: list[float],
+    query: str,
+    top_k: int,
+    corpus: str | None = None,
+) -> list[RagCitation]:
     documents = _documents_by_corpus(db, corpus)
     if not documents:
         return []
@@ -1165,11 +1266,21 @@ def _search_chunks_by_embedding(
     )
 
 
+def _documents_by_ids(db: Session, document_ids: list[int]) -> dict[int, RagDocument]:
+    if not document_ids:
+        return {}
+    return {document.id: document for document in db.scalars(select(RagDocument).where(RagDocument.id.in_(document_ids))).all()}
+
+
 def _documents_by_corpus(db: Session, corpus: str | None) -> dict[int, RagDocument]:
     statement = select(RagDocument)
     if corpus is not None:
         statement = statement.where(RagDocument.corpus == corpus)
     return {document.id: document for document in db.scalars(statement).all()}
+
+
+def _pgvector_literal(values: list[float]) -> str:
+    return "[" + ",".join(f"{value:.10g}" for value in values) + "]"
 
 
 def _metadata_relevance_boost(query: str, document: RagDocument) -> float:

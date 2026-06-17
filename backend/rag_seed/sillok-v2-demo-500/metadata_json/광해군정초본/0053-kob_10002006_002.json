@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 53,
+  "sillok_id": "kob_10002006_002",
+  "source_url": "https://sillok.history.go.kr/id/kob_10002006_002",
+  "period": "광해군정초본",
+  "title": "광해군정초본: 원상은 조종조의 고사에 의거하여 원임 대신도 아울러 차임하라고 전교하다",
+  "date": "광해군일기[정초본]1권, 광해 즉위년 2월 6일 계해 2/9 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "kob",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 11.875,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "41afc629b4233b1c616a2b97e42ef585e83e44884b7a602f442eacd67dcc83df",
+  "content_length": 94,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군정초본\\0053-kob_10002006_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군정초본\\0053-kob_10002006_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군정초본\\0053-kob_10002006_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

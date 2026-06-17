@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 84,
+  "sillok_id": "kfa_10005018_001",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005018_001",
+  "period": "단종실록",
+  "title": "단종실록: 내의 전순의는 전의감 청직으로, 변한산·최읍은 아전으로 강등하다",
+  "date": "단종실록1권, 단종 즉위년 5월 18일 경술 1/9 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-재판(裁判)",
+    "인사-관리(管理)",
+    "의약-의학(醫學)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.525,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e17b4e0055928e562bf96facf17490d27fcf1f336343101f5d2e036e7abaae12",
+  "content_length": 356,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0084-kfa_10005018_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0084-kfa_10005018_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0084-kfa_10005018_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

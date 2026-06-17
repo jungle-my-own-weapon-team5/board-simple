@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 8,
+  "sillok_id": "ktb_10006008_002",
+  "source_url": "https://sillok.history.go.kr/id/ktb_10006008_002",
+  "period": "경종수정실록",
+  "title": "경종수정실록: 즉위 전날 예조에서 아뢴 복제 절목가 백관의 복제 별단",
+  "date": "경종수정실록1권, 경종 즉위년 6월 8일 계묘 2/3 기사 / 1720년 청 강희(康熙) 59년",
+  "record_code": "ktb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "person_relation",
+  "score": 19.55,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 10.8,
+    "system_life": 0,
+    "title_clarity": 4.75,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "f278270cc6bacf21f8e31c1ebeb3e7e28572a39646ccdea9a45b4c9b6ea935c4",
+  "content_length": 6431,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\경종수정실록\\0008-ktb_10006008_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\경종수정실록\\0008-ktb_10006008_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\경종수정실록\\0008-ktb_10006008_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

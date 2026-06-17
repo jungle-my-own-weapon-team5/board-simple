@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 187,
+  "sillok_id": "kda_10008016_002",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008016_002",
+  "period": "세종실록",
+  "title": "세종실록: 상왕이 박신에게는 창덕궁 역사의 조속한 준공을, 하연에게는 구휼에 대해 이르다",
+  "date": "세종실록1권, 세종 즉위년 8월 16일 계사 2/5 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "농업-농작(農作)",
+    "호구-이동(移動)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 16.925,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 6.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "3752a3ea1f99b8dd1caef16618badfcb93c73c4a88601ec48e0f470aba63384d",
+  "content_length": 465,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0187-kda_10008016_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0187-kda_10008016_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0187-kda_10008016_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

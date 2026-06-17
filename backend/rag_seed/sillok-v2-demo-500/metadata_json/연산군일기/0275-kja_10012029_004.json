@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 275,
+  "sillok_id": "kja_10012029_004",
+  "source_url": "https://sillok.history.go.kr/id/kja_10012029_004",
+  "period": "연산군일기",
+  "title": "연산군일기: 미시에 성복하다. 의례를 마치고 중외에 사령을 반포하다",
+  "date": "연산군일기1권, 연산 즉위년 12월 29일 갑신 4/8 기사 / 1494년 명 홍치(弘治) 7년",
+  "record_code": "kja",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 27.125,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 8.1,
+    "system_life": 2.4,
+    "title_clarity": 4.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "34f6bc8a93d8592ece4c9ef1086e8d975eb660c71fd3e0281858bcee883eab24",
+  "content_length": 1909,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\연산군일기\\0275-kja_10012029_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\연산군일기\\0275-kja_10012029_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\연산군일기\\0275-kja_10012029_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

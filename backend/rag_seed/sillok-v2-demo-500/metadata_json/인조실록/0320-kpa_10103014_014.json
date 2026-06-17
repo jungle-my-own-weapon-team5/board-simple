@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 320,
+  "sillok_id": "kpa_10103014_014",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103014_014",
+  "period": "인조실록",
+  "title": "인조실록: 박승종·박자흥이 달아나 자결하다",
+  "date": "인조실록1권, 인조 1년 3월 14일 갑진 14/14 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 14,
+  "article_no": 14,
+  "categories": [
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.275,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 2.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9912ef82925068c8cbdd9d22d80a504843a81e133dc4a5c5b8e4f304de28601e",
+  "content_length": 560,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0320-kpa_10103014_014.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0320-kpa_10103014_014.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0320-kpa_10103014_014.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 184,
+  "sillok_id": "kda_10008014_001",
+  "source_url": "https://sillok.history.go.kr/id/kda_10008014_001",
+  "period": "세종실록",
+  "title": "세종실록: 영돈녕·영의정·대간을 불러 중국에 전위한 일을 알리는 방법을 의논하다",
+  "date": "세종실록1권, 세종 즉위년 8월 14일 신묘 1/10 기사 / 1418년 명 영락(永樂) 16년",
+  "record_code": "kda",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "외교-명(明)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 16.9,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 5.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "e2a5f5e810f23a5ba5828f0d34c3f840409a9abb7bdce479009f68678bf2fa13",
+  "content_length": 1117,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\세종실록\\0184-kda_10008014_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\세종실록\\0184-kda_10008014_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\세종실록\\0184-kda_10008014_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

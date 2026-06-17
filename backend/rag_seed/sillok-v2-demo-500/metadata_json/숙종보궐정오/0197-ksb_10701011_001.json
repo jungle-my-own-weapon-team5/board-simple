@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 197,
+  "sillok_id": "ksb_10701011_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10701011_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 이사명의 일을 박동량·심기원·김자점의 가자와 비교하면서 홍만용·조지겸이 아뢰다",
+  "date": "숙종실록보궐정오11권, 숙종 7년 1월 11일 을축 1/1 기사 / 1681년 청 강희(康熙) 20년",
+  "record_code": "ksb",
+  "volume": 11,
+  "king_year": 7,
+  "month": 1,
+  "day": 11,
+  "article_no": 1,
+  "categories": [
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 18.375,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "734c158d022827a59a1b42992e084286f59f587c0bdf1baf5708ea31f5c397e2",
+  "content_length": 835,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0197-ksb_10701011_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0197-ksb_10701011_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0197-ksb_10701011_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

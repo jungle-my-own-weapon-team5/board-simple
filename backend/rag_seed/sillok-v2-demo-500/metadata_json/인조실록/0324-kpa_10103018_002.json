@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 324,
+  "sillok_id": "kpa_10103018_002",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103018_002",
+  "period": "인조실록",
+  "title": "인조실록: 사헌부가 이재영의 국문을 청하다",
+  "date": "인조실록1권, 인조 1년 3월 18일 무신 2/8 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 18,
+  "article_no": 2,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "인사-선발(選拔)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 11.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 2.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "2abacf47c786a5762b40903aa002a4a9d42ecc412c2940cce8d49352e4f7972c",
+  "content_length": 479,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0324-kpa_10103018_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0324-kpa_10103018_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0324-kpa_10103018_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

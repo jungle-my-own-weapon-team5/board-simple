@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 294,
+  "sillok_id": "kua_10009011_001",
+  "source_url": "https://sillok.history.go.kr/id/kua_10009011_001",
+  "period": "영조실록",
+  "title": "영조실록: 국장 도감에서 제술관과 서사관 및 명정·보전문 등의 서사관 성명을 계문하다",
+  "date": "영조실록1권, 영조 즉위년 9월 11일 신해 1/2 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 14.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "f0f7de3de7384f16e497d1eeca6bc53ecd20f90afbcb99807d221eb27a4864b2",
+  "content_length": 545,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0294-kua_10009011_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0294-kua_10009011_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0294-kua_10009011_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

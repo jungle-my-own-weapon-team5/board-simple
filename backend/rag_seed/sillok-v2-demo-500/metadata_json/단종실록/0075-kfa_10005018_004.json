@@ -1,0 +1,60 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 75,
+  "sillok_id": "kfa_10005018_004",
+  "source_url": "https://sillok.history.go.kr/id/kfa_10005018_004",
+  "period": "단종실록",
+  "title": "단종실록: 근정문에서 즉위하고 교서를 반포하다",
+  "date": "단종실록1권, 단종 즉위년 5월 18일 경술 4/9 기사 / 1452년 명 경태(景泰) 3년",
+  "record_code": "kfa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종친(宗親)",
+    "왕실-사급(賜給)",
+    "왕실-국왕(國王)",
+    "사법-행형(行刑)",
+    "사법-치안(治安)",
+    "사법-탄핵(彈劾)",
+    "재정-진상(進上)",
+    "재정-창고(倉庫)",
+    "윤리-강상(綱常)",
+    "농업-양잠(養蠶)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.925,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 3.125,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "fa2d782c831e47fadb49bc2f891ba65d6d2fe11bec9b5e6121e162c1606d37f2",
+  "content_length": 4955,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\단종실록\\0075-kfa_10005018_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\단종실록\\0075-kfa_10005018_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\단종실록\\0075-kfa_10005018_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 95,
+  "sillok_id": "kma_10007014_001",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007014_001",
+  "period": "명종실록",
+  "title": "명종실록: 윤인경 등이 좌찬성을 원상으로 삼는 일, 친제를 행하는 일 등에 대해 아뢰다",
+  "date": "명종실록1권, 명종 즉위년 7월 14일 갑술 1/3 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "왕실-의식(儀式)",
+    "왕실-국왕(國王)",
+    "농업-축산(畜産)",
+    "호구-호구(戶口)",
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.1,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 6.0,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "31d567079b2c4e248ec2cf8330b0804c2178f2c11cc24e92c8fb699f64b070a6",
+  "content_length": 2471,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0095-kma_10007014_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0095-kma_10007014_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0095-kma_10007014_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

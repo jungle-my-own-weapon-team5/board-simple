@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 309,
+  "sillok_id": "kha_10009007_002",
+  "source_url": "https://sillok.history.go.kr/id/kha_10009007_002",
+  "period": "예종실록",
+  "title": "예종실록: 세자가 수강궁 중문에서 즉위하고 교서를 내리다",
+  "date": "예종실록1권, 예종 즉위년 9월 7일 계해 2/8 기사 / 1468년 명 성화(成化) 4년",
+  "record_code": "kha",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-행행(行幸)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.575,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "061f1c1ed5cdbae4b2e70fd188ee4b406e0c92ecfee66b561000619e9aa848fc",
+  "content_length": 1336,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\예종실록\\0309-kha_10009007_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\예종실록\\0309-kha_10009007_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\예종실록\\0309-kha_10009007_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

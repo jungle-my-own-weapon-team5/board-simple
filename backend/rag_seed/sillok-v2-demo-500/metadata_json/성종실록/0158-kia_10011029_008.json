@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 158,
+  "sillok_id": "kia_10011029_008",
+  "source_url": "https://sillok.history.go.kr/id/kia_10011029_008",
+  "period": "성종실록",
+  "title": "성종실록: 예조에 명하여 천안 군부인 한씨를 왕비로 일컫게 하다",
+  "date": "성종실록1권, 성종 즉위년 11월 29일 기유 8/18 기사 / 1469년 명 성화(成化) 5년",
+  "record_code": "kia",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-비빈(妃嬪)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "15e9cb577efd540d804654d200a27c4888e994359d6fa2d1459bac98921ff90f",
+  "content_length": 98,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\성종실록\\0158-kia_10011029_008.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\성종실록\\0158-kia_10011029_008.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\성종실록\\0158-kia_10011029_008.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

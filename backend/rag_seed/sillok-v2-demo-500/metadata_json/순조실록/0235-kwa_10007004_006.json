@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 235,
+  "sillok_id": "kwa_10007004_006",
+  "source_url": "https://sillok.history.go.kr/id/kwa_10007004_006",
+  "period": "순조실록",
+  "title": "순조실록: 대왕 대비가 심환지를 영의정으로 이시수를 좌의정으로 서용보를 우의정으로 삼다",
+  "date": "순조실록1권, 순조 즉위년 7월 4일 갑신 6/14 기사 / 1800년 청 가경(嘉慶) 5년",
+  "record_code": "kwa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "인사-임면(任免)",
+    "왕실-비빈(妃嬪)",
+    "왕실-의식(儀式)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 12.0,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9720b42feec0f55a02894e85bee8b068f40b1e2a4aa28a6be788a5bc5d6018a5",
+  "content_length": 350,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\순조실록\\0235-kwa_10007004_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\순조실록\\0235-kwa_10007004_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\순조실록\\0235-kwa_10007004_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

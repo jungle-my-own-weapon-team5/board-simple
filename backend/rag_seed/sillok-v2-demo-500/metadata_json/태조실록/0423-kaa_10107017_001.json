@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 423,
+  "sillok_id": "kaa_10107017_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10107017_001",
+  "period": "태조실록",
+  "title": "태조실록: 태조가 백관의 추대를 받아 수창궁에서 왕위에 오르다",
+  "date": "태조실록1권, 태조 1년 7월 17일 병신 1/2 기사 / 1392년 명 홍무(洪武) 25년",
+  "record_code": "kaa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 7,
+  "day": 17,
+  "article_no": 1,
+  "categories": [
+    "왕실-의식(儀式)",
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.95,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.25,
+    "length_quality": 3.0,
+    "category_quality": 3.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "69ad5e0ea5cae975155d2b4465881c5b0cb9ed4019d9fdcf599f7cbc20081629",
+  "content_length": 4470,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0423-kaa_10107017_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0423-kaa_10107017_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0423-kaa_10107017_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

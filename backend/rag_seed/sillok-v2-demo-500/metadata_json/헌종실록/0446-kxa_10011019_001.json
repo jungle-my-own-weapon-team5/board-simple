@@ -1,0 +1,48 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 446,
+  "sillok_id": "kxa_10011019_001",
+  "source_url": "https://sillok.history.go.kr/id/kxa_10011019_001",
+  "period": "헌종실록",
+  "title": "헌종실록: 대행 대왕과 효명 세자의 시호를 정하다",
+  "date": "헌종실록1권, 헌종 즉위년 11월 19일 경진 1/2 기사 / 1834년 청 도광(道光) 14년",
+  "record_code": "kxa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [],
+  "primary_bucket": "person_relation",
+  "score": 12.075,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 3.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "92299b2a3cd33cbbe32b69d174d36329a8be97fe766a990f855c2e8463b17678",
+  "content_length": 258,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\헌종실록\\0446-kxa_10011019_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\헌종실록\\0446-kxa_10011019_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\헌종실록\\0446-kxa_10011019_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

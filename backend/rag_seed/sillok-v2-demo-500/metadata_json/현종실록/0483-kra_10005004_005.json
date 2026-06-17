@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 483,
+  "sillok_id": "kra_10005004_005",
+  "source_url": "https://sillok.history.go.kr/id/kra_10005004_005",
+  "period": "현종실록",
+  "title": "현종실록: 어의 신가귀·유후성 등 6명을 의금부에 하옥하다",
+  "date": "현종실록1권, 현종 즉위년 5월 4일 갑자 5/7 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "kra",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "사법-탄핵(彈劾)",
+    "왕실-국왕(國王)",
+    "의약-의학(醫學)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 12.4,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 4.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "679f527afbf7e58994c919545b844e5bcd5665f395a6106f3f13a39b0408d51e",
+  "content_length": 81,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종실록\\0483-kra_10005004_005.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종실록\\0483-kra_10005004_005.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종실록\\0483-kra_10005004_005.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 481,
+  "sillok_id": "kra_10005009_007",
+  "source_url": "https://sillok.history.go.kr/id/kra_10005009_007",
+  "period": "현종실록",
+  "title": "현종실록: 대사헌 이응시 등이 원두표·홍명하 등을 처벌할 것을 아뢰다",
+  "date": "현종실록1권, 현종 즉위년 5월 9일 기사 7/7 기사 / 1659년 청 순치(順治) 16년",
+  "record_code": "kra",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "정론-간쟁(諫諍)",
+    "사법-행형(行刑)",
+    "사법-탄핵(彈劾)",
+    "의약-의학(醫學)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 18.55,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 4.8,
+    "title_clarity": 4.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ef8c28fc7f4cf1e426c52165bea7b4dfe38f08ef1119b72c9a18aa17acbd9b69",
+  "content_length": 872,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\현종실록\\0481-kra_10005009_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\현종실록\\0481-kra_10005009_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\현종실록\\0481-kra_10005009_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

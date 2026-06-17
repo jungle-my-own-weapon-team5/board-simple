@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 20,
+  "sillok_id": "kta_10006021_001",
+  "source_url": "https://sillok.history.go.kr/id/kta_10006021_001",
+  "period": "경종실록",
+  "title": "경종실록: 장녕전에 있는 숙종의 어진을 벽상에 펴서 봉안하게 하다",
+  "date": "경종실록1권, 경종 즉위년 6월 21일 병진 1/1 기사 / 1720년 청 강희(康熙) 59년",
+  "record_code": "kta",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)"
+  ],
+  "primary_bucket": "event",
+  "score": 16.2,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.5,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "adb1109e8c79d1ca79f1bafcd5035614cde737b6f6d464d84488be23342abc36",
+  "content_length": 518,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\경종실록\\0020-kta_10006021_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\경종실록\\0020-kta_10006021_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\경종실록\\0020-kta_10006021_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

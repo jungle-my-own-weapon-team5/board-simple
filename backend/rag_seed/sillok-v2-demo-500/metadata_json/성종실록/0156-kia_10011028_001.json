@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 156,
+  "sillok_id": "kia_10011028_001",
+  "source_url": "https://sillok.history.go.kr/id/kia_10011028_001",
+  "period": "성종실록",
+  "title": "성종실록: 예종이 돌아가시니 대비의 명에 의해 경복궁에서 즉위하다",
+  "date": "성종실록1권, 성종 즉위년 11월 28일 무신 1/11 기사 / 1469년 명 성화(成化) 5년",
+  "record_code": "kia",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "왕실-종사(宗社)",
+    "사법-행형(行刑)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 5.5,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.5,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "cbb81a190aed3ee38b568e1363087d1db16225bf2c4db555d834c8502bfe1db7",
+  "content_length": 4844,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\성종실록\\0156-kia_10011028_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\성종실록\\0156-kia_10011028_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\성종실록\\0156-kia_10011028_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

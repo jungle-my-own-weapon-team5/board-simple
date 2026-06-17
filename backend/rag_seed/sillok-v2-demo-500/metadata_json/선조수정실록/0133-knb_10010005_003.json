@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 133,
+  "sillok_id": "knb_10010005_003",
+  "source_url": "https://sillok.history.go.kr/id/knb_10010005_003",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 대비가 어진 선비와 무고하게 죄를 당한 자들을 풀어 주고 서용할 것을 하교하다",
+  "date": "선조수정실록1권, 선조 즉위년 10월 5일 병술 3/23 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "knb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-비빈(妃嬪)",
+    "인사-임면(任免)",
+    "과학-천기(天氣)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.375,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 6.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "7cf1b980741f331c547db67c7b0c213d22c817140134021486426f8550454e50",
+  "content_length": 425,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0133-knb_10010005_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0133-knb_10010005_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0133-knb_10010005_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

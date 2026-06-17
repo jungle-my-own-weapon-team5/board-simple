@@ -116,7 +116,7 @@ export type RagCitation = {
   source_url: string;
 };
 
-export type RagCorpusMode = "auto" | "encykorea" | "legacy" | "sinpyeon_hanguksa" | "all";
+export type RagCorpusMode = "auto" | "encykorea" | "legacy" | "sinpyeon_hanguksa" | "sillok-v2" | "all";
 
 export type RagSearchResponse = {
   answer_summary: string;

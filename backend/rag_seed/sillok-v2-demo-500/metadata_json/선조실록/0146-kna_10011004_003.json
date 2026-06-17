@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 146,
+  "sillok_id": "kna_10011004_003",
+  "source_url": "https://sillok.history.go.kr/id/kna_10011004_003",
+  "period": "선조실록",
+  "title": "선조실록: 원상을 파했는데 이때 상은 공사를 자전에게 미루고 관직 제수만 관여하다",
+  "date": "선조실록1권, 선조 즉위년 11월 4일 을묘 3/3 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "kna",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "행정-중앙행정(中央行政)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 11.525,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.625,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": -2.5,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality",
+    "low_signal_penalty"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9e7e1394c6f9f416799b11c3a8627c0291609508bff1f8a090813bf77d16ea05",
+  "content_length": 152,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0146-kna_10011004_003.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0146-kna_10011004_003.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0146-kna_10011004_003.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

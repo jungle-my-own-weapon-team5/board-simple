@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 351,
+  "sillok_id": "kva_10003011_001",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003011_001",
+  "period": "정조실록",
+  "title": "정조실록: 찬집청과 교정청을 설치하게 하다",
+  "date": "정조실록1권, 정조 즉위년 3월 11일 임오 1/5 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "행정-중앙행정(中央行政)",
+    "인사-임면(任免)",
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 11.275,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 2.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a620e3040139e7c4c6f0609dc9ea92c56499490c20dfae63ee66d1fbe2dd8888",
+  "content_length": 282,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0351-kva_10003011_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0351-kva_10003011_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0351-kva_10003011_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

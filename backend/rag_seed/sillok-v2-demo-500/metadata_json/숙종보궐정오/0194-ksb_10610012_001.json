@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 194,
+  "sillok_id": "ksb_10610012_001",
+  "source_url": "https://sillok.history.go.kr/id/ksb_10610012_001",
+  "period": "숙종보궐정오",
+  "title": "숙종보궐정오: 오시수의 죄와 그 처벌에 관해 조지겸·송시열·정재희와 논의하다",
+  "date": "숙종실록보궐정오10권, 숙종 6년 10월 12일 정유 1/1 기사 / 1680년 청 강희(康熙) 19년",
+  "record_code": "ksb",
+  "volume": 10,
+  "king_year": 6,
+  "month": 10,
+  "day": 12,
+  "article_no": 1,
+  "categories": [
+    "역사-편사(編史)"
+  ],
+  "primary_bucket": "event",
+  "score": 25.95,
+  "score_parts": {
+    "event": 12.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "f744160a9694f0284e0e62bb67bf7a37118e133937228a4180f98bb2ecbb7368",
+  "content_length": 1025,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\숙종보궐정오\\0194-ksb_10610012_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\숙종보궐정오\\0194-ksb_10610012_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\숙종보궐정오\\0194-ksb_10610012_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

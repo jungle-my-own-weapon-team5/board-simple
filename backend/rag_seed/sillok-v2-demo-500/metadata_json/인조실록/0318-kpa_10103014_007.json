@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 318,
+  "sillok_id": "kpa_10103014_007",
+  "source_url": "https://sillok.history.go.kr/id/kpa_10103014_007",
+  "period": "인조실록",
+  "title": "인조실록: 인조의 즉위와 광해군의 폐위에 대한 왕대비의 교서",
+  "date": "인조실록1권, 인조 1년 3월 14일 갑진 7/14 기사 / 1623년 명 천계(天啓) 3년",
+  "record_code": "kpa",
+  "volume": 1,
+  "king_year": 1,
+  "month": 3,
+  "day": 14,
+  "article_no": 7,
+  "categories": [
+    "왕실-비빈(妃嬪)",
+    "변란-정변(政變)",
+    "어문학-문학(文學)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 24.225,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 8.1,
+    "system_life": 0,
+    "title_clarity": 4.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "76f6b51e75f03e29daca925d24057c8368a3e2915eef5a55bef9f56f3ddec60f",
+  "content_length": 1917,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\인조실록\\0318-kpa_10103014_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\인조실록\\0318-kpa_10103014_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\인조실록\\0318-kpa_10103014_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

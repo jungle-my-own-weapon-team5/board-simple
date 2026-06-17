@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 70,
+  "sillok_id": "koa_10002001_025",
+  "source_url": "https://sillok.history.go.kr/id/koa_10002001_025",
+  "period": "광해군중초본",
+  "title": "광해군중초본: 이조에서 구의강을 수릉관으로 삼은 이유에 대하여 아뢰다",
+  "date": "광해군일기[중초본]1권, 광해 즉위년 2월 1일 무오 25/26 기사 / 1608년 명 만력(萬曆) 36년",
+  "record_code": "koa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "인사-관리(管理)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.45,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "cac0fcfa3ec03ed7ef314a48561a4f11f7bd011d827ea31a1c5541c36d091f62",
+  "content_length": 249,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\광해군중초본\\0070-koa_10002001_025.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\광해군중초본\\0070-koa_10002001_025.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\광해군중초본\\0070-koa_10002001_025.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

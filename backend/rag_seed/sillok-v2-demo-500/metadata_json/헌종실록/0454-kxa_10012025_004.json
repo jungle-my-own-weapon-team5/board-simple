@@ -1,0 +1,49 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 454,
+  "sillok_id": "kxa_10012025_004",
+  "source_url": "https://sillok.history.go.kr/id/kxa_10012025_004",
+  "period": "헌종실록",
+  "title": "헌종실록: 능역 때 제주 백성에게 바다를 건너와 부역하지 못하게 하다",
+  "date": "헌종실록1권, 헌종 즉위년 12월 25일 을묘 4/5 기사 / 1834년 청 도광(道光) 14년",
+  "record_code": "kxa",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "재정-역(役)"
+  ],
+  "primary_bucket": "time_distribution",
+  "score": 10.75,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 4.75,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "aa961b5a01f81487ec1320a247c116db6ed74b6c6ef67fc39151dd71fd6d357b",
+  "content_length": 88,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\헌종실록\\0454-kxa_10012025_004.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\헌종실록\\0454-kxa_10012025_004.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\헌종실록\\0454-kxa_10012025_004.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 97,
+  "sillok_id": "kma_10007009_007",
+  "source_url": "https://sillok.history.go.kr/id/kma_10007009_007",
+  "period": "명종실록",
+  "title": "명종실록: 나숙 등이 윤원로를 찬축할 것을 두 번째 아뢰었으나 불윤하다",
+  "date": "명종실록1권, 명종 즉위년 7월 9일 기사 7/13 기사 / 1545년 명 가정(嘉靖) 24년",
+  "record_code": "kma",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "역사-고사(故事)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 13.575,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.875,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "35ec29ad2baa2b4db7287b427fe6c4c9fb32822f0544dec946083819e191598c",
+  "content_length": 590,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\명종실록\\0097-kma_10007009_007.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\명종실록\\0097-kma_10007009_007.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\명종실록\\0097-kma_10007009_007.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

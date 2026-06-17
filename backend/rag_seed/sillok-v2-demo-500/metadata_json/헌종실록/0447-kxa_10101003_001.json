@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 447,
+  "sillok_id": "kxa_10101003_001",
+  "source_url": "https://sillok.history.go.kr/id/kxa_10101003_001",
+  "period": "헌종실록",
+  "title": "헌종실록: 파주의 옛 환곡 및 계사년·갑오년의 전세와 대동을 감할 것을 명하다",
+  "date": "헌종실록2권, 헌종 1년 1월 3일 계해 1/1 기사 / 1835년 청 도광(道光) 15년",
+  "record_code": "kxa",
+  "volume": 2,
+  "king_year": 1,
+  "month": 1,
+  "day": 3,
+  "article_no": 1,
+  "categories": [
+    "왕실-궁관(宮官)",
+    "재정-역(役)",
+    "재정-국용(國用)",
+    "재정-공물(貢物)"
+  ],
+  "primary_bucket": "system_life",
+  "score": 13.775,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 0,
+    "system_life": 2.4,
+    "title_clarity": 5.375,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "8016320f2c8de35621597f90eba41fd00f48832d8b5ca365992612f10629d411",
+  "content_length": 133,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\헌종실록\\0447-kxa_10101003_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\헌종실록\\0447-kxa_10101003_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\헌종실록\\0447-kxa_10101003_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

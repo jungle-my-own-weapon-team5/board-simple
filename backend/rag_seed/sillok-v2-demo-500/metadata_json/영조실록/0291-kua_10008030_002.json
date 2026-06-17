@@ -1,0 +1,53 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 291,
+  "sillok_id": "kua_10008030_002",
+  "source_url": "https://sillok.history.go.kr/id/kua_10008030_002",
+  "period": "영조실록",
+  "title": "영조실록: 예조에서 복제와 저장·등위 및 생원·진사 이하의 의대에 관한 절목을 올리다",
+  "date": "영조실록1권, 영조 즉위년 8월 30일 경자 2/5 기사 / 1724년 청 옹정(雍正) 2년",
+  "record_code": "kua",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "의생활-상복(常服)",
+    "역사-고사(故事)",
+    "역사-사학(史學)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 14.975,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 8.1,
+    "system_life": 0,
+    "title_clarity": 5.875,
+    "length_quality": 1.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "6849b735f86e6c604e2a2f05ad58486d365942ebf7fb048883d865c60f124a07",
+  "content_length": 8366,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\영조실록\\0291-kua_10008030_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\영조실록\\0291-kua_10008030_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\영조실록\\0291-kua_10008030_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

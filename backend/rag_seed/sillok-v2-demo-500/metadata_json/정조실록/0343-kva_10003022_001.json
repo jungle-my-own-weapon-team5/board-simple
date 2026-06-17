@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 343,
+  "sillok_id": "kva_10003022_001",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003022_001",
+  "period": "정조실록",
+  "title": "정조실록: 황해 도사 이현모의 직을 태거하다",
+  "date": "정조실록1권, 정조 즉위년 3월 22일 계사 1/3 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-종사(宗社)",
+    "왕실-의식(儀式)",
+    "인사-임면(任免)",
+    "사법-탄핵(彈劾)",
+    "사상-토속신앙(土俗信仰)"
+  ],
+  "primary_bucket": "event",
+  "score": 15.0,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 3.0,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a9aed1a278edb5d75587b4f5643b10b5fca4f1061e103eabba427a0bb4c6aa01",
+  "content_length": 1212,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0343-kva_10003022_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0343-kva_10003022_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0343-kva_10003022_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 404,
+  "sillok_id": "kaa_10306016_001",
+  "source_url": "https://sillok.history.go.kr/id/kaa_10306016_001",
+  "period": "태조실록",
+  "title": "태조실록: 태조의 선대 종계를 변무하고 정탐군을 보낸 적이 없음을 말한 주본",
+  "date": "태조실록6권, 태조 3년 6월 16일 갑신 1/2 기사 / 1394년 명 홍무(洪武) 27년",
+  "record_code": "kaa",
+  "volume": 6,
+  "king_year": 3,
+  "month": 6,
+  "day": 16,
+  "article_no": 1,
+  "categories": [
+    "외교-명(明)"
+  ],
+  "primary_bucket": "event",
+  "score": 24.45,
+  "score_parts": {
+    "event": 9.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 1.5,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality",
+    "category_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "271117c9102795fc60c5b4eebe607ffd2eefc46aee4a955cfea4cb5e25e1d5ce",
+  "content_length": 2091,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\태조실록\\0404-kaa_10306016_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\태조실록\\0404-kaa_10306016_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\태조실록\\0404-kaa_10306016_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

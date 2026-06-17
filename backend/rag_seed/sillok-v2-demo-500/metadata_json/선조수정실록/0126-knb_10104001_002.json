@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 126,
+  "sillok_id": "knb_10104001_002",
+  "source_url": "https://sillok.history.go.kr/id/knb_10104001_002",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 경연에 나아가다. 기대승이 국가의 폐단을 차근차근 고쳐나갈 것 등을 아뢰다",
+  "date": "선조수정실록2권, 선조 1년 4월 1일 정묘 2/3 기사 / 1568년 명 융경(隆慶) 2년",
+  "record_code": "knb",
+  "volume": 2,
+  "king_year": 1,
+  "month": 4,
+  "day": 1,
+  "article_no": 2,
+  "categories": [
+    "왕실-경연(經筵)",
+    "왕실-국왕(國王)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.225,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 2.4,
+    "title_clarity": 6.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "system_life",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "43c87695716d40175f7dfa344cc5291afb1024dfcf0151a4b434b5fa6f156755",
+  "content_length": 1363,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0126-knb_10104001_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0126-knb_10104001_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0126-knb_10104001_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

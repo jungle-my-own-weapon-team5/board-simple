@@ -1,0 +1,54 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 140,
+  "sillok_id": "kna_10010023_002",
+  "source_url": "https://sillok.history.go.kr/id/kna_10010023_002",
+  "period": "선조실록",
+  "title": "선조실록: 상이 조강에서 《대학》을 강하고 기대승이 기묘년 이후의 시비를 가릴 것을 청하다",
+  "date": "선조실록1권, 선조 즉위년 10월 23일 갑진 2/2 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "kna",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)",
+    "변란-정변(政變)",
+    "인사-관리(管理)",
+    "사상-유학(儒學)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 17.65,
+  "score_parts": {
+    "event": 3.0,
+    "person_relation": 5.4,
+    "system_life": 0,
+    "title_clarity": 6.25,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "a44b8b4e19c4a864d883449abbc163192a04672fc7310f7b57245bf5419e0b32",
+  "content_length": 3341,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조실록\\0140-kna_10010023_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조실록\\0140-kna_10010023_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조실록\\0140-kna_10010023_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 345,
+  "sillok_id": "kva_10003016_002",
+  "source_url": "https://sillok.history.go.kr/id/kva_10003016_002",
+  "period": "정조실록",
+  "title": "정조실록: 연거대를 개정하자는 정재관 등의 상소에 불가하다 하고 정재관을 정거시키다",
+  "date": "정조실록1권, 정조 즉위년 3월 16일 정해 2/2 기사 / 1776년 청 건륭(乾隆) 41년",
+  "record_code": "kva",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-의식(儀式)",
+    "정론-정론(政論)",
+    "사법-탄핵(彈劾)"
+  ],
+  "primary_bucket": "event",
+  "score": 14.75,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 0,
+    "system_life": 0,
+    "title_clarity": 5.75,
+    "length_quality": 3.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "ca4bbe9de76355396d1d835d6b638751f04e508499cf9eb596b3ec1e59f48323",
+  "content_length": 2035,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\정조실록\\0345-kva_10003016_002.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\정조실록\\0345-kva_10003016_002.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\정조실록\\0345-kva_10003016_002.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

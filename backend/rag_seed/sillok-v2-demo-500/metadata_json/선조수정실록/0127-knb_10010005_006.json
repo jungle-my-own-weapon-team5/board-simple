@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 127,
+  "sillok_id": "knb_10010005_006",
+  "source_url": "https://sillok.history.go.kr/id/knb_10010005_006",
+  "period": "선조수정실록",
+  "title": "선조수정실록: 구제에 따라 다시 상선을 회복할 것을 윤허하다",
+  "date": "선조수정실록1권, 선조 즉위년 10월 5일 병술 6/23 기사 / 1567년 명 융경(隆慶) 1년",
+  "record_code": "knb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-국왕(國王)",
+    "왕실-경연(經筵)"
+  ],
+  "primary_bucket": "person_relation",
+  "score": 12.825,
+  "score_parts": {
+    "event": 0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 4.125,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "40f28c59eb1c50ae76630f29b4293537876521b5f663530c0f13095bcbc9ca5c",
+  "content_length": 574,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\선조수정실록\\0127-knb_10010005_006.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\선조수정실록\\0127-knb_10010005_006.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\선조수정실록\\0127-knb_10010005_006.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}

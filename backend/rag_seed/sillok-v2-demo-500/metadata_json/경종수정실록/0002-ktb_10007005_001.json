@@ -1,0 +1,51 @@
+{
+  "schema_version": "sillok-seed-artifact-v1",
+  "seed_version": "sillok-v2-demo-500",
+  "status": "cleaned",
+  "selected_rank": 2,
+  "sillok_id": "ktb_10007005_001",
+  "source_url": "https://sillok.history.go.kr/id/ktb_10007005_001",
+  "period": "경종수정실록",
+  "title": "경종수정실록: 좨주 이희조가 자신이 편찬한 《동현주의》를 강론할 것을 청하다",
+  "date": "경종수정실록1권, 경종 즉위년 7월 5일 경오 1/1 기사 / 1720년 청 강희(康熙) 59년",
+  "record_code": "ktb",
+  "volume": null,
+  "king_year": null,
+  "month": null,
+  "day": null,
+  "article_no": null,
+  "categories": [
+    "왕실-경연(經筵)"
+  ],
+  "primary_bucket": "event",
+  "score": 19.95,
+  "score_parts": {
+    "event": 6.0,
+    "person_relation": 2.7,
+    "system_life": 0,
+    "title_clarity": 5.25,
+    "length_quality": 6.0,
+    "category_quality": 0.0,
+    "low_signal_penalty": 0,
+    "too_short_penalty": -0.0
+  },
+  "selection_reasons": [
+    "event",
+    "person_relation",
+    "title_clarity",
+    "length_quality"
+  ],
+  "evaluation_matches": [],
+  "source_material": "current_db",
+  "source_warning": null,
+  "source_type": "",
+  "corpus": "sillok-v2",
+  "content_hash": "9888292bc287009029e2f12e50f5a96f96901d8eff9381eca4277a477f3053ef",
+  "content_length": 386,
+  "artifact_paths": {
+    "md": "rag_seed\\sillok-v2-demo-500\\documents\\경종수정실록\\0002-ktb_10007005_001.md",
+    "metadata_json": "rag_seed\\sillok-v2-demo-500\\metadata_json\\경종수정실록\\0002-ktb_10007005_001.json",
+    "embedding_text": "rag_seed\\sillok-v2-demo-500\\embedding_text\\경종수정실록\\0002-ktb_10007005_001.txt"
+  },
+  "diagnostic_tag_policy": "evaluation_matches are diagnostic only and do not affect score, sorting, or selection."
+}
