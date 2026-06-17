@@ -31,15 +31,17 @@ type AgentChatMessage = {
   result?: EditorAgentResponse;
 };
 
+type AgentProgress = Extract<aiApi.EditorAgentStreamEvent, { type: "progress" }>;
+
 const TAG_NAME_PATTERN = /^[0-9A-Za-z가-힣_]{1,50}$/;
 const AGENT_CHAT_STORAGE_PREFIX = "history-board:editor-agent-chat:";
 const MAX_STORED_AGENT_MESSAGES = 24;
-const AGENT_PROGRESS_STEPS = [
-  { label: "요청 의도 분석", percent: 25 },
-  { label: "RAG 근거 검색", percent: 50 },
-  { label: "외부 자료 확인", percent: 75 },
-  { label: "답변 구성", percent: 90 },
-];
+const INITIAL_AGENT_PROGRESS: AgentProgress = {
+  type: "progress",
+  step: "queued",
+  label: "요청 준비",
+  percent: 1,
+};
 
 function normalizeTagName(value: string) {
   const tag = value.trim().replace(/^#/, "").toLowerCase();
@@ -241,8 +243,7 @@ function AgentResultPanel({
   );
 }
 
-function AgentProgressBubble({ stepIndex }: { stepIndex: number }) {
-  const currentStep = AGENT_PROGRESS_STEPS[Math.min(stepIndex, AGENT_PROGRESS_STEPS.length - 1)];
+function AgentProgressBubble({ progress }: { progress: AgentProgress }) {
   return (
     <div className="flex justify-start gap-2">
       <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card">
@@ -252,15 +253,15 @@ function AgentProgressBubble({ stepIndex }: { stepIndex: number }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Loader2 className="shrink-0 animate-spin" size={16} />
-            <span className="truncate font-semibold">{currentStep.label}</span>
+            <span className="truncate font-semibold">{progress.label}</span>
           </div>
-          <span className="shrink-0 text-xs font-bold text-muted-foreground">{currentStep.percent}%</span>
+          <span className="shrink-0 text-xs font-bold text-muted-foreground">{progress.percent}%</span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
-          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${currentStep.percent}%` }} />
+          <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${progress.percent}%` }} />
         </div>
         <p className="mt-2 text-xs leading-5 text-muted-foreground">
-          AI 도우미가 단계별로 작업 중입니다. 완료되면 아래에 답변과 적용 버튼이 표시됩니다.
+          백엔드 Agent가 실제 처리 단계별로 진행 상태를 보내고 있습니다.
         </p>
       </div>
     </div>
@@ -290,7 +291,7 @@ export default function PostForm({
   const [agentInput, setAgentInput] = useState("");
   const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([]);
   const [agentStorageKey, setAgentStorageKey] = useState<string | null>(null);
-  const [agentProgressIndex, setAgentProgressIndex] = useState(0);
+  const [agentProgress, setAgentProgress] = useState<AgentProgress>(INITIAL_AGENT_PROGRESS);
   const [isAgentCollapsed, setIsAgentCollapsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
@@ -336,17 +337,6 @@ export default function PostForm({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [agentMessages, isAssisting]);
-
-  useEffect(() => {
-    if (!isAssisting) {
-      setAgentProgressIndex(0);
-      return;
-    }
-    const timer = window.setInterval(() => {
-      setAgentProgressIndex((current) => Math.min(current + 1, AGENT_PROGRESS_STEPS.length - 1));
-    }, 1200);
-    return () => window.clearInterval(timer);
-  }, [isAssisting]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -404,18 +394,33 @@ export default function PostForm({
     setError(null);
     setAgentInput("");
     setAgentMessages((current) => [...current, userMessage]);
-    setAgentProgressIndex(0);
+    setAgentProgress(INITIAL_AGENT_PROGRESS);
     setIsAssisting(true);
 
     try {
-      const result = await aiApi.runEditorAgent({
+      const payload: aiApi.EditorAgentPayload = {
         title,
         content,
         post_type: postType,
         category,
         message,
         history
-      });
+      };
+      let result: EditorAgentResponse | null = null;
+      try {
+        await aiApi.streamEditorAgent(payload, (event) => {
+          if (event.type === "progress") {
+            setAgentProgress(event);
+            return;
+          }
+          result = event.response;
+        });
+      } catch {
+        result = await aiApi.runEditorAgent(payload);
+      }
+      if (!result) {
+        throw new ApiError(0, "AI 응답을 받지 못했습니다.");
+      }
       const assistantMessage: AgentChatMessage = {
         id: makeMessageId(),
         role: "assistant",
@@ -669,10 +674,10 @@ export default function PostForm({
       </div>
 
       <aside
-        className={`min-w-0 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] ${
+        className={`min-w-0 lg:sticky lg:top-20 lg:h-[calc(100vh-13rem)] ${
           isAgentCollapsed
             ? "flex min-h-0 items-start justify-center border-0 bg-transparent px-0 py-2"
-            : "bal-card relative flex min-h-[620px] flex-col overflow-hidden border border-border bg-accent/45 shadow-sm"
+            : "bal-card relative flex min-h-[620px] flex-col overflow-hidden border border-border bg-accent/45 shadow-sm lg:min-h-0"
         }`}
       >
         {isAgentCollapsed ? (
@@ -777,7 +782,7 @@ export default function PostForm({
                   </div>
                 ))}
 
-                {isAssisting ? <AgentProgressBubble stepIndex={agentProgressIndex} /> : null}
+                {isAssisting ? <AgentProgressBubble progress={agentProgress} /> : null}
                 <div ref={chatEndRef} />
               </div>
 
