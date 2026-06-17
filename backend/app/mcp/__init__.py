@@ -1,0 +1,2 @@
+"""FitLog MCP server package."""
+

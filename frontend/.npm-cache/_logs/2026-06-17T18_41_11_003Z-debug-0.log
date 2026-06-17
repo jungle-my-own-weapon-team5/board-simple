@@ -1,0 +1,24 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.6.2
+2 info using node@v22.16.0
+3 silly config load:file:C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\crafton\1\ai_utilization\board_simple\frontend\.npmrc
+5 silly config load:file:C:\Users\gi676\.npmrc
+6 silly config load:file:C:\Users\gi676\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm ci
+8 verbose argv "ci" "--dry-run" "--ignore-scripts" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:C:\crafton\1\ai_utilization\board_simple\frontend\.npm-cache\_logs\2026-06-17T18_41_11_003Z-
+10 verbose logfile C:\crafton\1\ai_utilization\board_simple\frontend\.npm-cache\_logs\2026-06-17T18_41_11_003Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 silly fetch manifest @emnapi/runtime@^1.7.0
+15 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fruntime cache-miss
+16 http fetch GET https://registry.npmjs.org/@emnapi%2fruntime attempt 1 failed with EACCES
+17 http fetch GET https://registry.npmjs.org/@emnapi%2fruntime attempt 2 failed with EACCES
+18 http fetch GET https://registry.npmjs.org/@emnapi%2fruntime attempt 3 failed with EACCES
+19 silly placeDep node_modules/@img/sharp-wasm32 @emnapi/runtime@ OK for: @img/sharp-wasm32@0.34.5 want: ^1.7.0
+20 silly fetch manifest @emnapi/core@^1.7.1
+21 silly packumentCache full:https://registry.npmjs.org/@emnapi%2fcore cache-miss
+22 http fetch GET https://registry.npmjs.org/@emnapi%2fcore attempt 1 failed with EACCES
+23 http fetch GET https://registry.npmjs.org/@emnapi%2fcore attempt 2 failed with EACCES

@@ -221,8 +221,8 @@ agent_start
 
 관련 코드:
 
-- `mcp_server/src/index.js`
-- `mcp_server/src/fitlogClient.js`
+- `backend/app/mcp/server.py`
+- `backend/app/mcp/tools.py`
 
 MCP의 역할:
 

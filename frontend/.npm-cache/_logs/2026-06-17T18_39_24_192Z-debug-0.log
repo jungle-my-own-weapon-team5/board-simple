@@ -1,0 +1,59 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.6.2
+2 info using node@v22.16.0
+3 silly config load:file:C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\crafton\1\ai_utilization\board_simple\frontend\.npmrc
+5 silly config load:file:C:\Users\gi676\.npmrc
+6 silly config load:file:C:\Users\gi676\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install" "--package-lock-only" "--ignore-scripts" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:C:\crafton\1\ai_utilization\board_simple\frontend\.npm-cache\_logs\2026-06-17T18_39_24_192Z-
+10 verbose logfile C:\crafton\1\ai_utilization\board_simple\frontend\.npm-cache\_logs\2026-06-17T18_39_24_192Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 http cache https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz 1ms (cache hit)
+15 silly tarball no local data for https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz. Extracting by manifest.
+16 http fetch GET https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz attempt 1 failed with EACCES
+17 http fetch GET https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz attempt 2 failed with EACCES
+18 http fetch GET https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz attempt 3 failed with EACCES
+19 verbose type system
+20 verbose stack FetchError: request to https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz failed, reason: 
+20 verbose stack     at ClientRequest.<anonymous> (C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\node_modules\minipass-fetch\lib\index.js:130:14)
+20 verbose stack     at ClientRequest.emit (node:events:518:28)
+20 verbose stack     at emitErrorEvent (node:_http_client:104:11)
+20 verbose stack     at _destroy (node:_http_client:898:9)
+20 verbose stack     at onSocketNT (node:_http_client:918:5)
+20 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+21 error code EACCES
+22 error errno EACCES
+23 error FetchError: request to https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.0.tgz failed, reason: 
+23 error     at ClientRequest.<anonymous> (C:\Users\gi676\AppData\Roaming\npm\node_modules\npm\node_modules\minipass-fetch\lib\index.js:130:14)
+23 error     at ClientRequest.emit (node:events:518:28)
+23 error     at emitErrorEvent (node:_http_client:104:11)
+23 error     at _destroy (node:_http_client:898:9)
+23 error     at onSocketNT (node:_http_client:918:5)
+23 error     at process.processTicksAndRejections (node:internal/process/task_queues:91:21) {
+23 error   code: 'EACCES',
+23 error   errno: 'EACCES',
+23 error   type: 'system'
+23 error }
+24 error
+24 error The operation was rejected by your operating system.
+24 error It's possible that the file was already in use (by a text editor or antivirus),
+24 error or that you lack permissions to access it.
+24 error
+24 error If you believe this might be a permissions issue, please double-check the
+24 error permissions of the file and its containing directories, or try running
+24 error the command again as root/Administrator.
+25 silly unfinished npm timer reify 1781721564701
+26 silly unfinished npm timer reify:loadTrees 1781721564701
+27 silly unfinished npm timer idealTree:buildDeps 1781721564770
+28 silly unfinished npm timer idealTree:node_modules/@tailwindcss/oxide-wasm32-wasi 1781721564771
+29 verbose cwd C:\crafton\1\ai_utilization\board_simple\frontend
+30 verbose os Windows_NT 10.0.26200
+31 verbose node v22.16.0
+32 verbose npm  v11.6.2
+33 verbose exit 1
+34 verbose code 1
+35 error A complete log of this run can be found in: C:\crafton\1\ai_utilization\board_simple\frontend\.npm-cache\_logs\2026-06-17T18_39_24_192Z-debug-0.log
