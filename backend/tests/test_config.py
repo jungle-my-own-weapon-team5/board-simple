@@ -156,6 +156,7 @@ def test_production_settings_accept_secure_values() -> None:
         jwt_secret_key="production-secret",
         auth_cookie_secure=True,
         frontend_origin="https://example.com",
+        frontend_extra_origins="",
     )
 
     assert settings.app_env == "production"

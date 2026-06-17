@@ -199,6 +199,39 @@ def list_searchable_chunk_embeddings(
     )
 
 
+def find_searchable_chunk_embedding_by_article_ref(
+    db: Session,
+    *,
+    embedding_profile_id: int,
+    law_title: str,
+    article_no: str,
+    document_types: list[str] | None = None,
+) -> LegalDocumentChunkEmbedding | None:
+    """법령명과 조문번호가 정확히 맞는 searchable chunk embedding을 찾습니다.
+
+    필수 조문은 vector score만으로 선택하면 밀릴 수 있으므로, 이미 색인된 공식
+    corpus 안에서는 조문 metadata/heading을 우선 사용해 정확 조회합니다.
+    """
+    normalized_law_title = _normalize_article_match_text(law_title)
+    normalized_article_no = _normalize_article_match_text(article_no)
+    if not normalized_law_title or not normalized_article_no:
+        return None
+
+    candidates = list_searchable_chunk_embeddings(
+        db,
+        embedding_profile_id,
+        document_types=document_types,
+    )
+    for candidate in candidates:
+        chunk = candidate.chunk
+        document = chunk.document
+        if normalized_law_title not in _normalize_article_match_text(document.title):
+            continue
+        if _chunk_matches_article_no(chunk, normalized_article_no):
+            return candidate
+    return None
+
+
 def search_similar_chunk_embeddings(
     db: Session,
     *,
@@ -361,3 +394,24 @@ def _cosine_similarity(left: list[float], right: list[float]) -> float:
         left_value * right_value for left_value, right_value in zip(left, right)
     )
     return dot_product / (left_norm * right_norm)
+
+
+def _chunk_matches_article_no(
+    chunk: LegalDocumentChunk,
+    normalized_article_no: str,
+) -> bool:
+    metadata = chunk.metadata_json or {}
+    metadata_article_no = _normalize_article_match_text(
+        str(metadata.get("article_no") or "")
+    )
+    heading = _normalize_article_match_text(chunk.heading or "")
+    content_prefix = _normalize_article_match_text(chunk.content[:300])
+    return (
+        metadata_article_no == normalized_article_no
+        or normalized_article_no in heading
+        or normalized_article_no in content_prefix
+    )
+
+
+def _normalize_article_match_text(value: str) -> str:
+    return "".join(value.split()).lower()

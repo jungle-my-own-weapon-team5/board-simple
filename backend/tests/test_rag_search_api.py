@@ -493,12 +493,11 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
     monkeypatch: pytest.MonkeyPatch,
     rag_client_context: ApiTestContext,
 ) -> None:
-    register_and_login(
+    user = register_and_login(
         rag_client_context.client,
         email="expected-article-supplement@example.com",
     )
     initial_query = "corpse concealment general issue"
-    expected_query = "형법 제161조 사체등의 유기 시신을 옮기거나 매장한 행위의 별도 범죄 성립 가능성 확인"
     with rag_client_context.session_factory() as db:
         profile = _create_profile(db, dimensions=3)
         _create_chunk_embedding(
@@ -522,19 +521,15 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
 
     class ExpectedArticleEmbeddingClient:
         def embed_texts(self, request):
-            text = request.texts[0]
-            vector = [1.0, 0.0, 0.0]
-            if text == expected_query:
-                vector = [0.0, 1.0, 0.0]
             return [
                 type(
                     "EmbeddingResult",
                     (),
                     {
-                        "embedding": vector,
+                        "embedding": [1.0, 0.0, 0.0],
                         "embedding_provider": "mock",
                         "embedding_model_name": request.model,
-                        "dimensions": len(vector),
+                        "dimensions": 3,
                         "input_index": 0,
                     },
                 )()
@@ -544,7 +539,7 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
         return LegalSourcePlan(
             issues=[
                 PlannedLegalIssue(
-                    issue_key="corpse_concealment",
+                    issue_key="criminal_corpse_concealment",
                     title="사체 은닉",
                     description=None,
                     internal_rag_query=initial_query,
@@ -582,10 +577,223 @@ def test_rag_search_endpoint_supplements_missing_expected_article_refs(
     assert response.status_code == 200
     body = response.json()
     assert expected_chunk_id in [item["chunk_id"] for item in body["items"]]
+    assert body["items"][0]["chunk_id"] == expected_chunk_id
     expected_item = next(
         item for item in body["items"] if item["chunk_id"] == expected_chunk_id
     )
-    assert expected_item["metadata"]["planned_issue_key"] == "supplemental_1"
+    assert expected_item["metadata"]["planned_issue_key"] == "exact_article_1"
+    assert expected_item["metadata"]["retrieval_type"] == "exact_article"
+
+    with rag_client_context.session_factory() as db:
+        retrievals = (
+            db.query(RagRetrieval)
+            .filter(RagRetrieval.rag_run_id == body["run_id"])
+            .order_by(RagRetrieval.rank.asc())
+            .all()
+        )
+        assert retrievals[0].chunk_id == expected_chunk_id
+        exact_retrieval = next(
+            retrieval
+            for retrieval in retrievals
+            if retrieval.chunk_id == expected_chunk_id
+        )
+        assert exact_retrieval.retrieval_type == "exact_article"
+        verify_result = verify_citations_tool(
+            {
+                "run_id": body["run_id"],
+                "citations": [{"chunk_id": expected_chunk_id}],
+            },
+            McpToolCallContext(db=db, user_id=user["id"]),
+        )
+        assert verify_result["valid"] is True
+
+
+def test_rag_search_endpoint_does_not_exact_lookup_untrusted_planner_refs(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(
+        rag_client_context.client,
+        email="untrusted-article-ref@example.com",
+    )
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        vector_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제267조(과실치사)",
+            content="과실로 사람을 사망하게 한 자를 처벌한다.",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        untrusted_expected_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제151조(범인은닉과 친족간의 특례)",
+            content="범인을 은닉한 친족에 관한 특례 조문이다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        vector_chunk_id = vector_embedding.chunk_id
+        untrusted_chunk_id = untrusted_expected_embedding.chunk_id
+        db.commit()
+
+    class StaticEmbeddingClient:
+        def embed_texts(self, request):
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": [1.0, 0.0, 0.0],
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": 3,
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="llm_planned_offender_hiding",
+                    title="범인 은닉 가능성",
+                    description=None,
+                    internal_rag_query="negligent death issue",
+                    expected_article_refs=[
+                        ExpectedArticleRef(
+                            law_title="형법",
+                            article_no="제151조",
+                            article_title="범인은닉과 친족간의 특례",
+                            reason="LLM planner supplied an untrusted article ref",
+                        )
+                    ],
+                )
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.AIClient",
+        lambda settings: StaticEmbeddingClient(),
+    )
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "A accidentally killed B.",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    chunk_ids = [item["chunk_id"] for item in body["items"]]
+    assert chunk_ids == [vector_chunk_id]
+    assert untrusted_chunk_id not in chunk_ids
+    assert all(
+        item["metadata"].get("retrieval_type") != "exact_article"
+        for item in body["items"]
+    )
+
+
+def test_rag_search_endpoint_filters_offender_hiding_without_hiding_fact(
+    monkeypatch: pytest.MonkeyPatch,
+    rag_client_context: ApiTestContext,
+) -> None:
+    register_and_login(
+        rag_client_context.client,
+        email="offender-hiding-filter@example.com",
+    )
+    with rag_client_context.session_factory() as db:
+        profile = _create_profile(db, dimensions=3)
+        offender_hiding_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제151조(범인은닉과 친족간의 특례)",
+            content="범인을 은닉한 친족에 관한 특례 조문이다.",
+            embedding=[1.0, 0.0, 0.0],
+        )
+        surrender_embedding = _create_chunk_embedding(
+            db,
+            profile=profile,
+            title="형법",
+            heading="제52조(자수, 자복)",
+            content="죄를 지은 후 수사기관에 자수한 경우 형을 감경할 수 있다.",
+            embedding=[0.0, 1.0, 0.0],
+        )
+        offender_hiding_chunk_id = offender_hiding_embedding.chunk_id
+        surrender_chunk_id = surrender_embedding.chunk_id
+        db.commit()
+
+    class StaticEmbeddingClient:
+        def embed_texts(self, request):
+            return [
+                type(
+                    "EmbeddingResult",
+                    (),
+                    {
+                        "embedding": [1.0, 0.0, 0.0],
+                        "embedding_provider": "mock",
+                        "embedding_model_name": request.model,
+                        "dimensions": 3,
+                        "input_index": 0,
+                    },
+                )()
+            ]
+
+    def fake_plan_legal_source_candidates(**_: object) -> LegalSourcePlan:
+        return LegalSourcePlan(
+            issues=[
+                PlannedLegalIssue(
+                    issue_key="criminal_self_surrender",
+                    title="자수와 감경",
+                    description=None,
+                    internal_rag_query="자수 감경",
+                    expected_article_refs=[
+                        ExpectedArticleRef(
+                            law_title="형법",
+                            article_no="제52조",
+                            article_title="자수, 자복",
+                            reason="자수 효과 확인",
+                        )
+                    ],
+                )
+            ]
+        )
+
+    monkeypatch.setattr(
+        "app.services.rag.issue_retrieval.plan_legal_source_candidates",
+        fake_plan_legal_source_candidates,
+    )
+    monkeypatch.setattr(
+        "app.api.rag.AIClient",
+        lambda settings: StaticEmbeddingClient(),
+    )
+
+    response = rag_client_context.client.post(
+        "/api/rag/search",
+        json={
+            "query": "A reported himself to the police after burying a body.",
+            "top_k": 1,
+            "filters": {"document_type": "statute"},
+        },
+        headers=origin_headers(),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    chunk_ids = [item["chunk_id"] for item in body["items"]]
+    assert surrender_chunk_id in chunk_ids
+    assert offender_hiding_chunk_id not in chunk_ids
 
 
 def test_rag_search_endpoint_indexes_only_llm_reviewed_chunks(

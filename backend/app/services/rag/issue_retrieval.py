@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.models.embedding import EmbeddingProfile
 from app.models.rag_run import RagRetrieval
+from app.repositories import embeddings as embedding_repository
 from app.repositories import rag_runs as rag_run_repository
 from app.services.ai.client import AIClient
 from app.services.ai.errors import ProviderError
@@ -35,6 +36,14 @@ from app.services.rag.retrieval import (
 class _SupplementalRetrievalRequest:
     query: str
     expected_article_ref: ExpectedArticleRef | None = None
+
+
+TRUSTED_EXPECTED_ARTICLE_ISSUE_KEYS = {
+    "criminal_negligent_death",
+    "criminal_corpse_concealment",
+    "criminal_self_surrender",
+    "criminal_procedure_body_search",
+}
 
 
 def search_legal_documents_by_planned_issues(
@@ -180,9 +189,16 @@ def _merge_issue_results(
     base_result = issue_results[0][1]
     merged_by_chunk_id: dict[int, RagSearchResultItem] = {}
     ordered_chunk_ids: list[int] = []
+    trusted_expected_ref_keys = _trusted_expected_article_ref_keys(issue_results)
     for issue, result in issue_results:
         for item in result.results:
             tagged_item = _tag_item_with_issue(item, issue)
+            if _should_skip_secondary_article_item(
+                tagged_item,
+                original_query=original_query,
+                trusted_expected_ref_keys=trusted_expected_ref_keys,
+            ):
+                continue
             existing_item = merged_by_chunk_id.get(item.chunk_id)
             if existing_item is None:
                 merged_by_chunk_id[item.chunk_id] = tagged_item
@@ -197,6 +213,11 @@ def _merge_issue_results(
     merged_items = [
         replace(merged_by_chunk_id[chunk_id], rank=index + 1)
         for index, chunk_id in enumerate(ordered_chunk_ids)
+    ]
+    merged_items = _prioritize_expected_article_items(merged_items)
+    merged_items = [
+        replace(item, rank=index + 1)
+        for index, item in enumerate(merged_items)
     ]
     merged_items = _index_merged_retrievals_for_base_run(
         db,
@@ -228,6 +249,7 @@ def _index_merged_retrievals_for_base_run(
             db.delete(retrieval)
             del retrievals_by_chunk_id[chunk_id]
     for rank, item in enumerate(merged_items, start=1):
+        retrieval_type = _retrieval_type_for_item(item)
         retrieval = retrievals_by_chunk_id.get(item.chunk_id)
         if retrieval is None:
             retrieval = RagRetrieval(
@@ -237,7 +259,7 @@ def _index_merged_retrievals_for_base_run(
                 embedding_profile_id=base_result.embedding_profile_id,
                 rank=rank,
                 score=item.score,
-                retrieval_type="vector",
+                retrieval_type=retrieval_type,
             )
             rag_run_repository.add_rag_retrieval(db, retrieval)
             retrievals_by_chunk_id[item.chunk_id] = retrieval
@@ -246,6 +268,7 @@ def _index_merged_retrievals_for_base_run(
             retrieval.score = item.score
             retrieval.chunk_embedding_id = item.chunk_embedding_id
             retrieval.embedding_profile_id = base_result.embedding_profile_id
+            retrieval.retrieval_type = retrieval_type
     db.flush()
     return [
         replace(
@@ -296,6 +319,12 @@ def _review_and_supplement_issue_results(
             for query in review["supplemental_queries"]
         )
 
+    reviewed_results = _append_exact_expected_article_results(
+        db,
+        issue_results=reviewed_results,
+        embedding_profile=embedding_profile,
+        document_types=document_types,
+    )
     supplemental_requests = _dedupe_supplemental_requests(
         [
             *_missing_expected_article_ref_requests(reviewed_results),
@@ -331,6 +360,76 @@ def _review_and_supplement_issue_results(
         if supplemental_result.status == "completed":
             reviewed_results.append((supplemental_issue, supplemental_result))
     return reviewed_results
+
+
+def _append_exact_expected_article_results(
+    db: Session,
+    *,
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+    embedding_profile: EmbeddingProfile,
+    document_types: list[str] | None,
+) -> list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]]:
+    """필수 조문 후보를 vector score와 무관하게 정확 조회해 결과에 추가합니다."""
+
+    if not issue_results:
+        return issue_results
+
+    all_items = [item for _issue, result in issue_results for item in result.results]
+    base_result = issue_results[0][1]
+    appended_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]] = []
+    seen_refs: set[tuple[str, str]] = set()
+    existing_chunk_ids = {item.chunk_id for item in all_items}
+
+    for issue, _result in issue_results:
+        for ref in _trusted_expected_article_refs(issue):
+            ref_key = _expected_article_ref_key(ref)
+            if ref_key in seen_refs:
+                continue
+            seen_refs.add(ref_key)
+            if any(_item_matches_expected_article_ref(item, ref) for item in all_items):
+                continue
+            chunk_embedding = (
+                embedding_repository.find_searchable_chunk_embedding_by_article_ref(
+                    db,
+                    embedding_profile_id=embedding_profile.id,
+                    law_title=ref.law_title,
+                    article_no=ref.article_no,
+                    document_types=document_types,
+                )
+            )
+            if chunk_embedding is None or chunk_embedding.chunk_id in existing_chunk_ids:
+                continue
+            query = _query_for_expected_article_ref(ref)
+            exact_issue = PlannedLegalIssue(
+                issue_key=f"exact_article_{len(appended_results) + 1}",
+                title=query,
+                description="필수 조문 후보를 조문번호로 정확 조회했습니다.",
+                internal_rag_query=query,
+                expected_article_refs=[ref],
+            )
+            exact_item = _exact_article_result_item(
+                chunk_embedding=chunk_embedding,
+                ref=ref,
+            )
+            appended_results.append(
+                (
+                    exact_issue,
+                    replace(
+                        base_result,
+                        query=query,
+                        top_k=1,
+                        score_threshold=None,
+                        max_chunks_per_document=None,
+                        results=[exact_item],
+                    ),
+                )
+            )
+            all_items.append(exact_item)
+            existing_chunk_ids.add(exact_item.chunk_id)
+
+    if not appended_results:
+        return issue_results
+    return [*issue_results, *appended_results]
 
 
 def _review_retrieved_evidence(
@@ -391,7 +490,7 @@ def _review_candidate_payload(
                     "query": issue.internal_rag_query,
                     "expected_article_refs": [
                         _expected_article_ref_payload(ref)
-                        for ref in issue.expected_article_refs
+                        for ref in _trusted_expected_article_refs(issue)
                     ],
                     "title": item.title,
                     "heading": item.heading,
@@ -466,13 +565,50 @@ def _parse_evidence_review(text: str) -> dict[str, list[int] | list[str]] | None
     }
 
 
+def _exact_article_result_item(
+    *,
+    chunk_embedding,
+    ref: ExpectedArticleRef,
+) -> RagSearchResultItem:
+    chunk = chunk_embedding.chunk
+    document = chunk.document
+    metadata = {
+        **(chunk.metadata_json or {}),
+        "document_type": document.document_type,
+        "canonical_id": document.canonical_id,
+        "version_label": document.version_label,
+        "retrieval_type": "exact_article",
+        "expected_article_ref": _expected_article_ref_payload(ref),
+    }
+    return RagSearchResultItem(
+        retrieval_id=None,
+        chunk_embedding_id=chunk_embedding.id,
+        chunk_id=chunk.id,
+        document_id=document.id,
+        rank=1,
+        score=1.0,
+        title=document.title,
+        source_url=document.source.source_url if document.source else None,
+        heading=chunk.heading,
+        content=chunk.content,
+        metadata_json=metadata,
+    )
+
+
+def _retrieval_type_for_item(item: RagSearchResultItem) -> str:
+    value = item.metadata_json.get("retrieval_type")
+    if isinstance(value, str) and value.strip():
+        return value.strip()[:30]
+    return "vector"
+
+
 def _expected_article_refs_payload(
     issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
 ) -> list[dict[str, object]]:
     refs: list[dict[str, object]] = []
     seen: set[tuple[str, str]] = set()
     for issue, _result in issue_results:
-        for ref in issue.expected_article_refs:
+        for ref in _trusted_expected_article_refs(issue):
             key = _expected_article_ref_key(ref)
             if key in seen:
                 continue
@@ -503,7 +639,7 @@ def _missing_expected_article_ref_requests(
     seen_refs: set[tuple[str, str]] = set()
     all_items = [item for _issue, result in issue_results for item in result.results]
     for issue, _result in issue_results:
-        for ref in issue.expected_article_refs:
+        for ref in _trusted_expected_article_refs(issue):
             key = _expected_article_ref_key(ref)
             if key in seen_refs:
                 continue
@@ -569,6 +705,71 @@ def _expected_article_ref_key(ref: ExpectedArticleRef) -> tuple[str, str]:
     )
 
 
+def _trusted_expected_article_refs(issue: PlannedLegalIssue) -> list[ExpectedArticleRef]:
+    if issue.issue_key in TRUSTED_EXPECTED_ARTICLE_ISSUE_KEYS:
+        return issue.expected_article_refs
+    if any(candidate.reason == "required_article_ref" for candidate in issue.candidates):
+        return issue.expected_article_refs
+    return []
+
+
+def _trusted_expected_article_ref_keys(
+    issue_results: list[tuple[PlannedLegalIssue, SearchLegalDocumentsResult]],
+) -> set[tuple[str, str]]:
+    return {
+        _expected_article_ref_key(ref)
+        for issue, _result in issue_results
+        for ref in _trusted_expected_article_refs(issue)
+    }
+
+
+def _should_skip_secondary_article_item(
+    item: RagSearchResultItem,
+    *,
+    original_query: str,
+    trusted_expected_ref_keys: set[tuple[str, str]],
+) -> bool:
+    self_surrender_key = (
+        _normalize_for_article_match("형법"),
+        _normalize_for_article_match("제52조"),
+    )
+    sentencing_condition_key = (
+        _normalize_for_article_match("형법"),
+        _normalize_for_article_match("제51조"),
+    )
+    if self_surrender_key not in trusted_expected_ref_keys:
+        return False
+    if sentencing_condition_key in trusted_expected_ref_keys:
+        return False
+    if _item_matches_expected_article_ref(
+        item,
+        ExpectedArticleRef(law_title="형법", article_no="제51조"),
+    ):
+        return True
+    if _item_matches_expected_article_ref(
+        item,
+        ExpectedArticleRef(law_title="형법", article_no="제151조"),
+    ):
+        return not _has_offender_hiding_fact(original_query)
+    return False
+
+
+def _has_offender_hiding_fact(text: str) -> bool:
+    normalized = _normalize_for_article_match(text)
+    return any(
+        keyword in normalized
+        for keyword in (
+            "범인은닉",
+            "범인도피",
+            "범인을숨",
+            "범인을도피",
+            "도피시키",
+            "숨겨주",
+            "숨겨준",
+        )
+    )
+
+
 def _normalize_for_article_match(value: str) -> str:
     return re.sub(r"\s+", "", value).lower()
 
@@ -617,6 +818,13 @@ def _tag_item_with_issue(
     metadata["planned_issue_title"] = issue.title
     metadata["planned_issue_query"] = issue.internal_rag_query
     metadata["planned_issue_queries"] = [issue_payload]
+    matched_expected_refs = [
+        _expected_article_ref_payload(ref)
+        for ref in _trusted_expected_article_refs(issue)
+        if _item_matches_expected_article_ref(item, ref)
+    ]
+    if matched_expected_refs:
+        metadata["matched_expected_article_refs"] = matched_expected_refs
     return replace(item, metadata_json=metadata)
 
 
@@ -640,11 +848,63 @@ def _merge_duplicate_item(
         planned_queries.append(query)
         seen_issue_keys.add(query.get("issue_key"))
     metadata["planned_issue_queries"] = planned_queries
+    metadata["matched_expected_article_refs"] = _merge_expected_article_ref_payloads(
+        metadata.get("matched_expected_article_refs"),
+        new_item.metadata_json.get("matched_expected_article_refs"),
+    )
     return replace(
         existing_item,
         score=max(existing_item.score, new_item.score),
         metadata_json=metadata,
     )
+
+
+def _prioritize_expected_article_items(
+    items: list[RagSearchResultItem],
+) -> list[RagSearchResultItem]:
+    """필수 조문과 직접 매칭되는 근거를 최종 검색 결과 상단에 배치합니다."""
+
+    return [
+        item
+        for _index, item in sorted(
+            enumerate(items),
+            key=lambda indexed_item: (
+                _expected_article_item_priority(indexed_item[1]),
+                indexed_item[0],
+            ),
+        )
+    ]
+
+
+def _expected_article_item_priority(item: RagSearchResultItem) -> int:
+    if _retrieval_type_for_item(item) == "exact_article":
+        return 0
+    if item.metadata_json.get("matched_expected_article_refs"):
+        return 1
+    return 2
+
+
+def _merge_expected_article_ref_payloads(
+    existing_value: object,
+    new_value: object,
+) -> list[dict[str, object]]:
+    merged: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    for value in (existing_value, new_value):
+        if not isinstance(value, list):
+            continue
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            key = (
+                _normalize_for_article_match(str(item.get("law_title") or "")),
+                _normalize_for_article_match(str(item.get("article_no") or "")),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(item)
+    return merged
 
 
 def _issues_or_default(
