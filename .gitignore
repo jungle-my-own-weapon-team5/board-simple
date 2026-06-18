@@ -50,3 +50,4 @@ legacy_pgvector_inventory.csv
 .vscode/
 backend/.venv312/
 .tmp_pytest/
+.tmp_cloudflared/
