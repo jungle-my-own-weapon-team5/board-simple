@@ -269,12 +269,54 @@ def test_editor_external_keyword_strips_quoted_name_endings() -> None:
     assert _evidence_entities(state)[0] == "정미수"
 
 
+def test_editor_external_keyword_preserves_person_incident_terms() -> None:
+    from app.services.editor_agent import _external_keyword
+
+    cat_keyword = _external_keyword(
+        {
+            "title": "",
+            "content": "",
+            "post_type": "토론",
+            "category": "인물 열전",
+            "message": "양녕대군의 고양이 사건 알려줘",
+            "history": [],
+            "agent_steps": [],
+            "graph_mode": "local_fallback",
+        }
+    )
+
+    revolt_keyword = _external_keyword(
+        {
+            "title": "",
+            "content": "",
+            "post_type": "토론",
+            "category": "인물 열전",
+            "message": "연산군의 폐비 사건 찾아줘",
+            "history": [],
+            "agent_steps": [],
+            "graph_mode": "local_fallback",
+        }
+    )
+
+    assert cat_keyword == "양녕대군 고양이 사건"
+    assert revolt_keyword == "연산군 폐비 사건"
+
+
 def test_naver_discovery_query_uses_entity_extraction_without_hardcoded_context() -> None:
     from app.services.ai_runtime import _naver_discovery_query
 
     assert _naver_discovery_query("어우동이 누구야") == "어우동"
     assert _naver_discovery_query("장녹수가 누구야") == "장녹수"
     assert _naver_discovery_query("정조 어찰") == "정조 어찰"
+
+
+def test_sillok_query_generation_preserves_short_nouns_ending_with_i() -> None:
+    from app.services.ai_runtime import _external_rank_terms, _sillok_queries_from_discovery
+
+    query = "양녕대군 고양이 사건"
+
+    assert "고양이" in _external_rank_terms(query)
+    assert "양녕대군 고양이" in _sillok_queries_from_discovery(query, [])
 
 
 def test_external_search_fast_person_discovery_skips_slow_sillok(
@@ -306,6 +348,89 @@ def test_external_search_fast_person_discovery_skips_slow_sillok(
     payload = response.json()
     assert payload["tool_log"]["status"] == "ok"
     assert payload["resources"][0]["title"] == "어우동"
+
+
+def test_external_search_rejects_subject_only_discovery_for_specific_event(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import mcp_server
+
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_naver",
+        lambda settings, query, categories, display: (
+            [
+                {
+                    "title": "양녕대군 (동작)",
+                    "provider": "네이버 검색/encyc",
+                    "url": "https://terms.naver.com/entry.naver?docId=6601741",
+                    "description": "서울특별시 동작구 상도동에 묘소와 사당이 있는 조선 전기 왕자.",
+                }
+            ],
+            "ok",
+        ),
+    )
+
+    def fake_search_sillok(keyword: str):
+        calls.append(keyword)
+        return []
+
+    monkeypatch.setattr(mcp_server, "_search_sillok", fake_search_sillok)
+
+    response = client.post("/api/ai/external/search", json={"keyword": "양녕대군 고양이 사건"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert calls
+    assert payload["resources"] == []
+    assert payload["tool_log"]["status"] == "no_results"
+
+
+def test_external_search_prefers_trusted_article_for_specific_event(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import mcp_server
+
+    monkeypatch.setattr(
+        mcp_server,
+        "_search_naver",
+        lambda settings, query, categories, display: (
+            [
+                {
+                    "title": "양녕대군 (동작)",
+                    "provider": "네이버 검색/encyc",
+                    "url": "https://terms.naver.com/entry.naver?docId=6601741",
+                    "description": "서울특별시 동작구 상도동에 묘소와 사당이 있는 조선 전기 왕자.",
+                }
+            ],
+            "ok",
+        ),
+    )
+
+    def fake_search_sillok(keyword: str):
+        if "고양이" in keyword:
+            return [
+                {
+                    "title": "태종실록 기사",
+                    "provider": "국사편찬위원회 조선왕조실록",
+                    "url": "https://sillok.history.go.kr/id/kca_11711024_002",
+                    "description": "양녕대군 고양이 사건과 직접 관련된 조선왕조실록 기사입니다.",
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(mcp_server, "_search_sillok", fake_search_sillok)
+
+    response = client.post("/api/ai/external/search", json={"keyword": "양녕대군 고양이 사건"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["tool_log"]["status"] == "ok"
+    assert payload["resources"][0]["url"] == "https://sillok.history.go.kr/id/kca_11711024_002"
 
 
 def test_external_resource_ranking_prefers_query_relevant_titles() -> None:
@@ -749,7 +874,7 @@ def test_post_discussion_fields_filters_and_ai_endpoints(client: TestClient, mon
     assert yangnyeong_response.status_code == 200
     yangnyeong_payload = yangnyeong_response.json()
     assert yangnyeong_payload["action"] == "answer"
-    assert "태종" in yangnyeong_payload["agent_message"]
+    assert "외부 자료 후보" in yangnyeong_payload["agent_message"]
     assert yangnyeong_payload["external_resources"]
     assert any(step["name"] == "external.search" for step in yangnyeong_payload["agent_steps"])
 

@@ -48,7 +48,6 @@ PRIMARY_SOURCE_QUERY_TERMS = [
     "기록",
     "국역",
     "원전",
-    "왕이",
     "교지",
 ]
 
@@ -471,6 +470,23 @@ HISTORY_RESOURCE_SIGNALS = (
     "자는",
     "이름은",
 )
+SPECIFIC_EVIDENCE_QUERY_SIGNALS = (
+    "사건",
+    "일화",
+    "기행",
+    "기행담",
+    "관계",
+    "활약",
+    "반대",
+    "논쟁",
+    "원문",
+    "사료",
+    "기록",
+    "국역",
+    "어찰",
+    "편지",
+    "서찰",
+)
 LOW_QUALITY_RESOURCE_SIGNALS = (
     "줄거리",
     "사이버 문학광장",
@@ -512,7 +528,11 @@ def search_external(db: Session, settings: Settings, keyword: str) -> ExternalSe
     statuses.append(f"naver:{naver_status}")
     raw_resources.extend(naver_resources)
 
-    sillok_queries = [] if _is_fast_person_discovery(query, naver_resources) else _sillok_queries_from_discovery(query, naver_resources)
+    sillok_queries = (
+        []
+        if _is_fast_person_discovery(query, naver_resources)
+        else _sillok_queries_from_discovery(query, naver_resources)
+    )
     sillok_resources: list[dict[str, str]] = []
     for sillok_query in sillok_queries:
         try:
@@ -572,6 +592,8 @@ def _safe_naver_discovery(settings: Settings, query: str) -> tuple[list[dict[str
 
 
 def _is_fast_person_discovery(query: str, resources: list[dict[str, str]]) -> bool:
+    if _query_requires_specific_evidence(query):
+        return False
     if not resources:
         return False
     entity = _entity_query_from_question(query)
@@ -605,7 +627,7 @@ def _naver_discovery_query(query: str) -> str:
 
 def _entity_query_from_question(query: str) -> str | None:
     text = _strip_question_words(query)
-    text = re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", text)
+    text = _strip_external_particle(text)
     text = re.sub(r"\s+", " ", text).strip()
     if " " in text:
         return None
@@ -615,7 +637,13 @@ def _entity_query_from_question(query: str) -> str | None:
 
 
 def _sillok_queries_from_discovery(query: str, resources: list[dict[str, str]]) -> list[str]:
-    candidates = [_strip_question_words(query), query]
+    stripped_query = _strip_question_words(query)
+    query_terms = _external_rank_terms(query)
+    candidates = [stripped_query, query]
+    if len(query_terms) >= 2:
+        primary = query_terms[0]
+        candidates.extend(f"{primary} {term}" for term in query_terms[1:4])
+        candidates.extend(" ".join(query_terms[index : index + 2]) for index in range(1, min(len(query_terms) - 1, 4)))
     for resource in resources:
         text = " ".join(
             [
@@ -645,7 +673,7 @@ def _history_keyword_candidates(text: str) -> list[str]:
     cleaned = re.sub(r"https?://\S+", " ", cleaned)
     cleaned = re.sub(r"[^\w가-힣一-龥\s]", " ", cleaned)
     words = [
-        re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", word)
+        _strip_external_particle(word)
         for word in cleaned.split()
     ]
     words = [word for word in words if 2 <= len(word) <= 12 and word not in {"네이버", "검색", "결과", "자료", "후보"}]
@@ -692,6 +720,14 @@ def _rank_external_resources(raw_resources: list[dict[str, str]], query: str) ->
         ]
         if entity_candidates:
             ranked_candidates = entity_candidates
+    if _query_requires_specific_evidence(query):
+        ranked_candidates = [
+            resource
+            for resource in ranked_candidates
+            if _resource_supports_specific_query(resource, query_terms)
+        ]
+        if not ranked_candidates:
+            return []
     historical_candidates = [
         resource
         for resource in ranked_candidates
@@ -714,10 +750,48 @@ def _external_rank_terms(query: str) -> list[str]:
     text = _strip_question_words(query)
     text = re.sub(r"[^\w가-힣一-龥\s]", " ", text)
     terms = [
-        re.sub(r"(은|는|이|가|을|를|의|에|와|과|로|으로|에게|에서)$", "", term)
+        _strip_external_particle(term)
         for term in text.split()
     ]
     return [term for term in terms if len(term) >= 2]
+
+
+def _strip_external_particle(term: str) -> str:
+    stripped = re.sub(r"(이라는|라는|이라고|라고|이며|라며|으로|에게|에서)$", "", term)
+    if stripped != term:
+        return stripped
+    if len(term) >= 3 and term.endswith(("은", "는", "을", "를", "의", "에", "와", "과", "로")):
+        return term[:-1]
+    if len(term) >= 4 and term.endswith(("이", "가")):
+        return term[:-1]
+    return term
+
+
+def _query_requires_specific_evidence(query: str) -> bool:
+    terms = _external_rank_terms(query)
+    return len(terms) >= 2 and any(signal in query for signal in SPECIFIC_EVIDENCE_QUERY_SIGNALS)
+
+
+def _resource_supports_specific_query(resource: ExternalResource, query_terms: list[str]) -> bool:
+    if not query_terms:
+        return True
+    haystack = f"{resource.title} {resource.description}"
+    primary = query_terms[0]
+    if primary and primary not in haystack:
+        return _is_primary_source_article(resource) and _mentions_any_query_term(haystack, query_terms)
+    detail_terms = query_terms[1:]
+    if any(term in haystack for term in detail_terms):
+        return True
+    return _is_primary_source_article(resource)
+
+
+def _is_primary_source_article(resource: ExternalResource) -> bool:
+    url = resource.url.lower()
+    return "sillok.history.go.kr/id/" in url or "db.history.go.kr" in url
+
+
+def _mentions_any_query_term(haystack: str, query_terms: list[str]) -> bool:
+    return any(term in haystack for term in query_terms)
 
 
 def _external_resource_rank(resource: ExternalResource, query_terms: list[str], query: str) -> tuple[int, int, int, int, str]:
@@ -1252,6 +1326,8 @@ def _save_ai_response(
 
 
 def _save_tool_log(db: Session, tool_log: ToolLog, result_summary: str) -> None:
+    if db is None:
+        return
     try:
         db.add(
             ToolLogRecord(

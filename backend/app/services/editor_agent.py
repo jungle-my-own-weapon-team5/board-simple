@@ -43,6 +43,7 @@ KING_NAMES = [
     "순종",
 ]
 SOURCE_KEYWORDS = ["어찰", "편지", "서찰", "문서", "일기", "실록", "사료", "원문", "국역"]
+INCIDENT_KEYWORDS = ["사건", "일화", "기행", "기행담"]
 GENERIC_EVIDENCE_TERMS = {
     "조선",
     "조선시대",
@@ -350,8 +351,89 @@ def _focused_external_keyword(text: str) -> str | None:
             return f"{person} 어찰"
         return f"{person} {source_keyword}"
     if person:
+        incident_keyword = _incident_keyword_for_person(normalized, person)
+        if incident_keyword:
+            return incident_keyword
         return person
+
+    entity_keyword = _entity_incident_keyword(normalized)
+    if entity_keyword:
+        return entity_keyword
     return None
+
+
+def _incident_keyword_for_person(text: str, person: str) -> str | None:
+    incident_terms = _nearby_incident_terms(text, person)
+    if incident_terms:
+        return " ".join([person, *incident_terms])[:40]
+    return None
+
+
+def _entity_incident_keyword(text: str) -> str | None:
+    tokens = _keyword_tokens(text)
+    for index, token in enumerate(tokens):
+        if not _looks_like_person_name(token):
+            continue
+        incident_terms = _incident_phrase_after(tokens, index)
+        if incident_terms:
+            return " ".join([token, *incident_terms])[:40]
+    return None
+
+
+def _nearby_incident_terms(text: str, person: str) -> list[str]:
+    tokens = _keyword_tokens(text)
+    try:
+        person_index = tokens.index(person)
+    except ValueError:
+        return []
+
+    return _incident_phrase_after(tokens, person_index)
+
+
+def _incident_phrase_after(tokens: list[str], person_index: int) -> list[str]:
+    nearby = [token for token in tokens[person_index + 1 : person_index + 6] if token != tokens[person_index]]
+    trigger_index = next(
+        (
+            index
+            for index, token in enumerate(nearby)
+            if token in INCIDENT_KEYWORDS or token.endswith(tuple(INCIDENT_KEYWORDS))
+        ),
+        None,
+    )
+    if trigger_index is None:
+        return []
+    start = max(0, trigger_index - 1)
+    return nearby[start : trigger_index + 1]
+
+
+def _keyword_tokens(text: str) -> list[str]:
+    cleaned = re.sub(r"[?!.~,;:()\[\]{}'\"“”‘’]", " ", text)
+    tokens = [_normalize_keyword_token(word.strip()) for word in cleaned.split()]
+    return [
+        token
+        for token in tokens
+        if 2 <= len(token) <= 20 and token not in GENERIC_EVIDENCE_TERMS
+    ]
+
+
+def _normalize_keyword_token(word: str) -> str:
+    if word in INCIDENT_KEYWORDS:
+        return word
+    incident_match = re.fullmatch(r"(.+(?:사건|일화|기행담|기행))(?:은|는|이|가|을|를|의|에|와|과)", word)
+    if incident_match:
+        return incident_match.group(1)
+    if len(word) <= 3:
+        return word
+    stripped = _strip_korean_particle(word)
+    return stripped
+
+
+def _looks_like_person_name(token: str) -> bool:
+    if token in KING_NAMES:
+        return True
+    if token.endswith(("대군", "군", "왕", "공주", "옹주")):
+        return True
+    return bool(re.fullmatch(r"[가-힣]{2,4}", token)) and token not in INCIDENT_KEYWORDS
 
 
 def _strip_korean_particle(word: str) -> str:
@@ -481,10 +563,9 @@ def _make_local_response(state: EditorAgentState) -> EditorAgentResponse:
 
 
 def _make_local_answer(state: EditorAgentState) -> str:
-    known_answer = _known_person_answer(state["message"])
-    if known_answer:
-        suffix = _external_suffix(state)
-        return f"{known_answer}{suffix}"
+    external_answer = _external_overview_answer(state)
+    if external_answer:
+        return external_answer
 
     if state.get("weak_evidence"):
         suffix = _external_suffix(state)
@@ -510,14 +591,18 @@ def _make_local_answer(state: EditorAgentState) -> str:
     )
 
 
-def _known_person_answer(message: str) -> str | None:
-    if "양녕대군" not in message:
+def _external_overview_answer(state: EditorAgentState) -> str | None:
+    resources = state.get("external_resources", [])
+    if not resources:
+        return None
+    first = resources[0]
+    description = first.description.strip()
+    if not description:
         return None
     return (
-        "양녕대군은 조선 태종의 맏아들이자 세종의 형입니다. 본래 왕세자로 책봉되었지만, 여러 문제와 정치적 판단 속에서 폐세자가 되었고, "
-        "결국 왕위는 충녕대군, 곧 세종에게 이어졌습니다. 후대에는 자유분방하고 예법에 얽매이지 않는 인물로 자주 기억되지만, "
-        "그 이미지는 일화와 후대 해석이 섞여 있으므로 조심해서 볼 필요가 있습니다. 핵심은 그를 단순한 방탕한 왕자나 실패한 세자로만 보기보다, "
-        "태종 말기 왕위 계승과 조선 왕실의 정치 질서 속에서 이해하는 것입니다."
+        f"내부 RAG 근거는 충분하지 않지만, 외부 자료 후보 기준으로는 `{first.title}`에서 다음처럼 확인됩니다. "
+        f"{description} "
+        "다만 이 내용은 제공된 외부 후보의 설명을 바탕으로 한 개괄이므로, 구체적인 일화나 사료 문구는 원문 확인 뒤에 단정하는 편이 좋습니다."
     )
 
 
